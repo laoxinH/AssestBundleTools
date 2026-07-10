@@ -252,15 +252,33 @@ public sealed partial class PluginManagementPage : Page
             Title = string.IsNullOrWhiteSpace(entryId)
                 ? UiText.Get(ResourceKeys.AssetBundleDecryptorEditorNewTitle)
                 : UiText.GetFormatted(ResourceKeys.AssetBundleDecryptorEditorEditTitleFormat, dialogTargetDisplayName ?? entryId),
-            PrimaryButtonText = UiText.Get(ResourceKeys.AssetBundleDecryptorEditorPrimaryButton),
+            SecondaryButtonText = UiText.Get(ResourceKeys.PluginEditorPreviousButton),
             CloseButtonText = UiText.Get(ResourceKeys.AssetBundleDecryptorEditorCloseButton),
             DefaultButton = ContentDialogButton.Primary,
             Content = editor
         };
 
+        editor.StepChanged += (_, _) => UpdateEditorDialogButtons(
+            dialog,
+            editor.IsLastStep,
+            editor.CanMovePrevious,
+            UiText.Get(ResourceKeys.AssetBundleDecryptorEditorPrimaryButton));
+        UpdateEditorDialogButtons(
+            dialog,
+            editor.IsLastStep,
+            editor.CanMovePrevious,
+            UiText.Get(ResourceKeys.AssetBundleDecryptorEditorPrimaryButton));
+
         UpsertAssetBundleDecryptorCommand? submittedCommand = null;
         dialog.PrimaryButtonClick += (_, args) =>
         {
+            if (!editor.IsLastStep)
+            {
+                args.Cancel = true;
+                editor.TryMoveNext();
+                return;
+            }
+
             if (!editor.TryCreateCommand(out var command) || command is null)
             {
                 args.Cancel = true;
@@ -269,6 +287,12 @@ public sealed partial class PluginManagementPage : Page
             }
 
             submittedCommand = command;
+        };
+
+        dialog.SecondaryButtonClick += (_, args) =>
+        {
+            args.Cancel = true;
+            editor.MovePrevious();
         };
 
         var result = await dialog.ShowAsync();
@@ -303,15 +327,33 @@ public sealed partial class PluginManagementPage : Page
             Title = string.IsNullOrWhiteSpace(entryId)
                 ? UiText.Get(ResourceKeys.ResourceProcessorEditorNewTitle)
                 : UiText.GetFormatted(ResourceKeys.ResourceProcessorEditorEditTitleFormat, dialogTargetDisplayName ?? entryId),
-            PrimaryButtonText = UiText.Get(ResourceKeys.ResourceProcessorEditorPrimaryButton),
+            SecondaryButtonText = UiText.Get(ResourceKeys.PluginEditorPreviousButton),
             CloseButtonText = UiText.Get(ResourceKeys.ResourceProcessorEditorCloseButton),
             DefaultButton = ContentDialogButton.Primary,
             Content = editor
         };
 
+        editor.StepChanged += (_, _) => UpdateEditorDialogButtons(
+            dialog,
+            editor.IsLastStep,
+            editor.CanMovePrevious,
+            UiText.Get(ResourceKeys.ResourceProcessorEditorPrimaryButton));
+        UpdateEditorDialogButtons(
+            dialog,
+            editor.IsLastStep,
+            editor.CanMovePrevious,
+            UiText.Get(ResourceKeys.ResourceProcessorEditorPrimaryButton));
+
         UpsertResourceProcessorCommand? submittedCommand = null;
         dialog.PrimaryButtonClick += (_, args) =>
         {
+            if (!editor.IsLastStep)
+            {
+                args.Cancel = true;
+                editor.TryMoveNext();
+                return;
+            }
+
             if (!editor.TryCreateCommand(out var command) || command is null)
             {
                 args.Cancel = true;
@@ -322,6 +364,12 @@ public sealed partial class PluginManagementPage : Page
             submittedCommand = command;
         };
 
+        dialog.SecondaryButtonClick += (_, args) =>
+        {
+            args.Cancel = true;
+            editor.MovePrevious();
+        };
+
         var result = await dialog.ShowAsync();
         if (result != ContentDialogResult.Primary || submittedCommand is null)
         {
@@ -329,5 +377,17 @@ public sealed partial class PluginManagementPage : Page
         }
 
         await ViewModel.SaveResourceProcessorAsync(submittedCommand);
+    }
+
+    private static void UpdateEditorDialogButtons(
+        ContentDialog dialog,
+        bool isLastStep,
+        bool canMovePrevious,
+        string submitButtonText)
+    {
+        dialog.PrimaryButtonText = isLastStep
+            ? submitButtonText
+            : UiText.Get(ResourceKeys.PluginEditorNextButton);
+        dialog.IsSecondaryButtonEnabled = canMovePrevious;
     }
 }

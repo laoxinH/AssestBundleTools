@@ -4856,6 +4856,21 @@
   <data name="PluginManagementPage.ProcessorDeleteFailedMessage" xml:space="preserve">
     <value>删除资源处理插件失败。</value>
   </data>
+  <data name="PluginEditor.Step.Basic" xml:space="preserve">
+    <value>基础信息</value>
+  </data>
+  <data name="PluginEditor.Step.Execution" xml:space="preserve">
+    <value>执行设置</value>
+  </data>
+  <data name="PluginEditor.Step.Arguments" xml:space="preserve">
+    <value>参数</value>
+  </data>
+  <data name="PluginEditor.NextButton" xml:space="preserve">
+    <value>下一步</value>
+  </data>
+  <data name="PluginEditor.PreviousButton" xml:space="preserve">
+    <value>上一步</value>
+  </data>
   <data name="ResourceProcessorEditor.NewTitle" xml:space="preserve">
     <value>新增资源处理插件</value>
   </data>

@@ -4856,6 +4856,21 @@
   <data name="PluginManagementPage.ProcessorDeleteFailedMessage" xml:space="preserve">
     <value>Failed to delete the resource processor plugin.</value>
   </data>
+  <data name="PluginEditor.Step.Basic" xml:space="preserve">
+    <value>Basics</value>
+  </data>
+  <data name="PluginEditor.Step.Execution" xml:space="preserve">
+    <value>Execution</value>
+  </data>
+  <data name="PluginEditor.Step.Arguments" xml:space="preserve">
+    <value>Arguments</value>
+  </data>
+  <data name="PluginEditor.NextButton" xml:space="preserve">
+    <value>Next</value>
+  </data>
+  <data name="PluginEditor.PreviousButton" xml:space="preserve">
+    <value>Back</value>
+  </data>
   <data name="ResourceProcessorEditor.NewTitle" xml:space="preserve">
     <value>Add Resource Processor Plugin</value>
   </data>

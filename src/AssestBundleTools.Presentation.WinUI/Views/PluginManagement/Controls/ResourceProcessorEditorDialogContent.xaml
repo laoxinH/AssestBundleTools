@@ -6,8 +6,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     HorizontalAlignment="Stretch"
-    Width="600"
-    MaxWidth="600"
+    MaxWidth="560"
     mc:Ignorable="d">
 
     <UserControl.Resources>
@@ -53,15 +52,90 @@
             <Setter Property="MinHeight" Value="36" />
             <Setter Property="HorizontalAlignment" Value="Stretch" />
         </Style>
+
+        <Style
+            x:Key="PluginEditorStepIndicatorStyle"
+            TargetType="Border">
+            <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+            <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Padding" Value="10,8" />
+        </Style>
     </UserControl.Resources>
 
-    <ScrollViewer
-        x:Name="FormScrollViewer"
-        MaxHeight="680"
-        HorizontalScrollBarVisibility="Disabled"
-        HorizontalScrollMode="Disabled"
-        VerticalScrollBarVisibility="Auto">
-        <StackPanel Spacing="12">
+    <StackPanel Spacing="12">
+        <Grid ColumnSpacing="8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Border
+                x:Name="BasicStepIndicatorBorder"
+                Style="{StaticResource PluginEditorStepIndicatorStyle}">
+                <StackPanel
+                    HorizontalAlignment="Center"
+                    Orientation="Horizontal"
+                    Spacing="6">
+                    <TextBlock
+                        x:Name="BasicStepNumberText"
+                        FontWeight="SemiBold"
+                        Text="1" />
+                    <TextBlock
+                        x:Name="BasicStepTitleText"
+                        FontWeight="SemiBold" />
+                </StackPanel>
+            </Border>
+
+            <Border
+                x:Name="ExecutionStepIndicatorBorder"
+                Grid.Column="1"
+                Style="{StaticResource PluginEditorStepIndicatorStyle}">
+                <StackPanel
+                    HorizontalAlignment="Center"
+                    Orientation="Horizontal"
+                    Spacing="6">
+                    <TextBlock
+                        x:Name="ExecutionStepNumberText"
+                        FontWeight="SemiBold"
+                        Text="2" />
+                    <TextBlock
+                        x:Name="ExecutionStepTitleText"
+                        FontWeight="SemiBold" />
+                </StackPanel>
+            </Border>
+
+            <Border
+                x:Name="ArgumentsStepIndicatorBorder"
+                Grid.Column="2"
+                Style="{StaticResource PluginEditorStepIndicatorStyle}">
+                <StackPanel
+                    HorizontalAlignment="Center"
+                    Orientation="Horizontal"
+                    Spacing="6">
+                    <TextBlock
+                        x:Name="ArgumentsStepNumberText"
+                        FontWeight="SemiBold"
+                        Text="3" />
+                    <TextBlock
+                        x:Name="ArgumentsStepTitleText"
+                        FontWeight="SemiBold" />
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <ScrollViewer
+            x:Name="FormScrollViewer"
+            MaxHeight="520"
+            HorizontalScrollBarVisibility="Disabled"
+            HorizontalScrollMode="Disabled"
+            VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <StackPanel
+                    x:Name="BasicStepPanel"
+                    Spacing="12">
             <Border Style="{StaticResource PluginEditorCardStyle}">
                 <StackPanel>
                     <Grid
@@ -71,7 +145,7 @@
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="34" />
                             <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="320" />
+                            <ColumnDefinition Width="260" />
                         </Grid.ColumnDefinitions>
                         <Border Style="{StaticResource PluginEditorRowIconStyle}">
                             <FontIcon
@@ -119,7 +193,7 @@
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="34" />
                             <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="320" />
+                            <ColumnDefinition Width="260" />
                         </Grid.ColumnDefinitions>
                         <Border Style="{StaticResource PluginEditorRowIconStyle}">
                             <FontIcon
@@ -166,7 +240,7 @@
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="34" />
                             <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="320" />
+                            <ColumnDefinition Width="260" />
                         </Grid.ColumnDefinitions>
 
                         <Border Style="{StaticResource PluginEditorRowIconStyle}">
@@ -209,7 +283,7 @@
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="34" />
                             <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="320" />
+                            <ColumnDefinition Width="260" />
                         </Grid.ColumnDefinitions>
                         <Border Style="{StaticResource PluginEditorRowIconStyle}">
                             <FontIcon
@@ -257,7 +331,7 @@
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="34" />
                             <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="320" />
+                            <ColumnDefinition Width="260" />
                         </Grid.ColumnDefinitions>
 
                         <Border Style="{StaticResource PluginEditorRowIconStyle}">
@@ -291,7 +365,12 @@
                     </Grid>
                 </StackPanel>
             </Border>
+                </StackPanel>
 
+                <StackPanel
+                    x:Name="ExecutionStepPanel"
+                    Spacing="12"
+                    Visibility="Collapsed">
             <Border Style="{StaticResource PluginEditorCardStyle}">
                 <StackPanel>
                     <Grid
@@ -301,7 +380,7 @@
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="34" />
                             <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="320" />
+                            <ColumnDefinition Width="260" />
                         </Grid.ColumnDefinitions>
                         <Border Style="{StaticResource PluginEditorRowIconStyle}">
                             <FontIcon
@@ -357,7 +436,12 @@
                     </Grid>
                 </StackPanel>
             </Border>
+                </StackPanel>
 
+                <StackPanel
+                    x:Name="ArgumentsStepPanel"
+                    Spacing="12"
+                    Visibility="Collapsed">
             <Border Style="{StaticResource PluginEditorCardStyle}">
                 <StackPanel>
                     <Grid
@@ -367,7 +451,7 @@
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="34" />
                             <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="320" />
+                            <ColumnDefinition Width="260" />
                         </Grid.ColumnDefinitions>
                         <Border Style="{StaticResource PluginEditorRowIconStyle}">
                             <FontIcon
@@ -414,7 +498,7 @@
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="34" />
                             <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="320" />
+                            <ColumnDefinition Width="260" />
                         </Grid.ColumnDefinitions>
 
                         <Border Style="{StaticResource PluginEditorRowIconStyle}">
@@ -456,7 +540,7 @@
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="34" />
                             <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="320" />
+                            <ColumnDefinition Width="260" />
                         </Grid.ColumnDefinitions>
                         <Border Style="{StaticResource PluginEditorRowIconStyle}">
                             <FontIcon
@@ -495,6 +579,8 @@
                     </Grid>
                 </StackPanel>
             </Border>
-        </StackPanel>
-    </ScrollViewer>
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+    </StackPanel>
 </UserControl>

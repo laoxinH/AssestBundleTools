@@ -13,7 +13,12 @@ namespace AssestBundleTools.Presentation.WinUI.Views.PluginManagement.Controls;
 /// </summary>
 public sealed partial class ResourceProcessorEditorDialogContent : UserControl
 {
+    private const int BasicStepIndex = 0;
+    private const int ExecutionStepIndex = 1;
+    private const int ArgumentsStepIndex = 2;
+
     private string? _previousProcessorId;
+    private int _currentStepIndex;
 
     public ResourceProcessorEditorDialogContent()
     {
@@ -33,9 +38,42 @@ public sealed partial class ResourceProcessorEditorDialogContent : UserControl
             "{resourceKind}",
             "--workspace",
             "{workspaceDataRootPath}");
+        UpdateStepState(raiseEvent: false);
     }
 
+    public event EventHandler? StepChanged;
+
     public string? PreviousProcessorId => _previousProcessorId;
+
+    public bool CanMovePrevious => _currentStepIndex > BasicStepIndex;
+
+    public bool IsLastStep => _currentStepIndex == ArgumentsStepIndex;
+
+    public bool TryMoveNext()
+    {
+        if (IsLastStep)
+        {
+            return true;
+        }
+
+        if (!ValidateCurrentStep())
+        {
+            return false;
+        }
+
+        SetCurrentStep(_currentStepIndex + 1);
+        return true;
+    }
+
+    public void MovePrevious()
+    {
+        if (!CanMovePrevious)
+        {
+            return;
+        }
+
+        SetCurrentStep(_currentStepIndex - 1);
+    }
 
     public void ApplyEntry(ResourceProcessorCatalogEntryDto entry)
     {
@@ -62,6 +100,7 @@ public sealed partial class ResourceProcessorEditorDialogContent : UserControl
         ClearValidationMessages();
 
         var hasValidationError = false;
+        var firstInvalidStep = -1;
         var processorId = ProcessorIdTextBox.Text.Trim();
         var displayName = ProcessorDisplayNameTextBox.Text.Trim();
         var executablePath = ProcessorExecutablePathTextBox.Text.Trim();
@@ -72,6 +111,7 @@ public sealed partial class ResourceProcessorEditorDialogContent : UserControl
         if (string.IsNullOrWhiteSpace(processorId))
         {
             hasValidationError = true;
+            firstInvalidStep = FirstInvalidStep(firstInvalidStep, BasicStepIndex);
             ShowValidationMessage(
                 ProcessorIdTextBox,
                 ProcessorIdValidationTextBlock,
@@ -81,6 +121,7 @@ public sealed partial class ResourceProcessorEditorDialogContent : UserControl
         if (string.IsNullOrWhiteSpace(displayName))
         {
             hasValidationError = true;
+            firstInvalidStep = FirstInvalidStep(firstInvalidStep, BasicStepIndex);
             ShowValidationMessage(
                 ProcessorDisplayNameTextBox,
                 ProcessorDisplayNameValidationTextBlock,
@@ -90,6 +131,7 @@ public sealed partial class ResourceProcessorEditorDialogContent : UserControl
         if (resourceKinds.Count == 0)
         {
             hasValidationError = true;
+            firstInvalidStep = FirstInvalidStep(firstInvalidStep, ExecutionStepIndex);
             ProcessorResourceKindsValidationTextBlock.Text = UiText.Get(ResourceKeys.ResourceProcessorEditorValidationResourceKindsRequired);
             ProcessorResourceKindsValidationTextBlock.Visibility = Visibility.Visible;
         }
@@ -97,6 +139,7 @@ public sealed partial class ResourceProcessorEditorDialogContent : UserControl
         if (string.IsNullOrWhiteSpace(executablePath))
         {
             hasValidationError = true;
+            firstInvalidStep = FirstInvalidStep(firstInvalidStep, ExecutionStepIndex);
             ShowValidationMessage(
                 ProcessorExecutablePathTextBox,
                 ProcessorExecutablePathValidationTextBlock,
@@ -106,6 +149,7 @@ public sealed partial class ResourceProcessorEditorDialogContent : UserControl
         if (!int.TryParse(timeoutText, out var timeoutMs) || timeoutMs <= 0)
         {
             hasValidationError = true;
+            firstInvalidStep = FirstInvalidStep(firstInvalidStep, BasicStepIndex);
             ShowValidationMessage(
                 ProcessorTimeoutTextBox,
                 ProcessorTimeoutValidationTextBlock,
@@ -115,6 +159,7 @@ public sealed partial class ResourceProcessorEditorDialogContent : UserControl
         if (processArguments.Count == 0)
         {
             hasValidationError = true;
+            firstInvalidStep = FirstInvalidStep(firstInvalidStep, ArgumentsStepIndex);
             ShowValidationMessage(
                 ProcessorArgumentsTextBox,
                 ProcessorArgumentsValidationTextBlock,
@@ -123,6 +168,11 @@ public sealed partial class ResourceProcessorEditorDialogContent : UserControl
 
         if (hasValidationError)
         {
+            if (firstInvalidStep >= 0)
+            {
+                SetCurrentStep(firstInvalidStep);
+            }
+
             command = null;
             return false;
         }
@@ -148,6 +198,9 @@ public sealed partial class ResourceProcessorEditorDialogContent : UserControl
 
     private void ApplyLocalizedText()
     {
+        BasicStepTitleText.Text = UiText.Get(ResourceKeys.PluginEditorStepBasic);
+        ExecutionStepTitleText.Text = UiText.Get(ResourceKeys.PluginEditorStepExecution);
+        ArgumentsStepTitleText.Text = UiText.Get(ResourceKeys.PluginEditorStepArguments);
         ProcessorIdLabelText.Text = UiText.Get(ResourceKeys.ResourceProcessorEditorIdLabel);
         ProcessorIdTextBox.PlaceholderText = UiText.Get(ResourceKeys.ResourceProcessorEditorIdPlaceholder);
         ProcessorIdDescriptionText.Text = UiText.Get(ResourceKeys.ResourceProcessorEditorIdDescription);
@@ -213,6 +266,130 @@ public sealed partial class ResourceProcessorEditorDialogContent : UserControl
         ClearValidationMessage(ProcessorExecutablePathTextBox, ProcessorExecutablePathValidationTextBlock);
         ClearValidationMessage(ProcessorTimeoutTextBox, ProcessorTimeoutValidationTextBlock);
         ClearValidationMessage(ProcessorArgumentsTextBox, ProcessorArgumentsValidationTextBlock);
+    }
+
+    private bool ValidateCurrentStep()
+    {
+        ClearValidationMessages();
+
+        return _currentStepIndex switch
+        {
+            BasicStepIndex => ValidateBasicStep(),
+            ExecutionStepIndex => ValidateExecutionStep(),
+            ArgumentsStepIndex => ValidateArgumentsStep(),
+            _ => true
+        };
+    }
+
+    private bool ValidateBasicStep()
+    {
+        var hasValidationError = false;
+
+        if (string.IsNullOrWhiteSpace(ProcessorIdTextBox.Text))
+        {
+            hasValidationError = true;
+            ShowValidationMessage(
+                ProcessorIdTextBox,
+                ProcessorIdValidationTextBlock,
+                UiText.Get(ResourceKeys.ResourceProcessorEditorValidationIdRequired));
+        }
+
+        if (string.IsNullOrWhiteSpace(ProcessorDisplayNameTextBox.Text))
+        {
+            hasValidationError = true;
+            ShowValidationMessage(
+                ProcessorDisplayNameTextBox,
+                ProcessorDisplayNameValidationTextBlock,
+                UiText.Get(ResourceKeys.ResourceProcessorEditorValidationDisplayNameRequired));
+        }
+
+        if (!int.TryParse(ProcessorTimeoutTextBox.Text.Trim(), out var timeoutMs) || timeoutMs <= 0)
+        {
+            hasValidationError = true;
+            ShowValidationMessage(
+                ProcessorTimeoutTextBox,
+                ProcessorTimeoutValidationTextBlock,
+                UiText.Get(ResourceKeys.ResourceProcessorEditorValidationTimeoutInvalid));
+        }
+
+        return !hasValidationError;
+    }
+
+    private bool ValidateExecutionStep()
+    {
+        var hasValidationError = false;
+
+        if (GetSelectedResourceKinds().Count == 0)
+        {
+            hasValidationError = true;
+            ProcessorResourceKindsValidationTextBlock.Text = UiText.Get(ResourceKeys.ResourceProcessorEditorValidationResourceKindsRequired);
+            ProcessorResourceKindsValidationTextBlock.Visibility = Visibility.Visible;
+        }
+
+        if (string.IsNullOrWhiteSpace(ProcessorExecutablePathTextBox.Text))
+        {
+            hasValidationError = true;
+            ShowValidationMessage(
+                ProcessorExecutablePathTextBox,
+                ProcessorExecutablePathValidationTextBlock,
+                UiText.Get(ResourceKeys.ResourceProcessorEditorValidationExecutablePathRequired));
+        }
+
+        return !hasValidationError;
+    }
+
+    private bool ValidateArgumentsStep()
+    {
+        if (SplitArguments(ProcessorArgumentsTextBox.Text).Count > 0)
+        {
+            return true;
+        }
+
+        ShowValidationMessage(
+            ProcessorArgumentsTextBox,
+            ProcessorArgumentsValidationTextBlock,
+            UiText.Get(ResourceKeys.ResourceProcessorEditorValidationArgumentsRequired));
+        return false;
+    }
+
+    private void SetCurrentStep(int stepIndex)
+    {
+        _currentStepIndex = Math.Clamp(stepIndex, BasicStepIndex, ArgumentsStepIndex);
+        UpdateStepState(raiseEvent: true);
+    }
+
+    private void UpdateStepState(bool raiseEvent)
+    {
+        BasicStepPanel.Visibility = _currentStepIndex == BasicStepIndex ? Visibility.Visible : Visibility.Collapsed;
+        ExecutionStepPanel.Visibility = _currentStepIndex == ExecutionStepIndex ? Visibility.Visible : Visibility.Collapsed;
+        ArgumentsStepPanel.Visibility = _currentStepIndex == ArgumentsStepIndex ? Visibility.Visible : Visibility.Collapsed;
+
+        UpdateStepIndicator(BasicStepIndex, BasicStepIndicatorBorder, BasicStepNumberText, BasicStepTitleText);
+        UpdateStepIndicator(ExecutionStepIndex, ExecutionStepIndicatorBorder, ExecutionStepNumberText, ExecutionStepTitleText);
+        UpdateStepIndicator(ArgumentsStepIndex, ArgumentsStepIndicatorBorder, ArgumentsStepNumberText, ArgumentsStepTitleText);
+        FormScrollViewer.ChangeView(null, 0, null);
+
+        if (raiseEvent)
+        {
+            StepChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    private void UpdateStepIndicator(int stepIndex, Border border, TextBlock numberText, TextBlock titleText)
+    {
+        var isActive = _currentStepIndex == stepIndex;
+        var accentBrush = GetBrush("AccentFillColorDefaultBrush") ?? new SolidColorBrush(ColorHelper.FromArgb(255, 209, 18, 38));
+        border.BorderBrush = isActive ? accentBrush : GetBrush("CardStrokeColorDefaultBrush");
+        border.Background = isActive
+            ? GetBrush("SubtleFillColorSecondaryBrush")
+            : GetBrush("CardBackgroundFillColorDefaultBrush");
+        numberText.Foreground = isActive ? accentBrush : GetBrush("TextFillColorSecondaryBrush");
+        titleText.Foreground = isActive ? GetBrush("TextFillColorPrimaryBrush") : GetBrush("TextFillColorSecondaryBrush");
+    }
+
+    private static int FirstInvalidStep(int currentStep, int candidateStep)
+    {
+        return currentStep < 0 ? candidateStep : Math.Min(currentStep, candidateStep);
     }
 
     private void ShowValidationMessage(TextBox textBox, TextBlock validationTextBlock, string message)

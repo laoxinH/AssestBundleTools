@@ -13,7 +13,12 @@ namespace AssestBundleTools.Presentation.WinUI.Views.PluginManagement.Controls;
 /// </summary>
 public sealed partial class AssetBundleDecryptorEditorDialogContent : UserControl
 {
+    private const int BasicStepIndex = 0;
+    private const int ExecutionStepIndex = 1;
+    private const int ArgumentsStepIndex = 2;
+
     private string? _previousDecryptorId;
+    private int _currentStepIndex;
 
     public AssetBundleDecryptorEditorDialogContent()
     {
@@ -21,9 +26,42 @@ public sealed partial class AssetBundleDecryptorEditorDialogContent : UserContro
         ApplyLocalizedText();
         DecryptorVersionTextBox.Text = "1.0.0";
         DecryptorTimeoutTextBox.Text = "15000";
+        UpdateStepState(raiseEvent: false);
     }
 
+    public event EventHandler? StepChanged;
+
     public string? PreviousDecryptorId => _previousDecryptorId;
+
+    public bool CanMovePrevious => _currentStepIndex > BasicStepIndex;
+
+    public bool IsLastStep => _currentStepIndex == ArgumentsStepIndex;
+
+    public bool TryMoveNext()
+    {
+        if (IsLastStep)
+        {
+            return true;
+        }
+
+        if (!ValidateCurrentStep())
+        {
+            return false;
+        }
+
+        SetCurrentStep(_currentStepIndex + 1);
+        return true;
+    }
+
+    public void MovePrevious()
+    {
+        if (!CanMovePrevious)
+        {
+            return;
+        }
+
+        SetCurrentStep(_currentStepIndex - 1);
+    }
 
     public void ApplyEntry(AssetBundleDecryptorCatalogEntryDto entry)
     {
@@ -48,6 +86,7 @@ public sealed partial class AssetBundleDecryptorEditorDialogContent : UserContro
         ClearValidationMessages();
 
         var hasValidationError = false;
+        var firstInvalidStep = -1;
         var decryptorId = DecryptorIdTextBox.Text.Trim();
         var displayName = DecryptorDisplayNameTextBox.Text.Trim();
         var executablePath = DecryptorExecutablePathTextBox.Text.Trim();
@@ -57,6 +96,7 @@ public sealed partial class AssetBundleDecryptorEditorDialogContent : UserContro
         if (string.IsNullOrWhiteSpace(decryptorId))
         {
             hasValidationError = true;
+            firstInvalidStep = FirstInvalidStep(firstInvalidStep, BasicStepIndex);
             ShowValidationMessage(
                 DecryptorIdTextBox,
                 DecryptorIdValidationTextBlock,
@@ -66,6 +106,7 @@ public sealed partial class AssetBundleDecryptorEditorDialogContent : UserContro
         if (string.IsNullOrWhiteSpace(displayName))
         {
             hasValidationError = true;
+            firstInvalidStep = FirstInvalidStep(firstInvalidStep, BasicStepIndex);
             ShowValidationMessage(
                 DecryptorDisplayNameTextBox,
                 DecryptorDisplayNameValidationTextBlock,
@@ -75,6 +116,7 @@ public sealed partial class AssetBundleDecryptorEditorDialogContent : UserContro
         if (string.IsNullOrWhiteSpace(executablePath))
         {
             hasValidationError = true;
+            firstInvalidStep = FirstInvalidStep(firstInvalidStep, ExecutionStepIndex);
             ShowValidationMessage(
                 DecryptorExecutablePathTextBox,
                 DecryptorExecutablePathValidationTextBlock,
@@ -84,6 +126,7 @@ public sealed partial class AssetBundleDecryptorEditorDialogContent : UserContro
         if (!int.TryParse(timeoutText, out var timeoutMs) || timeoutMs <= 0)
         {
             hasValidationError = true;
+            firstInvalidStep = FirstInvalidStep(firstInvalidStep, BasicStepIndex);
             ShowValidationMessage(
                 DecryptorTimeoutTextBox,
                 DecryptorTimeoutValidationTextBlock,
@@ -93,6 +136,7 @@ public sealed partial class AssetBundleDecryptorEditorDialogContent : UserContro
         if (decryptArguments.Count == 0)
         {
             hasValidationError = true;
+            firstInvalidStep = FirstInvalidStep(firstInvalidStep, ArgumentsStepIndex);
             ShowValidationMessage(
                 DecryptorDecryptArgumentsTextBox,
                 DecryptorDecryptArgumentsValidationTextBlock,
@@ -101,6 +145,11 @@ public sealed partial class AssetBundleDecryptorEditorDialogContent : UserContro
 
         if (hasValidationError)
         {
+            if (firstInvalidStep >= 0)
+            {
+                SetCurrentStep(firstInvalidStep);
+            }
+
             command = null;
             return false;
         }
@@ -128,6 +177,9 @@ public sealed partial class AssetBundleDecryptorEditorDialogContent : UserContro
 
     private void ApplyLocalizedText()
     {
+        BasicStepTitleText.Text = UiText.Get(ResourceKeys.PluginEditorStepBasic);
+        ExecutionStepTitleText.Text = UiText.Get(ResourceKeys.PluginEditorStepExecution);
+        ArgumentsStepTitleText.Text = UiText.Get(ResourceKeys.PluginEditorStepArguments);
         DecryptorIdLabelText.Text = UiText.Get(ResourceKeys.AssetBundleDecryptorEditorIdLabel);
         DecryptorIdTextBox.PlaceholderText = UiText.Get(ResourceKeys.AssetBundleDecryptorEditorIdPlaceholder);
         DecryptorIdDescriptionText.Text = UiText.Get(ResourceKeys.AssetBundleDecryptorEditorIdDescription);
@@ -168,6 +220,121 @@ public sealed partial class AssetBundleDecryptorEditorDialogContent : UserContro
         ClearValidationMessage(DecryptorExecutablePathTextBox, DecryptorExecutablePathValidationTextBlock);
         ClearValidationMessage(DecryptorTimeoutTextBox, DecryptorTimeoutValidationTextBlock);
         ClearValidationMessage(DecryptorDecryptArgumentsTextBox, DecryptorDecryptArgumentsValidationTextBlock);
+    }
+
+    private bool ValidateCurrentStep()
+    {
+        ClearValidationMessages();
+
+        return _currentStepIndex switch
+        {
+            BasicStepIndex => ValidateBasicStep(),
+            ExecutionStepIndex => ValidateExecutionStep(),
+            ArgumentsStepIndex => ValidateArgumentsStep(),
+            _ => true
+        };
+    }
+
+    private bool ValidateBasicStep()
+    {
+        var hasValidationError = false;
+
+        if (string.IsNullOrWhiteSpace(DecryptorIdTextBox.Text))
+        {
+            hasValidationError = true;
+            ShowValidationMessage(
+                DecryptorIdTextBox,
+                DecryptorIdValidationTextBlock,
+                UiText.Get(ResourceKeys.AssetBundleDecryptorEditorValidationIdRequired));
+        }
+
+        if (string.IsNullOrWhiteSpace(DecryptorDisplayNameTextBox.Text))
+        {
+            hasValidationError = true;
+            ShowValidationMessage(
+                DecryptorDisplayNameTextBox,
+                DecryptorDisplayNameValidationTextBlock,
+                UiText.Get(ResourceKeys.AssetBundleDecryptorEditorValidationDisplayNameRequired));
+        }
+
+        if (!int.TryParse(DecryptorTimeoutTextBox.Text.Trim(), out var timeoutMs) || timeoutMs <= 0)
+        {
+            hasValidationError = true;
+            ShowValidationMessage(
+                DecryptorTimeoutTextBox,
+                DecryptorTimeoutValidationTextBlock,
+                UiText.Get(ResourceKeys.AssetBundleDecryptorEditorValidationTimeoutInvalid));
+        }
+
+        return !hasValidationError;
+    }
+
+    private bool ValidateExecutionStep()
+    {
+        if (!string.IsNullOrWhiteSpace(DecryptorExecutablePathTextBox.Text))
+        {
+            return true;
+        }
+
+        ShowValidationMessage(
+            DecryptorExecutablePathTextBox,
+            DecryptorExecutablePathValidationTextBlock,
+            UiText.Get(ResourceKeys.AssetBundleDecryptorEditorValidationExecutablePathRequired));
+        return false;
+    }
+
+    private bool ValidateArgumentsStep()
+    {
+        if (SplitArguments(DecryptorDecryptArgumentsTextBox.Text).Count > 0)
+        {
+            return true;
+        }
+
+        ShowValidationMessage(
+            DecryptorDecryptArgumentsTextBox,
+            DecryptorDecryptArgumentsValidationTextBlock,
+            UiText.Get(ResourceKeys.AssetBundleDecryptorEditorValidationDecryptArgumentsRequired));
+        return false;
+    }
+
+    private void SetCurrentStep(int stepIndex)
+    {
+        _currentStepIndex = Math.Clamp(stepIndex, BasicStepIndex, ArgumentsStepIndex);
+        UpdateStepState(raiseEvent: true);
+    }
+
+    private void UpdateStepState(bool raiseEvent)
+    {
+        BasicStepPanel.Visibility = _currentStepIndex == BasicStepIndex ? Visibility.Visible : Visibility.Collapsed;
+        ExecutionStepPanel.Visibility = _currentStepIndex == ExecutionStepIndex ? Visibility.Visible : Visibility.Collapsed;
+        ArgumentsStepPanel.Visibility = _currentStepIndex == ArgumentsStepIndex ? Visibility.Visible : Visibility.Collapsed;
+
+        UpdateStepIndicator(BasicStepIndex, BasicStepIndicatorBorder, BasicStepNumberText, BasicStepTitleText);
+        UpdateStepIndicator(ExecutionStepIndex, ExecutionStepIndicatorBorder, ExecutionStepNumberText, ExecutionStepTitleText);
+        UpdateStepIndicator(ArgumentsStepIndex, ArgumentsStepIndicatorBorder, ArgumentsStepNumberText, ArgumentsStepTitleText);
+        FormScrollViewer.ChangeView(null, 0, null);
+
+        if (raiseEvent)
+        {
+            StepChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    private void UpdateStepIndicator(int stepIndex, Border border, TextBlock numberText, TextBlock titleText)
+    {
+        var isActive = _currentStepIndex == stepIndex;
+        var accentBrush = GetBrush("AccentFillColorDefaultBrush") ?? new SolidColorBrush(ColorHelper.FromArgb(255, 209, 18, 38));
+        border.BorderBrush = isActive ? accentBrush : GetBrush("CardStrokeColorDefaultBrush");
+        border.Background = isActive
+            ? GetBrush("SubtleFillColorSecondaryBrush")
+            : GetBrush("CardBackgroundFillColorDefaultBrush");
+        numberText.Foreground = isActive ? accentBrush : GetBrush("TextFillColorSecondaryBrush");
+        titleText.Foreground = isActive ? GetBrush("TextFillColorPrimaryBrush") : GetBrush("TextFillColorSecondaryBrush");
+    }
+
+    private static int FirstInvalidStep(int currentStep, int candidateStep)
+    {
+        return currentStep < 0 ? candidateStep : Math.Min(currentStep, candidateStep);
     }
 
     private void ShowValidationMessage(TextBox textBox, TextBlock validationTextBlock, string message)

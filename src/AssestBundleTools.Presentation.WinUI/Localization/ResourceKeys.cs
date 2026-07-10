@@ -265,6 +265,11 @@ public static class ResourceKeys
     public const string PluginManagementProcessorSaveFailedMessage = "PluginManagementPage.ProcessorSaveFailedMessage";
     public const string PluginManagementProcessorDeleteSucceededMessageFormat = "PluginManagementPage.ProcessorDeleteSucceededMessage.Format";
     public const string PluginManagementProcessorDeleteFailedMessage = "PluginManagementPage.ProcessorDeleteFailedMessage";
+    public const string PluginEditorStepBasic = "PluginEditor.Step.Basic";
+    public const string PluginEditorStepExecution = "PluginEditor.Step.Execution";
+    public const string PluginEditorStepArguments = "PluginEditor.Step.Arguments";
+    public const string PluginEditorNextButton = "PluginEditor.NextButton";
+    public const string PluginEditorPreviousButton = "PluginEditor.PreviousButton";
 
     public const string ResourceProcessorEditorNewTitle = "ResourceProcessorEditor.NewTitle";
     public const string ResourceProcessorEditorEditTitleFormat = "ResourceProcessorEditor.EditTitle.Format";
