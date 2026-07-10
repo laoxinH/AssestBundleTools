@@ -56,7 +56,9 @@ public static class ResourceKeys
     public const string HomePageOpenLatestWorkspaceButton = "HomePage.OpenLatestWorkspaceButton.Content";
     public const string HomePageRecentOpenedTitle = "HomePage.RecentOpenedTitleText.Text";
     public const string HomePageRecentActivityTitle = "HomePage.RecentActivityTitleText.Text";
+    public const string HomePageRecentWorkspaceSearchPlaceholder = "HomePage.RecentWorkspace.Search.Placeholder";
     public const string HomePageRecentWorkspaceEmptyState = "HomePage.RecentWorkspaceEmptyState.Text";
+    public const string HomePageRecentWorkspaceNoMatchesState = "HomePage.RecentWorkspaceNoMatchesState.Text";
     public const string HomePageRecentActivityEmptyState = "HomePage.RecentActivityEmptyState.Text";
     public const string HomePageRecentWorkspaceCurrentBadge = "HomePage.RecentWorkspace.CurrentBadge";
     public const string HomePageRecentWorkspaceRegisteredBadge = "HomePage.RecentWorkspace.RegisteredBadge";

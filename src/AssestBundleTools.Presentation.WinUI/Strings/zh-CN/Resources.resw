@@ -213,8 +213,14 @@
   <data name="HomePage.RecentActivityTitleText.Text" xml:space="preserve">
     <value>最近操作</value>
   </data>
+  <data name="HomePage.RecentWorkspace.Search.Placeholder" xml:space="preserve">
+    <value>搜索工作区、来源或数据目录</value>
+  </data>
   <data name="HomePage.RecentWorkspaceEmptyState.Text" xml:space="preserve">
     <value>暂无工作区。新建一个空工作区，或打开已有工作区目录。</value>
+  </data>
+  <data name="HomePage.RecentWorkspaceNoMatchesState.Text" xml:space="preserve">
+    <value>没有匹配的工作区。换个关键词再试。</value>
   </data>
   <data name="HomePage.RecentActivityEmptyState.Text" xml:space="preserve">
     <value>暂无操作记录。打开工作区或执行任务后会显示在这里。</value>

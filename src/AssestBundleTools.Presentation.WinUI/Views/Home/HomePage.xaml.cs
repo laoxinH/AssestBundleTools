@@ -316,7 +316,9 @@ public sealed partial class HomePage : Page
         OpenWorkspaceButtonText.Text = UiText.Get(ResourceKeys.HomePageOpenWorkspaceButton);
         OpenLatestWorkspaceButtonText.Text = UiText.Get(ResourceKeys.HomePageOpenLatestWorkspaceButton);
         RecentOpenedTitleText.Text = UiText.Get(ResourceKeys.HomePageRecentOpenedTitle);
+        WorkspaceSearchBox.PlaceholderText = UiText.Get(ResourceKeys.HomePageRecentWorkspaceSearchPlaceholder);
         RecentWorkspaceEmptyText.Text = UiText.Get(ResourceKeys.HomePageRecentWorkspaceEmptyState);
+        RecentWorkspaceNoMatchesText.Text = UiText.Get(ResourceKeys.HomePageRecentWorkspaceNoMatchesState);
         RecentActivityTitleText.Text = UiText.Get(ResourceKeys.HomePageRecentActivityTitle);
         RecentActivityEmptyText.Text = UiText.Get(ResourceKeys.HomePageRecentActivityEmptyState);
     }

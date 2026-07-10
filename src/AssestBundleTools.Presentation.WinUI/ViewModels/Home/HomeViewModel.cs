@@ -16,6 +16,8 @@ public sealed class HomeViewModel : ObservableObject
     private readonly IWorkspaceContextService _workspaceContextService;
     private readonly IAppLogService _appLogService;
     private readonly ILocalizationService _localizationService;
+    private readonly List<HomeRecentWorkspaceItemViewModel> _allRecentWorkspaceItems = new();
+    private string _workspaceSearchText = string.Empty;
 
     public HomeViewModel(
         IWorkspaceContextService workspaceContextService,
@@ -38,18 +40,35 @@ public sealed class HomeViewModel : ObservableObject
 
     public ObservableCollection<HomeRecentActivityItemViewModel> RecentActivityItems { get; } = new();
 
-    public bool HasRecentWorkspaces => RecentWorkspaceItems.Count > 0;
+    public string WorkspaceSearchText
+    {
+        get => _workspaceSearchText;
+        set
+        {
+            if (SetProperty(ref _workspaceSearchText, value ?? string.Empty))
+            {
+                RefreshFilteredRecentWorkspaceItems();
+            }
+        }
+    }
+
+    public bool HasRecentWorkspaces => _allRecentWorkspaceItems.Count > 0;
+
+    public bool HasFilteredRecentWorkspaces => RecentWorkspaceItems.Count > 0;
 
     public bool HasRecentActivities => RecentActivityItems.Count > 0;
 
     public HomeRecentWorkspaceItemViewModel? LatestRecentWorkspaceItem =>
-        RecentWorkspaceItems.FirstOrDefault(static item => item.CanOpen);
+        _allRecentWorkspaceItems.FirstOrDefault(static item => item.CanOpen);
 
     public bool CanOpenLatestRecentWorkspace => LatestRecentWorkspaceItem is not null;
 
-    public Visibility RecentWorkspaceListVisibility => HasRecentWorkspaces ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility RecentWorkspaceListVisibility => HasFilteredRecentWorkspaces ? Visibility.Visible : Visibility.Collapsed;
 
     public Visibility RecentWorkspaceEmptyStateVisibility => HasRecentWorkspaces ? Visibility.Collapsed : Visibility.Visible;
+
+    public Visibility RecentWorkspaceNoMatchesStateVisibility =>
+        HasRecentWorkspaces && !HasFilteredRecentWorkspaces ? Visibility.Visible : Visibility.Collapsed;
 
     public Visibility RecentActivityListVisibility => HasRecentActivities ? Visibility.Visible : Visibility.Collapsed;
 
@@ -76,7 +95,7 @@ public sealed class HomeViewModel : ObservableObject
     {
         var currentWorkspaceId = _workspaceContextService.CurrentWorkspaceSummary?.WorkspaceId.Value;
 
-        RecentWorkspaceItems.Clear();
+        _allRecentWorkspaceItems.Clear();
         foreach (var entry in _workspaceContextService.WorkspaceEntries)
         {
             var isCurrentWorkspace = !string.IsNullOrWhiteSpace(currentWorkspaceId) &&
@@ -92,7 +111,7 @@ public sealed class HomeViewModel : ObservableObject
                 ? _localizationService.GetRequiredString(ResourceKeys.WorkspaceSourceNotImported)
                 : entry.SourcePath;
 
-            RecentWorkspaceItems.Add(new HomeRecentWorkspaceItemViewModel(
+            _allRecentWorkspaceItems.Add(new HomeRecentWorkspaceItemViewModel(
                 workspaceKey: entry.WorkspaceKey,
                 displayName: entry.DisplayName,
                 sourcePath: entry.SourcePath,
@@ -117,12 +136,44 @@ public sealed class HomeViewModel : ObservableObject
                     : _localizationService.GetRequiredString(ResourceKeys.HomePageRecentWorkspacePinButtonToolTip)));
         }
 
+        RefreshFilteredRecentWorkspaceItems();
         OnPropertyChanged(nameof(HasRecentWorkspaces));
         OnPropertyChanged(nameof(LatestRecentWorkspaceItem));
         OnPropertyChanged(nameof(CanOpenLatestRecentWorkspace));
+    }
+
+    private void RefreshFilteredRecentWorkspaceItems()
+    {
+        RecentWorkspaceItems.Clear();
+        foreach (var item in _allRecentWorkspaceItems.Where(MatchesWorkspaceSearch))
+        {
+            RecentWorkspaceItems.Add(item);
+        }
+
+        OnPropertyChanged(nameof(HasFilteredRecentWorkspaces));
         OnPropertyChanged(nameof(RecentWorkspaceListVisibility));
         OnPropertyChanged(nameof(RecentWorkspaceEmptyStateVisibility));
+        OnPropertyChanged(nameof(RecentWorkspaceNoMatchesStateVisibility));
     }
+
+    private bool MatchesWorkspaceSearch(HomeRecentWorkspaceItemViewModel item)
+    {
+        var searchText = WorkspaceSearchText.Trim();
+        if (searchText.Length == 0)
+        {
+            return true;
+        }
+
+        return ContainsSearchText(item.DisplayName, searchText) ||
+               ContainsSearchText(item.SourcePath, searchText) ||
+               ContainsSearchText(item.WorkspaceDataRootPath, searchText) ||
+               ContainsSearchText(item.SourceSummary, searchText) ||
+               ContainsSearchText(item.WorkspaceDataRootSummary, searchText);
+    }
+
+    private static bool ContainsSearchText(string? value, string searchText) =>
+        !string.IsNullOrWhiteSpace(value) &&
+        value.Contains(searchText, StringComparison.OrdinalIgnoreCase);
 
     private void RefreshRecentActivityItems()
     {

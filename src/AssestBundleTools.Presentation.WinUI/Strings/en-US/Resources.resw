@@ -213,8 +213,14 @@
   <data name="HomePage.RecentActivityTitleText.Text" xml:space="preserve">
     <value>Recent Activity</value>
   </data>
+  <data name="HomePage.RecentWorkspace.Search.Placeholder" xml:space="preserve">
+    <value>Search workspaces, sources, or data roots</value>
+  </data>
   <data name="HomePage.RecentWorkspaceEmptyState.Text" xml:space="preserve">
     <value>No workspaces yet. Create an empty workspace, or open an existing workspace directory.</value>
+  </data>
+  <data name="HomePage.RecentWorkspaceNoMatchesState.Text" xml:space="preserve">
+    <value>No matching workspaces. Try another keyword.</value>
   </data>
   <data name="HomePage.RecentActivityEmptyState.Text" xml:space="preserve">
     <value>No activity yet. Open a workspace or run a task to see updates here.</value>
