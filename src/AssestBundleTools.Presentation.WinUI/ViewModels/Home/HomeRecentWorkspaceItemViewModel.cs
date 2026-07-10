@@ -1,5 +1,4 @@
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
 
 namespace AssestBundleTools.Presentation.WinUI.ViewModels.Home;
 
@@ -68,7 +67,7 @@ public sealed class HomeRecentWorkspaceItemViewModel
 
     public string PinButtonToolTipText { get; }
 
-    public Symbol PinButtonSymbol => IsPinned ? Symbol.UnPin : Symbol.Pin;
+    public string PinButtonGlyph => IsPinned ? "\uE77A" : "\uE718";
 
     public Visibility SecondaryBadgeVisibility =>
         string.IsNullOrWhiteSpace(SecondaryBadgeText) ? Visibility.Collapsed : Visibility.Visible;

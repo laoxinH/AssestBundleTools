@@ -475,14 +475,18 @@
                                             <StackPanel
                                                 Grid.Column="1"
                                                 HorizontalAlignment="Right"
+                                                Margin="0,9,0,0"
                                                 Orientation="Horizontal"
                                                 Spacing="2"
-                                                VerticalAlignment="Center">
+                                                VerticalAlignment="Top">
                                                 <Button
                                                     Click="OnRecentWorkspacePinButtonClick"
                                                     Style="{StaticResource HomeListActionButtonStyle}"
                                                     ToolTipService.ToolTip="{x:Bind PinButtonToolTipText}">
-                                                    <SymbolIcon Symbol="{x:Bind PinButtonSymbol}" />
+                                                    <FontIcon
+                                                        FontFamily="Segoe Fluent Icons"
+                                                        FontSize="12"
+                                                        Glyph="{x:Bind PinButtonGlyph}" />
                                                 </Button>
 
                                                 <Button
