@@ -10,7 +10,8 @@
     <RuntimeIdentifiers>win-x86;win-x64;win-arm64</RuntimeIdentifiers>
     <PublishProfile>win-$(Platform).pubxml</PublishProfile>
     <UseWinUI>true</UseWinUI>
-    <WinUISDKReferences>true</WinUISDKReferences>
+    <!-- Windows App SDK 已使用 Hybrid CRT，不再依赖旧的 UniversalCRT.Debug Extension SDK。 -->
+    <WinUISDKReferences>false</WinUISDKReferences>
     <EnableMsixTooling>true</EnableMsixTooling>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
@@ -124,6 +125,10 @@
       <BuiltInAssetBundleCodecRuntimeIdentifier Condition="'$(Platform)' == 'ARM64'">win-arm64</BuiltInAssetBundleCodecRuntimeIdentifier>
       <BuiltInAssetBundleCodecRuntimeIdentifier Condition="'$(BuiltInAssetBundleCodecRuntimeIdentifier)' == ''">win-x64</BuiltInAssetBundleCodecRuntimeIdentifier>
       <BuiltInAssetBundleCodecPublishDirectory>$([System.IO.Path]::GetFullPath('$(OutDir)codecs\arknights\'))</BuiltInAssetBundleCodecPublishDirectory>
+      <BuiltInAssetBundleCodecBuildRoot>$([System.IO.Path]::GetFullPath('$(BaseIntermediateOutputPath)built-in-codecs\arknights\$(Configuration)\$(BuiltInAssetBundleCodecRuntimeIdentifier)\'))</BuiltInAssetBundleCodecBuildRoot>
+      <BuiltInAssetBundleCodecIntermediatePath>$(BuiltInAssetBundleCodecBuildRoot)obj\</BuiltInAssetBundleCodecIntermediatePath>
+      <BuiltInAssetBundleCodecOutputPath>$(BuiltInAssetBundleCodecBuildRoot)bin\</BuiltInAssetBundleCodecOutputPath>
+      <BuiltInAssetBundleCodecBuildProperties>Configuration=$(Configuration);RuntimeIdentifier=$(BuiltInAssetBundleCodecRuntimeIdentifier);SelfContained=true;PublishSingleFile=true;BaseIntermediateOutputPath=$(BuiltInAssetBundleCodecIntermediatePath);MSBuildProjectExtensionsPath=$(BuiltInAssetBundleCodecIntermediatePath);BaseOutputPath=$(BuiltInAssetBundleCodecOutputPath)</BuiltInAssetBundleCodecBuildProperties>
     </PropertyGroup>
     <ItemGroup>
       <LegacyBuiltInAssetBundleCodec Include="$(OutDir)AssestBundleTools.BundleCodec.Arknights.*" />
@@ -134,12 +139,12 @@
     <MSBuild
       Projects="..\AssestBundleTools.BundleCodec.Arknights\AssestBundleTools.BundleCodec.Arknights.csproj"
       Targets="Restore"
-      Condition="!Exists('..\AssestBundleTools.BundleCodec.Arknights\obj\project.assets.json')"
-      Properties="Configuration=$(Configuration);RuntimeIdentifier=$(BuiltInAssetBundleCodecRuntimeIdentifier);SelfContained=true;PublishSingleFile=true" />
+      Condition="!Exists('$(BuiltInAssetBundleCodecIntermediatePath)project.assets.json')"
+      Properties="$(BuiltInAssetBundleCodecBuildProperties)" />
     <MSBuild
       Projects="..\AssestBundleTools.BundleCodec.Arknights\AssestBundleTools.BundleCodec.Arknights.csproj"
       Targets="Publish"
-      Properties="Configuration=$(Configuration);RuntimeIdentifier=$(BuiltInAssetBundleCodecRuntimeIdentifier);SelfContained=true;PublishSingleFile=true;DebugType=None;PublishDir=$(BuiltInAssetBundleCodecPublishDirectory)" />
+      Properties="$(BuiltInAssetBundleCodecBuildProperties);DebugType=None;PublishDir=$(BuiltInAssetBundleCodecPublishDirectory)" />
     <Error
       Condition="!Exists('$(BuiltInAssetBundleCodecPublishDirectory)AssestBundleTools.BundleCodec.Arknights.exe')"
       Text="Built-in Arknights bundle codec publish output is missing." />

@@ -94,7 +94,7 @@ $msbuild = & $vswhere -latest -requires Microsoft.Component.MSBuild -find 'MSBui
 - 当前命令用于“日常命令行编译验证”，默认不额外强制平台参数
 - 如果需要专门验证 `Debug | x64`，建议先停止正在运行的应用或结束 VS 调试会话，否则 WinUI 输出目录可能被锁定，触发 `MSB3021 / MSB3027`
 - 如果不方便停止当前运行实例，可直接改用上面的 `OutDir` 方案，把验证产物输出到独立目录
-- 当前环境下可能仍会出现 `MSB3774`（缺少 `Microsoft.UniversalCRT.Debug`）警告，但它不影响这条验证命令完成构建
+- 项目使用 Windows App SDK 的 Hybrid CRT，并显式设置 `WinUISDKReferences=false`，不再要求已废弃的 `Microsoft.UniversalCRT.Debug` Extension SDK；若仍出现 `MSB3774`，先确认本地项目文件和 NuGet 还原结果没有停留在旧版本
 
 ### 5.1 最近遇到的编译坑与处理方式
 
