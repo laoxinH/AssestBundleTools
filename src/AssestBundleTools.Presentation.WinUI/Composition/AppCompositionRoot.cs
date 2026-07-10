@@ -53,8 +53,11 @@ internal static class AppCompositionRoot
         StartupDiagnostics.Log("Creating composition root services.");
 
         var appPreferencesStore = new InfrastructureAppPreferencesPersistenceStore(new JsonAppPreferencesStore());
-        var localizationService = new ResourceLocalizationService();
-        var appPreferencesService = new AppPreferencesService(appPreferencesStore);
+        var appPreferencesService = new AppPreferencesService(
+            appPreferencesStore,
+            new WindowsAppDisplayLanguageOverride());
+        var localizationService = new ResourceLocalizationService(
+            AppDisplayLanguageCodec.ToLanguageTag(appPreferencesService.DisplayLanguage));
         var workspaceCatalogStore = new JsonWorkspaceCatalogStore();
         var workspaceMetadataStoreFactory = new JsonWorkspaceMetadataStoreFactory();
         var workspaceDataStoreFactory = new JsonWorkspaceDataStoreFactory();

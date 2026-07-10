@@ -6,6 +6,33 @@ namespace AssestBundleTools.Presentation.Tests.ViewModels;
 public sealed class SettingsDiagnosticsPreferenceOptionMapperTests
 {
     [Theory]
+    [InlineData(AppDisplayLanguage.SystemDefault, 0)]
+    [InlineData(AppDisplayLanguage.SimplifiedChinese, 1)]
+    [InlineData(AppDisplayLanguage.English, 2)]
+    public void DisplayLanguage_ShouldRoundTripThroughSelectedIndex(
+        AppDisplayLanguage language,
+        int selectedIndex)
+    {
+        Assert.Equal(
+            selectedIndex,
+            SettingsDiagnosticsPreferenceOptionMapper.ConvertDisplayLanguageToSelectedIndex(language));
+        Assert.Equal(
+            language,
+            SettingsDiagnosticsPreferenceOptionMapper.ConvertSelectedIndexToDisplayLanguage(selectedIndex));
+    }
+
+    [Theory]
+    [InlineData(-1)]
+    [InlineData(3)]
+    public void DisplayLanguage_ShouldCoerceUnknownSelectionToSystemDefault(int selectedIndex)
+    {
+        Assert.Equal(0, SettingsDiagnosticsPreferenceOptionMapper.CoerceDisplayLanguageSelectedIndex(selectedIndex));
+        Assert.Equal(
+            AppDisplayLanguage.SystemDefault,
+            SettingsDiagnosticsPreferenceOptionMapper.ConvertSelectedIndexToDisplayLanguage(selectedIndex));
+    }
+
+    [Theory]
     [InlineData(AssetEditorCloseBehavior.ReturnToMainWindow, 0)]
     [InlineData(AssetEditorCloseBehavior.DirectClose, 1)]
     public void AssetEditorCloseBehavior_ShouldRoundTripThroughSelectedIndex(

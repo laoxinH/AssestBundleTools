@@ -4,6 +4,33 @@ namespace AssestBundleTools.Presentation.WinUI.ViewModels.SettingsDiagnostics;
 
 internal static class SettingsDiagnosticsPreferenceOptionMapper
 {
+    public static int ConvertDisplayLanguageToSelectedIndex(AppDisplayLanguage language)
+    {
+        return language switch
+        {
+            AppDisplayLanguage.SimplifiedChinese => 1,
+            AppDisplayLanguage.English => 2,
+            _ => 0
+        };
+    }
+
+    public static AppDisplayLanguage ConvertSelectedIndexToDisplayLanguage(int selectedIndex)
+    {
+        return selectedIndex switch
+        {
+            1 => AppDisplayLanguage.SimplifiedChinese,
+            2 => AppDisplayLanguage.English,
+            _ => AppDisplayLanguage.SystemDefault
+        };
+    }
+
+    public static int CoerceDisplayLanguageSelectedIndex(int selectedIndex)
+    {
+        return selectedIndex is >= 0 and <= 2
+            ? selectedIndex
+            : 0;
+    }
+
     public static int ConvertRecentWorkspaceOpenBehaviorToSelectedIndex(RecentWorkspaceOpenBehavior behavior)
     {
         return behavior switch

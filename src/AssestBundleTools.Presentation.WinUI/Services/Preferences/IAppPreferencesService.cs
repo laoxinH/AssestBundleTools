@@ -16,6 +16,8 @@ public interface IAppPreferencesService
 
     AssetEditorCloseBehavior AssetEditorCloseBehavior { get; }
 
+    AppDisplayLanguage DisplayLanguage { get; }
+
     int WorkspaceImportWorkerCount { get; }
 
     int PreviewWorkerCount { get; }
@@ -31,6 +33,8 @@ public interface IAppPreferencesService
     bool TrySetRecentWorkspaceOpenBehavior(RecentWorkspaceOpenBehavior value);
 
     bool TrySetAssetEditorCloseBehavior(AssetEditorCloseBehavior value);
+
+    bool TrySetDisplayLanguage(AppDisplayLanguage value);
 
     bool TrySetWorkspaceImportWorkerCount(int value);
 

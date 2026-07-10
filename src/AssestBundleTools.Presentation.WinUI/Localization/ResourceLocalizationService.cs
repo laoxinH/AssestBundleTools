@@ -12,9 +12,18 @@ namespace AssestBundleTools.Presentation.WinUI.Localization;
 public sealed class ResourceLocalizationService : ILocalizationService
 {
     private readonly object _syncRoot = new();
+    private readonly CultureInfo? _preferredCulture;
     private ResourceLoader? _resourceLoader;
     private IReadOnlyDictionary<string, string>? _fallbackResources;
     private bool _preferFallbackResources;
+
+    public ResourceLocalizationService(string? preferredCultureName = null)
+    {
+        if (!string.IsNullOrWhiteSpace(preferredCultureName))
+        {
+            _preferredCulture = CultureInfo.GetCultureInfo(preferredCultureName);
+        }
+    }
 
     public string GetRequiredString(string resourceKey)
     {
@@ -41,7 +50,7 @@ public sealed class ResourceLocalizationService : ILocalizationService
     public string GetFormattedString(string resourceKey, params object[] arguments)
     {
         var format = GetRequiredString(resourceKey);
-        return string.Format(CultureInfo.CurrentUICulture, format, arguments);
+        return string.Format(_preferredCulture ?? CultureInfo.CurrentUICulture, format, arguments);
     }
 
     /// <summary>
@@ -109,7 +118,7 @@ public sealed class ResourceLocalizationService : ILocalizationService
         }
     }
 
-    private static IReadOnlyDictionary<string, string> LoadFallbackResources()
+    private IReadOnlyDictionary<string, string> LoadFallbackResources()
     {
         foreach (var cultureName in GetCultureProbeOrder())
         {
@@ -128,19 +137,25 @@ public sealed class ResourceLocalizationService : ILocalizationService
         return new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
     }
 
-    private static IEnumerable<string> GetCultureProbeOrder()
+    private IEnumerable<string> GetCultureProbeOrder()
     {
         var yielded = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var culture = CultureInfo.CurrentUICulture;
+        var cultures = _preferredCulture is null
+            ? new[] { CultureInfo.CurrentUICulture }
+            : new[] { _preferredCulture!, CultureInfo.CurrentUICulture };
 
-        while (!string.IsNullOrWhiteSpace(culture.Name))
+        foreach (var initialCulture in cultures)
         {
-            if (yielded.Add(culture.Name))
+            var culture = initialCulture;
+            while (!string.IsNullOrWhiteSpace(culture.Name))
             {
-                yield return culture.Name;
-            }
+                if (yielded.Add(culture.Name))
+                {
+                    yield return culture.Name;
+                }
 
-            culture = culture.Parent;
+                culture = culture.Parent;
+            }
         }
 
         if (yielded.Add("zh-CN"))

@@ -7,6 +7,7 @@ public sealed partial class SettingsDiagnosticsViewModel
     private bool _restoreLastWorkspaceOnStartup;
     private int _recentWorkspaceOpenBehaviorSelectedIndex;
     private int _assetEditorCloseBehaviorSelectedIndex;
+    private int _displayLanguageSelectedIndex;
     private int _workspaceImportWorkerCountSelectedIndex;
     private int _previewWorkerCountSelectedIndex;
     private int _operationRecordLimitSelectedIndex;
@@ -84,6 +85,31 @@ public sealed partial class SettingsDiagnosticsViewModel
 
             _appLogService.AppendError(GetString(ResourceKeys.SettingsDiagnosticsAssetEditorCloseBehaviorSaveFailedMessage));
             ShowErrorNotification(ResourceKeys.SettingsDiagnosticsAssetEditorCloseBehaviorSaveFailedMessage);
+            OnPropertyChanged();
+        }
+    }
+
+    public int DisplayLanguageSelectedIndex
+    {
+        get => _displayLanguageSelectedIndex;
+        set
+        {
+            var selectedIndex = SettingsDiagnosticsPreferenceOptionMapper.CoerceDisplayLanguageSelectedIndex(value);
+            if (_displayLanguageSelectedIndex == selectedIndex)
+            {
+                return;
+            }
+
+            var displayLanguage = SettingsDiagnosticsPreferenceOptionMapper.ConvertSelectedIndexToDisplayLanguage(
+                selectedIndex);
+            if (_appPreferencesService.TrySetDisplayLanguage(displayLanguage))
+            {
+                SetProperty(ref _displayLanguageSelectedIndex, selectedIndex);
+                return;
+            }
+
+            _appLogService.AppendError(GetString(ResourceKeys.SettingsDiagnosticsDisplayLanguageSaveFailedMessage));
+            ShowErrorNotification(ResourceKeys.SettingsDiagnosticsDisplayLanguageSaveFailedMessage);
             OnPropertyChanged();
         }
     }

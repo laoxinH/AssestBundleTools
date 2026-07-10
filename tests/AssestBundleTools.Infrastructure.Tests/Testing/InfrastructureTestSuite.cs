@@ -3,6 +3,7 @@ using AssestBundleTools.Infrastructure.Tests.Bundles.Internal;
 using AssestBundleTools.Infrastructure.Tests.Bundles.Processing;
 using AssestBundleTools.Infrastructure.Tests.Bundles.Reading;
 using AssestBundleTools.Infrastructure.Tests.Bundles.Previewing;
+using AssestBundleTools.Infrastructure.Tests.Settings.Persistence;
 using AssestBundleTools.Infrastructure.Tests.Workspace.Persistence;
 using AssestBundleTools.Infrastructure.Tests.Workspace.Extraction;
 using AssestBundleTools.Infrastructure.Tests.Workspace.Runtime;
@@ -16,6 +17,14 @@ internal static class InfrastructureTestSuite
     {
         var failures = new List<string>();
 
+        await RunTestAsync(
+            failures,
+            nameof(JsonAppPreferencesStoreTests.Save_ShouldRoundTripDisplayLanguage),
+            JsonAppPreferencesStoreTests.Save_ShouldRoundTripDisplayLanguage);
+        await RunTestAsync(
+            failures,
+            nameof(JsonAppPreferencesStoreTests.Load_ShouldUseSystemLanguage_WhenLegacySnapshotOmitsDisplayLanguage),
+            JsonAppPreferencesStoreTests.Load_ShouldUseSystemLanguage_WhenLegacySnapshotOmitsDisplayLanguage);
         await RunTestAsync(
             failures,
             nameof(JsonWorkspaceCatalogStoreTests.Load_ShouldReturnEmptySnapshot_WhenCatalogFileDoesNotExist),

@@ -3320,6 +3320,27 @@
   <data name="SettingsDiagnosticsPage.WorkspaceBadge.LiveSession" xml:space="preserve">
     <value>Loaded</value>
   </data>
+  <data name="SettingsDiagnosticsPage.AppearanceLanguage.Title" xml:space="preserve">
+    <value>Appearance &amp; Language</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.AppearanceLanguage.Hint" xml:space="preserve">
+    <value>Manage the display language used by the application.</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DisplayLanguage.Label" xml:space="preserve">
+    <value>Display language</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DisplayLanguage.RowDescription" xml:space="preserve">
+    <value>Choose the application interface language. Changes take full effect after restarting the app.</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DisplayLanguage.Option.SystemDefault" xml:space="preserve">
+    <value>Use system language</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DisplayLanguage.Option.SimplifiedChinese" xml:space="preserve">
+    <value>简体中文</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DisplayLanguage.Option.English" xml:space="preserve">
+    <value>English</value>
+  </data>
   <data name="SettingsDiagnosticsPage.StartupBehaviorTitleText.Text" xml:space="preserve">
     <value>Startup &amp; Window Behavior</value>
   </data>
@@ -3448,6 +3469,9 @@
   </data>
   <data name="SettingsDiagnosticsPage.OperationRecordLimit.Option.OneThousand" xml:space="preserve">
     <value>1000 records</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DisplayLanguage.SaveFailedMessage" xml:space="preserve">
+    <value>Failed to save the display language. Check access to the app data directory and continue diagnosing in Settings &amp; Diagnostics.</value>
   </data>
   <data name="SettingsDiagnosticsPage.StartupBehavior.SaveFailedMessage" xml:space="preserve">
     <value>Failed to save the startup restore preference. Check access to the app data directory and continue diagnosing in Settings &amp; Diagnostics.</value>

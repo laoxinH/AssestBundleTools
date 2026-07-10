@@ -26,7 +26,8 @@ internal sealed class InfrastructureAppPreferencesPersistenceStore : IAppPrefere
             snapshot.PreviewWorkerCount,
             snapshot.BundleArtifactCacheAutoPruneEnabled,
             snapshot.BundleArtifactCacheMaximumSizeInBytes,
-            snapshot.OperationRecordLimit);
+            snapshot.OperationRecordLimit,
+            snapshot.DisplayLanguage);
     }
 
     public void Save(AppPreferencesPersistenceSnapshot snapshot)
@@ -41,6 +42,7 @@ internal sealed class InfrastructureAppPreferencesPersistenceStore : IAppPrefere
             snapshot.BundleArtifactCacheAutoPruneEnabled,
             snapshot.BundleArtifactCacheMaximumSizeInBytes,
             snapshot.OperationRecordLimit,
-            snapshot.AssetEditorCloseBehavior));
+            snapshot.AssetEditorCloseBehavior,
+            snapshot.DisplayLanguage));
     }
 }

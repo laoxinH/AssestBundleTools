@@ -3320,6 +3320,27 @@
   <data name="SettingsDiagnosticsPage.WorkspaceBadge.LiveSession" xml:space="preserve">
     <value>已加载</value>
   </data>
+  <data name="SettingsDiagnosticsPage.AppearanceLanguage.Title" xml:space="preserve">
+    <value>界面与语言</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.AppearanceLanguage.Hint" xml:space="preserve">
+    <value>管理应用界面的显示语言。</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DisplayLanguage.Label" xml:space="preserve">
+    <value>显示语言</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DisplayLanguage.RowDescription" xml:space="preserve">
+    <value>选择应用界面语言。更改将在重新启动应用后完整生效。</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DisplayLanguage.Option.SystemDefault" xml:space="preserve">
+    <value>跟随系统</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DisplayLanguage.Option.SimplifiedChinese" xml:space="preserve">
+    <value>简体中文</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DisplayLanguage.Option.English" xml:space="preserve">
+    <value>English</value>
+  </data>
   <data name="SettingsDiagnosticsPage.StartupBehaviorTitleText.Text" xml:space="preserve">
     <value>启动与窗口行为</value>
   </data>
@@ -3448,6 +3469,9 @@
   </data>
   <data name="SettingsDiagnosticsPage.OperationRecordLimit.Option.OneThousand" xml:space="preserve">
     <value>1000 条</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.DisplayLanguage.SaveFailedMessage" xml:space="preserve">
+    <value>保存显示语言失败，请检查应用数据目录权限或在“设置与诊断”中继续排查。</value>
   </data>
   <data name="SettingsDiagnosticsPage.StartupBehavior.SaveFailedMessage" xml:space="preserve">
     <value>保存启动恢复偏好失败，请检查应用数据目录权限或在“设置与诊断”中继续排查。</value>

@@ -134,6 +134,8 @@ public sealed class SettingsDiagnosticsPageContractTests
         Assert.Contains("<Setter Property=\"MinWidth\" Value=\"0\" />", pageResources);
         Assert.Contains("x:Name=\"RecentWorkspaceOpenBehaviorComboBox\"", preferencesXaml);
         Assert.Contains("x:Name=\"AssetEditorCloseBehaviorComboBox\"", preferencesXaml);
+        Assert.Contains("x:Name=\"DisplayLanguageComboBox\"", preferencesXaml);
+        Assert.Contains("DisplayLanguageSelectedIndex", preferencesXaml);
         Assert.Contains("x:Name=\"RestoreLastWorkspaceOnStartupToggleSwitch\"", preferencesXaml);
         Assert.Contains("Style=\"{StaticResource SettingsDiagnosticsTrailingToggleSwitchStyle}\"", preferencesXaml);
         Assert.Contains("x:Name=\"BundleArtifactCacheAutoPruneToggleSwitch\"", performanceCacheXaml);
@@ -150,6 +152,8 @@ public sealed class SettingsDiagnosticsPageContractTests
         Assert.Contains("ActivateSection", pageCode);
         Assert.DoesNotContain("OnSettingsSubPageNavigationSelectionChanged", pageCode);
         Assert.Contains("SettingsDiagnosticsRestoreLastWorkspaceToggleHeader", preferencesCode);
+        Assert.Contains("SettingsDiagnosticsDisplayLanguageOptionSystemDefault", preferencesCode);
+        Assert.Contains("SettingsDiagnosticsDisplayLanguageSaveFailedMessage", resourceKeys);
         Assert.Contains("SettingsDiagnosticsBundleArtifactCacheMaximumSizeRowDescription", performanceCacheCode);
         Assert.Contains("SettingsDiagnosticsNavLogs", resourceKeys);
         Assert.Contains("SettingsDiagnosticsRestoreLastWorkspaceRowDescription", resourceKeys);

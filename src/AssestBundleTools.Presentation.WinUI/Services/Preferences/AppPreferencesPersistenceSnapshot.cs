@@ -15,4 +15,5 @@ internal sealed record AppPreferencesPersistenceSnapshot(
     int PreviewWorkerCount,
     bool BundleArtifactCacheAutoPruneEnabled = true,
     long BundleArtifactCacheMaximumSizeInBytes = AppPreferencesService.DefaultBundleArtifactCacheMaximumSizeInBytes,
-    int OperationRecordLimit = AppPreferencesService.DefaultOperationRecordLimit);
+    int OperationRecordLimit = AppPreferencesService.DefaultOperationRecordLimit,
+    string DisplayLanguage = AppDisplayLanguageCodec.SystemDefaultPreferenceKey);

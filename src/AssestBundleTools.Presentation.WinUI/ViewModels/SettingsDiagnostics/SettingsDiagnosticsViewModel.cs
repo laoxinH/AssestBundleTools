@@ -60,6 +60,9 @@ public sealed partial class SettingsDiagnosticsViewModel : ObservableObject, IDi
         _assetEditorCloseBehaviorSelectedIndex =
             SettingsDiagnosticsPreferenceOptionMapper.ConvertAssetEditorCloseBehaviorToSelectedIndex(
                 _appPreferencesService.AssetEditorCloseBehavior);
+        _displayLanguageSelectedIndex =
+            SettingsDiagnosticsPreferenceOptionMapper.ConvertDisplayLanguageToSelectedIndex(
+                _appPreferencesService.DisplayLanguage);
         _workspaceImportWorkerCountSelectedIndex =
             SettingsDiagnosticsPreferenceOptionMapper.ConvertWorkspaceImportWorkerCountToSelectedIndex(
                 _appPreferencesService.WorkspaceImportWorkerCount);

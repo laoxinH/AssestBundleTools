@@ -17,6 +17,16 @@ public sealed partial class SettingsPreferencesView : UserControl
 
     private void ApplyLocalizedText()
     {
+        AppearanceLanguageTitleText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsAppearanceLanguageTitle);
+        AppearanceLanguageHintText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsAppearanceLanguageHint);
+        DisplayLanguageLabelText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsDisplayLanguageLabel);
+        DisplayLanguageDescriptionText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsDisplayLanguageRowDescription);
+        DisplayLanguageComboBox.ItemsSource = new[]
+        {
+            UiText.Get(ResourceKeys.SettingsDiagnosticsDisplayLanguageOptionSystemDefault),
+            UiText.Get(ResourceKeys.SettingsDiagnosticsDisplayLanguageOptionSimplifiedChinese),
+            UiText.Get(ResourceKeys.SettingsDiagnosticsDisplayLanguageOptionEnglish)
+        };
         StartupBehaviorTitleText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsStartupBehaviorTitle);
         StartupBehaviorHintText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsStartupBehaviorHint);
         RestoreLastWorkspaceOnStartupLabelText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsRestoreLastWorkspaceToggleHeader);

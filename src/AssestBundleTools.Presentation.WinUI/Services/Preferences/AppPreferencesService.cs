@@ -24,12 +24,17 @@ public sealed class AppPreferencesService : IAppPreferencesService
     private const string ReturnToMainWindowCloseBehaviorKey = "returnToMainWindow";
     private const string DirectCloseBehaviorKey = "directClose";
     private readonly IAppPreferencesPersistenceStore _preferencesStore;
+    private readonly IAppDisplayLanguageOverride? _displayLanguageOverride;
     private AppPreferencesPersistenceSnapshot _currentSnapshot;
 
-    internal AppPreferencesService(IAppPreferencesPersistenceStore preferencesStore)
+    internal AppPreferencesService(
+        IAppPreferencesPersistenceStore preferencesStore,
+        IAppDisplayLanguageOverride? displayLanguageOverride = null)
     {
         _preferencesStore = preferencesStore ?? throw new ArgumentNullException(nameof(preferencesStore));
+        _displayLanguageOverride = displayLanguageOverride;
         _currentSnapshot = _preferencesStore.Load();
+        _displayLanguageOverride?.Apply(DisplayLanguage);
     }
 
     public bool RestoreLastWorkspaceOnStartup => _currentSnapshot.RestoreLastWorkspaceOnStartup;
@@ -39,6 +44,9 @@ public sealed class AppPreferencesService : IAppPreferencesService
 
     public AssetEditorCloseBehavior AssetEditorCloseBehavior =>
         DeserializeAssetEditorCloseBehavior(_currentSnapshot.AssetEditorCloseBehavior);
+
+    public AppDisplayLanguage DisplayLanguage =>
+        AppDisplayLanguageCodec.Deserialize(_currentSnapshot.DisplayLanguage);
 
     public int WorkspaceImportWorkerCount => CoerceWorkspaceImportWorkerCount(_currentSnapshot.WorkspaceImportWorkerCount);
 
@@ -131,6 +139,39 @@ public sealed class AppPreferencesService : IAppPreferencesService
         {
             _preferencesStore.Save(updatedSnapshot);
             _currentSnapshot = updatedSnapshot;
+            return true;
+        }
+        catch (IOException)
+        {
+            return false;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return false;
+        }
+    }
+
+    public bool TrySetDisplayLanguage(AppDisplayLanguage value)
+    {
+        var serializedValue = AppDisplayLanguageCodec.Serialize(value);
+        if (string.Equals(
+                _currentSnapshot.DisplayLanguage,
+                serializedValue,
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        var updatedSnapshot = _currentSnapshot with
+        {
+            DisplayLanguage = serializedValue
+        };
+
+        try
+        {
+            _preferencesStore.Save(updatedSnapshot);
+            _currentSnapshot = updatedSnapshot;
+            _displayLanguageOverride?.Apply(value);
             return true;
         }
         catch (IOException)

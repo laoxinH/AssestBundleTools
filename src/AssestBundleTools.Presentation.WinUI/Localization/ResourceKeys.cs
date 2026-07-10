@@ -308,6 +308,13 @@ public static class ResourceKeys
     public const string SettingsDiagnosticsWorkspaceCatalogSummaryFormat = "SettingsDiagnosticsPage.WorkspaceCatalogSummary.Format";
     public const string SettingsDiagnosticsWorkspaceCatalogEmpty = "SettingsDiagnosticsPage.WorkspaceCatalogEmptyText.Text";
     public const string SettingsDiagnosticsWorkspaceBadgeLiveSession = "SettingsDiagnosticsPage.WorkspaceBadge.LiveSession";
+    public const string SettingsDiagnosticsAppearanceLanguageTitle = "SettingsDiagnosticsPage.AppearanceLanguage.Title";
+    public const string SettingsDiagnosticsAppearanceLanguageHint = "SettingsDiagnosticsPage.AppearanceLanguage.Hint";
+    public const string SettingsDiagnosticsDisplayLanguageLabel = "SettingsDiagnosticsPage.DisplayLanguage.Label";
+    public const string SettingsDiagnosticsDisplayLanguageRowDescription = "SettingsDiagnosticsPage.DisplayLanguage.RowDescription";
+    public const string SettingsDiagnosticsDisplayLanguageOptionSystemDefault = "SettingsDiagnosticsPage.DisplayLanguage.Option.SystemDefault";
+    public const string SettingsDiagnosticsDisplayLanguageOptionSimplifiedChinese = "SettingsDiagnosticsPage.DisplayLanguage.Option.SimplifiedChinese";
+    public const string SettingsDiagnosticsDisplayLanguageOptionEnglish = "SettingsDiagnosticsPage.DisplayLanguage.Option.English";
     public const string SettingsDiagnosticsStartupBehaviorTitle = "SettingsDiagnosticsPage.StartupBehaviorTitleText.Text";
     public const string SettingsDiagnosticsStartupBehaviorHint = "SettingsDiagnosticsPage.StartupBehaviorHintText.Text";
     public const string SettingsDiagnosticsRestoreLastWorkspaceToggleHeader = "SettingsDiagnosticsPage.RestoreLastWorkspaceOnStartupToggle.Header";
@@ -351,6 +358,7 @@ public static class ResourceKeys
     public const string SettingsDiagnosticsOperationRecordLimitOptionTwoHundredFifty = "SettingsDiagnosticsPage.OperationRecordLimit.Option.TwoHundredFifty";
     public const string SettingsDiagnosticsOperationRecordLimitOptionFiveHundred = "SettingsDiagnosticsPage.OperationRecordLimit.Option.FiveHundred";
     public const string SettingsDiagnosticsOperationRecordLimitOptionOneThousand = "SettingsDiagnosticsPage.OperationRecordLimit.Option.OneThousand";
+    public const string SettingsDiagnosticsDisplayLanguageSaveFailedMessage = "SettingsDiagnosticsPage.DisplayLanguage.SaveFailedMessage";
     public const string SettingsDiagnosticsStartupBehaviorSaveFailedMessage = "SettingsDiagnosticsPage.StartupBehavior.SaveFailedMessage";
     public const string SettingsDiagnosticsRecentWorkspaceOpenBehaviorSaveFailedMessage = "SettingsDiagnosticsPage.RecentWorkspaceOpenBehavior.SaveFailedMessage";
     public const string SettingsDiagnosticsAssetEditorCloseBehaviorSaveFailedMessage = "SettingsDiagnosticsPage.AssetEditorCloseBehavior.SaveFailedMessage";
