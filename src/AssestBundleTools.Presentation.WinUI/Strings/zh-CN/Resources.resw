@@ -4184,6 +4184,12 @@
   <data name="AssetBundleDecryptor.BuiltIn.Arknights.Description" xml:space="preserve">
     <value>自动识别并解密明日方舟 LZ4AK UnityFS 资源包，导出时可回写为游戏格式。</value>
   </data>
+  <data name="AssetBundleDecryptor.BuiltIn.CrossCore.DisplayName" xml:space="preserve">
+    <value>交错战线</value>
+  </data>
+  <data name="AssetBundleDecryptor.BuiltIn.CrossCore.Description" xml:space="preserve">
+    <value>自动识别并解密交错战线 duplicated-header UnityFS 资源包，导出时可回写为游戏格式。</value>
+  </data>
   <data name="AssetBundleDecryptorEditor.Title.New" xml:space="preserve">
     <value>新增解密器</value>
   </data>

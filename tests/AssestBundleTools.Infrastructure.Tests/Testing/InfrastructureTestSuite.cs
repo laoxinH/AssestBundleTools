@@ -619,6 +619,10 @@ internal static class InfrastructureTestSuite
             ExternalProcessAssetBundleDecryptorTests.RegistryAndCatalog_ShouldExposeBuiltInArknightsCodec_AsReadOnlyEncryptor);
         await RunTestAsync(
             failures,
+            nameof(ExternalProcessAssetBundleDecryptorTests.RegistryAndCatalog_ShouldExposeBuiltInCrossCoreCodec_AsReadOnlyEncryptor),
+            ExternalProcessAssetBundleDecryptorTests.RegistryAndCatalog_ShouldExposeBuiltInCrossCoreCodec_AsReadOnlyEncryptor);
+        await RunTestAsync(
+            failures,
             nameof(ExternalProcessAssetBundleDecryptorTests.DecryptAsync_ShouldUseBundleScopedWorkspaceStagingPath_WhenWorkspaceDataRootIsProvided),
             ExternalProcessAssetBundleDecryptorTests.DecryptAsync_ShouldUseBundleScopedWorkspaceStagingPath_WhenWorkspaceDataRootIsProvided);
         await RunTestAsync(
@@ -637,6 +641,14 @@ internal static class InfrastructureTestSuite
             failures,
             nameof(ArknightsBundleCodecTests.ProbeAndRoundTrip_ShouldHandleRealLz4AkSample_WhenAvailable),
             ArknightsBundleCodecTests.ProbeAndRoundTrip_ShouldHandleRealLz4AkSample_WhenAvailable);
+        await RunTestAsync(
+            failures,
+            nameof(CrossCoreBundleCodecTests.EncryptAndDecrypt_ShouldRoundTripSyntheticUnityFsBundle),
+            CrossCoreBundleCodecTests.EncryptAndDecrypt_ShouldRoundTripSyntheticUnityFsBundle);
+        await RunTestAsync(
+            failures,
+            nameof(CrossCoreBundleCodecTests.ProbeAndRoundTrip_ShouldHandleRealSample_WhenAvailable),
+            CrossCoreBundleCodecTests.ProbeAndRoundTrip_ShouldHandleRealSample_WhenAvailable);
         await RunTestAsync(
             failures,
             nameof(FileSystemResourceProcessorCatalogStoreTests.Load_ShouldIncludeBuiltInSlots_AndUserManagedProcessors),

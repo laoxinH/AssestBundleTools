@@ -280,6 +280,19 @@ Presentation 不负责：
 
 为兼容现有插件，`supportsAutoDetection` 暂时保留；保存新定义时它必须与 `probeArguments` 是否存在保持一致。后续若升级 manifest schema，可改为从命令是否存在推导能力，但本阶段不为删除一个布尔字段引入破坏性迁移。
 
+## 4.4 内置 CrossCore duplicated-header v1 格式
+
+交错战线（CrossCore）当前已验证样本使用 duplicated-header v1：私有文件由标准 UnityFS 的前 83 字节副本与完整标准 UnityFS 顺序拼接而成。因此内置 codec 固定使用以下稳定契约：
+
+- codec id 为 `builtin.crosscore-duplicated-header`，format id 为 `crosscore.unityfs.duplicated-header-v1`。
+- `Probe` 只在偏移 `0` 与 `83` 都存在完整 `UnityFS\0` 签名，且前 83 字节与偏移 83 开始的 83 字节逐字节相同时返回高置信度匹配；不得仅凭文件名、扩展名或“出现两个 UnityFS 字符串”命中。
+- `Decrypt` 校验同一结构后删除前 83 字节，输出从第二个 UnityFS 开始的完整标准 AB。
+- `Encrypt` 要求输入为未重复前缀的标准 UnityFS，把输入前 83 字节复制到输出开头，再写入完整输入；对已验证真实样本应满足 `Decrypt -> Encrypt` 后与原文件逐字节一致。
+- CLI 继续复用 schema 1 的 `probe / decrypt / encrypt` 命令和 result JSON，不为该格式增加专用参数或把前缀写入工作区元数据。
+- 附件旧实现中的 `header_len = 336` 与当前真实样本不一致，且其 encode 分支仍执行删除而不是重建前缀，因此不属于本格式版本契约。未来确认存在其他前缀结构时，应新增 format 版本或可验证的推导规则，并补对应真实样本回归。
+
+内置 codec CLI 保持自包含单文件进程，但发布时必须启用 IL trimming 与单文件压缩，并用 `System.Text.Json` 源生成上下文输出协议 JSON。framework-dependent CLI 不能直接复用 WinUI 自包含输出目录中平铺的运行时，仍会要求机器全局安装匹配的 .NET Runtime；因此当前不以牺牲可执行稳定性换取更小的 apphost。若内置 codec 数量继续增长，应把多个算法收敛到一个共享自包含 CLI host，只携带一次运行时，而不是把 codec 入口并回 WinUI 进程。
+
 ## 5. 默认发现位置
 
 当前推荐默认发现目录：
@@ -382,7 +395,8 @@ Presentation 不负责：
 
 本轮已完成：
 
-- 内置只读 `builtin.arknights-lz4ak` CLI，提供真实 UnityFS Probe、LZ4AK 解密和标准 AB 逆向回写；应用构建时按目标平台发布为自包含单文件并放入独立 `codecs/arknights` 目录，不能与 WinUI 自包含运行时共用 framework-dependent apphost。
+- 内置只读 `builtin.arknights-lz4ak` CLI，提供真实 UnityFS Probe、LZ4AK 解密和标准 AB 逆向回写；应用构建时按目标平台发布为经裁剪和压缩的自包含单文件并放入独立 `codecs/arknights` 目录，不能与 WinUI 自包含运行时共用 framework-dependent apphost。
+- 内置只读 `builtin.crosscore-duplicated-header` CLI，按 duplicated-header v1 的双 UnityFS / 83 字节重复前缀证据自动识别，提供流式解密和标准 AB 前缀回写；按目标平台发布到独立 `codecs/crosscore` 目录。真实样本已覆盖 Probe、AssetsTools 读回，以及 `Decrypt -> Encrypt` 后原文件 SHA-256 完全一致。
 - Probe 以 UnityFS header、blocks-info 和数据 block 的压缩类型 / 实际解码结果为证据，不依赖文件名。
 - 外部进程 manifest 增加可选 `encryptArguments`，Application 增加窄 `IAssetBundleEncryptor` 端口。
 - SaveRebuild 在标准 writer 成功后按 artifact 的来源 decryptor 自动执行可选回写，并把 codec 身份写入导出结果与 manifest。

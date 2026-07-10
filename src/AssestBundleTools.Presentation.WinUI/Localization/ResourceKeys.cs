@@ -758,6 +758,8 @@ public static class ResourceKeys
     public const string AssetBundleDecryptorBuiltInPassThroughDescription = "AssetBundleDecryptor.BuiltIn.PassThrough.Description";
     public const string AssetBundleDecryptorBuiltInArknightsDisplayName = "AssetBundleDecryptor.BuiltIn.Arknights.DisplayName";
     public const string AssetBundleDecryptorBuiltInArknightsDescription = "AssetBundleDecryptor.BuiltIn.Arknights.Description";
+    public const string AssetBundleDecryptorBuiltInCrossCoreDisplayName = "AssetBundleDecryptor.BuiltIn.CrossCore.DisplayName";
+    public const string AssetBundleDecryptorBuiltInCrossCoreDescription = "AssetBundleDecryptor.BuiltIn.CrossCore.Description";
     public const string AssetBundleDecryptorEditorNewTitle = "AssetBundleDecryptorEditor.Title.New";
     public const string AssetBundleDecryptorEditorEditTitleFormat = "AssetBundleDecryptorEditor.Title.Edit.Format";
     public const string AssetBundleDecryptorEditorPrimaryButton = "AssetBundleDecryptorEditor.PrimaryButton";

@@ -40,6 +40,14 @@ public static class AssetBundleDecryptorDisplayText
             return localizationService.GetRequiredString(ResourceKeys.AssetBundleDecryptorBuiltInArknightsDisplayName);
         }
 
+        if (string.Equals(
+                decryptorId?.Trim(),
+                AssetBundleDecryptorIds.BuiltInCrossCoreDuplicatedHeader,
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return localizationService.GetRequiredString(ResourceKeys.AssetBundleDecryptorBuiltInCrossCoreDisplayName);
+        }
+
         return string.IsNullOrWhiteSpace(decryptorId)
             ? localizationService.GetRequiredString(ResourceKeys.AssetBundleDecryptorBuiltInPassThroughDisplayName)
             : decryptorId.Trim();
@@ -72,6 +80,11 @@ public static class AssetBundleDecryptorDisplayText
         if (IsBuiltInArknights(descriptor))
         {
             return localizationService.GetRequiredString(ResourceKeys.AssetBundleDecryptorBuiltInArknightsDisplayName);
+        }
+
+        if (IsBuiltInCrossCore(descriptor))
+        {
+            return localizationService.GetRequiredString(ResourceKeys.AssetBundleDecryptorBuiltInCrossCoreDisplayName);
         }
 
         return IsBuiltInPassThrough(descriptor)
@@ -111,6 +124,11 @@ public static class AssetBundleDecryptorDisplayText
         if (IsBuiltInArknights(descriptor))
         {
             return localizationService.GetRequiredString(ResourceKeys.AssetBundleDecryptorBuiltInArknightsDescription);
+        }
+
+        if (IsBuiltInCrossCore(descriptor))
+        {
+            return localizationService.GetRequiredString(ResourceKeys.AssetBundleDecryptorBuiltInCrossCoreDescription);
         }
 
         return string.IsNullOrWhiteSpace(descriptor.Description)
@@ -180,6 +198,15 @@ public static class AssetBundleDecryptorDisplayText
                string.Equals(
                    descriptor.Id,
                    AssetBundleDecryptorIds.BuiltInArknightsLz4Ak,
+                   StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsBuiltInCrossCore(AssetBundleDecryptorDescriptorDto descriptor)
+    {
+        return descriptor.Kind == AssetBundleDecryptorKind.BuiltIn &&
+               string.Equals(
+                   descriptor.Id,
+                   AssetBundleDecryptorIds.BuiltInCrossCoreDuplicatedHeader,
                    StringComparison.OrdinalIgnoreCase);
     }
 }

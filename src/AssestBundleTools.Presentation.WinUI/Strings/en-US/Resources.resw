@@ -4184,6 +4184,12 @@
   <data name="AssetBundleDecryptor.BuiltIn.Arknights.Description" xml:space="preserve">
     <value>Detect and decrypt Arknights LZ4AK UnityFS bundles, then restore the game format during export.</value>
   </data>
+  <data name="AssetBundleDecryptor.BuiltIn.CrossCore.DisplayName" xml:space="preserve">
+    <value>CrossCore</value>
+  </data>
+  <data name="AssetBundleDecryptor.BuiltIn.CrossCore.Description" xml:space="preserve">
+    <value>Detect and decrypt CrossCore duplicated-header UnityFS bundles, then restore the game format during export.</value>
+  </data>
   <data name="AssetBundleDecryptorEditor.Title.New" xml:space="preserve">
     <value>Add Decryptor</value>
   </data>

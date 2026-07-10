@@ -20,4 +20,9 @@ public static class AssetBundleDecryptorIds
     /// 表示内置的明日方舟 UnityFS LZ4AK bundle codec。
     /// </summary>
     public const string BuiltInArknightsLz4Ak = "builtin.arknights-lz4ak";
+
+    /// <summary>
+    /// 表示内置的交错战线 UnityFS duplicated-header bundle codec。
+    /// </summary>
+    public const string BuiltInCrossCoreDuplicatedHeader = "builtin.crosscore-duplicated-header";
 }

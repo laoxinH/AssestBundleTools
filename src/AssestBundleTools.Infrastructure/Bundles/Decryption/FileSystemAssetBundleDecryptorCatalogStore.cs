@@ -29,6 +29,7 @@ public sealed class FileSystemAssetBundleDecryptorCatalogStore : IAssetBundleDec
         var entries = new List<AssetBundleDecryptorCatalogEntryDto>
         {
             BuiltInArknightsLz4AkDecryptorFactory.CreateCatalogEntry(),
+            BuiltInCrossCoreDecryptorFactory.CreateCatalogEntry(),
             CreateBuiltInPassThroughEntry()
         };
 

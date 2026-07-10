@@ -29,6 +29,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AssestBundleTools.Audio.Fmo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AssestBundleTools.BundleCodec.Arknights", "src\AssestBundleTools.BundleCodec.Arknights\AssestBundleTools.BundleCodec.Arknights.csproj", "{13B01485-8DCD-4E44-B477-ED6D105A5F77}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AssestBundleTools.BundleCodec.CrossCore", "src\AssestBundleTools.BundleCodec.CrossCore\AssestBundleTools.BundleCodec.CrossCore.csproj", "{4775913D-8AB9-47D3-8ECE-F8EE1B82CE14}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -169,6 +171,18 @@ Global
 		{13B01485-8DCD-4E44-B477-ED6D105A5F77}.Release|x64.Build.0 = Release|Any CPU
 		{13B01485-8DCD-4E44-B477-ED6D105A5F77}.Release|x86.ActiveCfg = Release|Any CPU
 		{13B01485-8DCD-4E44-B477-ED6D105A5F77}.Release|x86.Build.0 = Release|Any CPU
+		{4775913D-8AB9-47D3-8ECE-F8EE1B82CE14}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4775913D-8AB9-47D3-8ECE-F8EE1B82CE14}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4775913D-8AB9-47D3-8ECE-F8EE1B82CE14}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{4775913D-8AB9-47D3-8ECE-F8EE1B82CE14}.Debug|x64.Build.0 = Debug|Any CPU
+		{4775913D-8AB9-47D3-8ECE-F8EE1B82CE14}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{4775913D-8AB9-47D3-8ECE-F8EE1B82CE14}.Debug|x86.Build.0 = Debug|Any CPU
+		{4775913D-8AB9-47D3-8ECE-F8EE1B82CE14}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4775913D-8AB9-47D3-8ECE-F8EE1B82CE14}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4775913D-8AB9-47D3-8ECE-F8EE1B82CE14}.Release|x64.ActiveCfg = Release|Any CPU
+		{4775913D-8AB9-47D3-8ECE-F8EE1B82CE14}.Release|x64.Build.0 = Release|Any CPU
+		{4775913D-8AB9-47D3-8ECE-F8EE1B82CE14}.Release|x86.ActiveCfg = Release|Any CPU
+		{4775913D-8AB9-47D3-8ECE-F8EE1B82CE14}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -181,5 +195,6 @@ Global
 		{87ABA253-CEA1-41AF-BED4-90F22E7B0670} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{AC9F859D-C218-4E20-89D6-55FC1026A788} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{13B01485-8DCD-4E44-B477-ED6D105A5F77} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{4775913D-8AB9-47D3-8ECE-F8EE1B82CE14} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 	EndGlobalSection
 EndGlobal

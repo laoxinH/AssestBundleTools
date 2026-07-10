@@ -129,13 +129,20 @@
       <BuiltInAssetBundleCodecIntermediatePath>$(BuiltInAssetBundleCodecBuildRoot)obj\</BuiltInAssetBundleCodecIntermediatePath>
       <BuiltInAssetBundleCodecOutputPath>$(BuiltInAssetBundleCodecBuildRoot)bin\</BuiltInAssetBundleCodecOutputPath>
       <BuiltInAssetBundleCodecBuildProperties>Configuration=$(Configuration);RuntimeIdentifier=$(BuiltInAssetBundleCodecRuntimeIdentifier);SelfContained=true;PublishSingleFile=true;BaseIntermediateOutputPath=$(BuiltInAssetBundleCodecIntermediatePath);MSBuildProjectExtensionsPath=$(BuiltInAssetBundleCodecIntermediatePath);BaseOutputPath=$(BuiltInAssetBundleCodecOutputPath)</BuiltInAssetBundleCodecBuildProperties>
+      <BuiltInCrossCoreCodecPublishDirectory>$([System.IO.Path]::GetFullPath('$(OutDir)codecs\crosscore\'))</BuiltInCrossCoreCodecPublishDirectory>
+      <BuiltInCrossCoreCodecBuildRoot>$([System.IO.Path]::GetFullPath('$(BaseIntermediateOutputPath)built-in-codecs\crosscore\$(Configuration)\$(BuiltInAssetBundleCodecRuntimeIdentifier)\'))</BuiltInCrossCoreCodecBuildRoot>
+      <BuiltInCrossCoreCodecIntermediatePath>$(BuiltInCrossCoreCodecBuildRoot)obj\</BuiltInCrossCoreCodecIntermediatePath>
+      <BuiltInCrossCoreCodecOutputPath>$(BuiltInCrossCoreCodecBuildRoot)bin\</BuiltInCrossCoreCodecOutputPath>
+      <BuiltInCrossCoreCodecBuildProperties>Configuration=$(Configuration);RuntimeIdentifier=$(BuiltInAssetBundleCodecRuntimeIdentifier);SelfContained=true;PublishSingleFile=true;BaseIntermediateOutputPath=$(BuiltInCrossCoreCodecIntermediatePath);MSBuildProjectExtensionsPath=$(BuiltInCrossCoreCodecIntermediatePath);BaseOutputPath=$(BuiltInCrossCoreCodecOutputPath)</BuiltInCrossCoreCodecBuildProperties>
     </PropertyGroup>
     <ItemGroup>
       <LegacyBuiltInAssetBundleCodec Include="$(OutDir)AssestBundleTools.BundleCodec.Arknights.*" />
+      <LegacyBuiltInAssetBundleCodec Include="$(OutDir)AssestBundleTools.BundleCodec.CrossCore.*" />
       <LegacyBuiltInAssetBundleCodec Include="$(OutDir)K4os.Compression.LZ4.dll" />
     </ItemGroup>
     <Delete Files="@(LegacyBuiltInAssetBundleCodec)" />
     <RemoveDir Directories="$(BuiltInAssetBundleCodecPublishDirectory)" />
+    <RemoveDir Directories="$(BuiltInCrossCoreCodecPublishDirectory)" />
     <MSBuild
       Projects="..\AssestBundleTools.BundleCodec.Arknights\AssestBundleTools.BundleCodec.Arknights.csproj"
       Targets="Restore"
@@ -148,5 +155,17 @@
     <Error
       Condition="!Exists('$(BuiltInAssetBundleCodecPublishDirectory)AssestBundleTools.BundleCodec.Arknights.exe')"
       Text="Built-in Arknights bundle codec publish output is missing." />
+    <MSBuild
+      Projects="..\AssestBundleTools.BundleCodec.CrossCore\AssestBundleTools.BundleCodec.CrossCore.csproj"
+      Targets="Restore"
+      Condition="!Exists('$(BuiltInCrossCoreCodecIntermediatePath)project.assets.json')"
+      Properties="$(BuiltInCrossCoreCodecBuildProperties)" />
+    <MSBuild
+      Projects="..\AssestBundleTools.BundleCodec.CrossCore\AssestBundleTools.BundleCodec.CrossCore.csproj"
+      Targets="Publish"
+      Properties="$(BuiltInCrossCoreCodecBuildProperties);DebugType=None;PublishDir=$(BuiltInCrossCoreCodecPublishDirectory)" />
+    <Error
+      Condition="!Exists('$(BuiltInCrossCoreCodecPublishDirectory)AssestBundleTools.BundleCodec.CrossCore.exe')"
+      Text="Built-in CrossCore bundle codec publish output is missing." />
   </Target>
 </Project>

@@ -39,6 +39,38 @@ internal static class ExternalProcessAssetBundleDecryptorTests
             "Built-in codec executable should resolve from its application codec directory instead of PATH.");
     }
 
+    public static void RegistryAndCatalog_ShouldExposeBuiltInCrossCoreCodec_AsReadOnlyEncryptor()
+    {
+        using var temporaryDirectory = new TemporaryDirectoryScope();
+        var registry = new FileSystemAssetBundleDecryptorRegistry([temporaryDirectory.DirectoryPath]);
+        var catalog = new FileSystemAssetBundleDecryptorCatalogStore([temporaryDirectory.DirectoryPath]);
+
+        TestAssert.True(
+            registry.TryGet(AssetBundleDecryptorIds.BuiltInCrossCoreDuplicatedHeader, out var decryptor),
+            "Registry should always expose the built-in CrossCore codec.");
+        TestAssert.True(decryptor.Descriptor.SupportsAutoDetection, "Built-in CrossCore codec should participate in auto detection.");
+        TestAssert.True(decryptor.Descriptor.SupportsEncryption, "Built-in CrossCore codec should advertise export encoding.");
+        TestAssert.True(decryptor is AssestBundleTools.Application.Bundles.Services.IAssetBundleEncryptor, "Built-in CrossCore codec should implement the optional encryptor port.");
+
+        var entry = catalog.Load().Single(item =>
+            string.Equals(
+                item.Definition.Id,
+                AssetBundleDecryptorIds.BuiltInCrossCoreDuplicatedHeader,
+                StringComparison.OrdinalIgnoreCase));
+        TestAssert.True(entry.IsBuiltIn, "Built-in CrossCore catalog entry should be marked built-in.");
+        TestAssert.True(entry.IsReadOnly, "Built-in CrossCore catalog entry should be read-only.");
+        TestAssert.True(entry.Definition.EncryptArguments is { Count: > 0 }, "Built-in CrossCore catalog entry should expose encrypt arguments.");
+        var codecDirectoryPath = Path.Combine(temporaryDirectory.DirectoryPath, "codecs", "crosscore");
+        var resolvedPath = ExternalProcessAssetBundleDecryptorSupport.ResolveExecutablePath(
+            entry.Definition.ExecutablePath,
+            codecDirectoryPath);
+
+        TestAssert.Equal(
+            Path.GetFullPath(Path.Combine(codecDirectoryPath, "AssestBundleTools.BundleCodec.CrossCore.exe")),
+            resolvedPath,
+            "Built-in CrossCore executable should resolve from its application codec directory instead of PATH.");
+    }
+
     public static void DecryptAsync_ShouldUseBundleScopedWorkspaceStagingPath_WhenWorkspaceDataRootIsProvided()
     {
         using var temporaryDirectory = new TemporaryDirectoryScope();

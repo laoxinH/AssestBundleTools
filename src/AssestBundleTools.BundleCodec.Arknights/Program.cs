@@ -1,4 +1,6 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 using AssestBundleTools.BundleCodec.Arknights;
 
 return await ArknightsBundleCodecProgram.RunAsync(args);
@@ -7,7 +9,7 @@ public static class ArknightsBundleCodecProgram
 {
     private const int SuccessExitCode = 0;
     private const int FailureExitCode = 1;
-    private const int ResultSchemaVersion = 1;
+    internal const int ResultSchemaVersion = 1;
 
     public static async Task<int> RunAsync(IReadOnlyList<string> args)
     {
@@ -16,7 +18,7 @@ public static class ArknightsBundleCodecProgram
         {
             await WriteTransformResultAsync(
                 options.ResultPath,
-                TransformResult.Failed(options.ValidationMessage));
+                ArknightsCodecTransformPayload.Failed(options.ValidationMessage));
             return FailureExitCode;
         }
 
@@ -34,7 +36,7 @@ public static class ArknightsBundleCodecProgram
         {
             await WriteTransformResultAsync(
                 options.ResultPath,
-                TransformResult.Failed(exception.Message));
+                ArknightsCodecTransformPayload.Failed(exception.Message));
             Console.Error.WriteLine(exception.Message);
             return FailureExitCode;
         }
@@ -45,13 +47,14 @@ public static class ArknightsBundleCodecProgram
         var result = ArknightsBundleCodec.Probe(options.InputPath);
         await WriteJsonAsync(
             options.ResultPath,
-            new ProbeResult(
+            new ArknightsCodecProbePayload(
                 ResultSchemaVersion,
                 result.IsMatch,
                 result.Confidence,
                 result.FormatId,
                 result.Evidence,
-                result.Message));
+                result.Message),
+            ArknightsCodecJsonContext.Default.ArknightsCodecProbePayload);
         return SuccessExitCode;
     }
 
@@ -63,14 +66,20 @@ public static class ArknightsBundleCodecProgram
         var outputPath = Path.GetFullPath(options.OutputPath);
         await WriteTransformResultAsync(
             options.ResultPath,
-            TransformResult.Succeeded(outputPath));
+            ArknightsCodecTransformPayload.Succeeded(outputPath));
         return SuccessExitCode;
     }
 
-    private static Task WriteTransformResultAsync(string? resultPath, TransformResult result) =>
-        WriteJsonAsync(resultPath, result);
+    private static Task WriteTransformResultAsync(string? resultPath, ArknightsCodecTransformPayload result) =>
+        WriteJsonAsync(
+            resultPath,
+            result,
+            ArknightsCodecJsonContext.Default.ArknightsCodecTransformPayload);
 
-    private static async Task WriteJsonAsync<T>(string? resultPath, T payload)
+    private static async Task WriteJsonAsync<T>(
+        string? resultPath,
+        T payload,
+        JsonTypeInfo<T> jsonTypeInfo)
     {
         if (string.IsNullOrWhiteSpace(resultPath))
         {
@@ -84,13 +93,7 @@ public static class ArknightsBundleCodecProgram
             FileMode.Create,
             FileAccess.Write,
             FileShare.Read);
-        await JsonSerializer.SerializeAsync(
-            stream,
-            payload,
-            new JsonSerializerOptions(JsonSerializerDefaults.Web)
-            {
-                WriteIndented = true
-            });
+        await JsonSerializer.SerializeAsync(stream, payload, jsonTypeInfo);
     }
 
     private enum CodecCommand
@@ -167,24 +170,32 @@ public static class ArknightsBundleCodecProgram
                 : null;
     }
 
-    private sealed record ProbeResult(
-        int SchemaVersion,
-        bool IsMatch,
-        int Confidence,
-        string? FormatId,
-        IReadOnlyList<string> Evidence,
-        string? Message);
-
-    private sealed record TransformResult(
-        int SchemaVersion,
-        bool IsSuccess,
-        string? OutputPath,
-        string? Message)
-    {
-        public static TransformResult Succeeded(string outputPath) =>
-            new(ResultSchemaVersion, true, outputPath, null);
-
-        public static TransformResult Failed(string? message) =>
-            new(ResultSchemaVersion, false, null, message);
-    }
 }
+
+internal sealed record ArknightsCodecProbePayload(
+    int SchemaVersion,
+    bool IsMatch,
+    int Confidence,
+    string? FormatId,
+    IReadOnlyList<string> Evidence,
+    string? Message);
+
+internal sealed record ArknightsCodecTransformPayload(
+    int SchemaVersion,
+    bool IsSuccess,
+    string? OutputPath,
+    string? Message)
+{
+    public static ArknightsCodecTransformPayload Succeeded(string outputPath) =>
+        new(ArknightsBundleCodecProgram.ResultSchemaVersion, true, outputPath, null);
+
+    public static ArknightsCodecTransformPayload Failed(string? message) =>
+        new(ArknightsBundleCodecProgram.ResultSchemaVersion, false, null, message);
+}
+
+[JsonSourceGenerationOptions(
+    PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
+    WriteIndented = true)]
+[JsonSerializable(typeof(ArknightsCodecProbePayload))]
+[JsonSerializable(typeof(ArknightsCodecTransformPayload))]
+internal sealed partial class ArknightsCodecJsonContext : JsonSerializerContext;
