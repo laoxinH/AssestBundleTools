@@ -21,6 +21,7 @@
         VerticalScrollBarVisibility="Auto"
         VerticalScrollMode="Enabled">
         <Border
+            x:Name="PreferenceSettingsContentColumn"
             Width="{Binding ViewportWidth, ElementName=PreferenceSettingsScrollViewer}"
             Style="{StaticResource SettingsDiagnosticsContentColumnStyle}">
             <StackPanel Spacing="26">

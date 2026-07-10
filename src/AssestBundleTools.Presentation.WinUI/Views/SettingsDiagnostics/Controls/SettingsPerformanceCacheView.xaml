@@ -21,6 +21,7 @@
         VerticalScrollBarVisibility="Auto"
         VerticalScrollMode="Enabled">
         <Border
+            x:Name="PerformanceCacheSettingsContentColumn"
             Width="{Binding ViewportWidth, ElementName=PerformanceCacheSettingsScrollViewer}"
             Style="{StaticResource SettingsDiagnosticsContentColumnStyle}">
             <StackPanel Spacing="26">

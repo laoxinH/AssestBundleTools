@@ -23,6 +23,8 @@
             IsPaneToggleButtonVisible="True"
             OpenPaneLength="280"
             PaneDisplayMode="Left"
+            PaneClosing="OnNavigationPaneClosing"
+            PaneOpening="OnNavigationPaneOpening"
             VerticalContentAlignment="Stretch"
             ItemInvoked="OnNavigationItemInvoked"
             SelectionChanged="OnNavigationSelectionChanged">

@@ -15,6 +15,11 @@ public sealed partial class SettingsPreferencesView : UserControl
 
     public SettingsDiagnosticsViewModel ViewModel { get; }
 
+    internal void SetContentColumnMaxWidth(double maxWidth)
+    {
+        PreferenceSettingsContentColumn.MaxWidth = maxWidth;
+    }
+
     private void ApplyLocalizedText()
     {
         AppearanceLanguageTitleText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsAppearanceLanguageTitle);

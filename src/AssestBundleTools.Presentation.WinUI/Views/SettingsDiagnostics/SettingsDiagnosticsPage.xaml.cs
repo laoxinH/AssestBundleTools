@@ -11,6 +11,10 @@ namespace AssestBundleTools.Presentation.WinUI.Views.SettingsDiagnostics;
 /// </summary>
 public sealed partial class SettingsDiagnosticsPage : Page
 {
+    private const double DefaultContentColumnMaxWidth = 980;
+    private readonly SettingsPreferencesView _preferencesView;
+    private readonly SettingsPerformanceCacheView _performanceCacheView;
+
     public SettingsDiagnosticsPage()
     {
         ViewModel = new SettingsDiagnosticsViewModel(
@@ -23,8 +27,10 @@ public sealed partial class SettingsDiagnosticsPage : Page
             App.CurrentApp.BackgroundWorkScheduler);
 
         InitializeComponent();
-        PreferenceSettingsPanel.Content = new SettingsPreferencesView(ViewModel);
-        PerformanceCacheSettingsPanel.Content = new SettingsPerformanceCacheView(ViewModel);
+        _preferencesView = new SettingsPreferencesView(ViewModel);
+        _performanceCacheView = new SettingsPerformanceCacheView(ViewModel);
+        PreferenceSettingsPanel.Content = _preferencesView;
+        PerformanceCacheSettingsPanel.Content = _performanceCacheView;
         ApplyLocalizedText();
         ActivateSection(SettingsDiagnosticsSection.Preferences);
         Loaded += OnLoaded;
@@ -52,6 +58,17 @@ public sealed partial class SettingsDiagnosticsPage : Page
         PreferenceSettingsPanel.Visibility = ToVisibility(section == SettingsDiagnosticsSection.Preferences);
         PerformanceCacheSettingsPanel.Visibility = ToVisibility(section == SettingsDiagnosticsSection.PerformanceCache);
         LogCenterPanel.Visibility = ToVisibility(section == SettingsDiagnosticsSection.Logs);
+    }
+
+    internal void ApplyNavigationPaneLayout(bool isPaneOpen, double paneWidthDifference)
+    {
+        var reclaimedWidth = isPaneOpen ? 0 : Math.Max(0, paneWidthDifference);
+        var contentColumnMaxWidth = DefaultContentColumnMaxWidth + reclaimedWidth;
+
+        WorkspaceSettingsContentColumn.MaxWidth = contentColumnMaxWidth;
+        LogCenterContentColumn.MaxWidth = contentColumnMaxWidth;
+        _preferencesView.SetContentColumnMaxWidth(contentColumnMaxWidth);
+        _performanceCacheView.SetContentColumnMaxWidth(contentColumnMaxWidth);
     }
 
     private static Visibility ToVisibility(bool isVisible) =>

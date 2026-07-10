@@ -15,6 +15,11 @@ public sealed partial class SettingsPerformanceCacheView : UserControl
 
     public SettingsDiagnosticsViewModel ViewModel { get; }
 
+    internal void SetContentColumnMaxWidth(double maxWidth)
+    {
+        PerformanceCacheSettingsContentColumn.MaxWidth = maxWidth;
+    }
+
     private void ApplyLocalizedText()
     {
         WorkspaceImportPerformanceTitleText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsWorkspaceImportPerformanceTitle);

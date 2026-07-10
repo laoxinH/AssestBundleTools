@@ -233,9 +233,34 @@ public sealed partial class ShellPage : Page
             ContentFrame.Content is SettingsDiagnosticsPage settingsPage)
         {
             settingsPage.ActivateSection(activeSettingsSection);
+            ApplySettingsNavigationPaneLayout(RootNavigationView.IsPaneOpen);
         }
 
         ViewModel.ApplySection(navigationTarget.ShellSectionKey);
+    }
+
+    private void OnNavigationPaneOpening(NavigationView sender, object args)
+    {
+        ApplySettingsNavigationPaneLayout(isPaneOpen: true);
+    }
+
+    private void OnNavigationPaneClosing(
+        NavigationView sender,
+        NavigationViewPaneClosingEventArgs args)
+    {
+        ApplySettingsNavigationPaneLayout(isPaneOpen: false);
+    }
+
+    private void ApplySettingsNavigationPaneLayout(bool isPaneOpen)
+    {
+        if (ContentFrame.Content is not SettingsDiagnosticsPage settingsPage)
+        {
+            return;
+        }
+
+        settingsPage.ApplyNavigationPaneLayout(
+            isPaneOpen,
+            RootNavigationView.OpenPaneLength - RootNavigationView.CompactPaneLength);
     }
 
     private ShellNavigationTarget ResolveNavigationTarget(string navigationKey, object? parameter)

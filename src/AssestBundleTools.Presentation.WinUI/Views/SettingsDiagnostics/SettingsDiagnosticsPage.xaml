@@ -44,6 +44,7 @@
                         VerticalScrollBarVisibility="Auto"
                         VerticalScrollMode="Enabled">
                         <Border
+                            x:Name="WorkspaceSettingsContentColumn"
                             Width="{Binding ViewportWidth, ElementName=WorkspaceSettingsPanel}"
                             Style="{StaticResource SettingsDiagnosticsContentColumnStyle}">
                             <StackPanel Spacing="14">
@@ -320,6 +321,7 @@
                         MinHeight="0"
                         Visibility="Collapsed">
                         <Border
+                            x:Name="LogCenterContentColumn"
                             HorizontalAlignment="Stretch"
                             Style="{StaticResource SettingsDiagnosticsContentColumnStyle}">
                             <Border

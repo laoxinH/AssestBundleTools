@@ -87,6 +87,8 @@ public sealed class SettingsDiagnosticsPageContractTests
             "ResourceKeys.cs"));
 
         Assert.Contains("ItemInvoked=\"OnNavigationItemInvoked\"", shellXaml);
+        Assert.Contains("PaneClosing=\"OnNavigationPaneClosing\"", shellXaml);
+        Assert.Contains("PaneOpening=\"OnNavigationPaneOpening\"", shellXaml);
         Assert.Contains("x:Name=\"SettingsDiagnosticsNavItem\"", shellXaml);
         Assert.Contains("IsExpanded=\"True\"", shellXaml);
         Assert.Contains("SelectsOnInvoked=\"False\"", shellXaml);
@@ -110,6 +112,8 @@ public sealed class SettingsDiagnosticsPageContractTests
         Assert.Contains("new SettingsPerformanceCacheView(ViewModel)", pageCode);
         Assert.Contains("ActivateSection(SettingsDiagnosticsSection.Preferences)", pageCode);
         Assert.Contains("ContentFrame.Content is SettingsDiagnosticsPage", shellCode);
+        Assert.Contains("ApplySettingsNavigationPaneLayout(RootNavigationView.IsPaneOpen)", shellCode);
+        Assert.Contains("RootNavigationView.OpenPaneLength - RootNavigationView.CompactPaneLength", shellCode);
         Assert.Contains("_lastSettingsSection = SettingsDiagnosticsSection.Preferences", shellCode);
         Assert.Contains("SettingsDiagnosticsNavWorkspace", shellCode);
         Assert.Contains("SettingsDiagnosticsNavPreferences", shellCode);
@@ -120,6 +124,12 @@ public sealed class SettingsDiagnosticsPageContractTests
         Assert.Contains("SettingsDiagnosticsPerformanceCache", shellNavigationKeys);
         Assert.Contains("SettingsDiagnosticsLogs", shellNavigationKeys);
         Assert.Contains("x:Key=\"SettingsDiagnosticsContentColumnStyle\"", pageResources);
+        Assert.Contains("x:Name=\"WorkspaceSettingsContentColumn\"", pageXaml);
+        Assert.Contains("x:Name=\"LogCenterContentColumn\"", pageXaml);
+        Assert.Contains("x:Name=\"PreferenceSettingsContentColumn\"", preferencesXaml);
+        Assert.Contains("x:Name=\"PerformanceCacheSettingsContentColumn\"", performanceCacheXaml);
+        Assert.Contains("DefaultContentColumnMaxWidth + reclaimedWidth", pageCode);
+        Assert.Contains("SetContentColumnMaxWidth(contentColumnMaxWidth)", pageCode);
         Assert.Contains("x:Key=\"SettingsDiagnosticsSurfaceStyle\"", pageResources);
         Assert.Contains("<Setter Property=\"Background\" Value=\"Transparent\" />", pageResources);
         Assert.DoesNotContain("SettingsDiagnosticsPanelShadow", pageXaml);
