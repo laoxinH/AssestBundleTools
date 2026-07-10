@@ -41,13 +41,14 @@
         </Style>
         <Style
             x:Key="PluginManagementCompactButtonStyle"
-            TargetType="Button"
-            BasedOn="{StaticResource WorkspaceInlineActionButtonStyle}">
+            TargetType="Button">
             <Setter Property="MinHeight" Value="34" />
-            <Setter Property="MinWidth" Value="78" />
+            <Setter Property="MinWidth" Value="96" />
             <Setter Property="Padding" Value="12,0" />
             <Setter Property="CornerRadius" Value="8" />
             <Setter Property="FontSize" Value="13" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
         </Style>
         <Style
             x:Key="PluginManagementCatalogStatChipStyle"
@@ -428,10 +429,10 @@
                     Click="OnRefreshCatalogButtonClick">
                     <StackPanel
                         Orientation="Horizontal"
-                        Spacing="8">
+                        Spacing="7">
                         <FontIcon
                             FontFamily="Segoe Fluent Icons"
-                            FontSize="14"
+                            FontSize="13"
                             Glyph="&#xE72C;" />
                         <TextBlock
                             x:Name="RefreshCatalogButtonText"
@@ -774,10 +775,10 @@
                             IsEnabled="{x:Bind ViewModel.CanEditSelectedPlugin, Mode=OneWay}">
                             <StackPanel
                                 Orientation="Horizontal"
-                                Spacing="8">
+                                Spacing="7">
                                 <FontIcon
                                     FontFamily="Segoe Fluent Icons"
-                                    FontSize="14"
+                                    FontSize="13"
                                     Glyph="&#xE70F;" />
                                 <TextBlock
                                     x:Name="EditSelectedPluginButtonText"
@@ -789,10 +790,10 @@
                             Click="OnValidateSelectedPluginButtonClick">
                             <StackPanel
                                 Orientation="Horizontal"
-                                Spacing="8">
+                                Spacing="7">
                                 <FontIcon
                                     FontFamily="Segoe Fluent Icons"
-                                    FontSize="14"
+                                    FontSize="13"
                                     Glyph="&#xE73E;" />
                                 <TextBlock
                                     x:Name="ValidateSelectedPluginButtonText"
@@ -804,10 +805,10 @@
                             Click="OnCopyDiagnosticsButtonClick">
                             <StackPanel
                                 Orientation="Horizontal"
-                                Spacing="8">
+                                Spacing="7">
                                 <FontIcon
                                     FontFamily="Segoe Fluent Icons"
-                                    FontSize="14"
+                                    FontSize="13"
                                     Glyph="&#xE8C8;" />
                                 <TextBlock
                                     x:Name="CopyDiagnosticsButtonText"
@@ -820,10 +821,10 @@
                             IsEnabled="{x:Bind ViewModel.CanOpenSelectedPluginLocation, Mode=OneWay}">
                             <StackPanel
                                 Orientation="Horizontal"
-                                Spacing="8">
+                                Spacing="7">
                                 <FontIcon
                                     FontFamily="Segoe Fluent Icons"
-                                    FontSize="14"
+                                    FontSize="13"
                                     Glyph="&#xE8B7;" />
                                 <TextBlock
                                     x:Name="OpenPluginLocationButtonText"
@@ -836,10 +837,10 @@
                             IsEnabled="{x:Bind ViewModel.CanDeleteSelectedPlugin, Mode=OneWay}">
                             <StackPanel
                                 Orientation="Horizontal"
-                                Spacing="8">
+                                Spacing="7">
                                 <FontIcon
                                     FontFamily="Segoe Fluent Icons"
-                                    FontSize="14"
+                                    FontSize="13"
                                     Glyph="&#xE74D;" />
                                 <TextBlock
                                     x:Name="DeleteSelectedPluginButtonText"
