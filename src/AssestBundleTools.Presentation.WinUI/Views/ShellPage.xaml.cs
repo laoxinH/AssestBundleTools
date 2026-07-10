@@ -371,8 +371,6 @@ public sealed partial class ShellPage : Page
     /// </summary>
     private void ApplyLocalizedText()
     {
-        PaneTitleText.Text = UiText.Get(ResourceKeys.ShellPaneTitle);
-        PaneSubtitleText.Text = UiText.Get(ResourceKeys.ShellPaneSubtitle);
         PluginManagementNavItem.Content = UiText.Get(ResourceKeys.ShellPluginManagementNavItemContent);
         SettingsDiagnosticsNavItem.Content = UiText.Get(ResourceKeys.ShellSettingsDiagnosticsNavItemContent);
         SettingsWorkspaceNavItem.Content = UiText.Get(ResourceKeys.SettingsDiagnosticsNavWorkspace);

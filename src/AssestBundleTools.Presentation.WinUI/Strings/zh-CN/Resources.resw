@@ -74,16 +74,6 @@
     <value>AssestBundleTools</value>
     <comment>主窗口标题</comment>
   </data>
-  <data name="MainWindow.Subtitle" xml:space="preserve">
-    <value>Unity AssetBundle 工作台</value>
-    <comment>主窗口副标题</comment>
-  </data>
-  <data name="Shell.Pane.Title" xml:space="preserve">
-    <value>工作区导航</value>
-  </data>
-  <data name="Shell.Pane.Subtitle" xml:space="preserve">
-    <value>启动、工作台与诊断</value>
-  </data>
   <data name="Shell.ConsoleNavItem.Content" xml:space="preserve">
     <value>控制台</value>
   </data>

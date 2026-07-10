@@ -6,10 +6,7 @@ namespace AssestBundleTools.Presentation.WinUI.Localization;
 public static class ResourceKeys
 {
     public const string MainWindowTitle = "MainWindow.Title";
-    public const string MainWindowSubtitle = "MainWindow.Subtitle";
 
-    public const string ShellPaneTitle = "Shell.Pane.Title";
-    public const string ShellPaneSubtitle = "Shell.Pane.Subtitle";
     public const string ShellSettingsDiagnosticsNavItemContent = "Shell.SettingsDiagnosticsNavItem.Content";
     public const string ShellPluginManagementNavItemContent = "Shell.PluginManagementNavItem.Content";
     public const string ShellConsoleNavItemContent = "Shell.ConsoleNavItem.Content";

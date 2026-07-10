@@ -74,16 +74,6 @@
     <value>AssestBundleTools</value>
     <comment>Main window title</comment>
   </data>
-  <data name="MainWindow.Subtitle" xml:space="preserve">
-    <value>Unity AssetBundle Workspace</value>
-    <comment>Main window subtitle</comment>
-  </data>
-  <data name="Shell.Pane.Title" xml:space="preserve">
-    <value>Workspace Navigation</value>
-  </data>
-  <data name="Shell.Pane.Subtitle" xml:space="preserve">
-    <value>Launch, Workbench, and Diagnostics</value>
-  </data>
   <data name="Shell.ConsoleNavItem.Content" xml:space="preserve">
     <value>Console</value>
   </data>

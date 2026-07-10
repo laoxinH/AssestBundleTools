@@ -85,7 +85,7 @@ public sealed partial class MainWindow : Microsoft.UI.Xaml.Window
             }
 
             var titleBar = _appWindow.TitleBar;
-            titleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
+            titleBar.PreferredHeightOption = TitleBarHeightOption.Standard;
             titleBar.ButtonBackgroundColor = Colors.Transparent;
             titleBar.ButtonInactiveBackgroundColor = Colors.Transparent;
             titleBar.ButtonHoverBackgroundColor = ColorHelper.FromArgb(20, 255, 255, 255);
@@ -138,14 +138,12 @@ public sealed partial class MainWindow : Microsoft.UI.Xaml.Window
         {
             Title = _localizationService.GetRequiredString(ResourceKeys.MainWindowTitle);
             WindowTitleText.Text = Title;
-            WindowSubtitleText.Text = _localizationService.GetRequiredString(ResourceKeys.MainWindowSubtitle);
         }
         catch (Exception ex)
         {
             StartupDiagnostics.Log($"Main window title localization failed: {ex}");
             Title = "AssestBundleTools";
             WindowTitleText.Text = Title;
-            WindowSubtitleText.Text = string.Empty;
         }
 
         try

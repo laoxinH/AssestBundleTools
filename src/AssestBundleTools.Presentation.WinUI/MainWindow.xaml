@@ -9,7 +9,7 @@
 
     <Grid Background="Transparent">
         <Grid.RowDefinitions>
-            <RowDefinition Height="48" />
+            <RowDefinition Height="32" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
@@ -23,22 +23,12 @@
                 <ColumnDefinition x:Name="RightInsetColumn" Width="0" />
             </Grid.ColumnDefinitions>
 
-            <Grid
+            <TextBlock
+                x:Name="WindowTitleText"
                 Grid.Column="1"
-                MinHeight="48"
-                Padding="16,6,16,8">
-                <StackPanel
-                    Spacing="0"
-                    VerticalAlignment="Center">
-                    <TextBlock
-                        x:Name="WindowTitleText"
-                        Style="{ThemeResource BodyStrongTextBlockStyle}" />
-                    <TextBlock
-                        x:Name="WindowSubtitleText"
-                        Margin="0,2,0,0"
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                </StackPanel>
-            </Grid>
+                Margin="16,0"
+                VerticalAlignment="Center"
+                Style="{ThemeResource BodyStrongTextBlockStyle}" />
         </Grid>
 
         <ContentControl
