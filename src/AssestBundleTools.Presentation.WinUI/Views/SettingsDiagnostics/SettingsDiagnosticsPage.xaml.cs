@@ -11,11 +11,6 @@ namespace AssestBundleTools.Presentation.WinUI.Views.SettingsDiagnostics;
 /// </summary>
 public sealed partial class SettingsDiagnosticsPage : Page
 {
-    private const string WorkspaceSubPageTag = "workspace";
-    private const string PreferencesSubPageTag = "preferences";
-    private const string PerformanceCacheSubPageTag = "performance-cache";
-    private const string LogsSubPageTag = "logs";
-
     public SettingsDiagnosticsPage()
     {
         ViewModel = new SettingsDiagnosticsViewModel(
@@ -29,9 +24,9 @@ public sealed partial class SettingsDiagnosticsPage : Page
 
         InitializeComponent();
         PreferenceSettingsPanel.Content = new SettingsPreferencesView(ViewModel);
+        PerformanceCacheSettingsPanel.Content = new SettingsPerformanceCacheView(ViewModel);
         ApplyLocalizedText();
-        SettingsSubPageNavigationView.SelectedItem = SettingsWorkspaceNavItem;
-        ShowSettingsSubPage(WorkspaceSubPageTag);
+        ActivateSection(SettingsDiagnosticsSection.Preferences);
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
     }
@@ -41,56 +36,26 @@ public sealed partial class SettingsDiagnosticsPage : Page
     private void ApplyLocalizedText()
     {
         PageTitleText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsPageTitle);
-        SettingsWorkspaceNavItem.Content = UiText.Get(ResourceKeys.SettingsDiagnosticsNavWorkspace);
-        SettingsPreferencesNavItem.Content = UiText.Get(ResourceKeys.SettingsDiagnosticsNavPreferences);
-        SettingsPerformanceCacheNavItem.Content = UiText.Get(ResourceKeys.SettingsDiagnosticsNavPerformanceCache);
-        SettingsLogsNavItem.Content = UiText.Get(ResourceKeys.SettingsDiagnosticsNavLogs);
         WorkspaceStatusTitleText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsWorkspaceStatusTitle);
         WorkspaceStatusHintText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsWorkspaceStatusHint);
         ActiveWorkspaceEmptyText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsActiveWorkspaceEmpty);
         WorkspaceCatalogTitleText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsWorkspaceCatalogTitle);
         WorkspaceCatalogHintText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsWorkspaceCatalogHint);
         WorkspaceCatalogEmptyText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsWorkspaceCatalogEmpty);
-        WorkspaceImportPerformanceTitleText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsWorkspaceImportPerformanceTitle);
-        WorkspaceImportPerformanceHintText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsWorkspaceImportPerformanceHint);
-        WorkspaceImportWorkerCountLabelText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsWorkspaceImportWorkerCountLabel);
-        WorkspaceImportWorkerCountDescriptionText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsWorkspaceImportWorkerCountRowDescription);
-        PreviewWorkerCountLabelText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsPreviewWorkerCountLabel);
-        PreviewWorkerCountDescriptionText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsPreviewWorkerCountRowDescription);
-        BundleArtifactCacheTitleText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheTitle);
-        BundleArtifactCacheHintText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheHint);
-        BundleArtifactCacheAutoPruneLabelText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheAutoPruneHeader);
-        BundleArtifactCacheAutoPruneDescriptionText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheAutoPruneRowDescription);
-        BundleArtifactCacheMaximumSizeLabelText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheMaximumSizeLabel);
-        BundleArtifactCacheMaximumSizeDescriptionText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheMaximumSizeRowDescription);
-        RefreshBundleArtifactCacheButtonText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheRefreshButton);
-        ClearBundleArtifactCacheButtonText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheClearButton);
         LogCenterTitleText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsLogCenterTitle);
         LogCenterHintText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsLogCenterHint);
     }
 
-    private void OnSettingsSubPageNavigationSelectionChanged(
-        NavigationView sender,
-        NavigationViewSelectionChangedEventArgs args)
+    internal void ActivateSection(SettingsDiagnosticsSection section)
     {
-        if (args.SelectedItemContainer?.Tag is string selectedTag)
-        {
-            ShowSettingsSubPage(selectedTag);
-        }
+        WorkspaceSettingsPanel.Visibility = ToVisibility(section == SettingsDiagnosticsSection.Workspace);
+        PreferenceSettingsPanel.Visibility = ToVisibility(section == SettingsDiagnosticsSection.Preferences);
+        PerformanceCacheSettingsPanel.Visibility = ToVisibility(section == SettingsDiagnosticsSection.PerformanceCache);
+        LogCenterPanel.Visibility = ToVisibility(section == SettingsDiagnosticsSection.Logs);
     }
 
-    private void ShowSettingsSubPage(string selectedTag)
-    {
-        WorkspaceSettingsPanel.Visibility = IsSubPageSelected(selectedTag, WorkspaceSubPageTag);
-        PreferenceSettingsPanel.Visibility = IsSubPageSelected(selectedTag, PreferencesSubPageTag);
-        PerformanceCacheSettingsPanel.Visibility = IsSubPageSelected(selectedTag, PerformanceCacheSubPageTag);
-        LogCenterPanel.Visibility = IsSubPageSelected(selectedTag, LogsSubPageTag);
-    }
-
-    private static Visibility IsSubPageSelected(string selectedTag, string targetTag) =>
-        string.Equals(selectedTag, targetTag, StringComparison.Ordinal)
-            ? Visibility.Visible
-            : Visibility.Collapsed;
+    private static Visibility ToVisibility(bool isVisible) =>
+        isVisible ? Visibility.Visible : Visibility.Collapsed;
 
     private async void OnLoaded(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {

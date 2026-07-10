@@ -23,6 +23,7 @@
             OpenPaneLength="280"
             PaneDisplayMode="Left"
             VerticalContentAlignment="Stretch"
+            ItemInvoked="OnNavigationItemInvoked"
             SelectionChanged="OnNavigationSelectionChanged">
             <NavigationView.Resources>
                 <!-- 去掉 NavigationView 模板自带的内容大卡片背景与圆角，
@@ -76,10 +77,45 @@
                 <NavigationViewItem
                     x:Name="SettingsDiagnosticsNavItem"
                     x:Uid="Shell.SettingsDiagnosticsNavItem"
+                    SelectsOnInvoked="False"
                     Tag="settings-diagnostics">
                     <NavigationViewItem.Icon>
                         <SymbolIcon Symbol="Setting" />
                     </NavigationViewItem.Icon>
+                    <NavigationViewItem.MenuItems>
+                        <NavigationViewItem
+                            x:Name="SettingsWorkspaceNavItem"
+                            Tag="settings-diagnostics-workspace">
+                            <NavigationViewItem.Icon>
+                                <SymbolIcon Symbol="Folder" />
+                            </NavigationViewItem.Icon>
+                        </NavigationViewItem>
+                        <NavigationViewItem
+                            x:Name="SettingsPreferencesNavItem"
+                            Tag="settings-diagnostics-preferences">
+                            <NavigationViewItem.Icon>
+                                <SymbolIcon Symbol="Setting" />
+                            </NavigationViewItem.Icon>
+                        </NavigationViewItem>
+                        <NavigationViewItem
+                            x:Name="SettingsPerformanceCacheNavItem"
+                            Tag="settings-diagnostics-performance-cache">
+                            <NavigationViewItem.Icon>
+                                <FontIcon
+                                    FontFamily="Segoe Fluent Icons"
+                                    Glyph="&#xE9D9;" />
+                            </NavigationViewItem.Icon>
+                        </NavigationViewItem>
+                        <NavigationViewItem
+                            x:Name="SettingsLogsNavItem"
+                            Tag="settings-diagnostics-logs">
+                            <NavigationViewItem.Icon>
+                                <FontIcon
+                                    FontFamily="Segoe Fluent Icons"
+                                    Glyph="&#xE9D5;" />
+                            </NavigationViewItem.Icon>
+                        </NavigationViewItem>
+                    </NavigationViewItem.MenuItems>
                 </NavigationViewItem>
             </NavigationView.MenuItems>
 

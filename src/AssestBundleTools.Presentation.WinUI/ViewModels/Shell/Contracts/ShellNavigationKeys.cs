@@ -12,4 +12,8 @@ public static class ShellNavigationKeys
     public const string Workbench = "workbench";
     public const string PluginManagement = "plugin-management";
     public const string SettingsDiagnostics = "settings-diagnostics";
+    public const string SettingsDiagnosticsWorkspace = "settings-diagnostics-workspace";
+    public const string SettingsDiagnosticsPreferences = "settings-diagnostics-preferences";
+    public const string SettingsDiagnosticsPerformanceCache = "settings-diagnostics-performance-cache";
+    public const string SettingsDiagnosticsLogs = "settings-diagnostics-logs";
 }

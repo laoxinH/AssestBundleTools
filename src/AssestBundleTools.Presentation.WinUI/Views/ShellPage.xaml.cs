@@ -31,6 +31,7 @@ public sealed partial class ShellPage : Page
     private bool _isSynchronizingNavigationSelection;
     private bool _isPointerOverBackgroundTaskSummary;
     private bool _isPointerOverBackgroundTasksPanel;
+    private SettingsDiagnosticsSection _lastSettingsSection = SettingsDiagnosticsSection.Preferences;
     private ShellWindowMode _windowMode;
 
     public ShellPage()
@@ -90,9 +91,10 @@ public sealed partial class ShellPage : Page
     /// 控制台页当前复用第一导航入口承载，因此导航项允许与正式工作台共用。
     /// </summary>
     private readonly record struct ShellNavigationTarget(
-        string NavigationKey,
+        string ShellSectionKey,
         Type PageType,
-        NavigationViewItem? NavigationItem);
+        NavigationViewItem? NavigationItem,
+        SettingsDiagnosticsSection? SettingsSection = null);
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
@@ -124,6 +126,17 @@ public sealed partial class ShellPage : Page
         }
 
         NavigateTo(navigationKey, parameter: null, updateSelection: false);
+    }
+
+    private void OnNavigationItemInvoked(NavigationView sender, NavigationViewItemInvokedEventArgs args)
+    {
+        if (!ReferenceEquals(args.InvokedItemContainer, SettingsDiagnosticsNavItem))
+        {
+            return;
+        }
+
+        SettingsDiagnosticsNavItem.IsExpanded = true;
+        NavigateTo(GetSettingsNavigationKey(_lastSettingsSection), parameter: null, updateSelection: true);
     }
 
     private void OnCancelBackgroundTaskButtonClick(object sender, RoutedEventArgs e)
@@ -200,6 +213,12 @@ public sealed partial class ShellPage : Page
     {
         var navigationTarget = ResolveNavigationTarget(navigationKey, parameter);
 
+        if (navigationTarget.SettingsSection is { } settingsSection)
+        {
+            _lastSettingsSection = settingsSection;
+            SettingsDiagnosticsNavItem.IsExpanded = true;
+        }
+
         if (updateSelection)
         {
             SynchronizeNavigationSelection(navigationTarget.NavigationItem);
@@ -210,7 +229,13 @@ public sealed partial class ShellPage : Page
             ContentFrame.Navigate(navigationTarget.PageType, parameter);
         }
 
-        ViewModel.ApplySection(navigationTarget.NavigationKey);
+        if (navigationTarget.SettingsSection is { } activeSettingsSection &&
+            ContentFrame.Content is SettingsDiagnosticsPage settingsPage)
+        {
+            settingsPage.ActivateSection(activeSettingsSection);
+        }
+
+        ViewModel.ApplySection(navigationTarget.ShellSectionKey);
     }
 
     private ShellNavigationTarget ResolveNavigationTarget(string navigationKey, object? parameter)
@@ -238,6 +263,11 @@ public sealed partial class ShellPage : Page
             return CreateNavigationTarget(ShellNavigationKeys.Workbench);
         }
 
+        if (IsSettingsDiagnosticsNavigationKey(navigationKey))
+        {
+            return CreateNavigationTarget(navigationKey);
+        }
+
         return _windowMode switch
         {
             ShellWindowMode.Workspace => ResolveWorkspaceModeTarget(navigationKey),
@@ -256,7 +286,6 @@ public sealed partial class ShellPage : Page
         return navigationKey switch
         {
             ShellNavigationKeys.PluginManagement => CreateNavigationTarget(ShellNavigationKeys.PluginManagement),
-            ShellNavigationKeys.SettingsDiagnostics => CreateNavigationTarget(ShellNavigationKeys.SettingsDiagnostics),
             _ => CreateNavigationTarget(ShellNavigationKeys.LaunchGuide)
         };
     }
@@ -266,7 +295,6 @@ public sealed partial class ShellPage : Page
         return navigationKey switch
         {
             ShellNavigationKeys.PluginManagement => CreateNavigationTarget(ShellNavigationKeys.PluginManagement),
-            ShellNavigationKeys.SettingsDiagnostics => CreateNavigationTarget(ShellNavigationKeys.SettingsDiagnostics),
             ShellNavigationKeys.LaunchGuide => CreateNavigationTarget(ShellNavigationKeys.Workbench),
             _ => CreateNavigationTarget(ShellNavigationKeys.Workbench)
         };
@@ -288,15 +316,54 @@ public sealed partial class ShellPage : Page
                 navigationKey,
                 typeof(PluginManagementPage),
                 PluginManagementNavItem),
-            ShellNavigationKeys.SettingsDiagnostics => new ShellNavigationTarget(
-                navigationKey,
-                typeof(SettingsDiagnosticsPage),
-                SettingsDiagnosticsNavItem),
+            ShellNavigationKeys.SettingsDiagnostics => CreateSettingsNavigationTarget(_lastSettingsSection),
+            ShellNavigationKeys.SettingsDiagnosticsWorkspace => CreateSettingsNavigationTarget(
+                SettingsDiagnosticsSection.Workspace),
+            ShellNavigationKeys.SettingsDiagnosticsPreferences => CreateSettingsNavigationTarget(
+                SettingsDiagnosticsSection.Preferences),
+            ShellNavigationKeys.SettingsDiagnosticsPerformanceCache => CreateSettingsNavigationTarget(
+                SettingsDiagnosticsSection.PerformanceCache),
+            ShellNavigationKeys.SettingsDiagnosticsLogs => CreateSettingsNavigationTarget(
+                SettingsDiagnosticsSection.Logs),
             _ => CreateNavigationTarget(
                 _windowMode == ShellWindowMode.Workspace
                     ? ShellNavigationKeys.Workbench
                     : ShellNavigationKeys.LaunchGuide)
         };
+    }
+
+    private static bool IsSettingsDiagnosticsNavigationKey(string navigationKey) =>
+        navigationKey is ShellNavigationKeys.SettingsDiagnostics
+            or ShellNavigationKeys.SettingsDiagnosticsWorkspace
+            or ShellNavigationKeys.SettingsDiagnosticsPreferences
+            or ShellNavigationKeys.SettingsDiagnosticsPerformanceCache
+            or ShellNavigationKeys.SettingsDiagnosticsLogs;
+
+    private static string GetSettingsNavigationKey(SettingsDiagnosticsSection section) => section switch
+    {
+        SettingsDiagnosticsSection.Workspace => ShellNavigationKeys.SettingsDiagnosticsWorkspace,
+        SettingsDiagnosticsSection.Preferences => ShellNavigationKeys.SettingsDiagnosticsPreferences,
+        SettingsDiagnosticsSection.PerformanceCache => ShellNavigationKeys.SettingsDiagnosticsPerformanceCache,
+        SettingsDiagnosticsSection.Logs => ShellNavigationKeys.SettingsDiagnosticsLogs,
+        _ => ShellNavigationKeys.SettingsDiagnosticsPreferences
+    };
+
+    private ShellNavigationTarget CreateSettingsNavigationTarget(SettingsDiagnosticsSection section)
+    {
+        var navigationItem = section switch
+        {
+            SettingsDiagnosticsSection.Workspace => SettingsWorkspaceNavItem,
+            SettingsDiagnosticsSection.Preferences => SettingsPreferencesNavItem,
+            SettingsDiagnosticsSection.PerformanceCache => SettingsPerformanceCacheNavItem,
+            SettingsDiagnosticsSection.Logs => SettingsLogsNavItem,
+            _ => SettingsPreferencesNavItem
+        };
+
+        return new ShellNavigationTarget(
+            ShellNavigationKeys.SettingsDiagnostics,
+            typeof(SettingsDiagnosticsPage),
+            navigationItem,
+            section);
     }
 
     /// <summary>
@@ -308,6 +375,10 @@ public sealed partial class ShellPage : Page
         PaneSubtitleText.Text = UiText.Get(ResourceKeys.ShellPaneSubtitle);
         PluginManagementNavItem.Content = UiText.Get(ResourceKeys.ShellPluginManagementNavItemContent);
         SettingsDiagnosticsNavItem.Content = UiText.Get(ResourceKeys.ShellSettingsDiagnosticsNavItemContent);
+        SettingsWorkspaceNavItem.Content = UiText.Get(ResourceKeys.SettingsDiagnosticsNavWorkspace);
+        SettingsPreferencesNavItem.Content = UiText.Get(ResourceKeys.SettingsDiagnosticsNavPreferences);
+        SettingsPerformanceCacheNavItem.Content = UiText.Get(ResourceKeys.SettingsDiagnosticsNavPerformanceCache);
+        SettingsLogsNavItem.Content = UiText.Get(ResourceKeys.SettingsDiagnosticsNavLogs);
     }
 
     private void OnBackgroundTasksPropertyChanged(object? sender, PropertyChangedEventArgs e)
