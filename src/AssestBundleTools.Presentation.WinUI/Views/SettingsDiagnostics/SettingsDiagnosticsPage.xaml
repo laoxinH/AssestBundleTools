@@ -538,6 +538,7 @@
                                                 Spacing="10">
                                                 <ToggleSwitch
                                                     x:Name="RestoreLastWorkspaceOnStartupToggleSwitch"
+                                                    FlowDirection="RightToLeft"
                                                     HorizontalAlignment="Right"
                                                     VerticalAlignment="Center"
                                                     IsOn="{x:Bind ViewModel.RestoreLastWorkspaceOnStartup, Mode=TwoWay}" />
@@ -903,6 +904,7 @@
                                             <ToggleSwitch
                                                 x:Name="BundleArtifactCacheAutoPruneToggleSwitch"
                                                 Grid.Column="2"
+                                                FlowDirection="RightToLeft"
                                                 HorizontalAlignment="Right"
                                                 VerticalAlignment="Center"
                                                 IsOn="{x:Bind ViewModel.BundleArtifactCache.AutoPruneEnabled, Mode=TwoWay}" />
