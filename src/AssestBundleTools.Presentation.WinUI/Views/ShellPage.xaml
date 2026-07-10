@@ -24,7 +24,7 @@
             OpenPaneLength="280"
             PaneDisplayMode="Left"
             PaneClosing="OnNavigationPaneClosing"
-            PaneOpening="OnNavigationPaneOpening"
+            PaneOpened="OnNavigationPaneOpened"
             VerticalContentAlignment="Stretch"
             ItemInvoked="OnNavigationItemInvoked"
             SelectionChanged="OnNavigationSelectionChanged">

@@ -18,6 +18,14 @@ public sealed class SettingsDiagnosticsPageContractTests
             "AssestBundleTools.Presentation.WinUI",
             "Views",
             "ShellPage.xaml.cs"));
+        var shellNavigationPaneCoordinatorCode = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "Views",
+            "Shell",
+            "Coordinators",
+            "ShellNavigationPaneCoordinator.cs"));
         var shellNavigationKeys = File.ReadAllText(Path.Combine(
             repositoryRoot,
             "src",
@@ -88,7 +96,8 @@ public sealed class SettingsDiagnosticsPageContractTests
 
         Assert.Contains("ItemInvoked=\"OnNavigationItemInvoked\"", shellXaml);
         Assert.Contains("PaneClosing=\"OnNavigationPaneClosing\"", shellXaml);
-        Assert.Contains("PaneOpening=\"OnNavigationPaneOpening\"", shellXaml);
+        Assert.Contains("PaneOpened=\"OnNavigationPaneOpened\"", shellXaml);
+        Assert.DoesNotContain("PaneOpening=", shellXaml);
         Assert.Contains("x:Name=\"SettingsDiagnosticsNavItem\"", shellXaml);
         Assert.Contains("IsExpanded=\"True\"", shellXaml);
         Assert.Contains("SelectsOnInvoked=\"False\"", shellXaml);
@@ -113,10 +122,11 @@ public sealed class SettingsDiagnosticsPageContractTests
         Assert.Contains("ActivateSection(SettingsDiagnosticsSection.Preferences)", pageCode);
         Assert.Contains("ContentFrame.Content is SettingsDiagnosticsPage", shellCode);
         Assert.Contains("if (!sender.IsPaneOpen)", shellCode);
-        Assert.Contains("if (RootNavigationView.IsPaneOpen)", shellCode);
-        Assert.Contains("SettingsDiagnosticsNavItem.IsExpanded = false", shellCode);
-        Assert.Contains("ApplySettingsNavigationPaneLayout(RootNavigationView.IsPaneOpen)", shellCode);
-        Assert.Contains("RootNavigationView.OpenPaneLength - RootNavigationView.CompactPaneLength", shellCode);
+        Assert.Contains("new ShellNavigationPaneCoordinator(", shellCode);
+        Assert.Contains("_navigationPaneCoordinator.ExpandSettingsIfPaneOpen()", shellCode);
+        Assert.Contains("_settingsNavigationItem.IsExpanded = false", shellNavigationPaneCoordinatorCode);
+        Assert.Contains("ApplySettingsPageLayout(_navigationView.IsPaneOpen)", shellNavigationPaneCoordinatorCode);
+        Assert.Contains("_navigationView.OpenPaneLength - _navigationView.CompactPaneLength", shellNavigationPaneCoordinatorCode);
         Assert.Contains("_lastSettingsSection = SettingsDiagnosticsSection.Preferences", shellCode);
         Assert.Contains("SettingsDiagnosticsNavWorkspace", shellCode);
         Assert.Contains("SettingsDiagnosticsNavPreferences", shellCode);

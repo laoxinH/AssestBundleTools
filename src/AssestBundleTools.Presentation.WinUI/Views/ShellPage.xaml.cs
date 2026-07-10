@@ -5,6 +5,7 @@ using AssestBundleTools.Presentation.WinUI.Views.BundleExplorer;
 using AssestBundleTools.Presentation.WinUI.Views.Home;
 using AssestBundleTools.Presentation.WinUI.Views.PluginManagement;
 using AssestBundleTools.Presentation.WinUI.Views.SettingsDiagnostics;
+using AssestBundleTools.Presentation.WinUI.Views.Shell.Coordinators;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
@@ -27,6 +28,7 @@ public sealed partial class ShellPage : Page
 {
     private readonly AssestBundleTools.Presentation.WinUI.MainWindow? _hostWindow;
     private readonly ShellLaunchRequest? _launchRequest;
+    private readonly ShellNavigationPaneCoordinator _navigationPaneCoordinator;
     private readonly DispatcherTimer _backgroundTaskPanelCloseTimer = new();
     private bool _isSynchronizingNavigationSelection;
     private bool _isPointerOverBackgroundTaskSummary;
@@ -52,6 +54,10 @@ public sealed partial class ShellPage : Page
             DispatcherQueue);
         ViewModel = new ShellViewModel(App.CurrentApp.LocalizationService);
         InitializeComponent();
+        _navigationPaneCoordinator = new ShellNavigationPaneCoordinator(
+            RootNavigationView,
+            SettingsDiagnosticsNavItem,
+            ContentFrame);
         if (BackgroundTaskStatusService is AppBackgroundTaskStatusService backgroundTaskStatusService)
         {
             backgroundTaskStatusService.AttachDispatcherQueue(DispatcherQueue);
@@ -141,7 +147,7 @@ public sealed partial class ShellPage : Page
             return;
         }
 
-        SettingsDiagnosticsNavItem.IsExpanded = true;
+        _navigationPaneCoordinator.ExpandSettingsIfPaneOpen();
         NavigateTo(GetSettingsNavigationKey(_lastSettingsSection), parameter: null, updateSelection: true);
     }
 
@@ -222,10 +228,7 @@ public sealed partial class ShellPage : Page
         if (navigationTarget.SettingsSection is { } settingsSection)
         {
             _lastSettingsSection = settingsSection;
-            if (RootNavigationView.IsPaneOpen)
-            {
-                SettingsDiagnosticsNavItem.IsExpanded = true;
-            }
+            _navigationPaneCoordinator.ExpandSettingsIfPaneOpen();
         }
 
         if (updateSelection)
@@ -242,36 +245,20 @@ public sealed partial class ShellPage : Page
             ContentFrame.Content is SettingsDiagnosticsPage settingsPage)
         {
             settingsPage.ActivateSection(activeSettingsSection);
-            ApplySettingsNavigationPaneLayout(RootNavigationView.IsPaneOpen);
+            _navigationPaneCoordinator.ApplyCurrentLayout();
         }
 
         ViewModel.ApplySection(navigationTarget.ShellSectionKey);
     }
 
-    private void OnNavigationPaneOpening(NavigationView sender, object args)
-    {
-        SettingsDiagnosticsNavItem.IsExpanded = true;
-        ApplySettingsNavigationPaneLayout(isPaneOpen: true);
-    }
+    private void OnNavigationPaneOpened(NavigationView sender, object args) =>
+        _navigationPaneCoordinator.HandlePaneOpened();
 
     private void OnNavigationPaneClosing(
         NavigationView sender,
         NavigationViewPaneClosingEventArgs args)
     {
-        SettingsDiagnosticsNavItem.IsExpanded = false;
-        ApplySettingsNavigationPaneLayout(isPaneOpen: false);
-    }
-
-    private void ApplySettingsNavigationPaneLayout(bool isPaneOpen)
-    {
-        if (ContentFrame.Content is not SettingsDiagnosticsPage settingsPage)
-        {
-            return;
-        }
-
-        settingsPage.ApplyNavigationPaneLayout(
-            isPaneOpen,
-            RootNavigationView.OpenPaneLength - RootNavigationView.CompactPaneLength);
+        _navigationPaneCoordinator.HandlePaneClosing();
     }
 
     private ShellNavigationTarget ResolveNavigationTarget(string navigationKey, object? parameter)
