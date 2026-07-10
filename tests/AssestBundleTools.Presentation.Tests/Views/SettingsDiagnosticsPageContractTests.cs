@@ -75,10 +75,14 @@ public sealed class SettingsDiagnosticsPageContractTests
         Assert.Contains("x:Key=\"SettingsDiagnosticsSettingRowStyle\"", pageResources);
         Assert.Contains("x:Key=\"SettingsDiagnosticsSettingIconStyle\"", pageResources);
         Assert.Contains("x:Key=\"SettingsDiagnosticsSettingDescriptionTextStyle\"", pageResources);
+        Assert.Contains("x:Key=\"SettingsDiagnosticsTrailingToggleSwitchStyle\"", pageResources);
+        Assert.Contains("<Setter Property=\"MinWidth\" Value=\"0\" />", pageResources);
         Assert.Contains("x:Name=\"RecentWorkspaceOpenBehaviorComboBox\"", preferencesXaml);
         Assert.Contains("x:Name=\"AssetEditorCloseBehaviorComboBox\"", preferencesXaml);
         Assert.Contains("x:Name=\"RestoreLastWorkspaceOnStartupToggleSwitch\"", preferencesXaml);
+        Assert.Contains("Style=\"{StaticResource SettingsDiagnosticsTrailingToggleSwitchStyle}\"", preferencesXaml);
         Assert.Contains("x:Name=\"BundleArtifactCacheAutoPruneToggleSwitch\"", pageXaml);
+        Assert.Contains("Style=\"{StaticResource SettingsDiagnosticsTrailingToggleSwitchStyle}\"", pageXaml);
         Assert.DoesNotContain("FlowDirection=\"RightToLeft\"", string.Concat(pageXaml, preferencesXaml));
         Assert.Contains("x:Name=\"BundleArtifactCacheMaximumSizeDescriptionText\"", pageXaml);
         Assert.Contains("OperationRecordLimitSliderValue", preferencesXaml);

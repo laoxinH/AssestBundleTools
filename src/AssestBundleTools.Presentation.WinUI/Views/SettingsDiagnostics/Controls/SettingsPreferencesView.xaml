@@ -61,9 +61,8 @@
                             <ToggleSwitch
                                 x:Name="RestoreLastWorkspaceOnStartupToggleSwitch"
                                 Grid.Column="2"
-                                HorizontalAlignment="Right"
-                                VerticalAlignment="Center"
-                                IsOn="{x:Bind ViewModel.RestoreLastWorkspaceOnStartup, Mode=TwoWay}" />
+                                IsOn="{x:Bind ViewModel.RestoreLastWorkspaceOnStartup, Mode=TwoWay}"
+                                Style="{StaticResource SettingsDiagnosticsTrailingToggleSwitchStyle}" />
                         </Grid>
                     </Border>
 

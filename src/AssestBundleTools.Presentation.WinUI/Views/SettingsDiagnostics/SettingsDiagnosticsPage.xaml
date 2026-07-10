@@ -583,9 +583,8 @@
                                             <ToggleSwitch
                                                 x:Name="BundleArtifactCacheAutoPruneToggleSwitch"
                                                 Grid.Column="2"
-                                                HorizontalAlignment="Right"
-                                                VerticalAlignment="Center"
-                                                IsOn="{x:Bind ViewModel.BundleArtifactCache.AutoPruneEnabled, Mode=TwoWay}" />
+                                                IsOn="{x:Bind ViewModel.BundleArtifactCache.AutoPruneEnabled, Mode=TwoWay}"
+                                                Style="{StaticResource SettingsDiagnosticsTrailingToggleSwitchStyle}" />
                                         </Grid>
                                     </Border>
 
