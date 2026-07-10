@@ -88,6 +88,7 @@ public sealed class SettingsDiagnosticsPageContractTests
 
         Assert.Contains("ItemInvoked=\"OnNavigationItemInvoked\"", shellXaml);
         Assert.Contains("x:Name=\"SettingsDiagnosticsNavItem\"", shellXaml);
+        Assert.Contains("IsExpanded=\"True\"", shellXaml);
         Assert.Contains("SelectsOnInvoked=\"False\"", shellXaml);
         Assert.Contains("<NavigationViewItem.MenuItems>", shellXaml);
         Assert.Contains("x:Name=\"SettingsWorkspaceNavItem\"", shellXaml);
