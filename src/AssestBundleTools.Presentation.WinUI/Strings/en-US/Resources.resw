@@ -3294,9 +3294,6 @@
   <data name="SettingsDiagnosticsPage.Navigation.PerformanceCache" xml:space="preserve">
     <value>Performance &amp; Cache</value>
   </data>
-  <data name="SettingsDiagnosticsPage.Navigation.Diagnostics" xml:space="preserve">
-    <value>Diagnostics</value>
-  </data>
   <data name="SettingsDiagnosticsPage.Navigation.Logs" xml:space="preserve">
     <value>Log Center</value>
   </data>
@@ -3548,18 +3545,6 @@
   </data>
   <data name="SettingsDiagnosticsPage.BundleArtifactCache.ClearSucceeded.Format" xml:space="preserve">
     <value>Cleared {0} artifacts and released {1}.</value>
-  </data>
-  <data name="SettingsDiagnosticsPage.ResponsibilityTitleText.Text" xml:space="preserve">
-    <value>Page Role</value>
-  </data>
-  <data name="SettingsDiagnosticsPage.ResponsibilityBodyText.Text" xml:space="preserve">
-    <value>The main workspace no longer carries a large log surface. Detailed records are gathered here so browsing, selecting, and inspecting assets stays focused.</value>
-  </data>
-  <data name="SettingsDiagnosticsPage.DiagnosticsTitleText.Text" xml:space="preserve">
-    <value>Next Milestones</value>
-  </data>
-  <data name="SettingsDiagnosticsPage.DiagnosticsBodyText.Text" xml:space="preserve">
-    <value>Later milestones will expand this page with language switching, theme strategy, environment checks, log export, and debugging toggles.</value>
   </data>
   <data name="SettingsDiagnosticsPage.LogCenterTitleText.Text" xml:space="preserve">
     <value>Detailed Log Center</value>

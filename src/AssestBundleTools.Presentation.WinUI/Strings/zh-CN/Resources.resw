@@ -3294,9 +3294,6 @@
   <data name="SettingsDiagnosticsPage.Navigation.PerformanceCache" xml:space="preserve">
     <value>性能与缓存</value>
   </data>
-  <data name="SettingsDiagnosticsPage.Navigation.Diagnostics" xml:space="preserve">
-    <value>诊断说明</value>
-  </data>
   <data name="SettingsDiagnosticsPage.Navigation.Logs" xml:space="preserve">
     <value>日志中心</value>
   </data>
@@ -3548,18 +3545,6 @@
   </data>
   <data name="SettingsDiagnosticsPage.BundleArtifactCache.ClearSucceeded.Format" xml:space="preserve">
     <value>已清理 {0} 个 artifact，释放 {1}。</value>
-  </data>
-  <data name="SettingsDiagnosticsPage.ResponsibilityTitleText.Text" xml:space="preserve">
-    <value>页面职责</value>
-  </data>
-  <data name="SettingsDiagnosticsPage.ResponsibilityBodyText.Text" xml:space="preserve">
-    <value>主工作区不再承载大块日志面板，而是把详细记录集中到这里，减少浏览、选择和检查资源时的视觉打断。</value>
-  </data>
-  <data name="SettingsDiagnosticsPage.DiagnosticsTitleText.Text" xml:space="preserve">
-    <value>后续扩展</value>
-  </data>
-  <data name="SettingsDiagnosticsPage.DiagnosticsBodyText.Text" xml:space="preserve">
-    <value>后续将在这里继续补语言切换、主题策略、环境检查、日志导出与调试开关，保持“设置”和“诊断”职责集中。</value>
   </data>
   <data name="SettingsDiagnosticsPage.LogCenterTitleText.Text" xml:space="preserve">
     <value>详细日志中心</value>

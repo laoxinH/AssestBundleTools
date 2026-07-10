@@ -31,13 +31,13 @@ public sealed class SettingsDiagnosticsPageContractTests
         Assert.Contains("x:Name=\"SettingsWorkspaceNavItem\"", pageXaml);
         Assert.Contains("x:Name=\"SettingsPreferencesNavItem\"", pageXaml);
         Assert.Contains("x:Name=\"SettingsPerformanceCacheNavItem\"", pageXaml);
-        Assert.Contains("x:Name=\"SettingsDiagnosticsNavItem\"", pageXaml);
         Assert.Contains("x:Name=\"SettingsLogsNavItem\"", pageXaml);
+        Assert.DoesNotContain("x:Name=\"SettingsDiagnosticsNavItem\"", pageXaml);
         Assert.Contains("x:Name=\"WorkspaceSettingsPanel\"", pageXaml);
         Assert.Contains("x:Name=\"PreferenceSettingsPanel\"", pageXaml);
         Assert.Contains("x:Name=\"PerformanceCacheSettingsPanel\"", pageXaml);
-        Assert.Contains("x:Name=\"DiagnosticsSettingsPanel\"", pageXaml);
         Assert.Contains("x:Name=\"LogCenterPanel\"", pageXaml);
+        Assert.DoesNotContain("x:Name=\"DiagnosticsSettingsPanel\"", pageXaml);
         Assert.Contains("x:Key=\"SettingsDiagnosticsContentColumnStyle\"", pageXaml);
         Assert.Contains("x:Key=\"SettingsDiagnosticsSurfaceStyle\"", pageXaml);
         Assert.Contains("<Setter Property=\"Background\" Value=\"Transparent\" />", pageXaml);
@@ -45,7 +45,6 @@ public sealed class SettingsDiagnosticsPageContractTests
         Assert.Contains("Width=\"{Binding ViewportWidth, ElementName=WorkspaceSettingsPanel}\"", pageXaml);
         Assert.Contains("Width=\"{Binding ViewportWidth, ElementName=PreferenceSettingsPanel}\"", pageXaml);
         Assert.Contains("Width=\"{Binding ViewportWidth, ElementName=PerformanceCacheSettingsPanel}\"", pageXaml);
-        Assert.Contains("Width=\"{Binding ViewportWidth, ElementName=DiagnosticsSettingsPanel}\"", pageXaml);
         Assert.DoesNotContain("MaxWidth=\"900\"", pageXaml);
         Assert.Contains("x:Key=\"SettingsDiagnosticsSettingRowStyle\"", pageXaml);
         Assert.Contains("x:Key=\"SettingsDiagnosticsSettingIconStyle\"", pageXaml);

@@ -13,7 +13,6 @@ public sealed partial class SettingsDiagnosticsPage : Page
     private const string WorkspaceSubPageTag = "workspace";
     private const string PreferencesSubPageTag = "preferences";
     private const string PerformanceCacheSubPageTag = "performance-cache";
-    private const string DiagnosticsSubPageTag = "diagnostics";
     private const string LogsSubPageTag = "logs";
 
     public SettingsDiagnosticsPage()
@@ -43,7 +42,6 @@ public sealed partial class SettingsDiagnosticsPage : Page
         SettingsWorkspaceNavItem.Content = UiText.Get(ResourceKeys.SettingsDiagnosticsNavWorkspace);
         SettingsPreferencesNavItem.Content = UiText.Get(ResourceKeys.SettingsDiagnosticsNavPreferences);
         SettingsPerformanceCacheNavItem.Content = UiText.Get(ResourceKeys.SettingsDiagnosticsNavPerformanceCache);
-        SettingsDiagnosticsNavItem.Content = UiText.Get(ResourceKeys.SettingsDiagnosticsNavDiagnostics);
         SettingsLogsNavItem.Content = UiText.Get(ResourceKeys.SettingsDiagnosticsNavLogs);
         WorkspaceStatusTitleText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsWorkspaceStatusTitle);
         WorkspaceStatusHintText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsWorkspaceStatusHint);
@@ -88,10 +86,6 @@ public sealed partial class SettingsDiagnosticsPage : Page
         BundleArtifactCacheMaximumSizeDescriptionText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheMaximumSizeRowDescription);
         RefreshBundleArtifactCacheButtonText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheRefreshButton);
         ClearBundleArtifactCacheButtonText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsBundleArtifactCacheClearButton);
-        ResponsibilityTitleText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsResponsibilityTitle);
-        ResponsibilityBodyText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsResponsibilityBody);
-        DiagnosticsTitleText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsDiagnosticsTitle);
-        DiagnosticsBodyText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsDiagnosticsBody);
         LogCenterTitleText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsLogCenterTitle);
         LogCenterHintText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsLogCenterHint);
     }
@@ -111,7 +105,6 @@ public sealed partial class SettingsDiagnosticsPage : Page
         WorkspaceSettingsPanel.Visibility = IsSubPageSelected(selectedTag, WorkspaceSubPageTag);
         PreferenceSettingsPanel.Visibility = IsSubPageSelected(selectedTag, PreferencesSubPageTag);
         PerformanceCacheSettingsPanel.Visibility = IsSubPageSelected(selectedTag, PerformanceCacheSubPageTag);
-        DiagnosticsSettingsPanel.Visibility = IsSubPageSelected(selectedTag, DiagnosticsSubPageTag);
         LogCenterPanel.Visibility = IsSubPageSelected(selectedTag, LogsSubPageTag);
     }
 

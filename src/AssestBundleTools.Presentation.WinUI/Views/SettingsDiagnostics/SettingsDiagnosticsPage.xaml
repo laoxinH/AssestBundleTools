@@ -197,15 +197,6 @@
                         </NavigationViewItem.Icon>
                     </NavigationViewItem>
                     <NavigationViewItem
-                        x:Name="SettingsDiagnosticsNavItem"
-                        Tag="diagnostics">
-                        <NavigationViewItem.Icon>
-                            <FontIcon
-                                FontFamily="Segoe Fluent Icons"
-                                Glyph="&#xE946;" />
-                        </NavigationViewItem.Icon>
-                    </NavigationViewItem>
-                    <NavigationViewItem
                         x:Name="SettingsLogsNavItem"
                         Tag="logs">
                         <NavigationViewItem.Icon>
@@ -960,43 +951,6 @@
                                         </Grid>
                                     </Border>
                                 </StackPanel>
-                            </StackPanel>
-                        </Border>
-                    </ScrollViewer>
-
-                    <ScrollViewer
-                        x:Name="DiagnosticsSettingsPanel"
-                        MinHeight="0"
-                        HorizontalScrollBarVisibility="Disabled"
-                        HorizontalScrollMode="Disabled"
-                        VerticalScrollBarVisibility="Auto"
-                        VerticalScrollMode="Enabled"
-                        Visibility="Collapsed">
-                        <Border
-                            Width="{Binding ViewportWidth, ElementName=DiagnosticsSettingsPanel}"
-                            Style="{StaticResource SettingsDiagnosticsContentColumnStyle}">
-                            <StackPanel Spacing="14">
-                                <Border Style="{StaticResource SettingsDiagnosticsGroupCardStyle}">
-                                <StackPanel Spacing="8">
-                                    <TextBlock
-                                        x:Name="ResponsibilityTitleText"
-                                        Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
-                                    <TextBlock
-                                        x:Name="ResponsibilityBodyText"
-                                        Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}" />
-                                </StackPanel>
-                                </Border>
-
-                                <Border Style="{StaticResource SettingsDiagnosticsGroupCardStyle}">
-                                <StackPanel Spacing="8">
-                                    <TextBlock
-                                        x:Name="DiagnosticsTitleText"
-                                        Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
-                                    <TextBlock
-                                        x:Name="DiagnosticsBodyText"
-                                        Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}" />
-                                </StackPanel>
-                                </Border>
                             </StackPanel>
                         </Border>
                     </ScrollViewer>
