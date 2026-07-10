@@ -1,10 +1,8 @@
-using AssestBundleTools.Application.Bundles;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Application.Workspace.Services;
 using AssestBundleTools.Application.Bundles.Services;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
-using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
@@ -54,7 +52,6 @@ public sealed partial class WorkspaceSetupDialogContent : UserControl
         ApplyLocalizedText();
         CurrentWindowRadioButton.IsChecked = true;
         UpdateOpenTargetCardVisuals();
-        UpdateSummary();
     }
 
     public string WorkspaceDisplayName
@@ -97,7 +94,6 @@ public sealed partial class WorkspaceSetupDialogContent : UserControl
 
         ConfigureFormMode();
         RefreshWorkspaceDisplayNamePresentation(showInlineValidation: false);
-        UpdateSummary();
         ClearValidationMessage();
     }
 
@@ -127,7 +123,6 @@ public sealed partial class WorkspaceSetupDialogContent : UserControl
         }
 
         UpdateOpenTargetCardVisuals();
-        UpdateSummary();
         ClearValidationMessage();
     }
 
@@ -204,7 +199,6 @@ public sealed partial class WorkspaceSetupDialogContent : UserControl
             return;
         }
 
-        UpdateSummary();
         ClearWorkspaceNameValidationMessage();
     }
 
@@ -217,13 +211,11 @@ public sealed partial class WorkspaceSetupDialogContent : UserControl
 
         ClearDataRootValidationMessage();
         RefreshWorkspaceDisplayNamePresentation(showInlineValidation: _dialogMode == WorkspaceDialogMode.Open);
-        UpdateSummary();
     }
 
     private void OnDecryptorSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         RefreshSelectedDecryptorPresentation();
-        UpdateSummary();
     }
 
     private void OnOpenTargetChecked(object sender, RoutedEventArgs e)
@@ -245,10 +237,6 @@ public sealed partial class WorkspaceSetupDialogContent : UserControl
         CurrentWindowOptionDescriptionText.Text = UiText.Get(ResourceKeys.WorkspaceDialogOpenTargetCurrentWindowDescription);
         NewWindowOptionTitleText.Text = UiText.Get(ResourceKeys.WorkspaceDialogOpenTargetNewWindow);
         NewWindowOptionDescriptionText.Text = UiText.Get(ResourceKeys.WorkspaceDialogOpenTargetNewWindowDescription);
-
-        SummarySectionTitleText.Text = UiText.Get(ResourceKeys.WorkspaceDialogSetupSummarySectionTitle);
-        SummaryWorkspaceNameLabelText.Text = UiText.Get(ResourceKeys.WorkspaceDialogSetupSummaryWorkspaceNameLabel);
-        SummaryDecryptorLabelText.Text = UiText.Get(ResourceKeys.WorkspaceDialogSetupSummaryDecryptorLabel);
     }
 
     private void ConfigureFormMode()
@@ -261,10 +249,6 @@ public sealed partial class WorkspaceSetupDialogContent : UserControl
             _dialogMode == WorkspaceDialogMode.New
                 ? ResourceKeys.WorkspaceDialogSetupDataRootSectionHint
                 : ResourceKeys.WorkspaceDialogSetupOpenDataRootSectionHint);
-        DataRootSectionTitleText.Text = UiText.Get(
-            _dialogMode == WorkspaceDialogMode.New
-                ? ResourceKeys.WorkspaceDialogSetupDataRootSectionTitle
-                : ResourceKeys.WorkspaceDialogSetupOpenDataRootSectionTitle);
         DataRootPathFieldLabelText.Text = UiText.Get(
             _dialogMode == WorkspaceDialogMode.New
                 ? ResourceKeys.WorkspaceDialogSetupDataRootPathHeader
@@ -273,10 +257,6 @@ public sealed partial class WorkspaceSetupDialogContent : UserControl
             _dialogMode == WorkspaceDialogMode.New
                 ? ResourceKeys.WorkspaceDialogSetupDataRootPathPlaceholder
                 : ResourceKeys.WorkspaceDialogSetupOpenDataRootPathPlaceholder);
-        SummaryDataRootPathLabelText.Text = UiText.Get(
-            _dialogMode == WorkspaceDialogMode.New
-                ? ResourceKeys.WorkspaceDialogSetupSummaryDataRootPathLabel
-                : ResourceKeys.WorkspaceDialogSetupOpenSummaryDataRootPathLabel);
         DecryptorDescriptionTextBlock.Text = UiText.Get(
             _dialogMode == WorkspaceDialogMode.New
                 ? ResourceKeys.WorkspaceDialogSetupDecryptorHint
@@ -290,18 +270,6 @@ public sealed partial class WorkspaceSetupDialogContent : UserControl
         {
             SelectAssetBundleDecryptor(null, allowFallback: false);
         }
-    }
-
-    private void UpdateSummary()
-    {
-        var pendingValue = UiText.Get(ResourceKeys.WorkspaceDialogSetupSummaryPendingValue);
-        SummaryWorkspaceNameValueText.Text = string.IsNullOrWhiteSpace(WorkspaceDisplayName)
-            ? pendingValue
-            : WorkspaceDisplayName;
-        SummaryDecryptorValueText.Text = ResolveSelectedDecryptorDisplayName() ?? pendingValue;
-        SummaryDataRootPathValueText.Text = string.IsNullOrWhiteSpace(WorkspaceDataRootPath)
-            ? pendingValue
-            : WorkspaceDataRootPath;
     }
 
     /// <summary>
@@ -438,13 +406,11 @@ public sealed partial class WorkspaceSetupDialogContent : UserControl
             WorkspaceDisplayName = inspection.Workspace.DisplayName.Trim();
             SelectAssetBundleDecryptor(inspection.Workspace.AssetBundleDecryptorId, allowFallback: false);
             ClearWorkspaceNameValidationMessage();
-            UpdateSummary();
             return;
         }
 
         WorkspaceDisplayName = string.Empty;
         SelectAssetBundleDecryptor(null, allowFallback: false);
-        UpdateSummary();
 
         if (!showInlineValidation)
         {
@@ -469,116 +435,6 @@ public sealed partial class WorkspaceSetupDialogContent : UserControl
             ResourceKeys.WorkspaceDialogSetupWorkspaceNameNotDetectedPlaceholder);
     }
 
-    private void SetDataRootValidationMessage(string validationMessage, bool announce)
-    {
-        ApplyFieldValidationState(DataRootPathTextBox, DataRootValidationTextBlock, validationMessage);
-
-        if (!announce)
-        {
-            return;
-        }
-
-        FocusValidationTarget(DataRootPathTextBox);
-        PlayValidationFeedback();
-    }
-
-    private void ShowWorkspaceNameValidationMessage(
-        string validationMessage,
-        bool announce,
-        string? placeholderResourceKey = null)
-    {
-        ApplyFieldValidationState(WorkspaceDisplayNameTextBox, WorkspaceNameValidationTextBlock, validationMessage);
-
-        if (!string.IsNullOrWhiteSpace(placeholderResourceKey))
-        {
-            WorkspaceDisplayNameTextBox.PlaceholderText = UiText.Get(placeholderResourceKey);
-        }
-
-        if (!announce)
-        {
-            return;
-        }
-
-        FocusValidationTarget(_dialogMode == WorkspaceDialogMode.Open
-            ? DataRootPathTextBox
-            : WorkspaceDisplayNameTextBox);
-        PlayValidationFeedback();
-    }
-
-    private void ClearDataRootValidationMessage()
-    {
-        ApplyFieldValidationState(DataRootPathTextBox, DataRootValidationTextBlock, null);
-    }
-
-    private void ClearWorkspaceNameValidationMessage()
-    {
-        ApplyFieldValidationState(WorkspaceDisplayNameTextBox, WorkspaceNameValidationTextBlock, null);
-        RestoreWorkspaceNamePlaceholder();
-    }
-
-    private void ApplyFieldValidationState(
-        TextBox textBox,
-        TextBlock validationTextBlock,
-        string? validationMessage)
-    {
-        var hasValidationError = !string.IsNullOrWhiteSpace(validationMessage);
-        validationTextBlock.Text = validationMessage ?? string.Empty;
-        validationTextBlock.Visibility = hasValidationError
-            ? Visibility.Visible
-            : Visibility.Collapsed;
-
-        ApplyTextBoxValidationStyle(textBox, hasValidationError);
-    }
-
-    private static void ApplyTextBoxValidationStyle(TextBox textBox, bool hasValidationError)
-    {
-        textBox.BorderBrush = hasValidationError
-            ? GetBrush("SystemFillColorCriticalBrush") ?? new SolidColorBrush(ColorHelper.FromArgb(255, 196, 43, 28))
-            : GetBrush("ControlStrokeColorDefaultBrush");
-
-        UpdateTextBoxResource(textBox, "TextControlBorderBrush", hasValidationError
-            ? textBox.BorderBrush
-            : null);
-        UpdateTextBoxResource(textBox, "TextControlBorderBrushFocused", hasValidationError
-            ? textBox.BorderBrush
-            : null);
-        UpdateTextBoxResource(textBox, "TextControlBorderBrushPointerOver", hasValidationError
-            ? textBox.BorderBrush
-            : null);
-    }
-
-    private static void UpdateTextBoxResource(TextBox textBox, string resourceKey, object? resourceValue)
-    {
-        if (resourceValue is null)
-        {
-            if (textBox.Resources.ContainsKey(resourceKey))
-            {
-                textBox.Resources.Remove(resourceKey);
-            }
-
-            return;
-        }
-
-        textBox.Resources[resourceKey] = resourceValue;
-    }
-
-    private void RestoreWorkspaceNamePlaceholder()
-    {
-        WorkspaceDisplayNameTextBox.PlaceholderText = UiText.Get(
-            _dialogMode == WorkspaceDialogMode.New
-                ? ResourceKeys.WorkspaceDialogSetupWorkspaceNamePlaceholder
-                : ResourceKeys.WorkspaceDialogSetupWorkspaceNameReadOnlyPlaceholder);
-    }
-
-    private void FocusValidationTarget(Control focusTarget)
-    {
-        FormScrollViewer.ChangeView(null, 0d, null, disableAnimation: false);
-        _ = focusTarget.Focus(FocusState.Programmatic);
-    }
-
-    private void PlayValidationFeedback() =>
-        _appInteractionFeedbackService.Play(AppInteractionFeedbackKind.ValidationError);
-
     private void SetTextBoxValue(TextBox textBox, string value)
     {
         if (string.Equals(textBox.Text, value, StringComparison.Ordinal))
@@ -589,142 +445,6 @@ public sealed partial class WorkspaceSetupDialogContent : UserControl
         _isApplyingTextBoxValue = true;
         textBox.Text = value;
         _isApplyingTextBoxValue = false;
-    }
-
-    private void PopulateDecryptorOptions()
-    {
-        DecryptorComboBox.Items.Clear();
-
-        // “自动识别”不是注册表里的真实解密器实现，而是工作区导入阶段的一种解析策略。
-        // 这里把它作为首选项显式展示出来，避免用户把“未选择”误解成“默认直通”。
-        DecryptorComboBox.Items.Add(CreateDecryptorComboBoxItem(
-            AssetBundleDecryptorIds.BuiltInAutoDetect,
-            AssetBundleDecryptorDisplayText.GetDisplayName(_localizationService, _assetBundleDecryptorRegistry, AssetBundleDecryptorIds.BuiltInAutoDetect),
-            AssetBundleDecryptorDisplayText.GetDescription(_localizationService, _assetBundleDecryptorRegistry, AssetBundleDecryptorIds.BuiltInAutoDetect)));
-
-        foreach (var decryptor in _assetBundleDecryptorRegistry.GetAll()
-                     .OrderByDescending(static decryptor => decryptor.Descriptor.IsFallback)
-                     .ThenBy(static decryptor => decryptor.Descriptor.DisplayName, StringComparer.CurrentCultureIgnoreCase))
-        {
-            DecryptorComboBox.Items.Add(CreateDecryptorComboBoxItem(
-                decryptor.Descriptor.Id,
-                AssetBundleDecryptorDisplayText.GetDisplayName(_localizationService, decryptor.Descriptor),
-                AssetBundleDecryptorDisplayText.GetDescription(_localizationService, decryptor.Descriptor)));
-        }
-    }
-
-    private void SelectAssetBundleDecryptor(string? decryptorId, bool allowFallback = true)
-    {
-        ComboBoxItem? matchedItem = null;
-
-        if (!string.IsNullOrWhiteSpace(decryptorId))
-        {
-            matchedItem = FindDecryptorComboBoxItem(decryptorId);
-            matchedItem ??= EnsureDecryptorComboBoxItem(
-                decryptorId.Trim(),
-                decryptorId.Trim(),
-                decryptorId.Trim());
-        }
-        else
-        {
-            matchedItem = FindAutoDetectDecryptorComboBoxItem();
-            if (matchedItem is null && allowFallback)
-            {
-                matchedItem = FindFallbackDecryptorComboBoxItem()
-                              ?? DecryptorComboBox.Items.OfType<ComboBoxItem>().FirstOrDefault();
-            }
-        }
-
-        if (ReferenceEquals(DecryptorComboBox.SelectedItem, matchedItem))
-        {
-            RefreshSelectedDecryptorPresentation();
-            return;
-        }
-
-        DecryptorComboBox.SelectedItem = matchedItem;
-        RefreshSelectedDecryptorPresentation();
-    }
-
-    private void RefreshSelectedDecryptorPresentation()
-    {
-        var selectedItem = DecryptorComboBox.SelectedItem as ComboBoxItem;
-        var selectedOption = selectedItem?.Tag as WorkspaceSetupDecryptorOption;
-        if (selectedOption is null)
-        {
-            DecryptorDescriptionTextBlock.Text = UiText.Get(
-                _dialogMode == WorkspaceDialogMode.New
-                    ? ResourceKeys.WorkspaceDialogSetupDecryptorHint
-                    : ResourceKeys.WorkspaceDialogSetupOpenDecryptorHint);
-            return;
-        }
-
-        DecryptorDescriptionTextBlock.Text = string.IsNullOrWhiteSpace(selectedOption.Description)
-            ? selectedItem?.Content?.ToString() ?? string.Empty
-            : selectedOption.Description;
-    }
-
-    private string? ResolveSelectedDecryptorDisplayName()
-    {
-        return (DecryptorComboBox.SelectedItem as ComboBoxItem)?.Content?.ToString();
-    }
-
-    private string? GetSelectedDecryptorId()
-    {
-        return (DecryptorComboBox.SelectedItem as ComboBoxItem)?.Tag is WorkspaceSetupDecryptorOption option
-            ? option.Id
-            : null;
-    }
-
-    private ComboBoxItem? FindFallbackDecryptorComboBoxItem()
-    {
-        return DecryptorComboBox.Items
-            .OfType<ComboBoxItem>()
-            .FirstOrDefault(static item => item.Tag is WorkspaceSetupDecryptorOption option &&
-                                           string.Equals(option.Id, AssetBundleDecryptorIds.BuiltInPassThrough, StringComparison.OrdinalIgnoreCase));
-    }
-
-    private ComboBoxItem? FindAutoDetectDecryptorComboBoxItem()
-    {
-        return DecryptorComboBox.Items
-            .OfType<ComboBoxItem>()
-            .FirstOrDefault(static item => item.Tag is WorkspaceSetupDecryptorOption option &&
-                                           string.Equals(option.Id, AssetBundleDecryptorIds.BuiltInAutoDetect, StringComparison.OrdinalIgnoreCase));
-    }
-
-    private ComboBoxItem? FindDecryptorComboBoxItem(string decryptorId)
-    {
-        return DecryptorComboBox.Items
-            .OfType<ComboBoxItem>()
-            .FirstOrDefault(item => item.Tag is WorkspaceSetupDecryptorOption option &&
-                                    string.Equals(option.Id, decryptorId.Trim(), StringComparison.OrdinalIgnoreCase));
-    }
-
-    private ComboBoxItem EnsureDecryptorComboBoxItem(
-        string decryptorId,
-        string displayName,
-        string? description)
-    {
-        var existingItem = FindDecryptorComboBoxItem(decryptorId);
-        if (existingItem is not null)
-        {
-            return existingItem;
-        }
-
-        var createdItem = CreateDecryptorComboBoxItem(decryptorId, displayName, description);
-        DecryptorComboBox.Items.Add(createdItem);
-        return createdItem;
-    }
-
-    private static ComboBoxItem CreateDecryptorComboBoxItem(
-        string decryptorId,
-        string displayName,
-        string? description)
-    {
-        return new ComboBoxItem
-        {
-            Content = displayName,
-            Tag = new WorkspaceSetupDecryptorOption(decryptorId, description)
-        };
     }
 
     private static string? BuildWorkspaceDisplayNameFromWorkspaceDirectoryPath(string workspaceDirectoryPath)
@@ -742,5 +462,3 @@ public sealed partial class WorkspaceSetupDialogContent : UserControl
             : trimmedPath;
     }
 }
-
-file sealed record WorkspaceSetupDecryptorOption(string Id, string? Description);

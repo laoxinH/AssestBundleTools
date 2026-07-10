@@ -325,10 +325,10 @@
     <value>取消</value>
   </data>
   <data name="WorkspaceDialog.Setup.New.Description" xml:space="preserve">
-    <value>像 IDE 创建项目一样，在一个配置面板中完成工作区目录、名称和打开方式设置。名称会优先根据目录自动生成；如果该目录里已经存在工作区，则会继续提示你直接打开还是重置后重新创建。</value>
+    <value>选择保存目录、命名工作区并确认打开方式。</value>
   </data>
   <data name="WorkspaceDialog.Setup.Open.Description" xml:space="preserve">
-    <value>从目录导入并打开已有工作区。这里不会创建新工作区，也不会修改已有工作区名称；只有当所选目录中确实存在可识别的工作区元数据时，才允许继续打开。</value>
+    <value>选择已包含工作区元数据的目录。</value>
   </data>
   <data name="WorkspaceDialog.Setup.Workspace.Name.Header" xml:space="preserve">
     <value>工作区名称</value>
@@ -352,13 +352,13 @@
     <value>工作区目录</value>
   </data>
   <data name="WorkspaceDialog.Setup.DataRoot.SectionHint" xml:space="preserve">
-    <value>该目录用于存放工具生成的工作区元数据、恢复状态和后续缓存。工作区名称会优先读取该目录中已有的工作区名称，否则自动退回到目录名。建议为每个工作区使用独立目录，方便后续恢复与迁移。</value>
+    <value>保存元数据、恢复状态和缓存。建议每个工作区使用独立目录。</value>
   </data>
   <data name="WorkspaceDialog.Setup.Open.DataRoot.SectionHint" xml:space="preserve">
-    <value>请选择一个已经包含工作区元数据的目录。当前入口只负责从目录导入并打开现有工作区；如果该目录尚未进入最近工作区索引，系统会在打开成功后自动补登记。</value>
+    <value>打开已有工作区，成功后会自动登记到最近列表。</value>
   </data>
   <data name="WorkspaceDialog.Setup.DataRoot.Path.Header" xml:space="preserve">
-    <value>数据保存目录</value>
+    <value>工作区数据目录</value>
   </data>
   <data name="WorkspaceDialog.Setup.Open.DataRoot.Path.Header" xml:space="preserve">
     <value>工作区目录</value>
@@ -376,7 +376,7 @@
     <value>打开方式</value>
   </data>
   <data name="WorkspaceDialog.Setup.OpenTarget.SectionHint" xml:space="preserve">
-    <value>根据当前任务选择在当前窗口继续，或保留当前界面并用新窗口并行处理。</value>
+    <value>选择复用当前窗口或新建窗口。</value>
   </data>
   <data name="WorkspaceDialog.Setup.Summary.SectionTitle" xml:space="preserve">
     <value>配置摘要</value>
@@ -430,10 +430,10 @@
     <value>取消</value>
   </data>
   <data name="WorkspaceDialog.OpenTargetDescription.CurrentWindow" xml:space="preserve">
-    <value>替换当前窗口中的工作区上下文，适合快速切换任务。</value>
+    <value>在当前窗口进入工作区。</value>
   </data>
   <data name="WorkspaceDialog.OpenTargetDescription.NewWindow" xml:space="preserve">
-    <value>保留当前窗口状态，并在新的主窗口中打开工作区，适合并行对比。</value>
+    <value>保留当前界面并行打开。</value>
   </data>
   <data name="Workspace.Source.NotImported" xml:space="preserve">
     <value>尚未导入资源</value>
@@ -4225,10 +4225,10 @@
     <value>工作区解密器</value>
   </data>
   <data name="WorkspaceDialog.Setup.Decryptor.Hint" xml:space="preserve">
-    <value>为当前工作区选择默认解密器，后续导入资源包时会统一使用这项配置。</value>
+    <value>后续导入资源包时使用的默认解密策略。</value>
   </data>
   <data name="WorkspaceDialog.Setup.Open.Decryptor.Hint" xml:space="preserve">
-    <value>已有工作区会沿用元数据中保存的解密器配置。</value>
+    <value>沿用该工作区保存的解密器配置。</value>
   </data>
   <data name="WorkspaceDialog.Setup.Summary.Decryptor.Label" xml:space="preserve">
     <value>解密器</value>

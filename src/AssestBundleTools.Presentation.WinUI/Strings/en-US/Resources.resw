@@ -325,10 +325,10 @@
     <value>Cancel</value>
   </data>
   <data name="WorkspaceDialog.Setup.New.Description" xml:space="preserve">
-    <value>Like an IDE project wizard, this panel keeps the workspace directory, name, and open target visible in one place. The name is suggested from the selected directory, and if that directory already contains a workspace, the wizard will ask whether to open it directly or reset it and create again.</value>
+    <value>Choose a directory, name the workspace, and select how it opens.</value>
   </data>
   <data name="WorkspaceDialog.Setup.Open.Description" xml:space="preserve">
-    <value>Import and open an existing workspace from a directory. This flow does not create a new workspace and does not rename an existing one; it only continues when recognizable workspace metadata is found in the selected directory.</value>
+    <value>Choose a directory that already contains workspace metadata.</value>
   </data>
   <data name="WorkspaceDialog.Setup.Workspace.Name.Header" xml:space="preserve">
     <value>Workspace name</value>
@@ -352,13 +352,13 @@
     <value>Workspace Directory</value>
   </data>
   <data name="WorkspaceDialog.Setup.DataRoot.SectionHint" xml:space="preserve">
-    <value>This directory stores tool-generated workspace metadata, restore state, and later cache files. The workspace name is first loaded from any existing workspace found there; otherwise the directory name is used. A dedicated folder per workspace is recommended for clearer recovery and migration.</value>
+    <value>Stores metadata, restore state, and cache files. Use a dedicated folder per workspace.</value>
   </data>
   <data name="WorkspaceDialog.Setup.Open.DataRoot.SectionHint" xml:space="preserve">
-    <value>Select a directory that already contains workspace metadata. This entry only imports and opens an existing workspace; if the directory is not yet in the recent workspace index, it will be registered automatically after the workspace opens successfully.</value>
+    <value>Opens an existing workspace and registers it in recents after success.</value>
   </data>
   <data name="WorkspaceDialog.Setup.DataRoot.Path.Header" xml:space="preserve">
-    <value>Data directory</value>
+    <value>Workspace data directory</value>
   </data>
   <data name="WorkspaceDialog.Setup.Open.DataRoot.Path.Header" xml:space="preserve">
     <value>Workspace directory</value>
@@ -376,7 +376,7 @@
     <value>Open Target</value>
   </data>
   <data name="WorkspaceDialog.Setup.OpenTarget.SectionHint" xml:space="preserve">
-    <value>Choose whether to continue in the current window or keep the current view and open the workspace in a new window.</value>
+    <value>Choose the current window or a new window.</value>
   </data>
   <data name="WorkspaceDialog.Setup.Summary.SectionTitle" xml:space="preserve">
     <value>Configuration Summary</value>
@@ -430,10 +430,10 @@
     <value>Cancel</value>
   </data>
   <data name="WorkspaceDialog.OpenTargetDescription.CurrentWindow" xml:space="preserve">
-    <value>Replaces the current window workspace context and is best for quick task switching.</value>
+    <value>Open in this window.</value>
   </data>
   <data name="WorkspaceDialog.OpenTargetDescription.NewWindow" xml:space="preserve">
-    <value>Keeps the current window intact and opens the workspace in a new main window for side-by-side work.</value>
+    <value>Keep this view and open in parallel.</value>
   </data>
   <data name="Workspace.Source.NotImported" xml:space="preserve">
     <value>No resources imported yet</value>
@@ -4225,10 +4225,10 @@
     <value>Workspace Decryptor</value>
   </data>
   <data name="WorkspaceDialog.Setup.Decryptor.Hint" xml:space="preserve">
-    <value>Select the default decryptor for this workspace. Future bundle imports will use this configuration.</value>
+    <value>Default decrypt strategy for future bundle imports.</value>
   </data>
   <data name="WorkspaceDialog.Setup.Open.Decryptor.Hint" xml:space="preserve">
-    <value>Existing workspaces continue using the decryptor saved in their metadata.</value>
+    <value>Uses the decryptor saved in this workspace.</value>
   </data>
   <data name="WorkspaceDialog.Setup.Summary.Decryptor.Label" xml:space="preserve">
     <value>Decryptor</value>

@@ -5,56 +5,122 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    MinWidth="620"
+    MaxWidth="660"
     mc:Ignorable="d">
 
     <UserControl.Resources>
         <Style
             x:Key="WorkspaceFieldValidationTextStyle"
             TargetType="TextBlock">
-            <Setter
-                Property="FontSize"
-                Value="12" />
-            <Setter
-                Property="Foreground"
-                Value="{ThemeResource SystemFillColorCriticalBrush}" />
-            <Setter
-                Property="TextWrapping"
-                Value="WrapWholeWords" />
-            <Setter
-                Property="Visibility"
-                Value="Collapsed" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Foreground" Value="{ThemeResource SystemFillColorCriticalBrush}" />
+            <Setter Property="TextWrapping" Value="WrapWholeWords" />
+            <Setter Property="Visibility" Value="Collapsed" />
+        </Style>
+
+        <Style
+            x:Key="WorkspaceSetupSecondaryTextStyle"
+            TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
+            <Setter Property="TextWrapping" Value="WrapWholeWords" />
+        </Style>
+
+        <Style
+            x:Key="WorkspaceSetupCardStyle"
+            TargetType="Border">
+            <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+            <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="12" />
+        </Style>
+
+        <Style
+            x:Key="WorkspaceSetupRowIconStyle"
+            TargetType="Border">
+            <Setter Property="Width" Value="34" />
+            <Setter Property="Height" Value="34" />
+            <Setter Property="Background" Value="{ThemeResource SubtleFillColorSecondaryBrush}" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="VerticalAlignment" Value="Top" />
+        </Style>
+
+        <Style
+            x:Key="WorkspaceSetupBrowseButtonStyle"
+            TargetType="Button">
+            <Setter Property="MinWidth" Value="112" />
+            <Setter Property="MinHeight" Value="36" />
+            <Setter Property="Padding" Value="12,0" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+        </Style>
+
+        <Style
+            x:Key="WorkspaceSetupOptionCardStyle"
+            TargetType="Border">
+            <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorSecondaryBrush}" />
+            <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Padding" Value="12,10" />
         </Style>
     </UserControl.Resources>
 
     <ScrollViewer
         x:Name="FormScrollViewer"
-        MaxHeight="640"
-        HorizontalScrollMode="Disabled"
+        MaxHeight="560"
         HorizontalScrollBarVisibility="Disabled"
+        HorizontalScrollMode="Disabled"
         VerticalScrollBarVisibility="Auto">
-        <StackPanel Spacing="16">
+        <StackPanel Spacing="12">
             <TextBlock
                 x:Name="DescriptionText"
-                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                TextWrapping="WrapWholeWords" />
+                MaxLines="2"
+                Style="{StaticResource WorkspaceSetupSecondaryTextStyle}" />
 
-            <Border
-                Style="{StaticResource SettingsInsetCardStyle}"
-                Padding="18">
-                <StackPanel Spacing="12">
-                    <TextBlock
-                        x:Name="DataRootSectionTitleText"
-                        Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
-                    <TextBlock
-                        x:Name="DataRootSectionHintText"
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        TextWrapping="WrapWholeWords" />
+            <Border Style="{StaticResource WorkspaceSetupCardStyle}">
+                <StackPanel>
+                    <Grid
+                        Padding="16"
+                        ColumnSpacing="14"
+                        RowSpacing="10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="34" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
 
-                    <StackPanel Spacing="6">
-                        <TextBlock
-                            x:Name="DataRootPathFieldLabelText"
-                            Style="{StaticResource WorkspaceFieldLabelTextStyle}" />
-                        <StackPanel Spacing="6">
+                        <Border Style="{StaticResource WorkspaceSetupRowIconStyle}">
+                            <FontIcon
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                FontFamily="Segoe Fluent Icons"
+                                FontSize="16"
+                                Glyph="&#xE8B7;" />
+                        </Border>
+
+                        <StackPanel
+                            Grid.Column="1"
+                            Spacing="2">
+                            <TextBlock
+                                x:Name="DataRootPathFieldLabelText"
+                                Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
+                            <TextBlock
+                                x:Name="DataRootSectionHintText"
+                                MaxLines="2"
+                                Style="{StaticResource WorkspaceSetupSecondaryTextStyle}" />
+                        </StackPanel>
+
+                        <StackPanel
+                            Grid.Row="1"
+                            Grid.Column="1"
+                            Spacing="6">
                             <Grid ColumnSpacing="10">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
@@ -63,19 +129,21 @@
 
                                 <TextBox
                                     x:Name="DataRootPathTextBox"
+                                    MinHeight="36"
                                     TextChanged="OnDataRootPathTextChanged" />
 
                                 <Button
                                     x:Name="BrowseDataRootButton"
                                     Grid.Column="1"
-                                    Style="{StaticResource WorkspaceCommandButtonStyle}"
-                                    Click="OnBrowseDataRootButtonClick">
+                                    Click="OnBrowseDataRootButtonClick"
+                                    Style="{StaticResource WorkspaceSetupBrowseButtonStyle}">
                                     <StackPanel
                                         Orientation="Horizontal"
                                         Spacing="8">
                                         <FontIcon
-                                            Glyph="&#xE838;"
-                                            FontSize="14" />
+                                            FontFamily="Segoe Fluent Icons"
+                                            FontSize="14"
+                                            Glyph="&#xE838;" />
                                         <TextBlock
                                             x:Name="BrowseDataRootButtonText"
                                             FontSize="13" />
@@ -88,53 +156,137 @@
                                 AutomationProperties.LiveSetting="Polite"
                                 Style="{StaticResource WorkspaceFieldValidationTextStyle}" />
                         </StackPanel>
-                    </StackPanel>
+                    </Grid>
 
-                    <StackPanel Spacing="6">
+                    <Border
+                        Height="1"
+                        Margin="64,0,0,0"
+                        Background="{ThemeResource CardStrokeColorDefaultBrush}" />
+
+                    <Grid
+                        Padding="16"
+                        ColumnSpacing="14"
+                        RowSpacing="6">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="34" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="260" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <Border Style="{StaticResource WorkspaceSetupRowIconStyle}">
+                            <FontIcon
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                FontFamily="Segoe Fluent Icons"
+                                FontSize="15"
+                                Glyph="&#xE8AC;" />
+                        </Border>
+
                         <TextBlock
                             x:Name="WorkspaceNameFieldLabelText"
-                            Style="{StaticResource WorkspaceFieldLabelTextStyle}" />
-                        <StackPanel Spacing="6">
-                            <TextBox
-                                x:Name="WorkspaceDisplayNameTextBox"
-                                TextChanged="OnWorkspaceDisplayNameTextChanged" />
-                            <TextBlock
-                                x:Name="WorkspaceNameValidationTextBlock"
-                                AutomationProperties.LiveSetting="Polite"
-                                Style="{StaticResource WorkspaceFieldValidationTextStyle}" />
-                        </StackPanel>
-                    </StackPanel>
+                            Grid.Column="1"
+                            VerticalAlignment="Center"
+                            Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
 
-                    <StackPanel Spacing="6">
+                        <TextBox
+                            x:Name="WorkspaceDisplayNameTextBox"
+                            Grid.Column="2"
+                            MinHeight="36"
+                            TextChanged="OnWorkspaceDisplayNameTextChanged" />
+
                         <TextBlock
-                            x:Name="DecryptorFieldLabelText"
-                            Style="{StaticResource WorkspaceFieldLabelTextStyle}" />
-                        <StackPanel Spacing="6">
-                            <ComboBox
-                                x:Name="DecryptorComboBox"
-                                SelectionChanged="OnDecryptorSelectionChanged" />
+                            x:Name="WorkspaceNameValidationTextBlock"
+                            Grid.Row="1"
+                            Grid.Column="1"
+                            Grid.ColumnSpan="2"
+                            AutomationProperties.LiveSetting="Polite"
+                            Style="{StaticResource WorkspaceFieldValidationTextStyle}" />
+                    </Grid>
+
+                    <Border
+                        Height="1"
+                        Margin="64,0,0,0"
+                        Background="{ThemeResource CardStrokeColorDefaultBrush}" />
+
+                    <Grid
+                        Padding="16"
+                        ColumnSpacing="14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="34" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="220" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Style="{StaticResource WorkspaceSetupRowIconStyle}">
+                            <FontIcon
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                FontFamily="Segoe Fluent Icons"
+                                FontSize="15"
+                                Glyph="&#xE72E;" />
+                        </Border>
+
+                        <StackPanel
+                            Grid.Column="1"
+                            Spacing="2">
+                            <TextBlock
+                                x:Name="DecryptorFieldLabelText"
+                                Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
                             <TextBlock
                                 x:Name="DecryptorDescriptionTextBlock"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                TextWrapping="WrapWholeWords" />
+                                MaxLines="2"
+                                TextTrimming="CharacterEllipsis"
+                                Style="{StaticResource WorkspaceSetupSecondaryTextStyle}" />
                         </StackPanel>
-                    </StackPanel>
+
+                        <ComboBox
+                            x:Name="DecryptorComboBox"
+                            Grid.Column="2"
+                            MinHeight="36"
+                            HorizontalAlignment="Stretch"
+                            SelectionChanged="OnDecryptorSelectionChanged" />
+                    </Grid>
                 </StackPanel>
             </Border>
 
             <Border
-                Style="{StaticResource SettingsInsetCardStyle}"
-                Padding="18">
+                Padding="16"
+                Style="{StaticResource WorkspaceSetupCardStyle}">
                 <StackPanel Spacing="12">
-                    <TextBlock
-                        x:Name="OpenTargetSectionTitleText"
-                        Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
-                    <TextBlock
-                        x:Name="OpenTargetSectionHintText"
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        TextWrapping="WrapWholeWords" />
+                    <Grid ColumnSpacing="14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="34" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
 
-                    <Grid ColumnSpacing="12">
+                        <Border Style="{StaticResource WorkspaceSetupRowIconStyle}">
+                            <FontIcon
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                FontFamily="Segoe Fluent Icons"
+                                FontSize="15"
+                                Glyph="&#xE7F4;" />
+                        </Border>
+
+                        <StackPanel
+                            Grid.Column="1"
+                            Spacing="2">
+                            <TextBlock
+                                x:Name="OpenTargetSectionTitleText"
+                                Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
+                            <TextBlock
+                                x:Name="OpenTargetSectionHintText"
+                                MaxLines="1"
+                                TextTrimming="CharacterEllipsis"
+                                Style="{StaticResource WorkspaceSetupSecondaryTextStyle}" />
+                        </StackPanel>
+                    </Grid>
+
+                    <Grid ColumnSpacing="10">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="*" />
@@ -142,22 +294,21 @@
 
                         <Border
                             x:Name="CurrentWindowOptionBorder"
-                            CornerRadius="14"
-                            Padding="14"
-                            BorderThickness="1">
+                            Style="{StaticResource WorkspaceSetupOptionCardStyle}">
                             <RadioButton
                                 x:Name="CurrentWindowRadioButton"
                                 GroupName="WorkspaceOpenTarget"
                                 Checked="OnOpenTargetChecked">
-                                <StackPanel Spacing="4">
+                                <StackPanel Spacing="2">
                                     <TextBlock
                                         x:Name="CurrentWindowOptionTitleText"
                                         FontWeight="SemiBold"
                                         TextWrapping="WrapWholeWords" />
                                     <TextBlock
                                         x:Name="CurrentWindowOptionDescriptionText"
-                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                        TextWrapping="WrapWholeWords" />
+                                        MaxLines="1"
+                                        TextTrimming="CharacterEllipsis"
+                                        Style="{StaticResource WorkspaceSetupSecondaryTextStyle}" />
                                 </StackPanel>
                             </RadioButton>
                         </Border>
@@ -165,76 +316,24 @@
                         <Border
                             x:Name="NewWindowOptionBorder"
                             Grid.Column="1"
-                            CornerRadius="14"
-                            Padding="14"
-                            BorderThickness="1">
+                            Style="{StaticResource WorkspaceSetupOptionCardStyle}">
                             <RadioButton
                                 x:Name="NewWindowRadioButton"
                                 GroupName="WorkspaceOpenTarget"
                                 Checked="OnOpenTargetChecked">
-                                <StackPanel Spacing="4">
+                                <StackPanel Spacing="2">
                                     <TextBlock
                                         x:Name="NewWindowOptionTitleText"
                                         FontWeight="SemiBold"
                                         TextWrapping="WrapWholeWords" />
                                     <TextBlock
                                         x:Name="NewWindowOptionDescriptionText"
-                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                        TextWrapping="WrapWholeWords" />
+                                        MaxLines="1"
+                                        TextTrimming="CharacterEllipsis"
+                                        Style="{StaticResource WorkspaceSetupSecondaryTextStyle}" />
                                 </StackPanel>
                             </RadioButton>
                         </Border>
-                    </Grid>
-                </StackPanel>
-            </Border>
-
-            <Border
-                Style="{StaticResource SettingsInsetCardStyle}"
-                Padding="18">
-                <StackPanel Spacing="10">
-                    <TextBlock
-                        x:Name="SummarySectionTitleText"
-                        Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
-
-                    <Grid ColumnSpacing="12" RowSpacing="8">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
-
-                        <TextBlock
-                            x:Name="SummaryWorkspaceNameLabelText"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                        <TextBlock
-                            x:Name="SummaryWorkspaceNameValueText"
-                            Grid.Column="1"
-                            FontWeight="SemiBold"
-                            TextWrapping="WrapWholeWords" />
-
-                        <TextBlock
-                            x:Name="SummaryDecryptorLabelText"
-                            Grid.Row="1"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                        <TextBlock
-                            x:Name="SummaryDecryptorValueText"
-                            Grid.Row="1"
-                            Grid.Column="1"
-                            TextWrapping="WrapWholeWords" />
-
-                        <TextBlock
-                            x:Name="SummaryDataRootPathLabelText"
-                            Grid.Row="2"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                        <TextBlock
-                            x:Name="SummaryDataRootPathValueText"
-                            Grid.Row="2"
-                            Grid.Column="1"
-                            TextWrapping="WrapWholeWords" />
                     </Grid>
                 </StackPanel>
             </Border>
