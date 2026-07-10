@@ -112,6 +112,9 @@ public sealed class SettingsDiagnosticsPageContractTests
         Assert.Contains("new SettingsPerformanceCacheView(ViewModel)", pageCode);
         Assert.Contains("ActivateSection(SettingsDiagnosticsSection.Preferences)", pageCode);
         Assert.Contains("ContentFrame.Content is SettingsDiagnosticsPage", shellCode);
+        Assert.Contains("if (!sender.IsPaneOpen)", shellCode);
+        Assert.Contains("if (RootNavigationView.IsPaneOpen)", shellCode);
+        Assert.Contains("SettingsDiagnosticsNavItem.IsExpanded = false", shellCode);
         Assert.Contains("ApplySettingsNavigationPaneLayout(RootNavigationView.IsPaneOpen)", shellCode);
         Assert.Contains("RootNavigationView.OpenPaneLength - RootNavigationView.CompactPaneLength", shellCode);
         Assert.Contains("_lastSettingsSection = SettingsDiagnosticsSection.Preferences", shellCode);

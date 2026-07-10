@@ -135,6 +135,12 @@ public sealed partial class ShellPage : Page
             return;
         }
 
+        // compact 状态由 NavigationView 自己打开层级浮层，立即导航会打断子项容器创建。
+        if (!sender.IsPaneOpen)
+        {
+            return;
+        }
+
         SettingsDiagnosticsNavItem.IsExpanded = true;
         NavigateTo(GetSettingsNavigationKey(_lastSettingsSection), parameter: null, updateSelection: true);
     }
@@ -216,7 +222,10 @@ public sealed partial class ShellPage : Page
         if (navigationTarget.SettingsSection is { } settingsSection)
         {
             _lastSettingsSection = settingsSection;
-            SettingsDiagnosticsNavItem.IsExpanded = true;
+            if (RootNavigationView.IsPaneOpen)
+            {
+                SettingsDiagnosticsNavItem.IsExpanded = true;
+            }
         }
 
         if (updateSelection)
@@ -241,6 +250,7 @@ public sealed partial class ShellPage : Page
 
     private void OnNavigationPaneOpening(NavigationView sender, object args)
     {
+        SettingsDiagnosticsNavItem.IsExpanded = true;
         ApplySettingsNavigationPaneLayout(isPaneOpen: true);
     }
 
@@ -248,6 +258,7 @@ public sealed partial class ShellPage : Page
         NavigationView sender,
         NavigationViewPaneClosingEventArgs args)
     {
+        SettingsDiagnosticsNavItem.IsExpanded = false;
         ApplySettingsNavigationPaneLayout(isPaneOpen: false);
     }
 
