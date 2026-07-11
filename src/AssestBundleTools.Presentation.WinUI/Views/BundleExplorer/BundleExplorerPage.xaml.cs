@@ -22,6 +22,7 @@ namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer;
 /// </remarks>
 public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost, IAssetDocumentGroupDragHost
 {
+    private const double BundlePaneHeaderTwoRowThreshold = 268d;
     private readonly BundleExplorerPageChromeCoordinator _chromeCoordinator;
     private readonly BundleExplorerPageNavigationCoordinator _navigationCoordinator;
     private readonly BundleExplorerPagePaneLayoutCoordinator _paneLayoutCoordinator;
@@ -362,6 +363,22 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
 
     private void OnBundlePaneCollapseButtonClick(object sender, RoutedEventArgs e) =>
         ViewModel.ToggleBundlePaneCollapsed();
+
+    private void OnBundlePaneHeaderGridSizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        var useTwoRows = e.NewSize.Width < BundlePaneHeaderTwoRowThreshold;
+
+        Grid.SetColumnSpan(LeftPanelTitleText, useTwoRows ? 2 : 1);
+        Grid.SetRow(BundlePaneHeaderActions, useTwoRows ? 1 : 0);
+        Grid.SetColumn(BundlePaneHeaderActions, useTwoRows ? 0 : 1);
+        Grid.SetColumnSpan(BundlePaneHeaderActions, useTwoRows ? 2 : 1);
+        BundlePaneHeaderActions.HorizontalAlignment = useTwoRows
+            ? HorizontalAlignment.Left
+            : HorizontalAlignment.Right;
+        BundlePaneHeaderActions.Margin = useTwoRows
+            ? new Thickness(0, 4, 0, 0)
+            : new Thickness(0);
+    }
 
     private async void OnWorkspaceBatchExtractChipButtonClick(object sender, RoutedEventArgs e)
     {

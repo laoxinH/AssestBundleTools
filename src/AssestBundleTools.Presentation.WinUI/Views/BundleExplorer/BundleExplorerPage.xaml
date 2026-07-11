@@ -655,18 +655,29 @@
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
-                    <Grid ColumnSpacing="8">
+                    <Grid
+                        x:Name="BundlePaneHeaderGrid"
+                        ColumnSpacing="8"
+                        SizeChanged="OnBundlePaneHeaderGridSizeChanged">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
 
                         <TextBlock
                             x:Name="LeftPanelTitleText"
+                            TextTrimming="CharacterEllipsis"
+                            TextWrapping="NoWrap"
                             Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
 
                         <StackPanel
+                            x:Name="BundlePaneHeaderActions"
                             Grid.Column="1"
+                            HorizontalAlignment="Right"
                             Orientation="Horizontal"
                             Spacing="4">
                             <Button
