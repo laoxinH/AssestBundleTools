@@ -4,6 +4,7 @@ using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Views.BundleExplorer;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 
@@ -162,6 +163,16 @@ public sealed partial class AssetPaneView : UserControl
         }
 
         FilterChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void OnAssetNameSortButtonClick(object sender, RoutedEventArgs e)
+    {
+        ViewModel?.ToggleAssetSort(AssetPaneSortColumn.Name);
+    }
+
+    private void OnAssetSizeSortButtonClick(object sender, RoutedEventArgs e)
+    {
+        ViewModel?.ToggleAssetSort(AssetPaneSortColumn.Size);
     }
 
     /// <summary>
@@ -401,6 +412,12 @@ public sealed partial class AssetPaneView : UserControl
         AssetTypeHeaderText.Text = UiText.Get(ResourceKeys.AssetPaneViewAssetTypeHeaderText);
         AssetSizeHeaderText.Text = UiText.Get(ResourceKeys.AssetPaneViewAssetSizeHeaderText);
         AssetStateHeaderText.Text = UiText.Get(ResourceKeys.AssetPaneViewAssetStateHeaderText);
+        var sortByNameText = UiText.Get(ResourceKeys.AssetPaneViewSortByNameToolTip);
+        var sortBySizeText = UiText.Get(ResourceKeys.AssetPaneViewSortBySizeToolTip);
+        ToolTipService.SetToolTip(AssetNameSortButton, sortByNameText);
+        ToolTipService.SetToolTip(AssetSizeSortButton, sortBySizeText);
+        AutomationProperties.SetName(AssetNameSortButton, sortByNameText);
+        AutomationProperties.SetName(AssetSizeSortButton, sortBySizeText);
         SpineGroupNameHeaderText.Text = UiText.Get(ResourceKeys.AssetPaneViewAssetNameHeaderText);
         SpineGroupPartsHeaderText.Text = UiText.Get(ResourceKeys.AssetPaneViewSpineGroupPartsHeaderText);
         SpineGroupTexturePagesHeaderText.Text = UiText.Get(ResourceKeys.AssetPaneViewSpineGroupTexturePagesHeaderText);

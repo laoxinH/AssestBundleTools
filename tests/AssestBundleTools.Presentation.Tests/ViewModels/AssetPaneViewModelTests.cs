@@ -10,6 +10,42 @@ namespace AssestBundleTools.Presentation.Tests.ViewModels;
 public sealed class AssetPaneViewModelTests
 {
     [Fact]
+    public void ToggleAssetSort_ShouldSortByNameAndEffectiveSize_AndPreserveSelection()
+    {
+        var viewModel = new AssetPaneViewModel();
+        var bravo = CreateAssetEntry("bravo", sizeInBytes: 300);
+        var alpha = CreateAssetEntry("alpha", sizeInBytes: 900, preferredDisplaySizeInBytes: 100);
+        var charlie = CreateAssetEntry("charlie", sizeInBytes: 200);
+        viewModel.ReplaceItems("ui.ab", [bravo, alpha, charlie], "empty");
+        viewModel.SelectedAsset = bravo;
+
+        viewModel.ToggleAssetSort(AssetPaneSortColumn.Name);
+
+        Assert.Equal(["alpha.png", "bravo.png", "charlie.png"], viewModel.Items.Select(item => item.DisplayName));
+        Assert.Equal(AssetPaneSortDirection.Ascending, viewModel.AssetSortDirection);
+        Assert.Same(bravo, viewModel.SelectedAsset);
+
+        viewModel.ToggleAssetSort(AssetPaneSortColumn.Name);
+
+        Assert.Equal(["charlie.png", "bravo.png", "alpha.png"], viewModel.Items.Select(item => item.DisplayName));
+        Assert.Equal(AssetPaneSortDirection.Descending, viewModel.AssetSortDirection);
+
+        viewModel.ToggleAssetSort(AssetPaneSortColumn.Size);
+
+        Assert.Equal(["alpha.png", "charlie.png", "bravo.png"], viewModel.Items.Select(item => item.DisplayName));
+        Assert.Equal(AssetPaneSortDirection.Ascending, viewModel.AssetSortDirection);
+
+        viewModel.ReplaceItems("ui.ab", [bravo, alpha, charlie], "empty");
+
+        Assert.Equal(["alpha.png", "charlie.png", "bravo.png"], viewModel.Items.Select(item => item.DisplayName));
+
+        viewModel.ToggleAssetSort(AssetPaneSortColumn.Size);
+
+        Assert.Equal(["bravo.png", "charlie.png", "alpha.png"], viewModel.Items.Select(item => item.DisplayName));
+        Assert.Equal(AssetPaneSortDirection.Descending, viewModel.AssetSortDirection);
+    }
+
+    [Fact]
     public void ReplaceAssetTypeOptions_ShouldNotMutateCollection_WhenOptionsAreEquivalent()
     {
         var viewModel = new AssetPaneViewModel();
@@ -457,7 +493,11 @@ public sealed class AssetPaneViewModelTests
         Assert.Null(viewModel.SelectedSpineGroup);
     }
 
-    private static AssetListEntryViewModel CreateAssetEntry(string assetId, bool isModified = false)
+    private static AssetListEntryViewModel CreateAssetEntry(
+        string assetId,
+        bool isModified = false,
+        long sizeInBytes = 128,
+        long? preferredDisplaySizeInBytes = null)
     {
         return new AssetListEntryViewModel(
             new AssetListItemDto(
@@ -466,8 +506,8 @@ public sealed class AssetPaneViewModelTests
                 $"{assetId}.png",
                 $"Assets/{assetId}.png",
                 AssetType.Texture2D,
-                SizeInBytes: 128,
-                PreferredDisplaySizeInBytes: null,
+                SizeInBytes: sizeInBytes,
+                PreferredDisplaySizeInBytes: preferredDisplaySizeInBytes,
                 HasPreview: true,
                 IsModified: isModified),
             "Texture2D",

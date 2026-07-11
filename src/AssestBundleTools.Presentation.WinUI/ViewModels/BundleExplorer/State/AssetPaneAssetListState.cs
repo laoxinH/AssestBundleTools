@@ -22,20 +22,26 @@ internal sealed class AssetPaneAssetListState
         IEnumerable<AssetListEntryViewModel> items,
         AssetId? preferredSelectedAssetId,
         bool showModifiedOnly,
-        bool showPreviewableOnly)
+        bool showPreviewableOnly,
+        AssetPaneSortColumn sortColumn,
+        AssetPaneSortDirection sortDirection)
     {
         _sourceItems.Clear();
         _sourceItems.AddRange(items);
         ApplyLocalFilters(
             preferredSelectedAssetId,
             showModifiedOnly,
-            showPreviewableOnly);
+            showPreviewableOnly,
+            sortColumn,
+            sortDirection);
     }
 
     public void ApplyLocalFilters(
         AssetId? preferredSelectedAssetId,
         bool showModifiedOnly,
-        bool showPreviewableOnly)
+        bool showPreviewableOnly,
+        AssetPaneSortColumn sortColumn,
+        AssetPaneSortDirection sortDirection)
     {
         var desiredSelectedAssetId = preferredSelectedAssetId ?? SelectedAsset?.Item.AssetId;
 
@@ -43,9 +49,10 @@ internal sealed class AssetPaneAssetListState
             .Where(item => !showModifiedOnly || item.Item.IsModified)
             .Where(item => !showPreviewableOnly || item.Item.HasPreview)
             .ToArray();
+        var sortedItems = SortItems(filteredItems, sortColumn, sortDirection).ToArray();
 
         Items.Clear();
-        foreach (var item in filteredItems)
+        foreach (var item in sortedItems)
         {
             Items.Add(item);
         }
@@ -58,6 +65,21 @@ internal sealed class AssetPaneAssetListState
         if (SelectedAsset is not null)
         {
             SelectedAssets.Add(SelectedAsset);
+        }
+
+        UpdateSelectionState();
+    }
+
+    public void ApplySort(AssetPaneSortColumn sortColumn, AssetPaneSortDirection sortDirection)
+    {
+        var sortedItems = SortItems(Items, sortColumn, sortDirection).ToArray();
+        for (var targetIndex = 0; targetIndex < sortedItems.Length; targetIndex++)
+        {
+            var currentIndex = Items.IndexOf(sortedItems[targetIndex]);
+            if (currentIndex != targetIndex)
+            {
+                Items.Move(currentIndex, targetIndex);
+            }
         }
 
         UpdateSelectionState();
@@ -216,4 +238,30 @@ internal sealed class AssetPaneAssetListState
             item.IsSelected = true;
         }
     }
+
+    private static IEnumerable<AssetListEntryViewModel> SortItems(
+        IEnumerable<AssetListEntryViewModel> items,
+        AssetPaneSortColumn sortColumn,
+        AssetPaneSortDirection sortDirection)
+    {
+        return (sortColumn, sortDirection) switch
+        {
+            (AssetPaneSortColumn.Name, AssetPaneSortDirection.Ascending) => items
+                .OrderBy(static item => item.DisplayName, StringComparer.CurrentCultureIgnoreCase)
+                .ThenBy(static item => item.DisplayAssetPath, StringComparer.CurrentCultureIgnoreCase),
+            (AssetPaneSortColumn.Name, AssetPaneSortDirection.Descending) => items
+                .OrderByDescending(static item => item.DisplayName, StringComparer.CurrentCultureIgnoreCase)
+                .ThenBy(static item => item.DisplayAssetPath, StringComparer.CurrentCultureIgnoreCase),
+            (AssetPaneSortColumn.Size, AssetPaneSortDirection.Ascending) => items
+                .OrderBy(static item => ResolveDisplaySizeInBytes(item))
+                .ThenBy(static item => item.DisplayName, StringComparer.CurrentCultureIgnoreCase),
+            (AssetPaneSortColumn.Size, AssetPaneSortDirection.Descending) => items
+                .OrderByDescending(static item => ResolveDisplaySizeInBytes(item))
+                .ThenBy(static item => item.DisplayName, StringComparer.CurrentCultureIgnoreCase),
+            _ => items
+        };
+    }
+
+    private static long ResolveDisplaySizeInBytes(AssetListEntryViewModel item) =>
+        item.Item.PreferredDisplaySizeInBytes ?? item.Item.SizeInBytes;
 }

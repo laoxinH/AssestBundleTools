@@ -824,6 +824,8 @@ public static class ResourceKeys
     public const string AssetPaneViewAssetTypeHeaderText = "AssetPaneView.AssetTypeHeaderText.Text";
     public const string AssetPaneViewAssetSizeHeaderText = "AssetPaneView.AssetSizeHeaderText.Text";
     public const string AssetPaneViewAssetStateHeaderText = "AssetPaneView.AssetStateHeaderText.Text";
+    public const string AssetPaneViewSortByNameToolTip = "AssetPaneView.SortByName.ToolTip";
+    public const string AssetPaneViewSortBySizeToolTip = "AssetPaneView.SortBySize.ToolTip";
     public const string AssetPaneViewSpineGroupPartsHeaderText = "AssetPaneView.SpineGroupPartsHeaderText.Text";
     public const string AssetPaneViewSpineGroupTexturePagesHeaderText = "AssetPaneView.SpineGroupTexturePagesHeaderText.Text";
     public const string AssetPaneViewSpineGroupPartsFormat = "AssetPaneView.SpineGroupParts.Format";

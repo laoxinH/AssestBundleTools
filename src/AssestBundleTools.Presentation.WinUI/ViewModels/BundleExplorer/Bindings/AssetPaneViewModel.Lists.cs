@@ -51,7 +51,9 @@ public sealed partial class AssetPaneViewModel
             items,
             preferredSelectedAssetId,
             ShowModifiedOnly,
-            ShowPreviewableOnly);
+            ShowPreviewableOnly,
+            AssetSortColumn,
+            AssetSortDirection);
         SetAssetMultiSelectionMode(false);
         OnPropertyChanged(nameof(CanToggleSearch));
         OnPropertyChanged(nameof(SelectedAsset));
@@ -174,7 +176,9 @@ public sealed partial class AssetPaneViewModel
         _assetList.ApplyLocalFilters(
             preferredSelectedAssetId,
             ShowModifiedOnly,
-            ShowPreviewableOnly);
+            ShowPreviewableOnly,
+            AssetSortColumn,
+            AssetSortDirection);
         OnPropertyChanged(nameof(SelectedAsset));
         NotifySelectionStateChanged();
         NotifyListStateChanged();

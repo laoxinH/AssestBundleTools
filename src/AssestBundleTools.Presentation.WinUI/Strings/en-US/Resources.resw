@@ -1202,6 +1202,12 @@
   <data name="AssetPaneView.AssetSizeHeaderText.Text" xml:space="preserve">
     <value>Size</value>
   </data>
+  <data name="AssetPaneView.SortByName.ToolTip" xml:space="preserve">
+    <value>Sort by name</value>
+  </data>
+  <data name="AssetPaneView.SortBySize.ToolTip" xml:space="preserve">
+    <value>Sort by size</value>
+  </data>
   <data name="AssetPaneView.AssetStateHeaderText.Text" xml:space="preserve">
     <value>State</value>
   </data>

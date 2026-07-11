@@ -112,6 +112,22 @@
         </Style>
 
         <Style
+            x:Key="AssetPaneSortableHeaderButtonStyle"
+            BasedOn="{StaticResource DefaultButtonStyle}"
+            TargetType="Button">
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="MinHeight" Value="24" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="4" />
+        </Style>
+
+        <Style
             x:Key="AssetPaneEmptyStateCardStyle"
             TargetType="Border">
             <Setter Property="MaxWidth" Value="430" />
@@ -387,17 +403,45 @@
                                 <ColumnDefinition Width="1*" />
                             </Grid.ColumnDefinitions>
 
-                            <TextBlock
-                                x:Name="AssetNameHeaderText"
-                                Style="{StaticResource AssetPaneTableHeaderTextStyle}" />
+                            <Button
+                                x:Name="AssetNameSortButton"
+                                Click="OnAssetNameSortButtonClick"
+                                Style="{StaticResource AssetPaneSortableHeaderButtonStyle}">
+                                <StackPanel
+                                    Orientation="Horizontal"
+                                    Spacing="4">
+                                    <TextBlock
+                                        x:Name="AssetNameHeaderText"
+                                        Style="{StaticResource AssetPaneTableHeaderTextStyle}" />
+                                    <FontIcon
+                                        FontFamily="Segoe Fluent Icons"
+                                        FontSize="10"
+                                        Glyph="{x:Bind ViewModel.NameSortGlyph, Mode=OneWay}"
+                                        Opacity="{x:Bind ViewModel.NameSortIndicatorOpacity, Mode=OneWay}" />
+                                </StackPanel>
+                            </Button>
                             <TextBlock
                                 x:Name="AssetTypeHeaderText"
                                 Grid.Column="1"
                                 Style="{StaticResource AssetPaneTableHeaderTextStyle}" />
-                            <TextBlock
-                                x:Name="AssetSizeHeaderText"
+                            <Button
+                                x:Name="AssetSizeSortButton"
                                 Grid.Column="2"
-                                Style="{StaticResource AssetPaneTableHeaderTextStyle}" />
+                                Click="OnAssetSizeSortButtonClick"
+                                Style="{StaticResource AssetPaneSortableHeaderButtonStyle}">
+                                <StackPanel
+                                    Orientation="Horizontal"
+                                    Spacing="4">
+                                    <TextBlock
+                                        x:Name="AssetSizeHeaderText"
+                                        Style="{StaticResource AssetPaneTableHeaderTextStyle}" />
+                                    <FontIcon
+                                        FontFamily="Segoe Fluent Icons"
+                                        FontSize="10"
+                                        Glyph="{x:Bind ViewModel.SizeSortGlyph, Mode=OneWay}"
+                                        Opacity="{x:Bind ViewModel.SizeSortIndicatorOpacity, Mode=OneWay}" />
+                                </StackPanel>
+                            </Button>
                             <TextBlock
                                 x:Name="AssetStateHeaderText"
                                 Grid.Column="3"
