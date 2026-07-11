@@ -90,7 +90,7 @@
                             Tag="settings-diagnostics-performance-cache">
                             <NavigationViewItem.Icon>
                                 <FontIcon
-                                    FontFamily="Segoe Fluent Icons"
+                                    FontFamily="Segoe MDL2 Assets"
                                     Glyph="&#xE9D9;" />
                             </NavigationViewItem.Icon>
                         </NavigationViewItem>
@@ -99,7 +99,7 @@
                             Tag="settings-diagnostics-logs">
                             <NavigationViewItem.Icon>
                                 <FontIcon
-                                    FontFamily="Segoe Fluent Icons"
+                                    FontFamily="Segoe MDL2 Assets"
                                     Glyph="&#xE9D5;" />
                             </NavigationViewItem.Icon>
                         </NavigationViewItem>

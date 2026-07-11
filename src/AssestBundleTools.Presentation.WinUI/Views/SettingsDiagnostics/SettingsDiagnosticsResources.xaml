@@ -78,7 +78,7 @@
         x:Key="SettingsDiagnosticsSettingIconStyle"
         TargetType="FontIcon">
         <Setter Property="Width" Value="28" />
-        <Setter Property="FontFamily" Value="Segoe Fluent Icons" />
+        <Setter Property="FontFamily" Value="Segoe MDL2 Assets" />
         <Setter Property="FontSize" Value="20" />
         <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
         <Setter Property="HorizontalAlignment" Value="Center" />

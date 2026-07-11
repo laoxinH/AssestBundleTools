@@ -50,7 +50,7 @@
                     Orientation="Horizontal"
                     Spacing="6">
                     <FontIcon
-                        FontFamily="Segoe Fluent Icons"
+                        FontFamily="Segoe MDL2 Assets"
                         FontSize="12"
                         Glyph="&#xE7C3;" />
                     <TextBlock x:Name="LoadFullEditButtonText" />
@@ -70,7 +70,7 @@
                 IsEnabled="{x:Bind ViewModel.CanSearch, Mode=OneWay}"
                 Style="{StaticResource WorkspaceOperationButtonStyle}">
                 <FontIcon
-                    FontFamily="Segoe Fluent Icons"
+                    FontFamily="Segoe MDL2 Assets"
                     FontSize="13"
                     Glyph="&#xE721;" />
             </Button>

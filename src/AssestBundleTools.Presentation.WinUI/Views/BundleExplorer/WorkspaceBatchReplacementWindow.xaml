@@ -44,7 +44,7 @@
                 </Grid.ColumnDefinitions>
                 <FontIcon
                     VerticalAlignment="Center"
-                    FontFamily="Segoe Fluent Icons"
+                    FontFamily="Segoe MDL2 Assets"
                     FontSize="12"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                     Glyph="&#xE8B7;" />
@@ -82,7 +82,7 @@
                     CornerRadius="12">
                     <FontIcon
                         VerticalAlignment="Center"
-                        FontFamily="Segoe Fluent Icons"
+                        FontFamily="Segoe MDL2 Assets"
                         FontSize="26"
                         Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
                         Glyph="&#xE8A5;" />
@@ -139,7 +139,7 @@
                         CornerRadius="9">
                         <FontIcon
                             VerticalAlignment="Center"
-                            FontFamily="Segoe Fluent Icons"
+                            FontFamily="Segoe MDL2 Assets"
                             FontSize="18"
                             Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
                             Glyph="&#xE8A5;" />

@@ -166,7 +166,7 @@
                     Click="OnSetupPoseButtonClick"
                     Style="{StaticResource SpinePreviewActionButtonStyle}">
                     <FontIcon
-                        FontFamily="Segoe Fluent Icons"
+                        FontFamily="Segoe MDL2 Assets"
                         FontSize="13"
                         Glyph="&#xE777;" />
                 </Button>
@@ -176,7 +176,7 @@
                     Click="OnStepPreviousButtonClick"
                     Style="{StaticResource SpinePreviewActionButtonStyle}">
                     <FontIcon
-                        FontFamily="Segoe Fluent Icons"
+                        FontFamily="Segoe MDL2 Assets"
                         FontSize="13"
                         Glyph="&#xE100;" />
                 </Button>
@@ -186,7 +186,7 @@
                     Click="OnPlayPauseButtonClick"
                     Style="{StaticResource SpinePreviewActionButtonStyle}">
                     <FontIcon
-                        FontFamily="Segoe Fluent Icons"
+                        FontFamily="Segoe MDL2 Assets"
                         FontSize="13"
                         Glyph="{x:Bind ViewModel.PlayPauseGlyph, Mode=OneWay}" />
                 </Button>
@@ -196,7 +196,7 @@
                     Click="OnStepNextButtonClick"
                     Style="{StaticResource SpinePreviewActionButtonStyle}">
                     <FontIcon
-                        FontFamily="Segoe Fluent Icons"
+                        FontFamily="Segoe MDL2 Assets"
                         FontSize="13"
                         Glyph="&#xE101;" />
                 </Button>
@@ -206,7 +206,7 @@
                     Click="OnRestartButtonClick"
                     Style="{StaticResource SpinePreviewActionButtonStyle}">
                     <FontIcon
-                        FontFamily="Segoe Fluent Icons"
+                        FontFamily="Segoe MDL2 Assets"
                         FontSize="13"
                         Glyph="&#xE72C;" />
                 </Button>
@@ -219,7 +219,7 @@
                 Click="OnExportFramesButtonClick"
                 Style="{StaticResource SpinePreviewActionButtonStyle}">
                 <FontIcon
-                    FontFamily="Segoe Fluent Icons"
+                    FontFamily="Segoe MDL2 Assets"
                     FontSize="14"
                     Glyph="&#xE74E;" />
             </Button>
@@ -267,7 +267,7 @@
                         Click="OnBackgroundModeButtonClick"
                         Style="{StaticResource SpinePreviewActionButtonStyle}">
                         <FontIcon
-                            FontFamily="Segoe Fluent Icons"
+                            FontFamily="Segoe MDL2 Assets"
                             FontSize="13"
                             Glyph="{x:Bind ViewModel.BackgroundModeGlyph, Mode=OneWay}" />
                     </Button>
@@ -277,7 +277,7 @@
                         Click="OnZoomOutViewportButtonClick"
                         Style="{StaticResource SpinePreviewActionButtonStyle}">
                         <FontIcon
-                            FontFamily="Segoe Fluent Icons"
+                            FontFamily="Segoe MDL2 Assets"
                             FontSize="13"
                             Glyph="&#xE738;" />
                     </Button>
@@ -287,7 +287,7 @@
                         Click="OnZoomInViewportButtonClick"
                         Style="{StaticResource SpinePreviewActionButtonStyle}">
                         <FontIcon
-                            FontFamily="Segoe Fluent Icons"
+                            FontFamily="Segoe MDL2 Assets"
                             FontSize="13"
                             Glyph="&#xE710;" />
                     </Button>
@@ -297,7 +297,7 @@
                         Click="OnResetViewportButtonClick"
                         Style="{StaticResource SpinePreviewActionButtonStyle}">
                         <FontIcon
-                            FontFamily="Segoe Fluent Icons"
+                            FontFamily="Segoe MDL2 Assets"
                             FontSize="13"
                             Glyph="&#xE72C;" />
                     </Button>

@@ -85,7 +85,7 @@
             TargetType="FontIcon">
             <Setter Property="HorizontalAlignment" Value="Center" />
             <Setter Property="VerticalAlignment" Value="Center" />
-            <Setter Property="FontFamily" Value="Segoe Fluent Icons" />
+            <Setter Property="FontFamily" Value="Segoe MDL2 Assets" />
             <Setter Property="FontSize" Value="22" />
             <Setter Property="Foreground" Value="{ThemeResource AccentFillColorDefaultBrush}" />
         </Style>
@@ -313,7 +313,7 @@
                 Style="{StaticResource WorkbenchTitleIconButtonStyle}"
                 VerticalAlignment="Center">
                 <FontIcon
-                    FontFamily="Segoe Fluent Icons"
+                    FontFamily="Segoe MDL2 Assets"
                     FontSize="14"
                     Glyph="&#xE72B;" />
             </Button>
@@ -346,7 +346,7 @@
                                 x:Name="CreateWorkspaceChipIcon"
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
-                                FontFamily="Segoe Fluent Icons"
+                                FontFamily="Segoe MDL2 Assets"
                                 FontSize="11"
                                 Foreground="{ThemeResource TextFillColorPrimaryBrush}"
                                 Glyph="&#xE710;" />
@@ -380,7 +380,7 @@
                                 x:Name="OpenWorkspaceChipIcon"
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
-                                FontFamily="Segoe Fluent Icons"
+                                FontFamily="Segoe MDL2 Assets"
                                 FontSize="11"
                                 Foreground="{ThemeResource TextFillColorPrimaryBrush}"
                                 Glyph="&#xE838;" />
@@ -412,7 +412,7 @@
                             <FontIcon
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
-                                FontFamily="Segoe Fluent Icons"
+                                FontFamily="Segoe MDL2 Assets"
                                 FontSize="11"
                                 Foreground="{ThemeResource TextFillColorPrimaryBrush}"
                                 Glyph="&#xE72C;" />
@@ -444,7 +444,7 @@
                             <FontIcon
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
-                                FontFamily="Segoe Fluent Icons"
+                                FontFamily="Segoe MDL2 Assets"
                                 FontSize="11"
                                 Foreground="{ThemeResource TextFillColorPrimaryBrush}"
                                 Glyph="&#xE896;" />
@@ -476,7 +476,7 @@
                             <FontIcon
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
-                                FontFamily="Segoe Fluent Icons"
+                                FontFamily="Segoe MDL2 Assets"
                                 FontSize="11"
                                 Foreground="{ThemeResource TextFillColorPrimaryBrush}"
                                 Glyph="&#xE8AC;" />
@@ -508,7 +508,7 @@
                             <FontIcon
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
-                                FontFamily="Segoe Fluent Icons"
+                                FontFamily="Segoe MDL2 Assets"
                                 FontSize="11"
                                 Foreground="{ThemeResource TextFillColorPrimaryBrush}"
                                 Glyph="&#xE74E;" />
@@ -541,7 +541,7 @@
                             <FontIcon
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
-                                FontFamily="Segoe Fluent Icons"
+                                FontFamily="Segoe MDL2 Assets"
                                 FontSize="11"
                                 Foreground="{ThemeResource TextFillColorPrimaryBrush}"
                                 Glyph="&#xE8A7;" />
@@ -586,7 +586,7 @@
 
                                     <FontIcon
                                         VerticalAlignment="Center"
-                                        FontFamily="Segoe Fluent Icons"
+                                        FontFamily="Segoe MDL2 Assets"
                                         FontSize="12"
                                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                         Glyph="{x:Bind Glyph}" />
@@ -708,7 +708,7 @@
                                     <FontIcon
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
-                                        FontFamily="Segoe Fluent Icons"
+                                        FontFamily="Segoe MDL2 Assets"
                                         FontSize="15"
                                         Glyph="&#xE8A5;" />
                                     <Border
@@ -721,7 +721,7 @@
                                         <FontIcon
                                             HorizontalAlignment="Center"
                                             VerticalAlignment="Center"
-                                            FontFamily="Segoe Fluent Icons"
+                                            FontFamily="Segoe MDL2 Assets"
                                             FontSize="6"
                                             Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
                                             Glyph="&#xE710;" />
@@ -760,7 +760,7 @@
                                     <FontIcon
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
-                                        FontFamily="Segoe Fluent Icons"
+                                        FontFamily="Segoe MDL2 Assets"
                                         FontSize="15"
                                         Glyph="&#xE838;" />
                                     <Border
@@ -773,7 +773,7 @@
                                         <FontIcon
                                             HorizontalAlignment="Center"
                                             VerticalAlignment="Center"
-                                            FontFamily="Segoe Fluent Icons"
+                                            FontFamily="Segoe MDL2 Assets"
                                             FontSize="6"
                                             Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
                                             Glyph="&#xE710;" />
@@ -808,7 +808,7 @@
                                         Color="Transparent" />
                                 </Button.Resources>
                                 <FontIcon
-                                    FontFamily="Segoe Fluent Icons"
+                                    FontFamily="Segoe MDL2 Assets"
                                     FontSize="17"
                                     Glyph="{x:Bind ViewModel.BundlePane.BundleSearchToggleGlyph, Mode=OneWay}" />
                             </Button>
@@ -935,7 +935,7 @@
                                                     Orientation="Horizontal"
                                                     Spacing="6">
                                                     <FontIcon
-                                                        FontFamily="Segoe Fluent Icons"
+                                                        FontFamily="Segoe MDL2 Assets"
                                                         FontSize="12"
                                                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                                         Glyph="&#xE8B7;" />
@@ -977,7 +977,7 @@
                                                                         Tag="{x:Bind}">
                                                                         <MenuFlyoutItem.Icon>
                                                                             <FontIcon
-                                                                                FontFamily="Segoe Fluent Icons"
+                                                                                FontFamily="Segoe MDL2 Assets"
                                                                                 Glyph="&#xE838;" />
                                                                         </MenuFlyoutItem.Icon>
                                                                     </MenuFlyoutItem>
@@ -988,7 +988,7 @@
                                                                         Tag="{x:Bind}">
                                                                         <MenuFlyoutItem.Icon>
                                                                             <FontIcon
-                                                                                FontFamily="Segoe Fluent Icons"
+                                                                                FontFamily="Segoe MDL2 Assets"
                                                                                 Glyph="&#xE74D;" />
                                                                         </MenuFlyoutItem.Icon>
                                                                     </MenuFlyoutItem>
@@ -1048,7 +1048,7 @@
 
                                                                     <FontIcon
                                                                         Margin="0,2,0,0"
-                                                                        FontFamily="Segoe Fluent Icons"
+                                                                        FontFamily="Segoe MDL2 Assets"
                                                                         FontSize="13"
                                                                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                                                         Glyph="&#xE8A5;" />
@@ -1212,7 +1212,7 @@
                                             <FontIcon
                                                 HorizontalAlignment="Center"
                                                 VerticalAlignment="Center"
-                                                FontFamily="Segoe Fluent Icons"
+                                                FontFamily="Segoe MDL2 Assets"
                                                 FontSize="15"
                                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                                 Glyph="&#xE8A5;" />
@@ -1226,7 +1226,7 @@
                                                 <FontIcon
                                                     HorizontalAlignment="Center"
                                                     VerticalAlignment="Center"
-                                                    FontFamily="Segoe Fluent Icons"
+                                                    FontFamily="Segoe MDL2 Assets"
                                                     FontSize="6"
                                                     Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
                                                     Glyph="&#xE710;" />
@@ -1300,7 +1300,7 @@
                                             <FontIcon
                                                 HorizontalAlignment="Center"
                                                 VerticalAlignment="Center"
-                                                FontFamily="Segoe Fluent Icons"
+                                                FontFamily="Segoe MDL2 Assets"
                                                 FontSize="15"
                                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                                 Glyph="&#xE838;" />
@@ -1314,7 +1314,7 @@
                                                 <FontIcon
                                                     HorizontalAlignment="Center"
                                                     VerticalAlignment="Center"
-                                                    FontFamily="Segoe Fluent Icons"
+                                                    FontFamily="Segoe MDL2 Assets"
                                                     FontSize="6"
                                                     Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
                                                     Glyph="&#xE710;" />
@@ -1433,7 +1433,7 @@
                                     <FontIcon
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
-                                        FontFamily="Segoe Fluent Icons"
+                                        FontFamily="Segoe MDL2 Assets"
                                         FontSize="20"
                                         Glyph="&#xE8A5;" />
                                     <Border
@@ -1446,7 +1446,7 @@
                                         <FontIcon
                                             HorizontalAlignment="Center"
                                             VerticalAlignment="Center"
-                                            FontFamily="Segoe Fluent Icons"
+                                            FontFamily="Segoe MDL2 Assets"
                                             FontSize="7"
                                             Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
                                             Glyph="&#xE710;" />
@@ -1644,7 +1644,7 @@
 
                             <FontIcon
                                 VerticalAlignment="Center"
-                                FontFamily="Segoe Fluent Icons"
+                                FontFamily="Segoe MDL2 Assets"
                                 FontSize="12"
                                 Glyph="&#xE700;" />
 
@@ -1665,7 +1665,7 @@
                                 IsEnabled="{x:Bind ViewModel.DocumentWorkspace.HasDocumentTabs, Mode=OneWay}"
                                 Style="{StaticResource WorkbenchTitleIconButtonStyle}">
                                 <FontIcon
-                                    FontFamily="Segoe Fluent Icons"
+                                    FontFamily="Segoe MDL2 Assets"
                                     FontSize="14"
                                     Glyph="&#xE707;" />
                             </Button>
@@ -1676,7 +1676,7 @@
                                 IsEnabled="{x:Bind ViewModel.DocumentWorkspace.HasDocumentTabs, Mode=OneWay}"
                                 Style="{StaticResource WorkbenchTitleIconButtonStyle}">
                                 <FontIcon
-                                    FontFamily="Segoe Fluent Icons"
+                                    FontFamily="Segoe MDL2 Assets"
                                     FontSize="14"
                                     Glyph="&#xE8A7;" />
                             </Button>

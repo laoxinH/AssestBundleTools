@@ -125,7 +125,7 @@
 
                         <FontIcon
                             VerticalAlignment="Center"
-                            FontFamily="Segoe Fluent Icons"
+                            FontFamily="Segoe MDL2 Assets"
                             FontSize="12"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                             Glyph="{Binding ExpandGlyph}" />
@@ -151,7 +151,7 @@
                     ToolTipService.ToolTip="{Binding CopyToolTipText}"
                     Visibility="{Binding CopyButtonVisibility}">
                     <FontIcon
-                        FontFamily="Segoe Fluent Icons"
+                        FontFamily="Segoe MDL2 Assets"
                         Glyph="&#xE8C8;" />
                 </Button>
             </Grid>
@@ -227,7 +227,7 @@
                                         <FontIcon
                                             HorizontalAlignment="Center"
                                             VerticalAlignment="Center"
-                                            FontFamily="Segoe Fluent Icons"
+                                            FontFamily="Segoe MDL2 Assets"
                                             FontSize="15"
                                             Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                             Glyph="&#xEB9F;"
@@ -256,7 +256,7 @@
                                     ToolTipService.ToolTip="{x:Bind OpenButtonToolTipText, Mode=OneTime}"
                                     Visibility="{x:Bind OpenButtonVisibility, Mode=OneTime}">
                                     <FontIcon
-                                        FontFamily="Segoe Fluent Icons"
+                                        FontFamily="Segoe MDL2 Assets"
                                         FontSize="12"
                                         Glyph="&#xE8A7;" />
                                 </Button>

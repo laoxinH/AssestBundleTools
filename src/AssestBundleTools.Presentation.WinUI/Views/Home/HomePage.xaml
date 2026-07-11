@@ -130,7 +130,7 @@
 
                                     <Border Style="{StaticResource HomeIconBadgeStyle}">
                                         <FontIcon
-                                            FontFamily="Segoe Fluent Icons"
+                                            FontFamily="Segoe MDL2 Assets"
                                             FontSize="15"
                                             Glyph="&#xE710;" />
                                     </Border>
@@ -144,7 +144,7 @@
                                     <FontIcon
                                         Grid.Column="2"
                                         VerticalAlignment="Center"
-                                        FontFamily="Segoe Fluent Icons"
+                                        FontFamily="Segoe MDL2 Assets"
                                         Glyph="&#xE76C;" />
                                 </Grid>
                             </Button>
@@ -169,7 +169,7 @@
 
                                     <Border Style="{StaticResource HomeIconBadgeStyle}">
                                         <FontIcon
-                                            FontFamily="Segoe Fluent Icons"
+                                            FontFamily="Segoe MDL2 Assets"
                                             FontSize="15"
                                             Glyph="&#xE8B7;" />
                                     </Border>
@@ -183,7 +183,7 @@
                                     <FontIcon
                                         Grid.Column="2"
                                         VerticalAlignment="Center"
-                                        FontFamily="Segoe Fluent Icons"
+                                        FontFamily="Segoe MDL2 Assets"
                                         Glyph="&#xE76C;" />
                                 </Grid>
                             </Button>
@@ -209,7 +209,7 @@
 
                                     <Border Style="{StaticResource HomeIconBadgeStyle}">
                                         <FontIcon
-                                            FontFamily="Segoe Fluent Icons"
+                                            FontFamily="Segoe MDL2 Assets"
                                             FontSize="15"
                                             Glyph="&#xE823;" />
                                     </Border>
@@ -223,7 +223,7 @@
                                     <FontIcon
                                         Grid.Column="2"
                                         VerticalAlignment="Center"
-                                        FontFamily="Segoe Fluent Icons"
+                                        FontFamily="Segoe MDL2 Assets"
                                         Glyph="&#xE76C;" />
                                 </Grid>
                             </Button>
@@ -282,7 +282,7 @@
                                                     CornerRadius="6"
                                                     Background="{ThemeResource LayerFillColorDefaultBrush}">
                                                     <FontIcon
-                                                        FontFamily="Segoe Fluent Icons"
+                                                        FontFamily="Segoe MDL2 Assets"
                                                         FontSize="12"
                                                         Glyph="&#xE823;" />
                                                 </Border>
@@ -313,7 +313,7 @@
                                 Visibility="{x:Bind ViewModel.RecentActivityEmptyStateVisibility, Mode=OneWay}">
                                 <Border Style="{StaticResource HomeIconBadgeStyle}">
                                     <FontIcon
-                                        FontFamily="Segoe Fluent Icons"
+                                        FontFamily="Segoe MDL2 Assets"
                                         FontSize="15"
                                         Glyph="&#xE9D9;" />
                                 </Border>
@@ -396,7 +396,7 @@
 
                                                     <Border Style="{StaticResource HomeIconBadgeStyle}">
                                                         <FontIcon
-                                                            FontFamily="Segoe Fluent Icons"
+                                                            FontFamily="Segoe MDL2 Assets"
                                                             FontSize="15"
                                                             Glyph="&#xE8B7;" />
                                                     </Border>
@@ -467,7 +467,7 @@
                                                         Grid.Column="2"
                                                         VerticalAlignment="Center"
                                                         FontSize="13"
-                                                        FontFamily="Segoe Fluent Icons"
+                                                        FontFamily="Segoe MDL2 Assets"
                                                         Glyph="&#xE76C;" />
                                                 </Grid>
                                             </Button>
@@ -484,7 +484,7 @@
                                                     Style="{StaticResource HomeListActionButtonStyle}"
                                                     ToolTipService.ToolTip="{x:Bind PinButtonToolTipText}">
                                                     <FontIcon
-                                                        FontFamily="Segoe Fluent Icons"
+                                                        FontFamily="Segoe MDL2 Assets"
                                                         FontSize="12"
                                                         Glyph="{x:Bind PinButtonGlyph}" />
                                                 </Button>
@@ -494,7 +494,7 @@
                                                     Style="{StaticResource HomeListActionButtonStyle}"
                                                     ToolTipService.ToolTip="{Binding RecentWorkspaceDeleteToolTipText, ElementName=RootPage}">
                                                     <FontIcon
-                                                        FontFamily="Segoe Fluent Icons"
+                                                        FontFamily="Segoe MDL2 Assets"
                                                         FontSize="12"
                                                         Glyph="&#xE74D;" />
                                                 </Button>
@@ -513,7 +513,7 @@
                             Visibility="{x:Bind ViewModel.RecentWorkspaceEmptyStateVisibility, Mode=OneWay}">
                             <Border Style="{StaticResource HomeIconBadgeStyle}">
                                 <FontIcon
-                                    FontFamily="Segoe Fluent Icons"
+                                    FontFamily="Segoe MDL2 Assets"
                                     FontSize="15"
                                     Glyph="&#xE838;" />
                             </Border>
@@ -531,7 +531,7 @@
                             Visibility="{x:Bind ViewModel.RecentWorkspaceNoMatchesStateVisibility, Mode=OneWay}">
                             <Border Style="{StaticResource HomeIconBadgeStyle}">
                                 <FontIcon
-                                    FontFamily="Segoe Fluent Icons"
+                                    FontFamily="Segoe MDL2 Assets"
                                     FontSize="15"
                                     Glyph="&#xE721;" />
                             </Border>

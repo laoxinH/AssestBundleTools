@@ -46,7 +46,7 @@
                     <FontIcon
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
-                        FontFamily="Segoe Fluent Icons"
+                        FontFamily="Segoe MDL2 Assets"
                         FontSize="15"
                         Glyph="&#xE8A5;" />
                 </Border>
@@ -91,7 +91,7 @@
                     <FontIcon
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
-                        FontFamily="Segoe Fluent Icons"
+                        FontFamily="Segoe MDL2 Assets"
                         FontSize="15"
                         Glyph="&#xE7C3;" />
                 </Border>
@@ -144,7 +144,7 @@
                     <FontIcon
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
-                        FontFamily="Segoe Fluent Icons"
+                        FontFamily="Segoe MDL2 Assets"
                         FontSize="15"
                         Glyph="&#xE72E;" />
                 </Border>

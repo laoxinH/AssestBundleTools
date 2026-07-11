@@ -75,7 +75,7 @@
 
                                             <Border Style="{StaticResource SettingsDiagnosticsWorkspaceIconBadgeStyle}">
                                                 <FontIcon
-                                                    FontFamily="Segoe Fluent Icons"
+                                                    FontFamily="Segoe MDL2 Assets"
                                                     FontSize="20"
                                                     Foreground="{ThemeResource AccentFillColorDefaultBrush}"
                                                     Glyph="&#xE838;"

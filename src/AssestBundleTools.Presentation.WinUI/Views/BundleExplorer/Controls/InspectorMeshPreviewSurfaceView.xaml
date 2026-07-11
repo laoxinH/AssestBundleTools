@@ -104,7 +104,7 @@
                                     ToolTipService.ToolTip="{x:Bind OpenButtonToolTipText, Mode=OneTime}"
                                     Visibility="{x:Bind OpenButtonVisibility, Mode=OneTime}">
                                     <FontIcon
-                                        FontFamily="Segoe Fluent Icons"
+                                        FontFamily="Segoe MDL2 Assets"
                                         FontSize="13"
                                         Foreground="#FFF8FAFC"
                                         Glyph="&#xE8A7;" />

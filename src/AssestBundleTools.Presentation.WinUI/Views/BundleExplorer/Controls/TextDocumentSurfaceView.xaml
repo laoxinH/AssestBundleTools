@@ -47,7 +47,7 @@
                     </Grid.ColumnDefinitions>
                     <FontIcon
                         VerticalAlignment="Top"
-                        FontFamily="Segoe Fluent Icons"
+                        FontFamily="Segoe MDL2 Assets"
                         FontSize="14"
                         Foreground="{ThemeResource SystemFillColorCautionBrush}"
                         Glyph="&#xE946;" />
@@ -71,7 +71,7 @@
                             Orientation="Horizontal"
                             Spacing="6">
                             <FontIcon
-                                FontFamily="Segoe Fluent Icons"
+                                FontFamily="Segoe MDL2 Assets"
                                 FontSize="12"
                                 Glyph="&#xE8C8;" />
                             <TextBlock x:Name="CopyFallbackDiagnosticButtonText" />
@@ -207,7 +207,7 @@
                         Orientation="Horizontal"
                         Spacing="6">
                         <FontIcon
-                            FontFamily="Segoe Fluent Icons"
+                            FontFamily="Segoe MDL2 Assets"
                             FontSize="12"
                             Glyph="&#xE70D;" />
                         <TextBlock x:Name="LoadMoreLinesButtonText" />

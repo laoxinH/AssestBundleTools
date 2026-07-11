@@ -280,7 +280,7 @@
                         Color="Transparent" />
                 </Button.Resources>
                 <FontIcon
-                    FontFamily="Segoe Fluent Icons"
+                    FontFamily="Segoe MDL2 Assets"
                     FontSize="16"
                     Glyph="{x:Bind ViewModel.SearchToggleGlyph, Mode=OneWay}" />
             </Button>
@@ -339,7 +339,7 @@
                     Click="OnExitMultiSelectionButtonClick"
                     Style="{StaticResource AssetPaneToolbarIconButtonStyle}">
                     <FontIcon
-                        FontFamily="Segoe Fluent Icons"
+                        FontFamily="Segoe MDL2 Assets"
                         FontSize="15"
                         Glyph="&#xE711;" />
                 </Button>
@@ -348,7 +348,7 @@
                     Click="OnSelectAllMultiSelectionButtonClick"
                     Style="{StaticResource AssetPaneToolbarIconButtonStyle}">
                     <FontIcon
-                        FontFamily="Segoe Fluent Icons"
+                        FontFamily="Segoe MDL2 Assets"
                         FontSize="15"
                         Glyph="&#xE762;" />
                 </Button>
@@ -357,7 +357,7 @@
                     Click="OnInvertMultiSelectionButtonClick"
                     Style="{StaticResource AssetPaneToolbarIconButtonStyle}">
                     <FontIcon
-                        FontFamily="Segoe Fluent Icons"
+                        FontFamily="Segoe MDL2 Assets"
                         FontSize="15"
                         Glyph="&#xE8AB;" />
                 </Button>
@@ -367,7 +367,7 @@
                     IsEnabled="{x:Bind ViewModel.CanBatchExtractSelectedAssets, Mode=OneWay}"
                     Style="{StaticResource AssetPaneToolbarIconButtonStyle}">
                     <FontIcon
-                        FontFamily="Segoe Fluent Icons"
+                        FontFamily="Segoe MDL2 Assets"
                         FontSize="15"
                         Glyph="&#xE896;" />
                 </Button>
@@ -414,7 +414,7 @@
                                         x:Name="AssetNameHeaderText"
                                         Style="{StaticResource AssetPaneTableHeaderTextStyle}" />
                                     <FontIcon
-                                        FontFamily="Segoe Fluent Icons"
+                                        FontFamily="Segoe MDL2 Assets"
                                         FontSize="10"
                                         Glyph="{x:Bind ViewModel.NameSortGlyph, Mode=OneWay}"
                                         Opacity="{x:Bind ViewModel.NameSortIndicatorOpacity, Mode=OneWay}" />
@@ -436,7 +436,7 @@
                                         x:Name="AssetSizeHeaderText"
                                         Style="{StaticResource AssetPaneTableHeaderTextStyle}" />
                                     <FontIcon
-                                        FontFamily="Segoe Fluent Icons"
+                                        FontFamily="Segoe MDL2 Assets"
                                         FontSize="10"
                                         Glyph="{x:Bind ViewModel.SizeSortGlyph, Mode=OneWay}"
                                         Opacity="{x:Bind ViewModel.SizeSortIndicatorOpacity, Mode=OneWay}" />
@@ -468,7 +468,7 @@
                                         Tag="{x:Bind}">
                                         <MenuFlyoutItem.Icon>
                                             <FontIcon
-                                                FontFamily="Segoe Fluent Icons"
+                                                FontFamily="Segoe MDL2 Assets"
                                                 Glyph="&#xE8A7;" />
                                         </MenuFlyoutItem.Icon>
                                     </MenuFlyoutItem>
@@ -478,7 +478,7 @@
                                         Tag="{x:Bind}">
                                         <MenuFlyoutItem.Icon>
                                             <FontIcon
-                                                FontFamily="Segoe Fluent Icons"
+                                                FontFamily="Segoe MDL2 Assets"
                                                 Glyph="&#xE896;" />
                                         </MenuFlyoutItem.Icon>
                                     </MenuFlyoutItem>
@@ -488,7 +488,7 @@
                                         Tag="{x:Bind}">
                                         <MenuFlyoutItem.Icon>
                                             <FontIcon
-                                                FontFamily="Segoe Fluent Icons"
+                                                FontFamily="Segoe MDL2 Assets"
                                                 Glyph="&#xE8AC;" />
                                         </MenuFlyoutItem.Icon>
                                     </MenuFlyoutItem>
@@ -499,7 +499,7 @@
                                         Tag="{x:Bind}">
                                         <MenuFlyoutItem.Icon>
                                             <FontIcon
-                                                FontFamily="Segoe Fluent Icons"
+                                                FontFamily="Segoe MDL2 Assets"
                                                 Glyph="&#xE762;" />
                                         </MenuFlyoutItem.Icon>
                                     </MenuFlyoutItem>
@@ -650,7 +650,7 @@
                                         Tag="{x:Bind}">
                                         <MenuFlyoutItem.Icon>
                                             <FontIcon
-                                                FontFamily="Segoe Fluent Icons"
+                                                FontFamily="Segoe MDL2 Assets"
                                                 Glyph="&#xE8A7;" />
                                         </MenuFlyoutItem.Icon>
                                     </MenuFlyoutItem>
@@ -660,7 +660,7 @@
                                         Tag="{x:Bind}">
                                         <MenuFlyoutItem.Icon>
                                             <FontIcon
-                                                FontFamily="Segoe Fluent Icons"
+                                                FontFamily="Segoe MDL2 Assets"
                                                 Glyph="&#xE896;" />
                                         </MenuFlyoutItem.Icon>
                                     </MenuFlyoutItem>
@@ -670,7 +670,7 @@
                                         Tag="{x:Bind}">
                                         <MenuFlyoutItem.Icon>
                                             <FontIcon
-                                                FontFamily="Segoe Fluent Icons"
+                                                FontFamily="Segoe MDL2 Assets"
                                                 Glyph="&#xE8AC;" />
                                         </MenuFlyoutItem.Icon>
                                     </MenuFlyoutItem>
@@ -681,7 +681,7 @@
                                         Tag="{x:Bind}">
                                         <MenuFlyoutItem.Icon>
                                             <FontIcon
-                                                FontFamily="Segoe Fluent Icons"
+                                                FontFamily="Segoe MDL2 Assets"
                                                 Glyph="&#xE762;" />
                                         </MenuFlyoutItem.Icon>
                                     </MenuFlyoutItem>
@@ -788,7 +788,7 @@
                             <FontIcon
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
-                                FontFamily="Segoe Fluent Icons"
+                                FontFamily="Segoe MDL2 Assets"
                                 FontSize="23"
                                 Foreground="{ThemeResource AccentFillColorDefaultBrush}"
                                 Glyph="{x:Bind ViewModel.EmptyStateIconGlyph, Mode=OneWay}" />

@@ -100,7 +100,7 @@
                         <FontIcon
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center"
-                            FontFamily="Segoe Fluent Icons"
+                            FontFamily="Segoe MDL2 Assets"
                             FontSize="11"
                             Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
                             Glyph="&#xE8B7;" />
@@ -118,7 +118,7 @@
                         <FontIcon
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center"
-                            FontFamily="Segoe Fluent Icons"
+                            FontFamily="Segoe MDL2 Assets"
                             FontSize="9"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                             Glyph="&#xE897;" />
@@ -201,7 +201,7 @@
                             <FontIcon
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
-                                FontFamily="Segoe Fluent Icons"
+                                FontFamily="Segoe MDL2 Assets"
                                 FontSize="11"
                                 Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
                                 Glyph="&#xE8A5;" />
@@ -294,7 +294,7 @@
                                                 <FontIcon
                                                     HorizontalAlignment="Center"
                                                     VerticalAlignment="Center"
-                                                    FontFamily="Segoe Fluent Icons"
+                                                    FontFamily="Segoe MDL2 Assets"
                                                     FontSize="16"
                                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                                     Glyph="&#xE8A5;" />
@@ -341,7 +341,7 @@
                                 <FontIcon
                                     HorizontalAlignment="Center"
                                     VerticalAlignment="Center"
-                                    FontFamily="Segoe Fluent Icons"
+                                    FontFamily="Segoe MDL2 Assets"
                                     FontSize="24"
                                     Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
                                     Glyph="&#xE8B7;" />
@@ -386,7 +386,7 @@
                             <FontIcon
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
-                                FontFamily="Segoe Fluent Icons"
+                                FontFamily="Segoe MDL2 Assets"
                                 FontSize="11"
                                 Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
                                 Glyph="&#xE8EF;" />
@@ -451,7 +451,7 @@
                                 <FontIcon
                                     Grid.Column="1"
                                     VerticalAlignment="Center"
-                                    FontFamily="Segoe Fluent Icons"
+                                    FontFamily="Segoe MDL2 Assets"
                                     FontSize="10"
                                     Glyph="&#xE70D;" />
                             </Grid>
@@ -577,7 +577,7 @@
                                 <FontIcon
                                     HorizontalAlignment="Center"
                                     VerticalAlignment="Center"
-                                    FontFamily="Segoe Fluent Icons"
+                                    FontFamily="Segoe MDL2 Assets"
                                     FontSize="24"
                                     Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
                                     Glyph="&#xE8B7;" />

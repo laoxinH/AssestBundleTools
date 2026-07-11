@@ -48,7 +48,7 @@
                 <FontIcon
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
-                    FontFamily="Segoe Fluent Icons"
+                    FontFamily="Segoe MDL2 Assets"
                     FontSize="18"
                     Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
                     Glyph="&#xE8B9;" />
