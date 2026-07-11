@@ -167,12 +167,20 @@ public sealed partial class AssetPaneView : UserControl
 
     private void OnAssetNameSortButtonClick(object sender, RoutedEventArgs e)
     {
-        ViewModel?.ToggleAssetSort(AssetPaneSortColumn.Name);
+        if (ViewModel is { } viewModel)
+        {
+            _selectionCoordinator.RunAssetItemsMutationPreservingSelection(
+                () => viewModel.ToggleAssetSort(AssetPaneSortColumn.Name));
+        }
     }
 
     private void OnAssetSizeSortButtonClick(object sender, RoutedEventArgs e)
     {
-        ViewModel?.ToggleAssetSort(AssetPaneSortColumn.Size);
+        if (ViewModel is { } viewModel)
+        {
+            _selectionCoordinator.RunAssetItemsMutationPreservingSelection(
+                () => viewModel.ToggleAssetSort(AssetPaneSortColumn.Size));
+        }
     }
 
     /// <summary>

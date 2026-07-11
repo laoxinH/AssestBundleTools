@@ -258,6 +258,40 @@ public sealed class AssetPaneViewSelectionContractTests
     }
 
     [Fact]
+    public void AssetPaneSorting_ShouldSuppressTransientSelectionWriteBack_DuringRowReorder()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var viewCode = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "Views",
+            "BundleExplorer",
+            "Controls",
+            "AssetPaneView.xaml.cs"));
+        var mutationCode = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "Views",
+            "BundleExplorer",
+            "Coordinators",
+            "AssetPaneSelectionViewCoordinator.Mutations.cs"));
+
+        Assert.Contains("RunAssetItemsMutationPreservingSelection", viewCode);
+        Assert.Contains("_isSynchronizingAssetSelectionFromViewModel = true;", mutationCode);
+        var protectedMutation = mutationCode[
+            mutationCode.IndexOf(
+                "_isSynchronizingAssetSelectionFromViewModel = true;",
+                StringComparison.Ordinal)..];
+        Assert.True(
+            protectedMutation.IndexOf("_isSynchronizingAssetSelectionFromViewModel = true;", StringComparison.Ordinal) <
+            protectedMutation.IndexOf("mutation();", StringComparison.Ordinal));
+        Assert.Contains("SynchronizeAssetSelectionCore(viewModel);", mutationCode);
+        Assert.Contains("_isSynchronizingAssetSelectionFromViewModel = false;", mutationCode);
+    }
+
+    [Fact]
     public void BundleExplorerPage_ShouldExposeActiveDocumentLocateCommand()
     {
         var xaml = File.ReadAllText(

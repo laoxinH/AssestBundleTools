@@ -6,7 +6,7 @@ namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer;
 /// <summary>
 /// 负责资产窗格中 ListView 与绑定状态之间的选择同步。
 /// </summary>
-internal sealed class AssetPaneSelectionViewCoordinator
+internal sealed partial class AssetPaneSelectionViewCoordinator
 {
     private readonly ListView _assetListView;
     private readonly ListView _spineGroupListView;
@@ -340,39 +340,44 @@ internal sealed class AssetPaneSelectionViewCoordinator
         _isSynchronizingAssetSelectionFromViewModel = true;
         try
         {
-            var targetSelection = viewModel.SelectedAsset;
-            if (targetSelection is null)
-            {
-                if (_assetListView.SelectedItem is not null || _assetListView.SelectedItems.Count > 0)
-                {
-                    _assetListView.SelectedItem = null;
-                    _assetListView.SelectedItems.Clear();
-                }
-
-                return;
-            }
-
-            if (!viewModel.Items.Contains(targetSelection))
-            {
-                return;
-            }
-
-            if (!ReferenceEquals(_assetListView.SelectedItem, targetSelection))
-            {
-                _assetListView.SelectedItem = targetSelection;
-            }
-
-            AssetPaneListViewSelectionWriter.ApplySelection(
-                _assetListView,
-                viewModel.SelectedAssets,
-                targetSelection);
-
-            _assetListView.ScrollIntoView(targetSelection);
+            SynchronizeAssetSelectionCore(viewModel);
         }
         finally
         {
             _isSynchronizingAssetSelectionFromViewModel = false;
         }
+    }
+
+    private void SynchronizeAssetSelectionCore(AssetPaneViewModel viewModel)
+    {
+        var targetSelection = viewModel.SelectedAsset;
+        if (targetSelection is null)
+        {
+            if (_assetListView.SelectedItem is not null || _assetListView.SelectedItems.Count > 0)
+            {
+                _assetListView.SelectedItem = null;
+                _assetListView.SelectedItems.Clear();
+            }
+
+            return;
+        }
+
+        if (!viewModel.Items.Contains(targetSelection))
+        {
+            return;
+        }
+
+        if (!ReferenceEquals(_assetListView.SelectedItem, targetSelection))
+        {
+            _assetListView.SelectedItem = targetSelection;
+        }
+
+        AssetPaneListViewSelectionWriter.ApplySelection(
+            _assetListView,
+            viewModel.SelectedAssets,
+            targetSelection);
+
+        _assetListView.ScrollIntoView(targetSelection);
     }
 
     public void SynchronizeSpineGroupSelectionFromViewModel()
