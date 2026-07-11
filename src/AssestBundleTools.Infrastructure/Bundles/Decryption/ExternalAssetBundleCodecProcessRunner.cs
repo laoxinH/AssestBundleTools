@@ -101,12 +101,12 @@ internal sealed class ExternalAssetBundleCodecProcessRunner
             ExternalProcessAssetBundleDecryptorSupport.TryTerminateProcess(process);
             throw;
         }
-        catch (Exception)
+        catch (Exception exception)
         {
             ExternalProcessAssetBundleDecryptorSupport.TryTerminateProcess(process);
             return new ExternalProcessExecutionResult(
                 false,
-                null,
+                $"{exception.GetType().Name}: {exception.Message}",
                 ExternalProcessExecutionFailureKind.Exception,
                 0);
         }

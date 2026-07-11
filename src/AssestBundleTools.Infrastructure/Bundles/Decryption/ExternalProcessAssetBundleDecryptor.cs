@@ -379,6 +379,12 @@ internal sealed class ExternalProcessAssetBundleDecryptor : IAssetBundleDecrypto
 
     private string ResolveEncryptionWorkingDirectory(AssetBundleEncryptionRequestDto request)
     {
+        // 导出器传入的目录已经按 operation 隔离，继续追加长标识会让 Win32 CreateProcess 的工作目录超过 MAX_PATH。
+        if (!string.IsNullOrWhiteSpace(request.WorkingDirectoryPath))
+        {
+            return Path.GetFullPath(request.WorkingDirectoryPath);
+        }
+
         var rootDirectoryPath = ResolveWorkingDirectory(
             request.SourcePath,
             request.WorkspaceKey,
@@ -437,7 +443,9 @@ internal sealed class ExternalProcessAssetBundleDecryptor : IAssetBundleDecrypto
             ExternalProcessExecutionFailureKind.TimedOut =>
                 ApplicationErrors.BundleExportCodecTimedOut(Descriptor.Id, _manifest.TimeoutMs),
             ExternalProcessExecutionFailureKind.Exception =>
-                ApplicationErrors.BundleExportCodecExecutionFailed(Descriptor.Id),
+                ApplicationErrors.BundleExportCodecExecutionFailed(
+                    Descriptor.Id,
+                    executionResult.Detail),
             _ => ApplicationErrors.BundleExportCodecEncryptionFailed(
                 Descriptor.Id,
                 executionResult.Detail)

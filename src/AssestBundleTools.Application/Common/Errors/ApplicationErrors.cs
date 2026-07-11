@@ -537,13 +537,15 @@ public static class ApplicationErrors
                 ("CodecId", codecId),
                 ("TimeoutMs", timeoutMs.ToString(System.Globalization.CultureInfo.InvariantCulture))));
 
-    public static AppError BundleExportCodecExecutionFailed(string codecId) =>
+    public static AppError BundleExportCodecExecutionFailed(string codecId, string? detail = null) =>
         new(
             code: "Bundle.Save.Codec.ExecutionFailed",
             category: ErrorCategory.ExternalDependency,
             severity: ErrorSeverity.Error,
             messageToken: "Error.Bundle.Save.Codec.ExecutionFailed",
-            parameters: CreateParameters(("CodecId", codecId)));
+            parameters: CreateParameters(
+                ("CodecId", codecId),
+                ("Detail", detail)));
 
     public static AppError BundleDecryptorFallbackNotFound() =>
         new(

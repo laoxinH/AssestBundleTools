@@ -276,6 +276,7 @@ Presentation 不负责：
 - `decryptArguments` 必填
 - `probeArguments` 只有在支持自动识别时才需要提供
 - `encryptArguments` 可选；提供后插件必须保证 `decrypt -> encrypt -> decrypt` 的 bundle 内容回环一致性
+- 保存导出器传入的 `WorkingDirectoryPath` 已经是 operation 级隔离目录，Encrypt 适配器必须把它作为最终工作目录使用，不再追加 workspace / codec / bundle 长标识；否则 Windows `CreateProcess` 可能因 working directory 超过 `MAX_PATH` 而在 CLI 启动前失败
 - 当前阶段 manifest 读取失败或字段不完整时，主程序应跳过该项，而不是阻断整个应用启动
 
 为兼容现有插件，`supportsAutoDetection` 暂时保留；保存新定义时它必须与 `probeArguments` 是否存在保持一致。后续若升级 manifest schema，可改为从命令是否存在推导能力，但本阶段不为删除一个布尔字段引入破坏性迁移。

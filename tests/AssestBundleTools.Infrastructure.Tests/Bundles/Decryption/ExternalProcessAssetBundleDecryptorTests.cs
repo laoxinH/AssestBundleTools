@@ -141,6 +141,7 @@ internal static class ExternalProcessAssetBundleDecryptorTests
         using var temporaryDirectory = new TemporaryDirectoryScope();
         var sourcePath = Path.Combine(temporaryDirectory.DirectoryPath, "standard.bundle");
         var outputPath = Path.Combine(temporaryDirectory.DirectoryPath, "encoded.bundle");
+        var workingDirectoryPath = Path.Combine(temporaryDirectory.DirectoryPath, "operation-codec");
         Directory.CreateDirectory(temporaryDirectory.DirectoryPath);
         File.WriteAllText(sourcePath, "standard-bundle");
         var decryptor = CreateDecryptor(temporaryDirectory.DirectoryPath);
@@ -151,6 +152,7 @@ internal static class ExternalProcessAssetBundleDecryptorTests
             WorkspaceKey: "workspace-c",
             WorkspaceDataRootPath: temporaryDirectory.DirectoryPath,
             BundleCacheKey: "bundle-cache-003",
+            WorkingDirectoryPath: workingDirectoryPath,
             Parameters: new Dictionary<string, string>
             {
                 ["test.value"] = "exact-prefix"
@@ -166,6 +168,10 @@ internal static class ExternalProcessAssetBundleDecryptorTests
             "standard-bundle",
             File.ReadAllText(outputPath),
             "Encrypt command should receive the standard bundle input.");
+        TestAssert.Equal(
+            0,
+            Directory.GetDirectories(workingDirectoryPath).Length,
+            "An operation-scoped encryption working directory should not receive another workspace/codec/bundle hierarchy.");
     }
 
     private static ExternalProcessAssetBundleDecryptor CreateDecryptor(string manifestDirectoryPath)
