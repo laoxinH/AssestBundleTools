@@ -322,9 +322,13 @@ Presentation 不负责：
 自动识别与持久化规则：
 
 - `builtin.auto-detect` 是持久化的工作区策略，不是一次性迁移状态；不得在识别后把工作区元数据改成某个具体 codec 或 `PassThrough`。
-- 每个待导入 AB 都独立执行所有支持自动识别的 codec Probe，并按该文件上的 `isMatch + confidence + 稳定顺序` 选择实际 codec。
-- 某个 AB 的所有 codec 都成功 Probe 且不匹配时，该文件使用 `PassThrough`；其他 AB 的识别结果不受影响。
+- 文件扩展名和来源路径只用于解密前的候选发现，不能证明文件是有效 AB；标准化 artifact 固定命名为 `normalized.bundle`，因此 Reader 尤其不得根据该扩展名放行。
+- 自动模式下，每个非明显无效的来源文件都独立执行所有支持自动识别的 codec Probe，并按该文件上的 `isMatch + confidence + 稳定顺序` 选择实际 codec。
+- 某个来源的所有 codec 都成功 Probe 且不匹配时，该文件才使用 `PassThrough`；直通后的内容仍必须通过真实 Unity Reader 解析，不能以扩展名或空索引的启发式成功作为有效资源包。
+- PNG / JPEG / ZIP / RAR / 7z / 常见音视频等明确非 AB 的内容签名只能作为“禁止直通”的负向提示，不能在 codec Probe 前筛除；若某个 codec Probe 明确命中，仍允许该 codec 继续解密和真实读取。
 - 某个 AB 存在 Probe 执行失败且没有其他匹配时，本轮仍可对该文件尝试 `PassThrough`，但诊断必须保留失败证据，后续刷新仍会重新 Probe。
+- 显式指定解密器且该解密器支持 Probe 时，必须对每个非明显无效的来源文件执行该解密器的 Probe；来源扩展名或标准 Unity header 不得绕过固定解密器识别。未命中的文件直接筛除。
+- 显式指定的兼容解密器若没有 Probe，则允许执行 `Decrypt -> 真实 Unity Reader` 作为兼容识别；解密失败或真实解析失败的文件必须排除，不能生成空 bundle index。
 - 实际 codec 的 id / version 只写入该 AB 的标准化 artifact 与 bundle index，继续参与缓存失效、预览重建和导出回写。
 
 缓存失效时除了原始 AB 指纹外，还应纳入：
@@ -376,7 +380,7 @@ Presentation 不负责：
 - 工作台顶部状态标签已显示“当前解密器”，替代原先的冗余“当前选中”提示
 - 工作区导入链路已正式按 `AssetBundleDecryptorId` 选择解密器执行，并把解密后文件送入 `IAssetBundleReader`
 - 当前真实导入结果已写入 `cache/bundle-index/...`，再由缓存型工作区会话驱动资源包列表恢复
-- Infrastructure 当前已接入 `AssetsTools.NET` 真实 Reader，并在读取失败时回退到启发式 Reader，避免真实导入阶段把资源包列表回退成不可用状态
+- Infrastructure 当前已接入 `AssetsTools.NET` 真实 Reader；导入链路只在真实 Unity 解析成功后生成 bundle index，不再用启发式空结果掩盖读取失败
 - 当前 Reader 已可从解密后文件中读取序列化资产、资产名和 `m_Container` 路径，供工作台恢复资产列表与基础详情摘要
 - 资源包索引缓存当前已持久化 `decryptorId / decryptorVersion`，并参与导入刷新时的缓存复用判定
 - 当前导入刷新已按 `decryptorId + decryptorVersion + sourceFingerprint + parserVersion + toolVersion` 执行命中复用与失效重建

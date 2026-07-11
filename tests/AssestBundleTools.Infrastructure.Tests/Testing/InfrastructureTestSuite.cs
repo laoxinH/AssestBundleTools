@@ -371,6 +371,14 @@ internal static class InfrastructureTestSuite
             CachedWorkspaceSessionRegistryOperationRestoreTests.TryGetAssetDetails_ShouldProjectDependencyReplacement_AsAssociatedChangeRecord);
         await RunTestAsync(
             failures,
+            nameof(UnityAssetBundleFileInspectorTests.CanTreatAsBundle_ShouldRejectPngContent_WithNormalizedBundleExtension),
+            UnityAssetBundleFileInspectorTests.CanTreatAsBundle_ShouldRejectPngContent_WithNormalizedBundleExtension);
+        await RunTestAsync(
+            failures,
+            nameof(UnityAssetBundleFileInspectorTests.CanTreatAsBundle_ShouldAcceptKnownUnityHeader_WithoutKnownExtension),
+            UnityAssetBundleFileInspectorTests.CanTreatAsBundle_ShouldAcceptKnownUnityHeader_WithoutKnownExtension);
+        await RunTestAsync(
+            failures,
             nameof(AssetsToolsRealSampleDependencyTests.Cone002Mesh_ShouldExposeRendererMaterialPath_ButNoTextureAssociation_FromRealDependencyGraph),
             AssetsToolsRealSampleDependencyTests.Cone002Mesh_ShouldExposeRendererMaterialPath_ButNoTextureAssociation_FromRealDependencyGraph);
         await RunTestAsync(

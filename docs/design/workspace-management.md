@@ -106,12 +106,12 @@
 后续实现默认按下面四层理解和收口：
 
 1. 导入源识别
-   把 `文件 / 目录 / 拖拽` 统一展开成真实文件，并在解密前尽早过滤明显无效输入。
+   把 `文件 / 目录 / 拖拽` 统一展开成真实文件，并在解密前尽早过滤缺失、空文件等明显无效输入。扩展名和来源 header 只用于候选发现，不能作为最终 AB 有效性证明。常见图片、压缩包和音视频签名只记录为“禁止直通”的负向提示，不能跳过后续解密器 Probe。
 2. 解密器识别
    这是当前最重要的自动识别主体。
-   当工作区策略为自动识别时，每个候选 AB 都独立调用所有可自动识别解密器的 `ProbeAsync`；该文件按匹配与置信度选择实际解密器，全部不匹配时才使用直通。工作区保持自动策略，不固化某个文件的选择。
+   当工作区策略为自动识别时，每个非明显无效的来源文件都独立调用所有可自动识别解密器的 `ProbeAsync`；该文件按匹配与置信度选择实际解密器，全部不匹配时才使用直通。工作区保持自动策略，不固化某个文件的选择。显式指定支持 Probe 的解密器时，同样必须对每个来源执行该解密器的 Probe，扩展名和标准 Unity header 不得绕过识别。
 3. Reader 路径识别
-   解密后再进入 `IAssetBundleReader.CanRead(...)`，决定走真实 Reader 还是在读取阶段被拒绝。
+   解密或直通后再进入 `IAssetBundleReader.CanRead(...)` 和真实读取，只有真实 Unity 内容解析成功才建立 bundle index；内部 `normalized.bundle` 文件名、来源扩展名或启发式空结果都不得放行无关文件。无 Probe 的旧显式解密器以 `Decrypt -> 真实 Reader` 作为兼容识别。
    Reader 不承担加密格式探测职责。
 4. 缓存命中识别
    最后根据 `source fingerprint + decryptorId + decryptorVersion + parserVersion + toolVersion`
@@ -121,6 +121,7 @@
 
 - 导入源识别和解密器识别属于“解密前自动识别”
 - Reader 路径识别属于“解密后自动识别”
+- 自动模式中，只有全部 codec 未匹配、准备选择 `PassThrough` 时才应用常见非 AB 签名的负向筛选；codec 明确命中的来源不受该提示阻断
 - 预览如何展示属于后续预览策略，不属于当前自动识别主轴
 - 每个 AB 的实际 `decryptorId / decryptorVersion` 属于 bundle artifact / index 身份，不属于工作区级选择状态
 
@@ -791,7 +792,7 @@ cache/
 - 当前导入处理协调器已正式拆为 `WorkspaceImportProcessingPlanBuilder -> WorkspaceImportWorkerPool -> WorkspaceImportCommitter`，bundle 粒度有界并行也已在 `Application` 导入链路内部落地
 - 当前导入结果与工作台日志已补上阶段耗时诊断，能够直接观察 `Planning / Screening / Worker / Commit` 的相对开销，并额外看到 `Probe` 的独立耗时与评估规模
 - 工作区运行时会话当前已改为优先从 `BundleIndexCacheStore` 恢复资源包列表，不再依赖假数据资源包树
-- Infrastructure 当前已接入 `AssetsTools.NET` 作为真实解析库，并保留启发式 Reader 作为失败回退
+- Infrastructure 当前已接入 `AssetsTools.NET` 作为真实解析库；真实解析失败会拒绝该来源，不再回退到启发式空索引
 - 当前阶段的 Reader 已可解析资源包内序列化文件、真实资产名与 `m_Container` 路径，并把资产列表 / 基础详情摘要写入 `BundleIndexCacheStore`
 - 解密后当前仍统一经 `IAssetBundleReader.CanRead(...)` 决定进入真实 Reader 还是在读取阶段拒绝，保持“Reader 不负责探测加密格式”的边界
 - 资产缓存当前已额外保存 `AssetTypeDisplayName`，便于工作台在 `AssetType.Unknown` 场景下仍展示真实 Unity 类型名

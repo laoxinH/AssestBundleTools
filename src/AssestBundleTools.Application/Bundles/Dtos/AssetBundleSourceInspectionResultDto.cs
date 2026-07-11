@@ -7,4 +7,5 @@ namespace AssestBundleTools.Application.Bundles.Dtos;
 /// </summary>
 public sealed record AssetBundleSourceInspectionResultDto(
     AssetBundleSourceInspectionKind Kind,
-    LocalizedMessageDto? DetailMessage = null);
+    LocalizedMessageDto? DetailMessage = null,
+    bool CanUsePassThrough = true);

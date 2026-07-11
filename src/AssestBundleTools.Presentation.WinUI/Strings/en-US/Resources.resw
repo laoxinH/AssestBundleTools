@@ -1037,6 +1037,9 @@
   <data name="WorkspaceImport.Detail.SourceInspection.MatchedKnownHeader" xml:space="preserve">
     <value>Matched known bundle header: {0}.</value>
   </data>
+  <data name="WorkspaceImport.Detail.SourceInspection.MatchedCommonNonBundleSignature" xml:space="preserve">
+    <value>The source matches a common non-bundle format ({0}); no decryptor matched, so pass-through import was skipped.</value>
+  </data>
   <data name="WorkspaceImport.Detail.SourceInspection.NoKnownPlainSignature" xml:space="preserve">
     <value>No known plain bundle signature was found.</value>
   </data>

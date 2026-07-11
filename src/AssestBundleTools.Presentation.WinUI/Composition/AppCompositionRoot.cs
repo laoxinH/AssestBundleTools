@@ -89,9 +89,7 @@ internal static class AppCompositionRoot
         var workspaceImportExecutionOptionsResolver = new WorkspaceImportExecutionOptionsResolver(
             () => appPreferencesService.WorkspaceImportWorkerCount);
         var assetBundleSourceInspector = new UnityAssetBundleSourceInspector();
-        var assetBundleReader = new FallbackAssetBundleReader(
-            new AssetsToolsAssetBundleReader(),
-            new HeuristicAssetBundleReader());
+        var assetBundleReader = new AssetsToolsAssetBundleReader();
         var audioPayloadTranscodingService = new AudioPayloadTranscodingService();
         var assetPreviewGenerator = new AssetsToolsAssetPreviewGenerator(audioPayloadTranscodingService);
         var replacementPreviewSourceProvider = new FileSystemReplacementPreviewSourceProvider();

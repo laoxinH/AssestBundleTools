@@ -11,6 +11,27 @@ internal static class UnityAssetBundleFileInspector
 {
     private static readonly string[] KnownExtensions = [".ab", ".bundle", ".assetbundle", ".unity3d"];
     private static readonly string[] KnownHeaders = ["UnityFS", "UnityRaw", "UnityWeb", "UnityArchive"];
+    private static readonly (byte[] Signature, string FormatName)[] CommonNonBundleSignatures =
+    [
+        ([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A], "PNG"),
+        ([0xFF, 0xD8, 0xFF], "JPEG"),
+        (Encoding.ASCII.GetBytes("GIF87a"), "GIF"),
+        (Encoding.ASCII.GetBytes("GIF89a"), "GIF"),
+        (Encoding.ASCII.GetBytes("BM"), "BMP"),
+        ([0x49, 0x49, 0x2A, 0x00], "TIFF"),
+        ([0x4D, 0x4D, 0x00, 0x2A], "TIFF"),
+        ([0x50, 0x4B, 0x03, 0x04], "ZIP"),
+        ([0x50, 0x4B, 0x05, 0x06], "ZIP"),
+        ([0x50, 0x4B, 0x07, 0x08], "ZIP"),
+        ([0x52, 0x61, 0x72, 0x21, 0x1A, 0x07], "RAR"),
+        ([0x37, 0x7A, 0xBC, 0xAF, 0x27, 0x1C], "7z"),
+        ([0x1F, 0x8B], "GZip"),
+        (Encoding.ASCII.GetBytes("OggS"), "Ogg"),
+        (Encoding.ASCII.GetBytes("fLaC"), "FLAC"),
+        (Encoding.ASCII.GetBytes("ID3"), "MP3"),
+        (Encoding.ASCII.GetBytes("RIFF"), "RIFF media"),
+        (Encoding.ASCII.GetBytes("%PDF"), "PDF")
+    ];
 
     /// <summary>
     /// 对原始来源文件执行“解密前”的保守识别。
@@ -50,17 +71,8 @@ internal static class UnityAssetBundleFileInspector
                 new LocalizedMessageDto(WorkspaceImportMessageTokens.SourceInspectionSourceMetadataUnreadable));
         }
 
-        var extension = Path.GetExtension(bundlePath);
-        if (KnownExtensions.Contains(extension, StringComparer.OrdinalIgnoreCase))
-        {
-            return new AssetBundleSourceInspectionResultDto(
-                AssetBundleSourceInspectionKind.Bundle,
-                new LocalizedMessageDto(
-                    WorkspaceImportMessageTokens.SourceInspectionMatchedKnownExtension,
-                    [extension]));
-        }
-
-        var header = TryReadHeader(bundlePath);
+        var prefix = TryReadPrefix(bundlePath);
+        var header = DecodeHeader(prefix);
         var matchedHeader = KnownHeaders.FirstOrDefault(knownHeader => header.StartsWith(knownHeader, StringComparison.Ordinal));
         if (!string.IsNullOrWhiteSpace(matchedHeader))
         {
@@ -71,6 +83,27 @@ internal static class UnityAssetBundleFileInspector
                     [matchedHeader]));
         }
 
+        var commonFormat = MatchCommonNonBundleFormat(prefix);
+        if (!string.IsNullOrWhiteSpace(commonFormat))
+        {
+            return new AssetBundleSourceInspectionResultDto(
+                AssetBundleSourceInspectionKind.Undetermined,
+                new LocalizedMessageDto(
+                    WorkspaceImportMessageTokens.SourceInspectionMatchedCommonNonBundleSignature,
+                    [commonFormat]),
+                CanUsePassThrough: false);
+        }
+
+        var extension = Path.GetExtension(bundlePath);
+        if (KnownExtensions.Contains(extension, StringComparer.OrdinalIgnoreCase))
+        {
+            return new AssetBundleSourceInspectionResultDto(
+                AssetBundleSourceInspectionKind.Bundle,
+                new LocalizedMessageDto(
+                    WorkspaceImportMessageTokens.SourceInspectionMatchedKnownExtension,
+                    [extension]));
+        }
+
         return new AssetBundleSourceInspectionResultDto(
             AssetBundleSourceInspectionKind.Undetermined,
             new LocalizedMessageDto(WorkspaceImportMessageTokens.SourceInspectionNoKnownPlainSignature));
@@ -78,7 +111,13 @@ internal static class UnityAssetBundleFileInspector
 
     public static bool CanTreatAsBundle(string bundlePath)
     {
-        return Inspect(bundlePath).Kind is AssetBundleSourceInspectionKind.Bundle;
+        if (string.IsNullOrWhiteSpace(bundlePath) || !File.Exists(bundlePath))
+        {
+            return false;
+        }
+
+        var header = DecodeHeader(TryReadPrefix(bundlePath));
+        return KnownHeaders.Any(knownHeader => header.StartsWith(knownHeader, StringComparison.Ordinal));
     }
 
     public static string NormalizeLogicalPath(string logicalPath, string bundlePath)
@@ -91,23 +130,41 @@ internal static class UnityAssetBundleFileInspector
         return logicalPath.Trim().Replace('\\', '/');
     }
 
-    private static string TryReadHeader(string bundlePath)
+    private static byte[] TryReadPrefix(string bundlePath)
     {
         try
         {
             using var stream = File.OpenRead(bundlePath);
-            Span<byte> buffer = stackalloc byte[16];
+            var buffer = new byte[16];
             var bytesRead = stream.Read(buffer);
             if (bytesRead <= 0)
             {
-                return string.Empty;
+                return [];
             }
 
-            return Encoding.ASCII.GetString(buffer[..bytesRead]).TrimEnd('\0', ' ', '\r', '\n', '\t');
+            return buffer[..bytesRead];
         }
         catch (Exception)
         {
-            return string.Empty;
+            return [];
         }
+    }
+
+    private static string DecodeHeader(byte[] prefix) =>
+        Encoding.ASCII.GetString(prefix).TrimEnd('\0', ' ', '\r', '\n', '\t');
+
+    private static string? MatchCommonNonBundleFormat(byte[] prefix)
+    {
+        foreach (var (signature, formatName) in CommonNonBundleSignatures)
+        {
+            if (prefix.AsSpan().StartsWith(signature))
+            {
+                return formatName;
+            }
+        }
+
+        return prefix.Length >= 8 && prefix.AsSpan(4).StartsWith("ftyp"u8)
+            ? "MP4/QuickTime"
+            : null;
     }
 }

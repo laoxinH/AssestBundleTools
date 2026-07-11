@@ -85,6 +85,10 @@ internal static partial class ApplicationTestSuite
             ProcessWorkspaceImportsHandlerTests.HandleAsync_ShouldKeepAutoDetection_WhenProbeExecutionFails);
         await RunTestAsync(
             failures,
+            nameof(ProcessWorkspaceImportsHandlerTests.HandleAsync_ShouldProbeEverySource_WhenDecryptorIsExplicitlyConfigured),
+            ProcessWorkspaceImportsHandlerTests.HandleAsync_ShouldProbeEverySource_WhenDecryptorIsExplicitlyConfigured);
+        await RunTestAsync(
+            failures,
             nameof(ProcessWorkspaceImportsHandlerTests.HandleAsync_ShouldReportReaderRejected_WhenDecryptedBundleCannotBeRead),
             ProcessWorkspaceImportsHandlerTests.HandleAsync_ShouldReportReaderRejected_WhenDecryptedBundleCannotBeRead);
         await RunTestAsync(

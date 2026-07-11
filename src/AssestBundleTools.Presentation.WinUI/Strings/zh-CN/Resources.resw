@@ -1037,6 +1037,9 @@
   <data name="WorkspaceImport.Detail.SourceInspection.MatchedKnownHeader" xml:space="preserve">
     <value>命中已知资源包头标识：{0}。</value>
   </data>
+  <data name="WorkspaceImport.Detail.SourceInspection.MatchedCommonNonBundleSignature" xml:space="preserve">
+    <value>来源内容已识别为常见非资源包格式：{0}；解密器均未命中，因此不再尝试直通导入。</value>
+  </data>
   <data name="WorkspaceImport.Detail.SourceInspection.NoKnownPlainSignature" xml:space="preserve">
     <value>未发现已知的明文资源包特征。</value>
   </data>

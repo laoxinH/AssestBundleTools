@@ -14,6 +14,7 @@ public static class WorkspaceImportMessageTokens
     public const string SourceInspectionSourceMetadataUnreadable = "WorkspaceImport.Detail.SourceInspection.SourceMetadataUnreadable";
     public const string SourceInspectionMatchedKnownExtension = "WorkspaceImport.Detail.SourceInspection.MatchedKnownExtension";
     public const string SourceInspectionMatchedKnownHeader = "WorkspaceImport.Detail.SourceInspection.MatchedKnownHeader";
+    public const string SourceInspectionMatchedCommonNonBundleSignature = "WorkspaceImport.Detail.SourceInspection.MatchedCommonNonBundleSignature";
     public const string SourceInspectionNoKnownPlainSignature = "WorkspaceImport.Detail.SourceInspection.NoKnownPlainSignature";
 
     public const string ScreeningSourceRejectedDuringInspection = "WorkspaceImport.Detail.Screening.SourceRejectedDuringInspection";

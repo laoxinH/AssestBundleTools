@@ -18,6 +18,8 @@ internal static partial class ProcessWorkspaceImportsHandlerTests
         const string logicalPath = "encrypted.ab";
         const string standardSourcePath = @"C:\Bundles\standard.ab";
         const string standardLogicalPath = "standard.ab";
+        const string unrelatedSourcePath = @"C:\Bundles\cover.png";
+        const string unrelatedLogicalPath = "cover.png";
         const string resolvedBundlePath = @"C:\Temp\encrypted.decrypted.ab";
         var sourceFingerprint = new WorkspaceFileFingerprintDto(
             SourcePath: sourcePath,
@@ -39,7 +41,8 @@ internal static partial class ProcessWorkspaceImportsHandlerTests
                 workspaceKey,
                 "Probe Workspace",
                 sourcePath,
-                standardSourcePath));
+                standardSourcePath,
+                unrelatedSourcePath));
         var bundleIndexCacheStore = new TestBundleIndexCacheStore(Array.Empty<BundleIndexCacheEntryDto>());
         var previewCacheStore = new TestPreviewCacheStore(Array.Empty<PreviewCacheDescriptorDto>());
         var autoDecryptorDescriptor = CreateAutoDetectDecryptorDescriptor("test.auto", "Test Auto");
@@ -62,7 +65,8 @@ internal static partial class ProcessWorkspaceImportsHandlerTests
         var sourceDiscoveryService = new TestWorkspaceImportSourceDiscoveryService(
         [
             new DiscoveredWorkspaceImportFileDto(sourcePath, logicalPath),
-            new DiscoveredWorkspaceImportFileDto(standardSourcePath, standardLogicalPath)
+            new DiscoveredWorkspaceImportFileDto(standardSourcePath, standardLogicalPath),
+            new DiscoveredWorkspaceImportFileDto(unrelatedSourcePath, unrelatedLogicalPath)
         ]);
         var fileSystemService = new TestWorkspaceImportFileSystemService(
             new Dictionary<string, WorkspaceFileFingerprintDto>(StringComparer.OrdinalIgnoreCase)
@@ -72,10 +76,14 @@ internal static partial class ProcessWorkspaceImportsHandlerTests
             });
         var inspector = new TestAssetBundleSourceInspector
         {
-            InspectResultFactory = path => new AssetBundleSourceInspectionResultDto(
-                string.Equals(path, standardSourcePath, StringComparison.OrdinalIgnoreCase)
-                    ? AssetBundleSourceInspectionKind.Bundle
-                    : AssetBundleSourceInspectionKind.Undetermined)
+            InspectResultFactory = path => string.Equals(path, unrelatedSourcePath, StringComparison.OrdinalIgnoreCase)
+                ? new AssetBundleSourceInspectionResultDto(
+                    AssetBundleSourceInspectionKind.Undetermined,
+                    CanUsePassThrough: false)
+                : new AssetBundleSourceInspectionResultDto(
+                    string.Equals(path, standardSourcePath, StringComparison.OrdinalIgnoreCase)
+                        ? AssetBundleSourceInspectionKind.Bundle
+                        : AssetBundleSourceInspectionKind.Undetermined)
         };
         var reader = new TestAssetBundleReader
         {
@@ -106,10 +114,11 @@ internal static partial class ProcessWorkspaceImportsHandlerTests
         var processingResult = result.Value ?? throw new InvalidOperationException("Expected processing result.");
         TestAssert.True(processingResult.UsedAutoDetection, "Import should report auto-detection usage.");
         TestAssert.Equal(AssetBundleDecryptorIds.BuiltInAutoDetect, processingResult.ResolvedDecryptorId, "Processing result should retain the workspace auto-detection strategy.");
-        TestAssert.Equal(2, autoDecryptor.ProbeCallCount, "Auto-detection should probe every bundle, including directly readable standard bundles.");
+        TestAssert.Equal(3, autoDecryptor.ProbeCallCount, "Auto-detection should probe every source before applying pass-through restrictions.");
         TestAssert.Equal(1, autoDecryptor.DecryptCallCount, "Matched auto decryptor should process the source.");
         TestAssert.Equal(1, fallbackDecryptor.DecryptCallCount, "Only the standard bundle with no codec match should use pass-through.");
         TestAssert.Equal(2, processingResult.IndexedBundleCount, "Both matched and pass-through sources should be indexed.");
+        TestAssert.Equal(1, processingResult.ScreenedOutFileCount, "A known non-bundle source should be screened out only after no codec matches.");
         TestAssert.Equal(0, metadataStore.SaveCallCount, "Per-bundle codec selections must not replace the workspace auto-detection strategy.");
         TestAssert.Equal(AssetBundleDecryptorIds.BuiltInAutoDetect, metadataStore.Metadata?.AssetBundleDecryptorId, "Workspace metadata should retain auto detection.");
         TestAssert.Equal(
@@ -129,7 +138,7 @@ internal static partial class ProcessWorkspaceImportsHandlerTests
         TestAssert.True(processingResult.PerformanceDiagnostic is not null, "Processing result should include performance diagnostics.");
         TestAssert.True(processingResult.PerformanceDiagnostic?.ProbeDurationMs >= 0, "Probe duration should be recorded.");
         TestAssert.Equal(1, processingResult.PerformanceDiagnostic?.ProbeDecryptorCount ?? 0, "Probe telemetry should count the evaluated decryptor.");
-        TestAssert.Equal(2, processingResult.PerformanceDiagnostic?.ProbeEvaluationCount ?? 0, "Probe telemetry should count every evaluated bundle.");
+        TestAssert.Equal(3, processingResult.PerformanceDiagnostic?.ProbeEvaluationCount ?? 0, "Probe telemetry should count every evaluated source, including the rejected PNG.");
         TestAssert.Equal(1, processingResult.AutoDetectionDiagnostic?.ProbeDiagnostics.Count ?? 0, "Auto-detection diagnostic should include the probe summary.");
         TestAssert.True(processingResult.AutoDetectionDiagnostic?.ProbeDiagnostics[0].WasSelected ?? false, "Probe diagnostic should mark the selected decryptor.");
     }
@@ -212,9 +221,104 @@ internal static partial class ProcessWorkspaceImportsHandlerTests
             "Workspace metadata should keep auto detection so a later refresh probes again.");
     }
 
+    public static async Task HandleAsync_ShouldProbeEverySource_WhenDecryptorIsExplicitlyConfigured()
+    {
+        const string workspaceKey = "workspace-explicit-probe";
+        const string workspaceDataRootPath = @"D:\WorkspaceData";
+        const string matchedPath = @"C:\Bundles\matched-private-data";
+        const string rejectedPath = @"C:\Bundles\unrelated.ab";
+        var matchedFingerprint = new WorkspaceFileFingerprintDto(
+            matchedPath,
+            4096,
+            new DateTimeOffset(2026, 7, 11, 1, 0, 0, TimeSpan.Zero),
+            "hash-matched");
+        var rejectedFingerprint = new WorkspaceFileFingerprintDto(
+            rejectedPath,
+            128,
+            new DateTimeOffset(2026, 7, 11, 1, 1, 0, TimeSpan.Zero),
+            "hash-rejected");
+        var decryptorDescriptor = CreateAutoDetectDecryptorDescriptor("test.explicit", "Explicit Test Codec");
+        var decryptor = new TestAssetBundleDecryptor(decryptorDescriptor)
+        {
+            ProbeResultFactory = request => Task.FromResult(new AssetBundleDecryptorProbeResultDto(
+                IsSuccessful: true,
+                IsMatch: string.Equals(request.SourcePath, matchedPath, StringComparison.OrdinalIgnoreCase),
+                Confidence: string.Equals(request.SourcePath, matchedPath, StringComparison.OrdinalIgnoreCase) ? 100 : 0,
+                DiagnosticMessage: null)),
+            DecryptResultFactory = request => Task.FromResult(Result<AssetBundleDecryptionResultDto>.Success(
+                CreateDecryptionResult(decryptorDescriptor, matchedFingerprint, request.SourcePath)))
+        };
+        var metadataStore = new TestWorkspaceMetadataStore(
+            CreateWorkspaceMetadata(
+                workspaceKey,
+                "Explicit Probe Workspace",
+                decryptorDescriptor.Id,
+                matchedPath,
+                rejectedPath));
+        var bundleIndexCacheStore = new TestBundleIndexCacheStore(Array.Empty<BundleIndexCacheEntryDto>());
+        var handler = new ProcessWorkspaceImportsHandler(
+            new TestWorkspaceMetadataStoreFactory(metadataStore),
+            new TestWorkspaceDataStoreFactory(
+                bundleIndexCacheStore,
+                new TestPreviewCacheStore(Array.Empty<PreviewCacheDescriptorDto>())),
+            new TestWorkspaceImportSourceDiscoveryService(
+            [
+                new DiscoveredWorkspaceImportFileDto(matchedPath, "matched-private-data"),
+                new DiscoveredWorkspaceImportFileDto(rejectedPath, "unrelated.ab")
+            ]),
+            new TestWorkspaceImportFileSystemService(
+                new Dictionary<string, WorkspaceFileFingerprintDto>(StringComparer.OrdinalIgnoreCase)
+                {
+                    [matchedPath] = matchedFingerprint,
+                    [rejectedPath] = rejectedFingerprint
+                }),
+            new WorkspaceImportExecutionGate(),
+            new WorkspaceImportExecutionOptionsResolver(),
+            new TestAssetBundleSourceInspector
+            {
+                InspectResultFactory = path => new AssetBundleSourceInspectionResultDto(
+                    string.Equals(path, rejectedPath, StringComparison.OrdinalIgnoreCase)
+                        ? AssetBundleSourceInspectionKind.Bundle
+                        : AssetBundleSourceInspectionKind.Undetermined)
+            },
+            new TestAssetBundleDecryptorRegistry(decryptor),
+            new TestAssetBundleReader
+            {
+                ReadResultFactory = request => Task.FromResult(Result<AssetBundleReadResultDto>.Success(
+                    new AssetBundleReadResultDto(
+                        "matched",
+                        request.LogicalPath,
+                        "parser-1",
+                        Array.Empty<string>(),
+                        Array.Empty<AssetBundleReadAssetDto>())))
+            });
+
+        var result = await handler.HandleAsync(new ProcessWorkspaceImportsCommand(
+            workspaceKey,
+            workspaceDataRootPath));
+
+        TestAssert.True(result.IsSuccess, "Explicit codec screening should complete successfully.");
+        TestAssert.Equal(2, decryptor.ProbeCallCount, "The explicit codec must probe both extension and unresolved candidates.");
+        TestAssert.Equal(1, decryptor.DecryptCallCount, "Only the source matched by the explicit codec should be decrypted.");
+        TestAssert.Equal(1, result.Value?.IndexedBundleCount ?? -1, "Only the matched source should be indexed.");
+        TestAssert.Equal(1, result.Value?.ScreenedOutFileCount ?? -1, "The unrelated .ab source should be screened out.");
+        TestAssert.Equal(1, bundleIndexCacheStore.SavedEntries.Count, "Only one bundle index should be persisted.");
+    }
+
     private static WorkspaceMetadataDto CreateAutoDetectWorkspaceMetadata(
         string workspaceKey,
         string displayName,
+        params string[] sourcePaths) =>
+        CreateWorkspaceMetadata(
+            workspaceKey,
+            displayName,
+            AssetBundleDecryptorIds.BuiltInAutoDetect,
+            sourcePaths);
+
+    private static WorkspaceMetadataDto CreateWorkspaceMetadata(
+        string workspaceKey,
+        string displayName,
+        string decryptorId,
         params string[] sourcePaths) =>
         new(
             WorkspaceKey: workspaceKey,
@@ -239,6 +343,6 @@ internal static partial class ProcessWorkspaceImportsHandlerTests
                     PathKind: WorkspaceImportPathKind.File,
                     RecordedAtUtc: new DateTimeOffset(2026, 4, 28, 14, 0, 0, TimeSpan.Zero)))
                 .ToArray(),
-            AssetBundleDecryptorId: AssetBundleDecryptorIds.BuiltInAutoDetect,
+            AssetBundleDecryptorId: decryptorId,
             ExcludedBundleSourcePaths: Array.Empty<string>());
 }

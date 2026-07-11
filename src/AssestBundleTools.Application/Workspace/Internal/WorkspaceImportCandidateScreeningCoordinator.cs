@@ -42,6 +42,7 @@ internal sealed class WorkspaceImportCandidateScreeningCoordinator
 
         var candidateFiles = new Dictionary<string, DiscoveredWorkspaceImportFileDto>(StringComparer.OrdinalIgnoreCase);
         var unresolvedFiles = new List<DiscoveredWorkspaceImportFileDto>();
+        var inspectionsBySourcePath = new Dictionary<string, AssetBundleSourceInspectionResultDto>(StringComparer.OrdinalIgnoreCase);
         var issueDiagnostics = new List<WorkspaceImportIssueDiagnosticDto>();
 
         foreach (var discoveredFile in discoveredFiles)
@@ -49,6 +50,7 @@ internal sealed class WorkspaceImportCandidateScreeningCoordinator
             cancellationToken.ThrowIfCancellationRequested();
 
             var inspectionResult = _assetBundleSourceInspector.Inspect(discoveredFile.SourcePath);
+            inspectionsBySourcePath[discoveredFile.SourcePath] = inspectionResult;
             switch (inspectionResult.Kind)
             {
                 case AssetBundleSourceInspectionKind.Bundle:
@@ -85,19 +87,29 @@ internal sealed class WorkspaceImportCandidateScreeningCoordinator
             }
 
             var autoResolution = autoResolutionResult.Value;
+            var acceptedAutoDetectionFiles = FilterAutoDetectionPassThroughCandidates(
+                autoDetectionFiles,
+                inspectionsBySourcePath,
+                autoResolution,
+                issueDiagnostics);
             return Result<WorkspaceImportCandidateScreeningResult>.Success(
                 new WorkspaceImportCandidateScreeningResult(
                     Decryptor: autoResolution.Decryptor,
                     UsedAutoDetection: true,
                     AutoDetectionDiagnostic: autoResolution.AutoDetectionDiagnostic,
-                    BundleCandidates: BuildBundleCandidates(autoDetectionFiles, autoResolution),
+                    BundleCandidates: BuildBundleCandidates(acceptedAutoDetectionFiles, autoResolution),
                     ScreenedOutDiagnostics: issueDiagnostics,
                     ProbeTelemetry: autoResolution.ProbeTelemetry));
         }
 
+        var explicitRecognitionFiles = candidateFiles.Values
+            .Concat(unresolvedFiles)
+            .OrderBy(static file => file.LogicalPath, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(static file => file.SourcePath, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
         var decryptorResolutionResult = await ResolveDecryptorAsync(
             configuredDecryptorId,
-            unresolvedFiles,
+            explicitRecognitionFiles,
             cancellationToken);
         if (!decryptorResolutionResult.IsSuccess || decryptorResolutionResult.Value is null)
         {
@@ -105,9 +117,10 @@ internal sealed class WorkspaceImportCandidateScreeningCoordinator
         }
 
         var decryptorResolution = decryptorResolutionResult.Value;
-        var probeTelemetry = await AppendUnresolvedCandidatesAsync(
+        candidateFiles.Clear();
+        var probeTelemetry = await AppendExplicitDecryptorCandidatesAsync(
             decryptorResolution,
-            unresolvedFiles,
+            explicitRecognitionFiles,
             candidateFiles,
             issueDiagnostics,
             cancellationToken);
@@ -164,21 +177,19 @@ internal sealed class WorkspaceImportCandidateScreeningCoordinator
     }
 
     /// <summary>
-    /// 对“直检未能判断”的来源继续执行显式解密器识别。
-    /// 规则保持保守：
-    /// 1. 自动识别或回退解密器未命中时，直接筛除；
-    /// 2. 显式解密器且支持 Probe 时，以 Probe 结果为准；
-    /// 3. 显式解密器但不支持 Probe 时，为避免误伤加密 AB，保守放行。
+    /// 对全部候选来源执行显式解密器识别。
+    /// 支持 Probe 时只放行匹配项；旧解密器没有 Probe 时，
+    /// 交给后续 Decrypt + 真实 Reader 完成兼容校验。
     /// </summary>
-    private async Task<WorkspaceImportProbeTelemetry> AppendUnresolvedCandidatesAsync(
+    private async Task<WorkspaceImportProbeTelemetry> AppendExplicitDecryptorCandidatesAsync(
         WorkspaceImportDecryptorResolutionResult decryptorResolution,
-        IReadOnlyList<DiscoveredWorkspaceImportFileDto> unresolvedFiles,
+        IReadOnlyList<DiscoveredWorkspaceImportFileDto> recognitionFiles,
         IDictionary<string, DiscoveredWorkspaceImportFileDto> candidateFiles,
         ICollection<WorkspaceImportIssueDiagnosticDto> issueDiagnostics,
         CancellationToken cancellationToken)
     {
         var probeTelemetry = decryptorResolution.ProbeTelemetry;
-        if (unresolvedFiles.Count == 0)
+        if (recognitionFiles.Count == 0)
         {
             return probeTelemetry;
         }
@@ -186,25 +197,9 @@ internal sealed class WorkspaceImportCandidateScreeningCoordinator
         var decryptor = decryptorResolution.Decryptor;
         if (!decryptor.Descriptor.SupportsAutoDetection)
         {
-            if (!decryptorResolution.UsedAutoDetection && !decryptor.Descriptor.IsFallback)
+            foreach (var recognitionFile in recognitionFiles)
             {
-                foreach (var unresolvedFile in unresolvedFiles)
-                {
-                    candidateFiles[unresolvedFile.SourcePath] = unresolvedFile;
-                }
-
-                return probeTelemetry;
-            }
-
-            var detail = decryptorResolution.UsedAutoDetection
-                ? new LocalizedMessageDto(WorkspaceImportMessageTokens.ScreeningAutoDetectionNoDecryptorMatch)
-                : new LocalizedMessageDto(WorkspaceImportMessageTokens.ScreeningConfiguredDecryptorProbeUnsupported);
-            foreach (var unresolvedFile in unresolvedFiles)
-            {
-                issueDiagnostics.Add(CreateScreenedOutDiagnostic(
-                    unresolvedFile,
-                    decryptor.Descriptor.Id,
-                    detail));
+                candidateFiles[recognitionFile.SourcePath] = recognitionFile;
             }
 
             return probeTelemetry;
@@ -213,7 +208,7 @@ internal sealed class WorkspaceImportCandidateScreeningCoordinator
         var probeStopwatch = Stopwatch.StartNew();
         var probeSummary = await WorkspaceAssetBundleDecryptorResolver.ProbeDecryptorAsync(
             decryptor,
-            unresolvedFiles,
+            recognitionFiles,
             cancellationToken);
         probeStopwatch.Stop();
         probeTelemetry = probeTelemetry.Add(
@@ -224,23 +219,23 @@ internal sealed class WorkspaceImportCandidateScreeningCoordinator
         var fileResultsByPath = probeSummary.FileResults
             .ToDictionary(fileResult => fileResult.SourcePath, StringComparer.OrdinalIgnoreCase);
 
-        foreach (var unresolvedFile in unresolvedFiles)
+        foreach (var recognitionFile in recognitionFiles)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            if (fileResultsByPath.TryGetValue(unresolvedFile.SourcePath, out var fileResult) &&
+            if (fileResultsByPath.TryGetValue(recognitionFile.SourcePath, out var fileResult) &&
                 fileResult.IsSuccessful &&
                 fileResult.IsMatch)
             {
-                candidateFiles[unresolvedFile.SourcePath] = unresolvedFile;
+                candidateFiles[recognitionFile.SourcePath] = recognitionFile;
                 continue;
             }
 
-            var detail = !fileResultsByPath.TryGetValue(unresolvedFile.SourcePath, out var unmatchedResult)
+            var detail = !fileResultsByPath.TryGetValue(recognitionFile.SourcePath, out var unmatchedResult)
                 ? new LocalizedMessageDto(WorkspaceImportMessageTokens.ScreeningProbeResultMissing)
                 : BuildProbeRejectedDetail(unmatchedResult);
             issueDiagnostics.Add(CreateScreenedOutDiagnostic(
-                unresolvedFile,
+                recognitionFile,
                 decryptor.Descriptor.Id,
                 detail));
         }
@@ -298,6 +293,33 @@ internal sealed class WorkspaceImportCandidateScreeningCoordinator
                 File: file,
                 Decryptor: resolution.ResolveForSourcePath(file.SourcePath)))
             .ToArray();
+
+    private static IReadOnlyList<DiscoveredWorkspaceImportFileDto> FilterAutoDetectionPassThroughCandidates(
+        IReadOnlyList<DiscoveredWorkspaceImportFileDto> files,
+        IReadOnlyDictionary<string, AssetBundleSourceInspectionResultDto> inspectionsBySourcePath,
+        WorkspaceImportDecryptorResolutionResult resolution,
+        ICollection<WorkspaceImportIssueDiagnosticDto> issueDiagnostics)
+    {
+        var acceptedFiles = new List<DiscoveredWorkspaceImportFileDto>(files.Count);
+        foreach (var file in files)
+        {
+            var decryptor = resolution.ResolveForSourcePath(file.SourcePath);
+            if (!decryptor.Descriptor.IsFallback ||
+                !inspectionsBySourcePath.TryGetValue(file.SourcePath, out var inspection) ||
+                inspection.CanUsePassThrough)
+            {
+                acceptedFiles.Add(file);
+                continue;
+            }
+
+            issueDiagnostics.Add(CreateScreenedOutDiagnostic(
+                file,
+                decryptor.Descriptor.Id,
+                inspection.DetailMessage));
+        }
+
+        return acceptedFiles;
+    }
 }
 
 internal sealed record WorkspaceImportCandidateScreeningResult(
