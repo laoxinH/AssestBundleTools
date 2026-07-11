@@ -4,4 +4,5 @@ internal sealed record AssetBundleExternalProcessDecryptPayload(
     bool IsSuccess,
     string? OutputPath,
     string? Message,
-    int SchemaVersion = 1);
+    int SchemaVersion = 1,
+    IReadOnlyDictionary<string, string>? CodecParameters = null);

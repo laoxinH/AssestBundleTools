@@ -132,6 +132,9 @@ internal sealed class WorkspaceSaveBundleExportRunner
                             : null,
                         SourceCodecVersion: command.UseSourceCodec
                             ? selectedPlan.ArtifactInput.SourceCodecVersion
+                            : null,
+                        SourceCodecParameters: command.UseSourceCodec
+                            ? selectedPlan.ArtifactInput.SourceCodecParameters
                             : null),
                     cancellationToken);
 

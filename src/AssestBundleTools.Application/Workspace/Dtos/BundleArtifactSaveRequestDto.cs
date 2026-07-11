@@ -13,4 +13,5 @@ public sealed record BundleArtifactSaveRequestDto(
     string ResolvedBundlePath,
     bool ProducedDerivedFile,
     WorkspaceFileFingerprintDto ResolvedBundleFingerprint,
-    DateTimeOffset CreatedAtUtc);
+    DateTimeOffset CreatedAtUtc,
+    IReadOnlyDictionary<string, string>? CodecParameters = null);

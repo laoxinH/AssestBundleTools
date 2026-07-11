@@ -26,7 +26,8 @@ public sealed record WorkspaceBundleExportRequestDto(
     string? WorkspaceKey = null,
     string? WorkspaceDataRootPath = null,
     string? SourceCodecId = null,
-    string? SourceCodecVersion = null);
+    string? SourceCodecVersion = null,
+    IReadOnlyDictionary<string, string>? SourceCodecParameters = null);
 
 public sealed record WorkspaceBundleExportResultDto(
     BundleId BundleId,

@@ -11,4 +11,5 @@ public sealed record AssetBundleDecryptionResultDto(
     string ResolvedBundlePath,
     bool ProducedDerivedFile,
     WorkspaceFileFingerprintDto BundleFingerprint,
-    LocalizedMessageDto? DiagnosticMessage);
+    LocalizedMessageDto? DiagnosticMessage,
+    IReadOnlyDictionary<string, string>? CodecParameters = null);

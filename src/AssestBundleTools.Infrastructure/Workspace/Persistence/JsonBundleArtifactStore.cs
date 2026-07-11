@@ -82,7 +82,8 @@ public sealed class JsonBundleArtifactStore : IBundleArtifactStore
             DecryptorVersion: request.DecryptorVersion,
             NormalizerVersion: request.NormalizerVersion,
             CreatedAtUtc: request.CreatedAtUtc,
-            LastAccessedAtUtc: request.CreatedAtUtc);
+            LastAccessedAtUtc: request.CreatedAtUtc,
+            CodecParameters: request.CodecParameters);
         JsonWorkspaceFileStorageHelper.WriteJsonAtomically(
             _storagePaths.GetBundleArtifactManifestFilePath(request.WorkspaceKey, request.BundleCacheKey),
             manifest,

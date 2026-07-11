@@ -6,7 +6,7 @@ namespace AssestBundleTools.Infrastructure.Bundles.Decryption;
 
 internal static class BuiltInCrossCoreDecryptorFactory
 {
-    private const string Version = "1.0.0";
+    private const string Version = "2.0.0";
     private const string ExecutableFileName = @".\AssestBundleTools.BundleCodec.CrossCore.exe";
 
     public static IAssetBundleDecryptor CreateDecryptor()
@@ -81,6 +81,8 @@ internal static class BuiltInCrossCoreDecryptorFactory
                 "{inputPath}",
                 "--output",
                 "{outputPath}",
+                "--outer-prefix-base64",
+                "{parameter:crosscore.outerPrefixBase64}",
                 "--result",
                 "{resultPath}"
             ]

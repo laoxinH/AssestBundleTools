@@ -77,6 +77,7 @@ internal sealed class ExternalProcessAssetBundleDecryptor : IAssetBundleDecrypto
             workspaceKey: string.Empty,
             workspaceDataRootPath: string.Empty,
             workingDirectoryPath: workingDirectoryPath,
+            parameters: null,
             cancellationToken: cancellationToken);
 
         try
@@ -162,6 +163,7 @@ internal sealed class ExternalProcessAssetBundleDecryptor : IAssetBundleDecrypto
             workspaceKey: request.WorkspaceKey,
             workspaceDataRootPath: request.WorkspaceDataRootPath,
             workingDirectoryPath: workingDirectoryPath,
+            parameters: null,
             cancellationToken: cancellationToken);
 
         try
@@ -220,7 +222,8 @@ internal sealed class ExternalProcessAssetBundleDecryptor : IAssetBundleDecrypto
                 BundleFingerprint: AssetBundleFileFingerprintFactory.Create(resolvedOutputPath),
                 DiagnosticMessage: string.IsNullOrWhiteSpace(payload.Message)
                     ? null
-                    : new LocalizedMessageDto(FallbackText: payload.Message.Trim()));
+                    : new LocalizedMessageDto(FallbackText: payload.Message.Trim()),
+                CodecParameters: payload.CodecParameters);
 
             return Result<AssetBundleDecryptionResultDto>.Success(result);
         }
@@ -264,6 +267,7 @@ internal sealed class ExternalProcessAssetBundleDecryptor : IAssetBundleDecrypto
             workspaceKey: request.WorkspaceKey,
             workspaceDataRootPath: request.WorkspaceDataRootPath,
             workingDirectoryPath: workingDirectoryPath,
+            parameters: request.Parameters,
             cancellationToken: cancellationToken);
 
         try

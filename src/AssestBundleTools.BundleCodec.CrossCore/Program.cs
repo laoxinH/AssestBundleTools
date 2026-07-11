@@ -27,8 +27,8 @@ public static class CrossCoreBundleCodecProgram
             return options.Command switch
             {
                 CodecCommand.Probe => await ProbeAsync(options),
-                CodecCommand.Decrypt => await TransformAsync(options, CrossCoreBundleCodec.Decrypt),
-                CodecCommand.Encrypt => await TransformAsync(options, CrossCoreBundleCodec.Encrypt),
+                CodecCommand.Decrypt => await DecryptAsync(options),
+                CodecCommand.Encrypt => await EncryptAsync(options),
                 _ => FailureExitCode
             };
         }
@@ -58,11 +58,22 @@ public static class CrossCoreBundleCodecProgram
         return SuccessExitCode;
     }
 
-    private static async Task<int> TransformAsync(
-        CodecOptions options,
-        Action<string, string> transform)
+    private static async Task<int> DecryptAsync(CodecOptions options)
     {
-        transform(options.InputPath, options.OutputPath);
+        var metadata = CrossCoreBundleCodec.Decrypt(options.InputPath, options.OutputPath);
+        var outputPath = Path.GetFullPath(options.OutputPath);
+        await WriteTransformResultAsync(
+            options.ResultPath,
+            CrossCoreCodecTransformPayload.Succeeded(outputPath, metadata.CodecParameters));
+        return SuccessExitCode;
+    }
+
+    private static async Task<int> EncryptAsync(CodecOptions options)
+    {
+        CrossCoreBundleCodec.Encrypt(
+            options.InputPath,
+            options.OutputPath,
+            options.OuterPrefixBase64);
         var outputPath = Path.GetFullPath(options.OutputPath);
         await WriteTransformResultAsync(
             options.ResultPath,
@@ -109,6 +120,7 @@ public static class CrossCoreBundleCodecProgram
         string InputPath,
         string OutputPath,
         string ResultPath,
+        string? OuterPrefixBase64,
         string? ValidationMessage)
     {
         public bool IsValid => string.IsNullOrWhiteSpace(ValidationMessage);
@@ -128,6 +140,7 @@ public static class CrossCoreBundleCodecProgram
             var inputPath = GetValue(values, "input");
             var outputPath = GetValue(values, "output");
             var resultPath = GetValue(values, "result");
+            var outerPrefixBase64 = GetValue(values, "outer-prefix-base64");
             var validationMessage = command == CodecCommand.None
                 ? "Command must be probe, decrypt, or encrypt."
                 : string.IsNullOrWhiteSpace(inputPath)
@@ -143,6 +156,7 @@ public static class CrossCoreBundleCodecProgram
                 inputPath ?? string.Empty,
                 outputPath ?? string.Empty,
                 resultPath ?? string.Empty,
+                outerPrefixBase64,
                 validationMessage);
         }
 
@@ -184,10 +198,13 @@ internal sealed record CrossCoreCodecTransformPayload(
     int SchemaVersion,
     bool IsSuccess,
     string? OutputPath,
-    string? Message)
+    string? Message,
+    IReadOnlyDictionary<string, string>? CodecParameters = null)
 {
-    public static CrossCoreCodecTransformPayload Succeeded(string outputPath) =>
-        new(CrossCoreBundleCodecProgram.ResultSchemaVersion, true, outputPath, null);
+    public static CrossCoreCodecTransformPayload Succeeded(
+        string outputPath,
+        IReadOnlyDictionary<string, string>? codecParameters = null) =>
+        new(CrossCoreBundleCodecProgram.ResultSchemaVersion, true, outputPath, null, codecParameters);
 
     public static CrossCoreCodecTransformPayload Failed(string? message) =>
         new(CrossCoreBundleCodecProgram.ResultSchemaVersion, false, null, message);

@@ -150,7 +150,11 @@ internal static class ExternalProcessAssetBundleDecryptorTests
             OutputPath: outputPath,
             WorkspaceKey: "workspace-c",
             WorkspaceDataRootPath: temporaryDirectory.DirectoryPath,
-            BundleCacheKey: "bundle-cache-003")).GetAwaiter().GetResult();
+            BundleCacheKey: "bundle-cache-003",
+            Parameters: new Dictionary<string, string>
+            {
+                ["test.value"] = "exact-prefix"
+            })).GetAwaiter().GetResult();
 
         TestAssert.True(result.IsSuccess, "Optional external encrypt command should succeed.");
         var encryptionResult = TestAssert.NotNull(result.Value, "Successful encryption should return a value.");
@@ -183,7 +187,7 @@ internal static class ExternalProcessAssetBundleDecryptorTests
                 [
                     "-NoProfile",
                     "-Command",
-                    "$inputPath = '{inputPath}'; $output = '{outputPath}'; $result = '{resultPath}'; Copy-Item -LiteralPath $inputPath -Destination $output; Set-Content -LiteralPath $result -Value '{\"isSuccess\":true}'"
+                    "$inputPath = '{inputPath}'; $output = '{outputPath}'; $result = '{resultPath}'; $parameter = '{parameter:test.value}'; if ($parameter -ne 'exact-prefix') { exit 9 }; Copy-Item -LiteralPath $inputPath -Destination $output; Set-Content -LiteralPath $result -Value '{\"isSuccess\":true}'"
                 ]
             },
             manifestDirectoryPath);

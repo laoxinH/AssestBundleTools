@@ -192,7 +192,8 @@ internal static class WorkspaceBundleArtifactResolver
             ResolvedBundlePath: decryptionResult.Value.ResolvedBundlePath,
             ProducedDerivedFile: decryptionResult.Value.ProducedDerivedFile,
             ResolvedBundleFingerprint: decryptionResult.Value.BundleFingerprint,
-            CreatedAtUtc: createdAtUtc));
+            CreatedAtUtc: createdAtUtc,
+            CodecParameters: decryptionResult.Value.CodecParameters));
 
         var resolvedBundlePath = bundleArtifactStore.ResolveBundlePath(savedManifest)
                                  ?? savedManifest.ResolvedBundlePath;

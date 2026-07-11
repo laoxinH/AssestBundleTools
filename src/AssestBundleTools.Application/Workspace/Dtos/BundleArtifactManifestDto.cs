@@ -18,4 +18,5 @@ public sealed record BundleArtifactManifestDto(
     string? DecryptorVersion,
     string NormalizerVersion,
     DateTimeOffset CreatedAtUtc,
-    DateTimeOffset? LastAccessedAtUtc = null);
+    DateTimeOffset? LastAccessedAtUtc = null,
+    IReadOnlyDictionary<string, string>? CodecParameters = null);

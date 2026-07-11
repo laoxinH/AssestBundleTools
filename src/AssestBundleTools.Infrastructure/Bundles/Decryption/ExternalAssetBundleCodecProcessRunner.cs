@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 
 namespace AssestBundleTools.Infrastructure.Bundles.Decryption;
 
@@ -23,6 +24,7 @@ internal sealed class ExternalAssetBundleCodecProcessRunner
         string workspaceKey,
         string workspaceDataRootPath,
         string workingDirectoryPath,
+        IReadOnlyDictionary<string, string>? parameters,
         CancellationToken cancellationToken)
     {
         Process? process = null;
@@ -45,7 +47,8 @@ internal sealed class ExternalAssetBundleCodecProcessRunner
                          outputPath,
                          resultPath,
                          workspaceKey,
-                         workspaceDataRootPath))
+                         workspaceDataRootPath,
+                         parameters))
             {
                 process.StartInfo.ArgumentList.Add(argument);
             }
@@ -121,17 +124,25 @@ internal sealed class ExternalAssetBundleCodecProcessRunner
         string outputPath,
         string resultPath,
         string workspaceKey,
-        string workspaceDataRootPath)
+        string workspaceDataRootPath,
+        IReadOnlyDictionary<string, string>? parameters)
     {
         foreach (var argument in arguments)
         {
-            yield return argument
+            var expandedArgument = argument
                 .Replace("{inputPath}", Path.GetFullPath(sourcePath), StringComparison.Ordinal)
                 .Replace("{outputPath}", outputPath, StringComparison.Ordinal)
                 .Replace("{resultPath}", resultPath, StringComparison.Ordinal)
                 .Replace("{workspaceKey}", workspaceKey, StringComparison.Ordinal)
                 .Replace("{workspaceDataRootPath}", workspaceDataRootPath, StringComparison.Ordinal)
                 .Replace("{manifestDirectory}", _manifestDirectoryPath, StringComparison.Ordinal);
+            yield return Regex.Replace(
+                expandedArgument,
+                "\\{parameter:([^{}]+)\\}",
+                match => parameters is not null && parameters.TryGetValue(match.Groups[1].Value, out var value)
+                    ? value
+                    : string.Empty,
+                RegexOptions.CultureInvariant);
         }
     }
 }

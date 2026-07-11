@@ -115,7 +115,8 @@ internal sealed class WorkspaceSaveArtifactInputResolver
                 ArtifactDiagnosticCode: null,
                 OriginalCompression: originalCompression,
                 SourceCodecId: sourceCodecId,
-                SourceCodecVersion: sourceCodecVersion);
+                SourceCodecVersion: sourceCodecVersion,
+                SourceCodecParameters: artifactResolution.Input.Manifest.CodecParameters);
         }
 
         return WorkspaceSaveBundleArtifactInput.Unresolved(
@@ -138,7 +139,8 @@ internal sealed record WorkspaceSaveBundleArtifactInput(
     string? ArtifactDiagnosticCode,
     string? OriginalCompression = null,
     string? SourceCodecId = null,
-    string? SourceCodecVersion = null)
+    string? SourceCodecVersion = null,
+    IReadOnlyDictionary<string, string>? SourceCodecParameters = null)
 {
     public static WorkspaceSaveBundleArtifactInput Unresolved(
         string? bundleCacheKey,
@@ -151,5 +153,6 @@ internal sealed record WorkspaceSaveBundleArtifactInput(
             ArtifactDiagnosticCode: diagnosticCode,
             OriginalCompression: null,
             SourceCodecId: null,
-            SourceCodecVersion: null);
+            SourceCodecVersion: null,
+            SourceCodecParameters: null);
 }

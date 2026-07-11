@@ -203,7 +203,8 @@ public sealed class FileSystemWorkspaceBundleExporter : IWorkspaceBundleExporter
                     ? Path.GetDirectoryName(outputPath) ?? Environment.CurrentDirectory
                     : request.WorkspaceDataRootPath,
                 BundleCacheKey: request.BundleCacheKey,
-                WorkingDirectoryPath: workingDirectoryPath),
+                WorkingDirectoryPath: workingDirectoryPath,
+                Parameters: request.SourceCodecParameters),
             cancellationToken);
         if (encryptionResult.IsCancelled)
         {

@@ -25,13 +25,21 @@ internal static class JsonBundleArtifactStoreTests
             ResolvedBundlePath: sourceBundlePath,
             ProducedDerivedFile: true,
             ResolvedBundleFingerprint: CreateFingerprint(sourceBundlePath, 3),
-            CreatedAtUtc: new DateTimeOffset(2026, 5, 17, 10, 0, 0, TimeSpan.Zero)));
+            CreatedAtUtc: new DateTimeOffset(2026, 5, 17, 10, 0, 0, TimeSpan.Zero),
+            CodecParameters: new Dictionary<string, string>
+            {
+                ["crosscore.outerPrefixBase64"] = "VW5pdHlGUwA="
+            }));
 
         var restoredManifest = TestAssert.NotNull(
             store.Load("workspace-a", "bundle-cache-a"),
             "Saved bundle artifact manifest should be readable.");
         TestAssert.True(restoredManifest.IsMaterialized, "Derived bundle should be materialized into cache/bundles.");
         TestAssert.Equal(manifest.ResolvedBundlePath, restoredManifest.ResolvedBundlePath, "Manifest path should round-trip.");
+        TestAssert.Equal(
+            "VW5pdHlGUwA=",
+            restoredManifest.CodecParameters!["crosscore.outerPrefixBase64"],
+            "Codec parameters required for exact re-encryption should round-trip through the manifest.");
         TestAssert.Equal(manifest.CreatedAtUtc, restoredManifest.LastAccessedAtUtc, "Saving artifact manifest should initialize last access time.");
         TestAssert.True(
             restoredManifest.ResolvedBundlePath.EndsWith(

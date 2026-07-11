@@ -157,7 +157,11 @@ internal static partial class SaveWorkspaceHandlersTests
                 workspaceKey,
                 alphaIndexEntry.BundleCacheKey,
                 @"D:\WorkspaceData\cache\bundles\workspace-save-key\bundle-cache-alpha\normalized.bundle",
-                alphaIndexEntry.SourceFingerprint),
+                alphaIndexEntry.SourceFingerprint,
+                new Dictionary<string, string>
+                {
+                    ["crosscore.outerPrefixBase64"] = "VW5pdHlGUwA="
+                }),
             CreateArtifactManifest(
                 workspaceKey,
                 zetaIndexEntry.BundleCacheKey,
@@ -227,6 +231,10 @@ internal static partial class SaveWorkspaceHandlersTests
             "1.0.0",
             exporter.Requests[0].SourceCodecVersion,
             "Exporter should receive the source codec version from the bundle index.");
+        TestAssert.Equal(
+            "VW5pdHlGUwA=",
+            exporter.Requests[0].SourceCodecParameters!["crosscore.outerPrefixBase64"],
+            "Exporter should receive exact re-encryption metadata from the artifact manifest.");
         TestAssert.True(!string.IsNullOrWhiteSpace(exporter.Requests[0].BundleSessionCacheKey), "Exporter should receive the artifact loaded-session identity for isolated writer load diagnostics.");
         TestAssert.Equal("resource.processor.texture.png", TestAssert.Single(exporter.Requests[0].ProcessorSelections).ProcessorId, "Processor selections should be forwarded to exporter.");
         TestAssert.Equal("HeroTexture", TestAssert.Single(processorExecutor.WorkItems).AssetName, "File-backed Texture2D changes should create resource processor work items.");
@@ -249,6 +257,7 @@ internal static partial class SaveWorkspaceHandlersTests
         TestAssert.Equal(2, exporter.Requests.Count, "Both export requests should reach the writer.");
         TestAssert.Equal(null, exporter.Requests[1].SourceCodecId, "Disabled source encoding should omit the source codec id.");
         TestAssert.Equal(null, exporter.Requests[1].SourceCodecVersion, "Disabled source encoding should omit the source codec version.");
+        TestAssert.Equal(null, exporter.Requests[1].SourceCodecParameters, "Disabled source encoding should omit source codec parameters.");
     }
 
     public static async Task SaveWorkspaceAsNewBundleHandler_ShouldBlockExistingOutput_WhenOverwriteIsDisabled()
@@ -577,7 +586,8 @@ internal static partial class SaveWorkspaceHandlersTests
         string workspaceKey,
         string bundleCacheKey,
         string resolvedBundlePath,
-        WorkspaceFileFingerprintDto sourceFingerprint)
+        WorkspaceFileFingerprintDto sourceFingerprint,
+        IReadOnlyDictionary<string, string>? codecParameters = null)
     {
         return new BundleArtifactManifestDto(
             WorkspaceKey: workspaceKey,
@@ -593,7 +603,8 @@ internal static partial class SaveWorkspaceHandlersTests
             DecryptorId: AssetBundleDecryptorIds.BuiltInPassThrough,
             DecryptorVersion: "1.0.0",
             NormalizerVersion: "bundle-artifact/1",
-            CreatedAtUtc: new DateTimeOffset(2026, 5, 17, 9, 30, 0, TimeSpan.Zero));
+            CreatedAtUtc: new DateTimeOffset(2026, 5, 17, 9, 30, 0, TimeSpan.Zero),
+            CodecParameters: codecParameters);
     }
 
 }

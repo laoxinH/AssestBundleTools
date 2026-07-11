@@ -38,6 +38,10 @@ internal static partial class FileSystemWorkspaceBundleExporterTests
         var codec = new RecordingAssetBundleCodec(
             probe.SerializedFileName,
             probe.PathId);
+        var sourceCodecParameters = new Dictionary<string, string>
+        {
+            ["crosscore.outerPrefixBase64"] = "VW5pdHlGUwA="
+        };
         var exporter = new FileSystemWorkspaceBundleExporter(new SingleDecryptorRegistry(codec));
 
         var result = await exporter.ExportAsync(new WorkspaceBundleExportRequestDto(
@@ -68,7 +72,8 @@ internal static partial class FileSystemWorkspaceBundleExporterTests
             WorkspaceKey: "workspace-key",
             WorkspaceDataRootPath: scope.DirectoryPath,
             SourceCodecId: codec.Descriptor.Id,
-            SourceCodecVersion: codec.Descriptor.Version));
+            SourceCodecVersion: codec.Descriptor.Version,
+            SourceCodecParameters: sourceCodecParameters));
 
         TestAssert.True(result.IsSuccess, "Bundle export should apply an available source codec.");
         TestAssert.Equal(1, codec.ExecutionCount, "Source codec should run exactly once per bundle output.");
@@ -78,6 +83,10 @@ internal static partial class FileSystemWorkspaceBundleExporterTests
             "Source codec should receive the standard bundle after object changes are written.");
         TestAssert.Equal(codec.Descriptor.Id, result.Value!.OutputCodecId, "Export result should record output codec id.");
         TestAssert.Equal(codec.Descriptor.Version, result.Value.OutputCodecVersion, "Export result should record output codec version.");
+        TestAssert.Equal(
+            sourceCodecParameters["crosscore.outerPrefixBase64"],
+            codec.ObservedParameters!["crosscore.outerPrefixBase64"],
+            "Export should pass persisted codec parameters to the source encryptor unchanged.");
         TestAssert.True(
             File.ReadAllBytes(outputPath).AsSpan().EndsWith(RecordingAssetBundleCodec.Marker),
             "Final hash and promotion should use the codec output rather than the standard temporary bundle.");
@@ -110,6 +119,8 @@ internal static partial class FileSystemWorkspaceBundleExporterTests
 
         public string? ObservedTextAsset { get; private set; }
 
+        public IReadOnlyDictionary<string, string>? ObservedParameters { get; private set; }
+
         public Task<AssetBundleDecryptorProbeResultDto> ProbeAsync(
             AssetBundleDecryptorProbeRequestDto request,
             CancellationToken cancellationToken = default) =>
@@ -126,6 +137,7 @@ internal static partial class FileSystemWorkspaceBundleExporterTests
         {
             ExecutionCount++;
             ObservedTextAsset = ReadTextAsset(request.SourcePath, _serializedFileName, _pathId);
+            ObservedParameters = request.Parameters;
             File.Copy(request.SourcePath, request.OutputPath, overwrite: true);
             using (var stream = new FileStream(request.OutputPath, FileMode.Append, FileAccess.Write, FileShare.None))
             {

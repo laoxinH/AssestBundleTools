@@ -655,8 +655,16 @@ internal static class InfrastructureTestSuite
             CrossCoreBundleCodecTests.EncryptAndDecrypt_ShouldRoundTripSyntheticUnityFsBundle);
         await RunTestAsync(
             failures,
+            nameof(CrossCoreBundleCodecTests.ProbeAndDecrypt_ShouldHandleNonDuplicatedOuterHeader),
+            CrossCoreBundleCodecTests.ProbeAndDecrypt_ShouldHandleNonDuplicatedOuterHeader);
+        await RunTestAsync(
+            failures,
             nameof(CrossCoreBundleCodecTests.ProbeAndRoundTrip_ShouldHandleRealSample_WhenAvailable),
             CrossCoreBundleCodecTests.ProbeAndRoundTrip_ShouldHandleRealSample_WhenAvailable);
+        await RunTestAsync(
+            failures,
+            nameof(CrossCoreBundleCodecTests.ProbeAndRoundTrip_ShouldHandlePrefixedHeaderRealSample_WhenAvailable),
+            CrossCoreBundleCodecTests.ProbeAndRoundTrip_ShouldHandlePrefixedHeaderRealSample_WhenAvailable);
         await RunTestAsync(
             failures,
             nameof(FileSystemResourceProcessorCatalogStoreTests.Load_ShouldIncludeBuiltInSlots_AndUserManagedProcessors),
