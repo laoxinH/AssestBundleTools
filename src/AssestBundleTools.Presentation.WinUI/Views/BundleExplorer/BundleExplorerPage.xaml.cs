@@ -57,6 +57,7 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
             () => App.CurrentApp.AppPreferencesService.PreviewWorkerCount);
 
         InitializeComponent();
+        RegisterWorkspaceImportDropHandlers();
 
         _chromeCoordinator = new BundleExplorerPageChromeCoordinator(this);
         _navigationCoordinator = new BundleExplorerPageNavigationCoordinator(this);
@@ -297,23 +298,46 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
         await ViewModel.RequestBundleDirectoryImportAsync();
     }
 
+    private void RegisterWorkspaceImportDropHandlers()
+    {
+        BundlePaneHost.AddHandler(
+            DragEnterEvent,
+            new DragEventHandler(OnWorkspaceImportDragOver),
+            handledEventsToo: true);
+        BundlePaneHost.AddHandler(
+            DragOverEvent,
+            new DragEventHandler(OnWorkspaceImportDragOver),
+            handledEventsToo: true);
+        BundlePaneHost.AddHandler(
+            DragLeaveEvent,
+            new DragEventHandler(OnWorkspaceImportDragLeave),
+            handledEventsToo: true);
+        BundlePaneHost.AddHandler(
+            DropEvent,
+            new DragEventHandler(OnWorkspaceImportDrop),
+            handledEventsToo: true);
+    }
+
     private void OnWorkspaceImportDragOver(object sender, DragEventArgs e)
     {
-        var canAcceptImport = ViewModel.WorkspaceShell.HasWorkspace &&
-                              e.DataView.Contains(StandardDataFormats.StorageItems);
+        // Win10 可能在 DragEnter/DragOver 阶段尚未公开 StorageItems，放下时再校验载荷。
+        var canAcceptImport = ViewModel.WorkspaceShell.HasWorkspace;
         e.AcceptedOperation = canAcceptImport
             ? DataPackageOperation.Copy
             : DataPackageOperation.None;
+        e.Handled = true;
         _chromeCoordinator.SetWorkspaceImportDropOverlayVisible(canAcceptImport);
     }
 
     private void OnWorkspaceImportDragLeave(object sender, DragEventArgs e)
     {
+        e.Handled = true;
         _chromeCoordinator.SetWorkspaceImportDropOverlayVisible(false);
     }
 
     private async void OnWorkspaceImportDrop(object sender, DragEventArgs e)
     {
+        e.Handled = true;
         _chromeCoordinator.SetWorkspaceImportDropOverlayVisible(false);
 
         if (!ViewModel.WorkspaceShell.HasWorkspace ||

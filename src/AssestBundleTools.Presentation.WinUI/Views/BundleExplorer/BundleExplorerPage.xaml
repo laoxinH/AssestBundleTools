@@ -634,10 +634,7 @@
             <Grid
                 x:Name="BundlePaneHost"
                 MinHeight="0"
-                AllowDrop="True"
-                DragOver="OnWorkspaceImportDragOver"
-                DragLeave="OnWorkspaceImportDragLeave"
-                Drop="OnWorkspaceImportDrop">
+                AllowDrop="True">
                 <Border
                     x:Name="BundlePaneExpandedCard"
                     Padding="12"
