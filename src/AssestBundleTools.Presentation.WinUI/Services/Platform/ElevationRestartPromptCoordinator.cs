@@ -7,6 +7,8 @@ namespace AssestBundleTools.Presentation.WinUI.Services;
 
 internal sealed class ElevationRestartPromptCoordinator
 {
+    private const int XamlRootWaitAttemptCount = 50;
+    private static readonly TimeSpan XamlRootWaitInterval = TimeSpan.FromMilliseconds(100);
     private readonly ILocalizationService _localizationService;
     private readonly IAppLogService _appLogService;
     private readonly IAppNotificationService _appNotificationService;
@@ -28,7 +30,7 @@ internal sealed class ElevationRestartPromptCoordinator
         UnelevatedRestartLaunchArguments.IsCurrentProcessRestartLaunch();
 
     public async Task<bool> PromptAndRestartIfRequestedAsync(
-        XamlRoot? xamlRoot,
+        UIElement? contentRoot,
         ShellLaunchRequest? launchRequest)
     {
         var elevation = ProcessElevationDiagnostics.Capture();
@@ -42,10 +44,13 @@ internal sealed class ElevationRestartPromptCoordinator
         var message = _localizationService.GetRequiredString(ResourceKeys.AppElevationWarningMessage);
         _appLogService.AppendWarning(message);
 
+        var xamlRoot = await WaitForXamlRootAsync(contentRoot);
         if (xamlRoot is null)
         {
             ShowWarningNotification(title, message);
-            StartupDiagnostics.Log("Elevation restart prompt was skipped because XamlRoot is unavailable.");
+            StartupDiagnostics.Log(
+                $"Elevation restart prompt was skipped because XamlRoot remained unavailable after " +
+                $"{XamlRootWaitAttemptCount * XamlRootWaitInterval.TotalMilliseconds:0} ms.");
             return false;
         }
 
@@ -105,6 +110,21 @@ internal sealed class ElevationRestartPromptCoordinator
             ShowWarningNotification(title, message);
             return false;
         }
+    }
+
+    private static async Task<XamlRoot?> WaitForXamlRootAsync(UIElement? contentRoot)
+    {
+        for (var attempt = 0; attempt < XamlRootWaitAttemptCount; attempt++)
+        {
+            if (contentRoot?.XamlRoot is { } xamlRoot)
+            {
+                return xamlRoot;
+            }
+
+            await Task.Delay(XamlRootWaitInterval);
+        }
+
+        return contentRoot?.XamlRoot;
     }
 
     private void ShowWarningNotification(string title, string message)
