@@ -956,6 +956,9 @@
   <data name="App.ElevationRestart.FailedLog.Format" xml:space="preserve">
     <value>Restart without administrator privileges failed: Win32 error={0}, detail={1}</value>
   </data>
+  <data name="App.ElevationRestart.StillElevatedMessage" xml:space="preserve">
+    <value>The restarted process is still running as administrator. Further restart prompts were stopped to prevent a loop. Disable Run as administrator in compatibility or shortcut settings, then start the app again.</value>
+  </data>
   <data name="AppNotification.ErrorTitle" xml:space="preserve">
     <value>Action Failed</value>
   </data>

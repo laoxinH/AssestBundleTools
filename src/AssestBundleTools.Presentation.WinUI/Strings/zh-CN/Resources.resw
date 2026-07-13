@@ -956,6 +956,9 @@
   <data name="App.ElevationRestart.FailedLog.Format" xml:space="preserve">
     <value>以非管理员模式重启失败：Win32 错误码={0}，详情={1}</value>
   </data>
+  <data name="App.ElevationRestart.StillElevatedMessage" xml:space="preserve">
+    <value>重启后的进程仍处于管理员模式，已停止再次重启以避免循环。请关闭兼容性或快捷方式中的“以管理员身份运行”，然后重新启动应用。</value>
+  </data>
   <data name="AppNotification.ErrorTitle" xml:space="preserve">
     <value>操作失败</value>
   </data>

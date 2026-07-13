@@ -1,12 +1,11 @@
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 
 namespace AssestBundleTools.Presentation.WinUI.Services;
 
-internal sealed class WindowsUnelevatedProcessRestartService : IUnelevatedProcessRestartService
+internal sealed partial class WindowsUnelevatedProcessRestartService : IUnelevatedProcessRestartService
 {
     private const uint ProcessQueryLimitedInformation = 0x1000;
     private const uint TokenAssignPrimary = 0x0001;
@@ -100,56 +99,6 @@ internal sealed class WindowsUnelevatedProcessRestartService : IUnelevatedProces
         finally
         {
             _ = CloseHandle(shellProcess);
-        }
-    }
-
-    private static ExplorerShellLaunchResult TryRequestExplorerShellLaunch(
-        string executablePath,
-        IReadOnlyList<string> arguments)
-    {
-        object? shell = null;
-        try
-        {
-            var shellType = Type.GetTypeFromProgID("Shell.Application", throwOnError: false);
-            if (shellType is null)
-            {
-                return ExplorerShellLaunchResult.Unavailable(
-                    "Shell.Application is not registered for the current desktop.");
-            }
-
-            shell = Activator.CreateInstance(shellType);
-            if (shell is null)
-            {
-                return ExplorerShellLaunchResult.Unavailable(
-                    "Shell.Application could not be activated.");
-            }
-
-            _ = shellType.InvokeMember(
-                "ShellExecute",
-                BindingFlags.InvokeMethod | BindingFlags.Public | BindingFlags.Instance,
-                binder: null,
-                target: shell,
-                args:
-                [
-                    executablePath,
-                    UnelevatedRestartLaunchArguments.BuildArgumentList(arguments),
-                    Path.GetDirectoryName(executablePath) ?? AppContext.BaseDirectory,
-                    "open",
-                    1
-                ]);
-            return ExplorerShellLaunchResult.Accepted();
-        }
-        catch (Exception ex)
-        {
-            return ExplorerShellLaunchResult.Unavailable(
-                $"Shell.Application.ShellExecute failed: {ex.GetBaseException().Message}");
-        }
-        finally
-        {
-            if (shell is not null && Marshal.IsComObject(shell))
-            {
-                _ = Marshal.FinalReleaseComObject(shell);
-            }
         }
     }
 
@@ -460,18 +409,4 @@ internal sealed class WindowsUnelevatedProcessRestartService : IUnelevatedProces
         public uint ThreadId;
     }
 
-    private readonly record struct ExplorerShellLaunchResult(
-        bool Requested,
-        string DiagnosticDetail)
-    {
-        public static ExplorerShellLaunchResult Accepted()
-        {
-            return new ExplorerShellLaunchResult(true, string.Empty);
-        }
-
-        public static ExplorerShellLaunchResult Unavailable(string diagnosticDetail)
-        {
-            return new ExplorerShellLaunchResult(false, diagnosticDetail);
-        }
-    }
 }

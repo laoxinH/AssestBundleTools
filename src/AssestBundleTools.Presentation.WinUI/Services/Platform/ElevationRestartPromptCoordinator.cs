@@ -40,6 +40,20 @@ internal sealed class ElevationRestartPromptCoordinator
             return false;
         }
 
+        if (IsUnelevatedRestartLaunch)
+        {
+            var restartStillElevatedMessage = _localizationService.GetRequiredString(
+                ResourceKeys.AppElevationRestartStillElevatedMessage);
+            _appLogService.AppendError(restartStillElevatedMessage);
+            StartupDiagnostics.Log("Unelevated restart process remained elevated; recursive prompt suppressed.");
+            _appNotificationService.Show(
+                _localizationService.GetRequiredString(ResourceKeys.AppNotificationErrorTitle),
+                restartStillElevatedMessage,
+                AppNotificationSeverity.Error,
+                TimeSpan.FromSeconds(15));
+            return false;
+        }
+
         var title = _localizationService.GetRequiredString(ResourceKeys.AppElevationWarningTitle);
         var message = _localizationService.GetRequiredString(ResourceKeys.AppElevationWarningMessage);
         _appLogService.AppendWarning(message);

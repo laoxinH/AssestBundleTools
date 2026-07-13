@@ -142,6 +142,7 @@ public static class ResourceKeys
     public const string AppElevationWarningContinueButton = "App.ElevationWarning.ContinueButton";
     public const string AppElevationRestartFailedMessage = "App.ElevationRestart.FailedMessage";
     public const string AppElevationRestartFailedLogFormat = "App.ElevationRestart.FailedLog.Format";
+    public const string AppElevationRestartStillElevatedMessage = "App.ElevationRestart.StillElevatedMessage";
     public const string AppNotificationErrorTitle = "AppNotification.ErrorTitle";
     public const string AppNotificationCloseButtonToolTip = "AppNotification.CloseButton.ToolTip";
     public const string CommonCancelButton = "Common.CancelButton";

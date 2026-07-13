@@ -26,6 +26,11 @@ public sealed class ApplicationElevationContractTests
             "Services",
             "Platform",
             "WindowsUnelevatedProcessRestartService.cs"));
+        var explorerShellCode = File.ReadAllText(Path.Combine(
+            projectRoot,
+            "Services",
+            "Platform",
+            "WindowsUnelevatedProcessRestartService.ExplorerShell.cs"));
 
         Assert.Contains("requestedExecutionLevel level=\"asInvoker\" uiAccess=\"false\"", manifest);
         Assert.DoesNotContain("requireAdministrator", manifest, StringComparison.OrdinalIgnoreCase);
@@ -39,11 +44,15 @@ public sealed class ApplicationElevationContractTests
         Assert.Contains("ContentDialogResult.Primary", promptCode);
         Assert.Contains("WaitForXamlRootAsync(contentRoot)", promptCode);
         Assert.Contains("contentRoot?.XamlRoot", promptCode);
-        Assert.Contains("Shell.Application", restartCode);
+        Assert.Contains("Shell.Application", explorerShellCode);
+        Assert.Contains("FindWindowSW", explorerShellCode);
+        Assert.Contains("desktopApplication", explorerShellCode);
         Assert.Contains("WaitForUnelevatedProcessAsync", restartCode);
         Assert.Contains("CreateProcessWithTokenW", restartCode);
         Assert.Contains("GetShellWindow", restartCode);
         Assert.Contains("TokenIsElevated", restartCode);
+        Assert.Contains("ResourceKeys.AppElevationRestartStillElevatedMessage", promptCode);
+        Assert.Contains("recursive prompt suppressed", promptCode);
         Assert.Contains("WindowsBuiltInRole.Administrator", elevationCode);
     }
 
