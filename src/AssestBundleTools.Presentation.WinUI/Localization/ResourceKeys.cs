@@ -136,6 +136,8 @@ public static class ResourceKeys
     public const string AppNotificationSuccessTitle = "AppNotification.SuccessTitle";
     public const string AppNotificationInfoTitle = "AppNotification.InfoTitle";
     public const string AppNotificationWarningTitle = "AppNotification.WarningTitle";
+    public const string AppElevationWarningTitle = "App.ElevationWarning.Title";
+    public const string AppElevationWarningMessage = "App.ElevationWarning.Message";
     public const string AppNotificationErrorTitle = "AppNotification.ErrorTitle";
     public const string AppNotificationCloseButtonToolTip = "AppNotification.CloseButton.ToolTip";
     public const string CommonCancelButton = "Common.CancelButton";

@@ -938,6 +938,12 @@
   <data name="AppNotification.WarningTitle" xml:space="preserve">
     <value>请注意</value>
   </data>
+  <data name="App.ElevationWarning.Title" xml:space="preserve">
+    <value>管理员模式会阻止拖放</value>
+  </data>
+  <data name="App.ElevationWarning.Message" xml:space="preserve">
+    <value>应用当前以管理员权限运行，Windows 会阻止从普通资源管理器拖放文件。当前可使用文件或目录导入按钮；下次启动前请关闭程序兼容性和快捷方式中的“以管理员身份运行”。</value>
+  </data>
   <data name="AppNotification.ErrorTitle" xml:space="preserve">
     <value>操作失败</value>
   </data>

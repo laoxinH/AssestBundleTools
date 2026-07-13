@@ -160,12 +160,31 @@ public partial class App : Microsoft.UI.Xaml.Application
 
             window.Activate();
             StartupDiagnostics.Log("MainWindow activated.");
+            WarnIfProcessIsElevated();
         }
         catch (Exception ex)
         {
             StartupDiagnostics.Log($"OnLaunched failed: {ex}");
             throw;
         }
+    }
+
+    private void WarnIfProcessIsElevated()
+    {
+        var elevation = ProcessElevationDiagnostics.Capture();
+        StartupDiagnostics.Log($"Process elevation state resolved: {elevation.DiagnosticValue}.");
+        if (elevation.IsElevated != true)
+        {
+            return;
+        }
+
+        var message = LocalizationService.GetRequiredString(ResourceKeys.AppElevationWarningMessage);
+        AppLogService.AppendWarning(message);
+        AppNotificationService.Show(
+            LocalizationService.GetRequiredString(ResourceKeys.AppElevationWarningTitle),
+            message,
+            AppNotificationSeverity.Warning,
+            TimeSpan.FromSeconds(15));
     }
 
     public MainWindow CreateMainWindow(ShellLaunchRequest? launchRequest = null)

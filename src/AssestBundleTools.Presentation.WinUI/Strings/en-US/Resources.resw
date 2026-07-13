@@ -938,6 +938,12 @@
   <data name="AppNotification.WarningTitle" xml:space="preserve">
     <value>Attention</value>
   </data>
+  <data name="App.ElevationWarning.Title" xml:space="preserve">
+    <value>Administrator mode blocks drag and drop</value>
+  </data>
+  <data name="App.ElevationWarning.Message" xml:space="preserve">
+    <value>The app is running with administrator privileges, so Windows blocks file drag and drop from a standard Explorer process. Use the file or folder import buttons for this session, then disable Run as administrator in compatibility and shortcut settings before the next launch.</value>
+  </data>
   <data name="AppNotification.ErrorTitle" xml:space="preserve">
     <value>Action Failed</value>
   </data>

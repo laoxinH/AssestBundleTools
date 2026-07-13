@@ -49,7 +49,7 @@ public sealed class BundlePaneDragDropCompatibilityContractTests
         Assert.Contains("WorkspaceImportLogDragDropDispatchResultFormat", dropHandler);
         Assert.Contains("finally", dropHandler);
 
-        Assert.Contains("ResolveProcessElevationState", dragDropCode);
+        Assert.Contains("ProcessElevationDiagnostics.Capture()", dragDropCode);
         Assert.Contains("WorkspaceImportLogDragDropHandlerRegisteredFormat", dragDropCode);
         Assert.Contains("WorkspaceImportLogDragDropEventFormat", dragDropCode);
         Assert.Contains("_workspaceImportFirstDragOverLogged", dragDropCode);

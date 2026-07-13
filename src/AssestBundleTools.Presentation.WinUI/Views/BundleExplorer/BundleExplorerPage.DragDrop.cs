@@ -1,5 +1,5 @@
 using System.Runtime.InteropServices;
-using System.Security.Principal;
+using AssestBundleTools.Presentation.WinUI.Diagnostics;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using Microsoft.UI.Xaml;
 using Windows.ApplicationModel.DataTransfer;
@@ -45,7 +45,7 @@ public sealed partial class BundleExplorerPage
             BundlePaneHost.AllowDrop,
             Environment.OSVersion.VersionString,
             RuntimeInformation.ProcessArchitecture,
-            ResolveProcessElevationState(),
+            ProcessElevationDiagnostics.Capture().DiagnosticValue,
             ViewModel.WorkspaceShell.HasWorkspace);
     }
 
@@ -250,21 +250,6 @@ public sealed partial class BundleExplorerPage
         }
 
         return descriptions.Count == 0 ? "-" : string.Join(" | ", descriptions);
-    }
-
-    private static string ResolveProcessElevationState()
-    {
-        try
-        {
-            using var identity = WindowsIdentity.GetCurrent();
-            return new WindowsPrincipal(identity)
-                .IsInRole(WindowsBuiltInRole.Administrator)
-                .ToString();
-        }
-        catch (Exception exception)
-        {
-            return $"{exception.GetType().Name}:0x{exception.HResult:X8}";
-        }
     }
 
     private static void AppendDragDropInfo(string resourceKey, params object[] arguments) =>
