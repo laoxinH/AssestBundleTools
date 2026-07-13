@@ -150,6 +150,16 @@ public static class ResourceKeys
     public const string WorkspaceImportLogBundleFilesRegisteredFormat = "WorkspaceImport.Log.BundleFilesRegistered.Format";
     public const string WorkspaceImportLogBundleDirectoryRegisteredFormat = "WorkspaceImport.Log.BundleDirectoryRegistered.Format";
     public const string WorkspaceImportLogDragDropRegisteredFormat = "WorkspaceImport.Log.DragDropRegistered.Format";
+    public const string WorkspaceImportLogDragDropHandlerRegisteredFormat = "WorkspaceImport.Log.DragDrop.HandlerRegistered.Format";
+    public const string WorkspaceImportLogDragDropEventFormat = "WorkspaceImport.Log.DragDrop.Event.Format";
+    public const string WorkspaceImportLogDragDropSessionEndedFormat = "WorkspaceImport.Log.DragDrop.SessionEnded.Format";
+    public const string WorkspaceImportLogDragDropRejectedNoWorkspaceFormat = "WorkspaceImport.Log.DragDrop.RejectedNoWorkspace.Format";
+    public const string WorkspaceImportLogDragDropStorageItemsUnavailableFormat = "WorkspaceImport.Log.DragDrop.StorageItemsUnavailable.Format";
+    public const string WorkspaceImportLogDragDropStorageItemsReadFormat = "WorkspaceImport.Log.DragDrop.StorageItemsRead.Format";
+    public const string WorkspaceImportLogDragDropStorageItemsReadFailedFormat = "WorkspaceImport.Log.DragDrop.StorageItemsReadFailed.Format";
+    public const string WorkspaceImportLogDragDropNoPathsFormat = "WorkspaceImport.Log.DragDrop.NoPaths.Format";
+    public const string WorkspaceImportLogDragDropDispatchResultFormat = "WorkspaceImport.Log.DragDrop.DispatchResult.Format";
+    public const string WorkspaceImportLogDragDropUnhandledFailureFormat = "WorkspaceImport.Log.DragDrop.UnhandledFailure.Format";
     public const string WorkspaceImportLogProcessedFormat = "WorkspaceImport.Log.Processed.Format";
     public const string WorkspaceImportLogPerformanceFormat = "WorkspaceImport.Log.Performance.Format";
     public const string WorkspaceImportLogProbePerformanceFormat = "WorkspaceImport.Log.ProbePerformance.Format";

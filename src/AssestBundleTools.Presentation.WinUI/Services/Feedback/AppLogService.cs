@@ -1,3 +1,4 @@
+using AssestBundleTools.Application.Common.Diagnostics;
 using AssestBundleTools.Presentation.WinUI.Localization;
 
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.ActionHandlers;
@@ -17,9 +18,18 @@ namespace AssestBundleTools.Presentation.WinUI.Services;
 /// </remarks>
 public sealed class AppLogService : IAppLogService
 {
-    public AppLogService(ILocalizationService localizationService)
+    private readonly IWorkspaceDiagnosticLogStore? _workspaceDiagnosticLogStore;
+    private readonly Func<string?>? _workspaceDataRootPathProvider;
+
+    public AppLogService(
+        ILocalizationService localizationService,
+        IWorkspaceDiagnosticLogStore? workspaceDiagnosticLogStore = null,
+        Func<string?>? workspaceDataRootPathProvider = null)
     {
         ArgumentNullException.ThrowIfNull(localizationService);
+
+        _workspaceDiagnosticLogStore = workspaceDiagnosticLogStore;
+        _workspaceDataRootPathProvider = workspaceDataRootPathProvider;
 
         LogPanel = new LogPanelViewModel
         {
@@ -31,10 +41,25 @@ public sealed class AppLogService : IAppLogService
 
     public void Clear() => LogPanel.Clear();
 
-    public void AppendInfo(string message) => LogPanel.Append(message);
+    public void AppendInfo(string message) => Append(message, WorkspaceDiagnosticLogLevel.Information);
 
-    public void AppendWarning(string message) => LogPanel.Append(message);
+    public void AppendWarning(string message) => Append(message, WorkspaceDiagnosticLogLevel.Warning);
 
-    public void AppendError(string message) => LogPanel.Append(message);
+    public void AppendError(string message) => Append(message, WorkspaceDiagnosticLogLevel.Error);
+
+    private void Append(string message, WorkspaceDiagnosticLogLevel level)
+    {
+        LogPanel.Append(message);
+
+        var workspaceDataRootPath = _workspaceDataRootPathProvider?.Invoke();
+        if (_workspaceDiagnosticLogStore is null || string.IsNullOrWhiteSpace(workspaceDataRootPath))
+        {
+            return;
+        }
+
+        _workspaceDiagnosticLogStore.Append(
+            workspaceDataRootPath,
+            new WorkspaceDiagnosticLogEntryDto(DateTimeOffset.Now, level, message));
+    }
 }
 

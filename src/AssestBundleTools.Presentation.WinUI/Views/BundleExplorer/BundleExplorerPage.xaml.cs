@@ -9,7 +9,6 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
-using Windows.ApplicationModel.DataTransfer;
 
 namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer;
 
@@ -129,6 +128,7 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
     {
         await _paneLayoutCoordinator.ApplyInitialStateAsync();
         await _navigationCoordinator.HandleLoadedAsync(_workspaceNavigationRequest);
+        AppendWorkspaceImportDropEnvironmentDiagnostic();
         await _assetEditorWindowCoordinator.PromptPendingAssetEditorWindowsRestoreAsync();
     }
 
@@ -296,68 +296,6 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
     private async void OnBundleImportDirectoryButtonClick(object sender, RoutedEventArgs e)
     {
         await ViewModel.RequestBundleDirectoryImportAsync();
-    }
-
-    private void RegisterWorkspaceImportDropHandlers()
-    {
-        BundlePaneHost.AddHandler(
-            DragEnterEvent,
-            new DragEventHandler(OnWorkspaceImportDragOver),
-            handledEventsToo: true);
-        BundlePaneHost.AddHandler(
-            DragOverEvent,
-            new DragEventHandler(OnWorkspaceImportDragOver),
-            handledEventsToo: true);
-        BundlePaneHost.AddHandler(
-            DragLeaveEvent,
-            new DragEventHandler(OnWorkspaceImportDragLeave),
-            handledEventsToo: true);
-        BundlePaneHost.AddHandler(
-            DropEvent,
-            new DragEventHandler(OnWorkspaceImportDrop),
-            handledEventsToo: true);
-    }
-
-    private void OnWorkspaceImportDragOver(object sender, DragEventArgs e)
-    {
-        // Win10 可能在 DragEnter/DragOver 阶段尚未公开 StorageItems，放下时再校验载荷。
-        var canAcceptImport = ViewModel.WorkspaceShell.HasWorkspace;
-        e.AcceptedOperation = canAcceptImport
-            ? DataPackageOperation.Copy
-            : DataPackageOperation.None;
-        e.Handled = true;
-        _chromeCoordinator.SetWorkspaceImportDropOverlayVisible(canAcceptImport);
-    }
-
-    private void OnWorkspaceImportDragLeave(object sender, DragEventArgs e)
-    {
-        e.Handled = true;
-        _chromeCoordinator.SetWorkspaceImportDropOverlayVisible(false);
-    }
-
-    private async void OnWorkspaceImportDrop(object sender, DragEventArgs e)
-    {
-        e.Handled = true;
-        _chromeCoordinator.SetWorkspaceImportDropOverlayVisible(false);
-
-        if (!ViewModel.WorkspaceShell.HasWorkspace ||
-            !e.DataView.Contains(StandardDataFormats.StorageItems))
-        {
-            return;
-        }
-
-        var storageItems = await e.DataView.GetStorageItemsAsync();
-        var droppedPaths = storageItems
-            .Select(static item => item.Path)
-            .Where(static path => !string.IsNullOrWhiteSpace(path))
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToArray();
-        if (droppedPaths.Length == 0)
-        {
-            return;
-        }
-
-        await ViewModel.RequestDragDropImportAsync(droppedPaths);
     }
 
     private void OnCollapsedBundlePaneActionPointerEntered(object sender, PointerRoutedEventArgs e)

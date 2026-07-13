@@ -959,6 +959,36 @@
   <data name="WorkspaceImport.Log.DragDropRegistered.Format" xml:space="preserve">
     <value>已为工作区“{0}”登记拖拽导入：{1} 个文件、{2} 个目录，当前共记录 {3} 条导入来源。</value>
   </data>
+  <data name="WorkspaceImport.Log.DragDrop.HandlerRegistered.Format" xml:space="preserve">
+    <value>拖放诊断已启用：目标={0}，AllowDrop={1}，OS={2}，架构={3}，管理员权限={4}，活动工作区={5}。若拖动时没有后续 DragEnter 日志，表示事件在进入 WinUI 前已被系统或其他窗口层拦截。</value>
+  </data>
+  <data name="WorkspaceImport.Log.DragDrop.Event.Format" xml:space="preserve">
+    <value>拖放诊断 [{0}] {1}：工作区={2}，来源={3}，格式={4}，系统允许={5}，应用接受={6}，Handled={7}。</value>
+  </data>
+  <data name="WorkspaceImport.Log.DragDrop.SessionEnded.Format" xml:space="preserve">
+    <value>拖放诊断 [{0}] 会话结束：阶段={1}，DragOver 次数={2}。</value>
+  </data>
+  <data name="WorkspaceImport.Log.DragDrop.RejectedNoWorkspace.Format" xml:space="preserve">
+    <value>拖放诊断 [{0}] 已拒绝：当前没有活动工作区。</value>
+  </data>
+  <data name="WorkspaceImport.Log.DragDrop.StorageItemsUnavailable.Format" xml:space="preserve">
+    <value>拖放诊断 [{0}] Drop 未提供 StorageItems；可用格式={1}。</value>
+  </data>
+  <data name="WorkspaceImport.Log.DragDrop.StorageItemsRead.Format" xml:space="preserve">
+    <value>拖放诊断 [{0}] 已读取 StorageItems：条目={1}，有效路径={2}，摘要={3}。</value>
+  </data>
+  <data name="WorkspaceImport.Log.DragDrop.StorageItemsReadFailed.Format" xml:space="preserve">
+    <value>拖放诊断 [{0}] 读取 StorageItems 失败：{1}，HResult={2}，消息={3}。</value>
+  </data>
+  <data name="WorkspaceImport.Log.DragDrop.NoPaths.Format" xml:space="preserve">
+    <value>拖放诊断 [{0}] StorageItems 中没有可用的文件系统路径。</value>
+  </data>
+  <data name="WorkspaceImport.Log.DragDrop.DispatchResult.Format" xml:space="preserve">
+    <value>拖放诊断 [{0}] 导入分发调用已完成：路径={1}。最终处理结果见后续工作区导入日志。</value>
+  </data>
+  <data name="WorkspaceImport.Log.DragDrop.UnhandledFailure.Format" xml:space="preserve">
+    <value>拖放诊断 [{0}] 处理失败：{1}，HResult={2}，消息={3}。</value>
+  </data>
   <data name="WorkspaceImport.Log.Processed.Format" xml:space="preserve">
     <value>工作区“{0}”已刷新导入索引：{1} 条来源、发现 {2} 个文件、初筛排除 {3} 个、新建索引 {4} 个资源包，复用缓存 {5} 个，读取跳过 {6} 个，失败 {7} 个。</value>
   </data>

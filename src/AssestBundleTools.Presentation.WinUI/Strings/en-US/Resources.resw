@@ -959,6 +959,36 @@
   <data name="WorkspaceImport.Log.DragDropRegistered.Format" xml:space="preserve">
     <value>Registered drag-and-drop import items for workspace \"{0}\": {1} files and {2} folders. The workspace now tracks {3} import sources.</value>
   </data>
+  <data name="WorkspaceImport.Log.DragDrop.HandlerRegistered.Format" xml:space="preserve">
+    <value>Drag-and-drop diagnostics enabled: target={0}, AllowDrop={1}, OS={2}, architecture={3}, elevated={4}, active workspace={5}. If no DragEnter entry follows a drag attempt, the event was blocked before reaching WinUI.</value>
+  </data>
+  <data name="WorkspaceImport.Log.DragDrop.Event.Format" xml:space="preserve">
+    <value>Drag-and-drop diagnostic [{0}] {1}: workspace={2}, source={3}, formats={4}, allowed={5}, accepted={6}, handled={7}.</value>
+  </data>
+  <data name="WorkspaceImport.Log.DragDrop.SessionEnded.Format" xml:space="preserve">
+    <value>Drag-and-drop diagnostic [{0}] session ended: stage={1}, DragOver count={2}.</value>
+  </data>
+  <data name="WorkspaceImport.Log.DragDrop.RejectedNoWorkspace.Format" xml:space="preserve">
+    <value>Drag-and-drop diagnostic [{0}] rejected: there is no active workspace.</value>
+  </data>
+  <data name="WorkspaceImport.Log.DragDrop.StorageItemsUnavailable.Format" xml:space="preserve">
+    <value>Drag-and-drop diagnostic [{0}] Drop did not provide StorageItems; available formats={1}.</value>
+  </data>
+  <data name="WorkspaceImport.Log.DragDrop.StorageItemsRead.Format" xml:space="preserve">
+    <value>Drag-and-drop diagnostic [{0}] read StorageItems: items={1}, valid paths={2}, summary={3}.</value>
+  </data>
+  <data name="WorkspaceImport.Log.DragDrop.StorageItemsReadFailed.Format" xml:space="preserve">
+    <value>Drag-and-drop diagnostic [{0}] failed to read StorageItems: {1}, HResult={2}, message={3}.</value>
+  </data>
+  <data name="WorkspaceImport.Log.DragDrop.NoPaths.Format" xml:space="preserve">
+    <value>Drag-and-drop diagnostic [{0}] found no usable file-system paths in StorageItems.</value>
+  </data>
+  <data name="WorkspaceImport.Log.DragDrop.DispatchResult.Format" xml:space="preserve">
+    <value>Drag-and-drop diagnostic [{0}] completed import dispatch for {1} paths. See subsequent workspace import entries for the final processing result.</value>
+  </data>
+  <data name="WorkspaceImport.Log.DragDrop.UnhandledFailure.Format" xml:space="preserve">
+    <value>Drag-and-drop diagnostic [{0}] failed: {1}, HResult={2}, message={3}.</value>
+  </data>
   <data name="WorkspaceImport.Log.Processed.Format" xml:space="preserve">
     <value>Refreshed the import index for workspace \"{0}\": {1} sources, {2} discovered files, {3} screened out early, {4} bundles re-indexed, {5} cache hits reused, {6} read-stage skips, {7} failures.</value>
   </data>

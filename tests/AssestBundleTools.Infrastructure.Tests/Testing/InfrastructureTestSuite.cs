@@ -5,6 +5,7 @@ using AssestBundleTools.Infrastructure.Tests.Bundles.Reading;
 using AssestBundleTools.Infrastructure.Tests.Bundles.Previewing;
 using AssestBundleTools.Infrastructure.Tests.Settings.Persistence;
 using AssestBundleTools.Infrastructure.Tests.Workspace.Persistence;
+using AssestBundleTools.Infrastructure.Tests.Workspace.Diagnostics;
 using AssestBundleTools.Infrastructure.Tests.Workspace.Extraction;
 using AssestBundleTools.Infrastructure.Tests.Workspace.Runtime;
 using AssestBundleTools.Infrastructure.Tests.Workspace.Saving;
@@ -45,6 +46,10 @@ internal static class InfrastructureTestSuite
             failures,
             nameof(JsonWorkspaceMetadataStoreTests.Delete_ShouldRemoveSavedMetadataFile),
             JsonWorkspaceMetadataStoreTests.Delete_ShouldRemoveSavedMetadataFile);
+        await RunTestAsync(
+            failures,
+            nameof(FileSystemWorkspaceDiagnosticLogStoreTests.Append_ShouldWriteTimestampedSingleLineEntries_UnderWorkspaceRoot),
+            FileSystemWorkspaceDiagnosticLogStoreTests.Append_ShouldWriteTimestampedSingleLineEntries_UnderWorkspaceRoot);
         await RunTestAsync(
             failures,
             nameof(JsonWorkspaceChangeStoreTests.Save_ShouldRoundTripEditDraftDescriptors),

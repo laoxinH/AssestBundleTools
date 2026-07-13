@@ -24,6 +24,7 @@ using AssestBundleTools.Infrastructure.Bundles.Previewing.Spine;
 using AssestBundleTools.Infrastructure.Bundles.Reading;
 using AssestBundleTools.Infrastructure.Settings.Persistence;
 using AssestBundleTools.Infrastructure.Workspace.Extraction;
+using AssestBundleTools.Infrastructure.Workspace.Diagnostics;
 using AssestBundleTools.Infrastructure.Workspace.Importing;
 using AssestBundleTools.Infrastructure.Workspace.Persistence;
 using AssestBundleTools.Infrastructure.Workspace.Replacement;
@@ -381,7 +382,13 @@ internal static class AppCompositionRoot
             assetBundleDecryptorRegistry);
         var workspaceWindowService = new WorkspaceWindowService(workspaceProcessCoordinatorService);
         var appNotificationService = new AppNotificationService();
-        var appLogService = new AppLogService(localizationService);
+        var workspaceDiagnosticLogStore = new FileSystemWorkspaceDiagnosticLogStore();
+        var appLogService = new AppLogService(
+            localizationService,
+            workspaceDiagnosticLogStore,
+            () => workspaceContextService.TryGetCurrentWorkspaceEntry(out var entry) && entry is not null
+                ? entry.WorkspaceDataRootPath
+                : null);
         var appBackgroundTaskStatusService = new AppBackgroundTaskStatusService(localizationService);
         var backgroundTaskRunner = new ThreadPoolBackgroundTaskRunner();
         var backgroundWorkScheduler = new BackgroundWorkScheduler(

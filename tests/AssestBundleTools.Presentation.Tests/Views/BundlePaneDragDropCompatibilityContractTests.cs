@@ -15,29 +15,44 @@ public sealed class BundlePaneDragDropCompatibilityContractTests
             "BundleExplorerPage");
         var pageXaml = File.ReadAllText(pagePath + ".xaml");
         var pageCode = File.ReadAllText(pagePath + ".xaml.cs");
+        var dragDropCode = File.ReadAllText(pagePath + ".DragDrop.cs");
 
         Assert.Contains("x:Name=\"BundlePaneHost\"", pageXaml);
         Assert.Contains("AllowDrop=\"True\"", pageXaml);
         Assert.DoesNotContain("DragOver=\"OnWorkspaceImportDragOver\"", pageXaml);
         Assert.Contains("RegisterWorkspaceImportDropHandlers();", pageCode);
-        Assert.Contains("DragEnterEvent", pageCode);
-        Assert.Contains("DragOverEvent", pageCode);
-        Assert.Contains("DropEvent", pageCode);
-        Assert.Contains("handledEventsToo: true", pageCode);
+        Assert.Contains("DragEnterEvent", dragDropCode);
+        Assert.Contains("DragOverEvent", dragDropCode);
+        Assert.Contains("DropEvent", dragDropCode);
+        Assert.Contains("handledEventsToo: true", dragDropCode);
 
-        var dragOverHandler = pageCode[
-            pageCode.IndexOf("private void OnWorkspaceImportDragOver", StringComparison.Ordinal)..
-            pageCode.IndexOf("private void OnWorkspaceImportDragLeave", StringComparison.Ordinal)];
-        Assert.Contains("ViewModel.WorkspaceShell.HasWorkspace", dragOverHandler);
-        Assert.Contains("DataPackageOperation.Copy", dragOverHandler);
-        Assert.Contains("e.Handled = true;", dragOverHandler);
+        var dragOverHandler = dragDropCode[
+            dragDropCode.IndexOf("private void OnWorkspaceImportDragOver", StringComparison.Ordinal)..
+            dragDropCode.IndexOf("private void OnWorkspaceImportDragLeave", StringComparison.Ordinal)];
+        Assert.Contains("ApplyWorkspaceImportDragAcceptance(e);", dragOverHandler);
         Assert.DoesNotContain("StandardDataFormats.StorageItems", dragOverHandler);
 
-        var dropHandler = pageCode[
-            pageCode.IndexOf("private async void OnWorkspaceImportDrop", StringComparison.Ordinal)..
-            pageCode.IndexOf("private void OnCollapsedBundlePaneActionPointerEntered", StringComparison.Ordinal)];
+        var acceptanceHandler = dragDropCode[
+            dragDropCode.IndexOf("private void ApplyWorkspaceImportDragAcceptance", StringComparison.Ordinal)..
+            dragDropCode.IndexOf("private void AppendDragDropEventDiagnostic", StringComparison.Ordinal)];
+        Assert.Contains("ViewModel.WorkspaceShell.HasWorkspace", acceptanceHandler);
+        Assert.Contains("DataPackageOperation.Copy", acceptanceHandler);
+        Assert.Contains("e.Handled = true;", acceptanceHandler);
+        Assert.DoesNotContain("StandardDataFormats.StorageItems", acceptanceHandler);
+
+        var dropHandler = dragDropCode[
+            dragDropCode.IndexOf("private async void OnWorkspaceImportDrop", StringComparison.Ordinal)..
+            dragDropCode.IndexOf("private void ApplyWorkspaceImportDragAcceptance", StringComparison.Ordinal)];
         Assert.Contains("StandardDataFormats.StorageItems", dropHandler);
         Assert.Contains("GetStorageItemsAsync", dropHandler);
+        Assert.Contains("WorkspaceImportLogDragDropStorageItemsReadFailedFormat", dropHandler);
+        Assert.Contains("WorkspaceImportLogDragDropDispatchResultFormat", dropHandler);
+        Assert.Contains("finally", dropHandler);
+
+        Assert.Contains("ResolveProcessElevationState", dragDropCode);
+        Assert.Contains("WorkspaceImportLogDragDropHandlerRegisteredFormat", dragDropCode);
+        Assert.Contains("WorkspaceImportLogDragDropEventFormat", dragDropCode);
+        Assert.Contains("_workspaceImportFirstDragOverLogged", dragDropCode);
     }
 
     private static string FindRepositoryRoot()
