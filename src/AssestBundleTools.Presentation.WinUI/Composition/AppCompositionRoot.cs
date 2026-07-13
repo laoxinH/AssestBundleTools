@@ -389,6 +389,11 @@ internal static class AppCompositionRoot
             () => workspaceContextService.TryGetCurrentWorkspaceEntry(out var entry) && entry is not null
                 ? entry.WorkspaceDataRootPath
                 : null);
+        var elevationRestartPromptCoordinator = new ElevationRestartPromptCoordinator(
+            localizationService,
+            appLogService,
+            appNotificationService,
+            new WindowsUnelevatedProcessRestartService());
         var appBackgroundTaskStatusService = new AppBackgroundTaskStatusService(localizationService);
         var backgroundTaskRunner = new ThreadPoolBackgroundTaskRunner();
         var backgroundWorkScheduler = new BackgroundWorkScheduler(
@@ -420,6 +425,7 @@ internal static class AppCompositionRoot
             AssetEditDraftRestorePlanGateway: assetEditDraftRestorePlanGateway,
             WorkspaceContextService: workspaceContextService,
             WorkspaceProcessCoordinatorService: workspaceProcessCoordinatorService,
+            ElevationRestartPromptCoordinator: elevationRestartPromptCoordinator,
             FilePickerService: filePickerService,
             PathNavigationService: pathNavigationService,
             WorkspaceCatalogGateway: workspaceCatalogGateway,

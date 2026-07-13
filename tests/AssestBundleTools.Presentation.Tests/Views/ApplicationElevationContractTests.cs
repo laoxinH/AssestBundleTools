@@ -16,16 +16,30 @@ public sealed class ApplicationElevationContractTests
             projectRoot,
             "Diagnostics",
             "ProcessElevationDiagnostics.cs"));
+        var promptCode = File.ReadAllText(Path.Combine(
+            projectRoot,
+            "Services",
+            "Platform",
+            "ElevationRestartPromptCoordinator.cs"));
+        var restartCode = File.ReadAllText(Path.Combine(
+            projectRoot,
+            "Services",
+            "Platform",
+            "WindowsUnelevatedProcessRestartService.cs"));
 
         Assert.Contains("requestedExecutionLevel level=\"asInvoker\" uiAccess=\"false\"", manifest);
         Assert.DoesNotContain("requireAdministrator", manifest, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("uiAccess=\"true\"", manifest, StringComparison.OrdinalIgnoreCase);
 
-        Assert.Contains("WarnIfProcessIsElevated();", appCode);
-        Assert.Contains("ProcessElevationDiagnostics.Capture()", appCode);
-        Assert.Contains("ResourceKeys.AppElevationWarningTitle", appCode);
-        Assert.Contains("ResourceKeys.AppElevationWarningMessage", appCode);
-        Assert.Contains("AppNotificationSeverity.Warning", appCode);
+        Assert.Contains("HandleElevationRestartPromptAsync(window, launchRequest)", appCode);
+        Assert.Contains("IsUnelevatedRestartLaunch", appCode);
+        Assert.Contains("ClearWorkspaceRegistration();", appCode);
+        Assert.Contains("ProcessElevationDiagnostics.Capture()", promptCode);
+        Assert.Contains("ResourceKeys.AppElevationWarningRestartButton", promptCode);
+        Assert.Contains("ContentDialogResult.Primary", promptCode);
+        Assert.Contains("CreateProcessWithTokenW", restartCode);
+        Assert.Contains("GetShellWindow", restartCode);
+        Assert.Contains("TokenIsElevated", restartCode);
         Assert.Contains("WindowsBuiltInRole.Administrator", elevationCode);
     }
 

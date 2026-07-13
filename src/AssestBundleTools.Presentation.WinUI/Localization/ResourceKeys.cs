@@ -138,6 +138,10 @@ public static class ResourceKeys
     public const string AppNotificationWarningTitle = "AppNotification.WarningTitle";
     public const string AppElevationWarningTitle = "App.ElevationWarning.Title";
     public const string AppElevationWarningMessage = "App.ElevationWarning.Message";
+    public const string AppElevationWarningRestartButton = "App.ElevationWarning.RestartButton";
+    public const string AppElevationWarningContinueButton = "App.ElevationWarning.ContinueButton";
+    public const string AppElevationRestartFailedMessage = "App.ElevationRestart.FailedMessage";
+    public const string AppElevationRestartFailedLogFormat = "App.ElevationRestart.FailedLog.Format";
     public const string AppNotificationErrorTitle = "AppNotification.ErrorTitle";
     public const string AppNotificationCloseButtonToolTip = "AppNotification.CloseButton.ToolTip";
     public const string CommonCancelButton = "Common.CancelButton";

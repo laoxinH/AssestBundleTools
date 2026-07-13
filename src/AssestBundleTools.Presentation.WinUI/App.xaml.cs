@@ -47,6 +47,7 @@ public partial class App : Microsoft.UI.Xaml.Application
             AssetEditDraftRestorePlanGateway = services.AssetEditDraftRestorePlanGateway;
             WorkspaceContextService = services.WorkspaceContextService;
             WorkspaceProcessCoordinatorService = services.WorkspaceProcessCoordinatorService;
+            ElevationRestartPromptCoordinator = services.ElevationRestartPromptCoordinator;
             FilePickerService = services.FilePickerService;
             PathNavigationService = services.PathNavigationService;
             WorkspaceCatalogGateway = services.WorkspaceCatalogGateway;
@@ -102,6 +103,8 @@ public partial class App : Microsoft.UI.Xaml.Application
 
     public IWorkspaceProcessCoordinatorService WorkspaceProcessCoordinatorService { get; }
 
+    internal ElevationRestartPromptCoordinator ElevationRestartPromptCoordinator { get; }
+
     public IFilePickerService FilePickerService { get; }
 
     public IPathNavigationService PathNavigationService { get; }
@@ -148,7 +151,8 @@ public partial class App : Microsoft.UI.Xaml.Application
         try
         {
             var launchRequest = ResolveInitialLaunchRequest();
-            if (WorkspaceProcessCoordinatorService.TryRedirectLaunchToExistingProcess(launchRequest))
+            if (!ElevationRestartPromptCoordinator.IsUnelevatedRestartLaunch &&
+                WorkspaceProcessCoordinatorService.TryRedirectLaunchToExistingProcess(launchRequest))
             {
                 StartupDiagnostics.Log("Launch redirected to an existing workspace process.");
                 Exit();
@@ -160,7 +164,7 @@ public partial class App : Microsoft.UI.Xaml.Application
 
             window.Activate();
             StartupDiagnostics.Log("MainWindow activated.");
-            WarnIfProcessIsElevated();
+            _ = HandleElevationRestartPromptAsync(window, launchRequest);
         }
         catch (Exception ex)
         {
@@ -169,22 +173,21 @@ public partial class App : Microsoft.UI.Xaml.Application
         }
     }
 
-    private void WarnIfProcessIsElevated()
+    private async Task HandleElevationRestartPromptAsync(
+        MainWindow window,
+        ShellLaunchRequest? launchRequest)
     {
-        var elevation = ProcessElevationDiagnostics.Capture();
-        StartupDiagnostics.Log($"Process elevation state resolved: {elevation.DiagnosticValue}.");
-        if (elevation.IsElevated != true)
+        await Task.Yield();
+        var restartStarted = await ElevationRestartPromptCoordinator.PromptAndRestartIfRequestedAsync(
+            window.Content?.XamlRoot,
+            launchRequest);
+        if (!restartStarted)
         {
             return;
         }
 
-        var message = LocalizationService.GetRequiredString(ResourceKeys.AppElevationWarningMessage);
-        AppLogService.AppendWarning(message);
-        AppNotificationService.Show(
-            LocalizationService.GetRequiredString(ResourceKeys.AppElevationWarningTitle),
-            message,
-            AppNotificationSeverity.Warning,
-            TimeSpan.FromSeconds(15));
+        WorkspaceProcessCoordinatorService.ClearWorkspaceRegistration();
+        Exit();
     }
 
     public MainWindow CreateMainWindow(ShellLaunchRequest? launchRequest = null)

@@ -942,7 +942,19 @@
     <value>Administrator mode blocks drag and drop</value>
   </data>
   <data name="App.ElevationWarning.Message" xml:space="preserve">
-    <value>The app is running with administrator privileges, so Windows blocks file drag and drop from a standard Explorer process. Use the file or folder import buttons for this session, then disable Run as administrator in compatibility and shortcut settings before the next launch.</value>
+    <value>The app is running with administrator privileges, so Windows blocks file drag and drop from a standard Explorer process. Restart now without administrator privileges and restore the current launch target, or continue with the file and folder import buttons.</value>
+  </data>
+  <data name="App.ElevationWarning.RestartButton" xml:space="preserve">
+    <value>Restart without administrator privileges</value>
+  </data>
+  <data name="App.ElevationWarning.ContinueButton" xml:space="preserve">
+    <value>Continue</value>
+  </data>
+  <data name="App.ElevationRestart.FailedMessage" xml:space="preserve">
+    <value>The app could not restart without administrator privileges. This window remains open; use the file or folder import buttons and check Diagnostics for details.</value>
+  </data>
+  <data name="App.ElevationRestart.FailedLog.Format" xml:space="preserve">
+    <value>Restart without administrator privileges failed: Win32 error={0}, detail={1}</value>
   </data>
   <data name="AppNotification.ErrorTitle" xml:space="preserve">
     <value>Action Failed</value>

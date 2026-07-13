@@ -942,7 +942,19 @@
     <value>管理员模式会阻止拖放</value>
   </data>
   <data name="App.ElevationWarning.Message" xml:space="preserve">
-    <value>应用当前以管理员权限运行，Windows 会阻止从普通资源管理器拖放文件。当前可使用文件或目录导入按钮；下次启动前请关闭程序兼容性和快捷方式中的“以管理员身份运行”。</value>
+    <value>应用当前以管理员权限运行，Windows 会阻止从普通资源管理器拖放文件。可以立即以非管理员模式重启并恢复当前启动目标；也可以继续使用文件或目录导入按钮。</value>
+  </data>
+  <data name="App.ElevationWarning.RestartButton" xml:space="preserve">
+    <value>以非管理员模式重启</value>
+  </data>
+  <data name="App.ElevationWarning.ContinueButton" xml:space="preserve">
+    <value>继续使用</value>
+  </data>
+  <data name="App.ElevationRestart.FailedMessage" xml:space="preserve">
+    <value>无法以非管理员模式重启。当前窗口已保留，请使用文件或目录导入按钮，并在诊断中心查看详细信息。</value>
+  </data>
+  <data name="App.ElevationRestart.FailedLog.Format" xml:space="preserve">
+    <value>以非管理员模式重启失败：Win32 错误码={0}，详情={1}</value>
   </data>
   <data name="AppNotification.ErrorTitle" xml:space="preserve">
     <value>操作失败</value>
