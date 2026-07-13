@@ -2,7 +2,7 @@ namespace AssestBundleTools.Presentation.WinUI.Services;
 
 internal interface IUnelevatedProcessRestartService
 {
-    UnelevatedProcessRestartResult TryRestart(IReadOnlyList<string> arguments);
+    Task<UnelevatedProcessRestartResult> TryRestartAsync(IReadOnlyList<string> arguments);
 }
 
 internal readonly record struct UnelevatedProcessRestartResult(

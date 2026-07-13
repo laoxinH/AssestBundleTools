@@ -78,7 +78,7 @@ internal sealed class ElevationRestartPromptCoordinator
             var arguments = UnelevatedRestartLaunchArguments.Create(
                 launchRequest,
                 _localizationService);
-            var result = _restartService.TryRestart(arguments);
+            var result = await _restartService.TryRestartAsync(arguments);
             if (result.Succeeded)
             {
                 StartupDiagnostics.Log(

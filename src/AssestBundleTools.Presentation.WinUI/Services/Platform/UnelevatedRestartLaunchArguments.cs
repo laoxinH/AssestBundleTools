@@ -48,6 +48,24 @@ internal static class UnelevatedRestartLaunchArguments
         return builder.ToString();
     }
 
+    internal static string BuildArgumentList(IEnumerable<string> arguments)
+    {
+        ArgumentNullException.ThrowIfNull(arguments);
+
+        var builder = new StringBuilder();
+        foreach (var argument in arguments)
+        {
+            if (builder.Length > 0)
+            {
+                builder.Append(' ');
+            }
+
+            AppendQuotedArgument(builder, argument ?? string.Empty);
+        }
+
+        return builder.ToString();
+    }
+
     private static void AppendQuotedArgument(StringBuilder builder, string argument)
     {
         if (argument.Length > 0 &&

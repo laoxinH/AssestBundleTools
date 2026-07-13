@@ -27,4 +27,13 @@ public sealed class UnelevatedRestartLaunchArgumentsTests
             "--abt-unelevated-restart \"\" \"value with spaces\" \"quoted\\\"value\"",
             commandLine);
     }
+
+    [Fact]
+    public void BuildArgumentList_ShouldQuoteArgumentsForExplorerShellExecute()
+    {
+        var argumentList = UnelevatedRestartLaunchArguments.BuildArgumentList(
+            ["--abt-unelevated-restart", "", "value with spaces"]);
+
+        Assert.Equal("--abt-unelevated-restart \"\" \"value with spaces\"", argumentList);
+    }
 }

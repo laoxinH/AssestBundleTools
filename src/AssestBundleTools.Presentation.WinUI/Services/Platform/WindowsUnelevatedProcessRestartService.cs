@@ -1,4 +1,6 @@
 using System.ComponentModel;
+using System.Diagnostics;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -13,8 +15,10 @@ internal sealed class WindowsUnelevatedProcessRestartService : IUnelevatedProces
     private const uint LogonWithProfile = 0x00000001;
     private const uint CreateUnicodeEnvironment = 0x00000400;
     private const int TokenElevationInformationClass = 20;
+    private const int ExplorerProcessWaitAttemptCount = 100;
+    private static readonly TimeSpan ExplorerProcessWaitInterval = TimeSpan.FromMilliseconds(100);
 
-    public UnelevatedProcessRestartResult TryRestart(IReadOnlyList<string> arguments)
+    public async Task<UnelevatedProcessRestartResult> TryRestartAsync(IReadOnlyList<string> arguments)
     {
         ArgumentNullException.ThrowIfNull(arguments);
 
@@ -24,6 +28,30 @@ internal sealed class WindowsUnelevatedProcessRestartService : IUnelevatedProces
             return UnelevatedProcessRestartResult.Failure(
                 $"Current executable path is unavailable: {executablePath ?? "<null>"}.");
         }
+
+        var existingProcessIds = CaptureMatchingProcessIds(executablePath);
+        var explorerLaunch = TryRequestExplorerShellLaunch(executablePath, arguments);
+        if (explorerLaunch.Requested)
+        {
+            return await WaitForUnelevatedProcessAsync(executablePath, existingProcessIds);
+        }
+
+        var tokenResult = TryRestartWithShellToken(executablePath, arguments);
+        if (tokenResult.Succeeded)
+        {
+            return tokenResult;
+        }
+
+        return UnelevatedProcessRestartResult.Failure(
+            $"Explorer Shell launch was unavailable: {explorerLaunch.DiagnosticDetail} " +
+            $"Shell-token fallback failed: {tokenResult.DiagnosticDetail}",
+            tokenResult.NativeErrorCode);
+    }
+
+    private static UnelevatedProcessRestartResult TryRestartWithShellToken(
+        string executablePath,
+        IReadOnlyList<string> arguments)
+    {
 
         var shellWindow = GetShellWindow();
         if (shellWindow == IntPtr.Zero)
@@ -72,6 +100,184 @@ internal sealed class WindowsUnelevatedProcessRestartService : IUnelevatedProces
         finally
         {
             _ = CloseHandle(shellProcess);
+        }
+    }
+
+    private static ExplorerShellLaunchResult TryRequestExplorerShellLaunch(
+        string executablePath,
+        IReadOnlyList<string> arguments)
+    {
+        object? shell = null;
+        try
+        {
+            var shellType = Type.GetTypeFromProgID("Shell.Application", throwOnError: false);
+            if (shellType is null)
+            {
+                return ExplorerShellLaunchResult.Unavailable(
+                    "Shell.Application is not registered for the current desktop.");
+            }
+
+            shell = Activator.CreateInstance(shellType);
+            if (shell is null)
+            {
+                return ExplorerShellLaunchResult.Unavailable(
+                    "Shell.Application could not be activated.");
+            }
+
+            _ = shellType.InvokeMember(
+                "ShellExecute",
+                BindingFlags.InvokeMethod | BindingFlags.Public | BindingFlags.Instance,
+                binder: null,
+                target: shell,
+                args:
+                [
+                    executablePath,
+                    UnelevatedRestartLaunchArguments.BuildArgumentList(arguments),
+                    Path.GetDirectoryName(executablePath) ?? AppContext.BaseDirectory,
+                    "open",
+                    1
+                ]);
+            return ExplorerShellLaunchResult.Accepted();
+        }
+        catch (Exception ex)
+        {
+            return ExplorerShellLaunchResult.Unavailable(
+                $"Shell.Application.ShellExecute failed: {ex.GetBaseException().Message}");
+        }
+        finally
+        {
+            if (shell is not null && Marshal.IsComObject(shell))
+            {
+                _ = Marshal.FinalReleaseComObject(shell);
+            }
+        }
+    }
+
+    private static async Task<UnelevatedProcessRestartResult> WaitForUnelevatedProcessAsync(
+        string executablePath,
+        IReadOnlySet<int> existingProcessIds)
+    {
+        var elevatedCandidateProcessIds = new HashSet<int>();
+        for (var attempt = 0; attempt < ExplorerProcessWaitAttemptCount; attempt++)
+        {
+            foreach (var processId in CaptureMatchingProcessIds(executablePath))
+            {
+                if (existingProcessIds.Contains(processId))
+                {
+                    continue;
+                }
+
+                if (!TryReadProcessElevation(processId, out var isElevated))
+                {
+                    continue;
+                }
+
+                if (!isElevated)
+                {
+                    return UnelevatedProcessRestartResult.Success(processId);
+                }
+
+                elevatedCandidateProcessIds.Add(processId);
+            }
+
+            await Task.Delay(ExplorerProcessWaitInterval);
+        }
+
+        var candidateDetail = elevatedCandidateProcessIds.Count == 0
+            ? "No matching child process was observed."
+            : $"Only elevated matching processes were observed: {string.Join(",", elevatedCandidateProcessIds)}.";
+        return UnelevatedProcessRestartResult.Failure(
+            $"Explorer Shell accepted the restart request, but no unelevated process was confirmed within " +
+            $"{ExplorerProcessWaitAttemptCount * ExplorerProcessWaitInterval.TotalMilliseconds:0} ms. " +
+            candidateDetail);
+    }
+
+    private static HashSet<int> CaptureMatchingProcessIds(string executablePath)
+    {
+        var processName = Path.GetFileNameWithoutExtension(executablePath);
+        var processIds = new HashSet<int>();
+        foreach (var process in Process.GetProcessesByName(processName))
+        {
+            using (process)
+            {
+                if (TryReadProcessPath(process.Id, out var processPath) &&
+                    string.Equals(processPath, executablePath, StringComparison.OrdinalIgnoreCase))
+                {
+                    processIds.Add(process.Id);
+                }
+            }
+        }
+
+        return processIds;
+    }
+
+    private static bool TryReadProcessPath(int processId, out string processPath)
+    {
+        processPath = string.Empty;
+        var processHandle = OpenProcess(ProcessQueryLimitedInformation, false, checked((uint)processId));
+        if (processHandle == IntPtr.Zero)
+        {
+            return false;
+        }
+
+        try
+        {
+            var capacity = 32768u;
+            var pathBuilder = new StringBuilder(checked((int)capacity));
+            if (!QueryFullProcessImageNameW(processHandle, 0, pathBuilder, ref capacity))
+            {
+                return false;
+            }
+
+            processPath = pathBuilder.ToString();
+            return !string.IsNullOrWhiteSpace(processPath);
+        }
+        finally
+        {
+            _ = CloseHandle(processHandle);
+        }
+    }
+
+    private static bool TryReadProcessElevation(int processId, out bool isElevated)
+    {
+        isElevated = false;
+        var processHandle = OpenProcess(ProcessQueryLimitedInformation, false, checked((uint)processId));
+        if (processHandle == IntPtr.Zero)
+        {
+            return false;
+        }
+
+        try
+        {
+            if (!OpenProcessToken(processHandle, TokenQuery, out var tokenHandle))
+            {
+                return false;
+            }
+
+            try
+            {
+                var elevationSize = Marshal.SizeOf<TokenElevation>();
+                if (!GetTokenInformation(
+                        tokenHandle,
+                        TokenElevationInformationClass,
+                        out var elevation,
+                        elevationSize,
+                        out _))
+                {
+                    return false;
+                }
+
+                isElevated = elevation.TokenIsElevated != 0;
+                return true;
+            }
+            finally
+            {
+                _ = CloseHandle(tokenHandle);
+            }
+        }
+        finally
+        {
+            _ = CloseHandle(processHandle);
         }
     }
 
@@ -164,6 +370,14 @@ internal sealed class WindowsUnelevatedProcessRestartService : IUnelevatedProces
     [DllImport("kernel32.dll", SetLastError = true)]
     private static extern IntPtr OpenProcess(uint desiredAccess, bool inheritHandle, uint processId);
 
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool QueryFullProcessImageNameW(
+        IntPtr processHandle,
+        uint flags,
+        StringBuilder executablePath,
+        ref uint executablePathSize);
+
     [DllImport("advapi32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool OpenProcessToken(
@@ -244,5 +458,20 @@ internal sealed class WindowsUnelevatedProcessRestartService : IUnelevatedProces
         public IntPtr ThreadHandle;
         public uint ProcessId;
         public uint ThreadId;
+    }
+
+    private readonly record struct ExplorerShellLaunchResult(
+        bool Requested,
+        string DiagnosticDetail)
+    {
+        public static ExplorerShellLaunchResult Accepted()
+        {
+            return new ExplorerShellLaunchResult(true, string.Empty);
+        }
+
+        public static ExplorerShellLaunchResult Unavailable(string diagnosticDetail)
+        {
+            return new ExplorerShellLaunchResult(false, diagnosticDetail);
+        }
     }
 }

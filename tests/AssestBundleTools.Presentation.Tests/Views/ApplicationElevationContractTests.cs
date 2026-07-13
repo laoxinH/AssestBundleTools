@@ -39,6 +39,8 @@ public sealed class ApplicationElevationContractTests
         Assert.Contains("ContentDialogResult.Primary", promptCode);
         Assert.Contains("WaitForXamlRootAsync(contentRoot)", promptCode);
         Assert.Contains("contentRoot?.XamlRoot", promptCode);
+        Assert.Contains("Shell.Application", restartCode);
+        Assert.Contains("WaitForUnelevatedProcessAsync", restartCode);
         Assert.Contains("CreateProcessWithTokenW", restartCode);
         Assert.Contains("GetShellWindow", restartCode);
         Assert.Contains("TokenIsElevated", restartCode);
