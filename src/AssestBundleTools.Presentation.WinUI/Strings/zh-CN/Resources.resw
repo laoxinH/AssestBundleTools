@@ -963,7 +963,7 @@
     <value>管理员拖放兼容（实验性）</value>
   </data>
   <data name="App.ElevatedDragDropCompatibility.EnabledMessage" xml:space="preserve">
-    <value>已启用传统 WM_DROPFILES 接收器；在资源包列表区域释放文件或目录后会转入导入流程。本模式不依赖 WinUI/OLE Drop，但仍可能受系统策略限制；如仍无法拖入，请改用导入按钮或以非管理员模式运行。</value>
+    <value>已启用传统 WM_DROPFILES 接收器；优先识别资源包列表落点，坐标不兼容时会按当前工作台窗口回退导入。本模式不依赖 WinUI/OLE Drop，但仍可能受系统策略限制；如仍无法拖入，请改用导入按钮或以非管理员模式运行。</value>
   </data>
   <data name="App.ElevatedDragDropCompatibility.FailedMessage" xml:space="preserve">
     <value>实验性拖放过滤器未能完整启用。应用将继续运行，请使用导入按钮并在诊断中心查看详细信息。</value>
@@ -1025,8 +1025,8 @@
   <data name="WorkspaceImport.Log.ElevatedDrop.Received.Format" xml:space="preserve">
     <value>拖放诊断 [{0}] 收到管理员兼容 WM_DROPFILES：路径={1}，客户区坐标=({2},{3})，客户区内={4}，资源包区域内={5}，摘要={6}。</value>
   </data>
-  <data name="WorkspaceImport.Log.ElevatedDrop.OutsideTarget.Format" xml:space="preserve">
-    <value>拖放诊断 [{0}] 已忽略管理员兼容投递：落点不在当前工作台的资源包列表区域。</value>
+  <data name="WorkspaceImport.Log.ElevatedDrop.WindowFallback.Format" xml:space="preserve">
+    <value>拖放诊断 [{0}] 管理员兼容落点未匹配 WinUI 资源包区域；来源仍是当前工作台主窗口，将使用窗口级回退继续导入。</value>
   </data>
   <data name="WorkspaceImport.Log.ElevatedDrop.NoPaths.Format" xml:space="preserve">
     <value>拖放诊断 [{0}] WM_DROPFILES 中没有可用的文件系统路径。</value>
@@ -3441,7 +3441,7 @@
     <value>管理员拖放兼容（实验性）</value>
   </data>
   <data name="SettingsDiagnosticsPage.ElevatedDragDropCompatibility.Description" xml:space="preserve">
-    <value>下次以管理员模式启动时放行并接收传统 WM_DROPFILES，在资源包列表区域释放后复用现有导入流程，并改为仅显示启动提示。此设置会放宽窗口消息过滤，仍可能受系统策略限制；普通模式不受影响。</value>
+    <value>下次以管理员模式启动时放行并接收传统 WM_DROPFILES，优先识别资源包列表落点，坐标不兼容时按当前工作台窗口回退到现有导入流程，并改为仅显示启动提示。此设置会放宽窗口消息过滤，仍可能受系统策略限制；普通模式不受影响。</value>
   </data>
   <data name="SettingsDiagnosticsPage.ElevatedDragDropCompatibility.SaveFailedMessage" xml:space="preserve">
     <value>保存管理员拖放兼容偏好失败，请检查应用数据目录权限。</value>

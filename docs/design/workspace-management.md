@@ -211,7 +211,9 @@ Presentation 层保留两个协同层次：
   通过 `ChangeWindowMessageFilterEx` 放行 `WM_DROPFILES / WM_COPYDATA / WM_COPYGLOBALDATA`，并对主窗口调用 `DragAcceptFiles`
 - 启用实验兼容时还必须为主窗口安装可移除的 Win32 消息子类过程；收到 `WM_DROPFILES` 后通过 `DragQueryFile`
   提取文件或目录路径、通过 `DragQueryPoint` 保留窗口客户区落点，并在 `finally` 中调用 `DragFinish` 释放 `HDROP`；
-  Presentation 工作台只在落点位于左侧资源包区域且存在活动工作区时，把路径投递给现有拖放导入入口
+  Presentation 工作台优先用落点判断左侧资源包区域；由于传统 Shell 落点在自定义标题栏、DPI 虚拟化组合下可能与
+  WinUI 坐标不一致，未命中时只要来源仍是承载当前工作台的主窗口且存在活动工作区，就按当前窗口回退投递给现有拖放导入入口，
+  同时记录回退诊断。该放宽只适用于用户显式开启的管理员实验模式
 - 实验兼容只覆盖传统 Win32 `WM_DROPFILES` 消息入口，不承诺 WinUI OLE / `DataPackage` 在所有 Win10 / Win11 环境都能跨 UIPI 工作；
   设置文案和启动诊断必须明确这一限制，不能把它描述为等价于普通权限运行
 - 管理员启动且实验兼容关闭时，继续显示“以非管理员模式重启”决策框并提示设置入口；实验兼容开启时，

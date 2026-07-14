@@ -963,7 +963,7 @@
     <value>Elevated drag-and-drop compatibility (experimental)</value>
   </data>
   <data name="App.ElevatedDragDropCompatibility.EnabledMessage" xml:space="preserve">
-    <value>The traditional WM_DROPFILES receiver is enabled. Releasing files or folders over the bundle pane now routes them to import without relying on WinUI/OLE Drop. System policy can still block this experimental path; use the import buttons or run without administrator privileges if dragging still fails.</value>
+    <value>The traditional WM_DROPFILES receiver is enabled. It prefers the bundle pane hit test and falls back to the current workbench window when Shell and WinUI coordinates disagree. This path does not rely on WinUI/OLE Drop, but system policy can still block it; use the import buttons or run without administrator privileges if dragging still fails.</value>
   </data>
   <data name="App.ElevatedDragDropCompatibility.FailedMessage" xml:space="preserve">
     <value>The experimental drag-and-drop filters could not be enabled completely. The app will remain open; use the import buttons and check Diagnostics for details.</value>
@@ -1025,8 +1025,8 @@
   <data name="WorkspaceImport.Log.ElevatedDrop.Received.Format" xml:space="preserve">
     <value>Drag-and-drop diagnostic [{0}] received elevated compatibility WM_DROPFILES: paths={1}, client point=({2},{3}), in client area={4}, in bundle pane={5}, summary={6}.</value>
   </data>
-  <data name="WorkspaceImport.Log.ElevatedDrop.OutsideTarget.Format" xml:space="preserve">
-    <value>Drag-and-drop diagnostic [{0}] ignored the elevated compatibility drop because it was outside the current workbench bundle pane.</value>
+  <data name="WorkspaceImport.Log.ElevatedDrop.WindowFallback.Format" xml:space="preserve">
+    <value>Drag-and-drop diagnostic [{0}] could not match the elevated compatibility point to the WinUI bundle pane. The source is still the current workbench window, so import will continue through the window-level fallback.</value>
   </data>
   <data name="WorkspaceImport.Log.ElevatedDrop.NoPaths.Format" xml:space="preserve">
     <value>Drag-and-drop diagnostic [{0}] found no usable file-system paths in WM_DROPFILES.</value>
@@ -3441,7 +3441,7 @@
     <value>Elevated drag-and-drop compatibility (experimental)</value>
   </data>
   <data name="SettingsDiagnosticsPage.ElevatedDragDropCompatibility.Description" xml:space="preserve">
-    <value>On the next administrator-mode launch, allow and receive traditional WM_DROPFILES, then route releases over the bundle pane through the existing import flow and show only a startup notification. This relaxes the window message filter and can still be blocked by system policy. Standard mode is unaffected.</value>
+    <value>On the next administrator-mode launch, allow and receive traditional WM_DROPFILES, prefer the bundle pane hit test, and fall back to the current workbench window when Shell and WinUI coordinates disagree. This relaxes the window message filter and can still be blocked by system policy. Standard mode is unaffected.</value>
   </data>
   <data name="SettingsDiagnosticsPage.ElevatedDragDropCompatibility.SaveFailedMessage" xml:space="preserve">
     <value>Failed to save the elevated drag-and-drop compatibility preference. Check the app data directory permissions.</value>

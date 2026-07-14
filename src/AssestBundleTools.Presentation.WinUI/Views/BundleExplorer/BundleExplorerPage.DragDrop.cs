@@ -74,9 +74,8 @@ public sealed partial class BundleExplorerPage
             if (!isWithinBundlePane)
             {
                 AppendDragDropWarning(
-                    ResourceKeys.WorkspaceImportLogElevatedDropOutsideTargetFormat,
+                    ResourceKeys.WorkspaceImportLogElevatedDropWindowFallbackFormat,
                     ResolveWorkspaceImportDragSessionId());
-                return;
             }
 
             if (!ViewModel.WorkspaceShell.HasWorkspace)

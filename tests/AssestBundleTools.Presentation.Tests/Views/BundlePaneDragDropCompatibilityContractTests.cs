@@ -60,6 +60,14 @@ public sealed class BundlePaneDragDropCompatibilityContractTests
         Assert.Contains("IsElevatedCompatibilityDropWithinBundlePane", dragDropCode);
         Assert.Contains("RequestDragDropImportAsync(droppedPaths)", dragDropCode);
         Assert.Contains("WorkspaceImportLogElevatedDropReceivedFormat", dragDropCode);
+        Assert.Contains("WorkspaceImportLogElevatedDropWindowFallbackFormat", dragDropCode);
+        var elevatedDropHandler = dragDropCode[
+            dragDropCode.IndexOf("private async void OnElevatedCompatibilityFilesDropped", StringComparison.Ordinal)..
+            dragDropCode.IndexOf("private void AppendWorkspaceImportDropEnvironmentDiagnostic", StringComparison.Ordinal)];
+        var windowFallbackBlock = elevatedDropHandler[
+            elevatedDropHandler.IndexOf("WorkspaceImportLogElevatedDropWindowFallbackFormat", StringComparison.Ordinal)..
+            elevatedDropHandler.IndexOf("if (!ViewModel.WorkspaceShell.HasWorkspace)", StringComparison.Ordinal)];
+        Assert.DoesNotContain("return;", windowFallbackBlock);
         Assert.Contains(
             "ElevatedDragDropCompatibilityService.FilesDropped -=",
             pageCode);
