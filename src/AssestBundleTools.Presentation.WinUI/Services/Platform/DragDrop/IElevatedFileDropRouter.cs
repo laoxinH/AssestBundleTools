@@ -23,6 +23,13 @@ internal enum ElevatedFileDropTargetHitTestMode
     WindowFallback
 }
 
+internal enum ElevatedDropCoordinateValidationMode
+{
+    NativeClientAreaFlag,
+    ClientBounds,
+    ClientBoundsFallback
+}
+
 internal static class ElevatedFileDropTargetPriorities
 {
     public const int WindowFallback = -1000;
@@ -42,4 +49,5 @@ internal sealed record ElevatedDropCoordinateMapping(
     Point RootPosition,
     Point LocalPosition,
     double ScaleX,
-    double ScaleY);
+    double ScaleY,
+    ElevatedDropCoordinateValidationMode ValidationMode);

@@ -1032,7 +1032,7 @@
     <value>Drag-and-drop diagnostic [{0}] found no usable file-system paths in WM_DROPFILES.</value>
   </data>
   <data name="ElevatedDrop.Log.TargetMatched.Format" xml:space="preserve">
-    <value>Elevated drop route matched: target={0}, mode={1}, paths={2}, client=({3},{4}), screen=({5},{6}), XAML root=({7:F1},{8:F1}), target local=({9:F1},{10:F1}), mapping scale=({11:F3},{12:F3}).</value>
+    <value>Elevated drop route matched: target={0}, mode={1}, paths={2}, client=({3},{4})/{5}x{6}, client-area flag={7}, coordinate validation={8}, screen=({9},{10}), screen valid={11}, XAML root=({12:F1},{13:F1}), target local=({14:F1},{15:F1}), mapping scale=({16:F3},{17:F3}).</value>
   </data>
   <data name="ElevatedDrop.Log.NoTarget.Format" xml:space="preserve">
     <value>Elevated drop routing found no available target: paths={0}, client point=({1},{2}), client size={3}x{4}.</value>

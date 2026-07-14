@@ -86,4 +86,70 @@ public sealed class ElevatedDropCoordinateMapperTests
 
         Assert.False(succeeded);
     }
+
+    [Fact]
+    public void TryValidateClientPoint_ShouldUseBoundsFallback_WhenNativeFlagIsFalseButPointIsInside()
+    {
+        var nativePosition = new ElevatedNativeDropPosition(
+            ClientX: 449,
+            ClientY: 356,
+            IsClientArea: false,
+            ClientWidth: 1400,
+            ClientHeight: 900,
+            ScreenX: 535,
+            ScreenY: 452,
+            HasScreenPosition: true);
+
+        var succeeded = ElevatedDropCoordinateMapper.TryValidateClientPoint(
+            nativePosition,
+            out var validationMode);
+
+        Assert.True(succeeded);
+        Assert.Equal(
+            ElevatedDropCoordinateValidationMode.ClientBoundsFallback,
+            validationMode);
+    }
+
+    [Fact]
+    public void TryValidateClientPoint_ShouldRejectPointOutsideAvailableClientBounds()
+    {
+        var nativePosition = new ElevatedNativeDropPosition(
+            ClientX: 1400,
+            ClientY: 356,
+            IsClientArea: false,
+            ClientWidth: 1400,
+            ClientHeight: 900,
+            ScreenX: 0,
+            ScreenY: 0,
+            HasScreenPosition: false);
+
+        var succeeded = ElevatedDropCoordinateMapper.TryValidateClientPoint(
+            nativePosition,
+            out _);
+
+        Assert.False(succeeded);
+    }
+
+    [Fact]
+    public void TryValidateClientPoint_ShouldUseNativeFlag_WhenClientBoundsAreUnavailable()
+    {
+        var nativePosition = new ElevatedNativeDropPosition(
+            ClientX: 240,
+            ClientY: 120,
+            IsClientArea: true,
+            ClientWidth: 0,
+            ClientHeight: 0,
+            ScreenX: 0,
+            ScreenY: 0,
+            HasScreenPosition: false);
+
+        var succeeded = ElevatedDropCoordinateMapper.TryValidateClientPoint(
+            nativePosition,
+            out var validationMode);
+
+        Assert.True(succeeded);
+        Assert.Equal(
+            ElevatedDropCoordinateValidationMode.NativeClientAreaFlag,
+            validationMode);
+    }
 }

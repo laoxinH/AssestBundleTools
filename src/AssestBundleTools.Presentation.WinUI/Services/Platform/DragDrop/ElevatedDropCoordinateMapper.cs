@@ -24,9 +24,13 @@ internal sealed class ElevatedDropCoordinateMapper : IElevatedDropCoordinateMapp
         out ElevatedDropRootCoordinateMapping mapping)
     {
         mapping = default;
-        if (!nativePosition.IsClientArea ||
-            sourceWindow.Content is not FrameworkElement rootElement ||
+        if (sourceWindow.Content is not FrameworkElement rootElement ||
             rootElement.XamlRoot is null)
+        {
+            return false;
+        }
+
+        if (!TryValidateClientPoint(nativePosition, out var validationMode))
         {
             return false;
         }
@@ -53,7 +57,8 @@ internal sealed class ElevatedDropCoordinateMapper : IElevatedDropCoordinateMapp
             rootElement,
             rootPosition,
             scaleX,
-            scaleY);
+            scaleY,
+            validationMode);
         return true;
     }
 
@@ -125,10 +130,44 @@ internal sealed class ElevatedDropCoordinateMapper : IElevatedDropCoordinateMapp
             nativePosition.ClientY / scaleY);
         return double.IsFinite(rootPosition.X) && double.IsFinite(rootPosition.Y);
     }
+
+    internal static bool TryValidateClientPoint(
+        ElevatedNativeDropPosition nativePosition,
+        out ElevatedDropCoordinateValidationMode validationMode)
+    {
+        validationMode = default;
+        var hasClientBounds = nativePosition.ClientWidth > 0 && nativePosition.ClientHeight > 0;
+        if (hasClientBounds)
+        {
+            var isWithinClientBounds =
+                nativePosition.ClientX >= 0 &&
+                nativePosition.ClientX < nativePosition.ClientWidth &&
+                nativePosition.ClientY >= 0 &&
+                nativePosition.ClientY < nativePosition.ClientHeight;
+            if (!isWithinClientBounds)
+            {
+                return false;
+            }
+
+            validationMode = nativePosition.IsClientArea
+                ? ElevatedDropCoordinateValidationMode.ClientBounds
+                : ElevatedDropCoordinateValidationMode.ClientBoundsFallback;
+            return true;
+        }
+
+        if (!nativePosition.IsClientArea)
+        {
+            return false;
+        }
+
+        validationMode = ElevatedDropCoordinateValidationMode.NativeClientAreaFlag;
+        return true;
+    }
 }
 
 internal readonly record struct ElevatedDropRootCoordinateMapping(
     FrameworkElement RootElement,
     Point RootPosition,
     double ScaleX,
-    double ScaleY);
+    double ScaleY,
+    ElevatedDropCoordinateValidationMode ValidationMode);

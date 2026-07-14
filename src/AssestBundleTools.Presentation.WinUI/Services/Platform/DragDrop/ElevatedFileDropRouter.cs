@@ -97,7 +97,8 @@ internal sealed class ElevatedFileDropRouter : IElevatedFileDropRouter
                 rootMapping.RootPosition,
                 match.Value.LocalPosition,
                 rootMapping.ScaleX,
-                rootMapping.ScaleY)
+                rootMapping.ScaleY,
+                rootMapping.ValidationMode)
             : null;
         var context = new ElevatedFileDropContext(
             match.Value.Target.Registration.TargetId,
@@ -219,8 +220,13 @@ internal sealed class ElevatedFileDropRouter : IElevatedFileDropRouter
             context.Paths.Count,
             context.NativePosition.ClientX,
             context.NativePosition.ClientY,
+            context.NativePosition.ClientWidth,
+            context.NativePosition.ClientHeight,
+            context.NativePosition.IsClientArea,
+            coordinates?.ValidationMode.ToString() ?? "-",
             context.NativePosition.ScreenX,
             context.NativePosition.ScreenY,
+            context.NativePosition.HasScreenPosition,
             coordinates?.RootPosition.X ?? double.NaN,
             coordinates?.RootPosition.Y ?? double.NaN,
             coordinates?.LocalPosition.X ?? double.NaN,

@@ -94,6 +94,8 @@ public sealed class ApplicationElevationContractTests
             routerCode.IndexOf("FindWindowFallback", StringComparison.Ordinal));
         Assert.Contains("ClientWidth / rootWidth", coordinateMapperCode);
         Assert.Contains("ClientHeight / rootHeight", coordinateMapperCode);
+        Assert.Contains("TryValidateClientPoint", coordinateMapperCode);
+        Assert.Contains("ClientBoundsFallback", coordinateMapperCode);
         Assert.Contains("TransformToVisual(targetElement)", coordinateMapperCode);
         Assert.Contains("WindowsBuiltInRole.Administrator", elevationCode);
     }
