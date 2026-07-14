@@ -23,6 +23,7 @@ internal sealed record AppCompositionServices(
     IAssetEditDraftRestorePlanGateway AssetEditDraftRestorePlanGateway,
     IWorkspaceContextService WorkspaceContextService,
     IWorkspaceProcessCoordinatorService WorkspaceProcessCoordinatorService,
+    IElevatedDragDropCompatibilityService ElevatedDragDropCompatibilityService,
     ElevationRestartPromptCoordinator ElevationRestartPromptCoordinator,
     IFilePickerService FilePickerService,
     IPathNavigationService PathNavigationService,

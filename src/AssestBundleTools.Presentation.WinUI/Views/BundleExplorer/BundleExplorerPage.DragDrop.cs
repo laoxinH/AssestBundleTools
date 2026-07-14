@@ -1,8 +1,10 @@
 using System.Runtime.InteropServices;
 using AssestBundleTools.Presentation.WinUI.Diagnostics;
 using AssestBundleTools.Presentation.WinUI.Localization;
+using AssestBundleTools.Presentation.WinUI.Services;
 using Microsoft.UI.Xaml;
 using Windows.ApplicationModel.DataTransfer;
+using Windows.Foundation;
 using Windows.Storage;
 
 namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer;
@@ -33,8 +35,89 @@ public sealed partial class BundleExplorerPage
             DropEvent,
             new DragEventHandler(OnWorkspaceImportDrop),
             handledEventsToo: true);
+        App.CurrentApp.ElevatedDragDropCompatibilityService.FilesDropped +=
+            OnElevatedCompatibilityFilesDropped;
 
         AppendWorkspaceImportDropEnvironmentDiagnostic();
+    }
+
+    private async void OnElevatedCompatibilityFilesDropped(
+        object? sender,
+        ElevatedFileDropReceivedEventArgs e)
+    {
+        if (!IsLoaded ||
+            !TryGetHostWindow(out var hostWindow) ||
+            !ReferenceEquals(hostWindow, e.SourceWindow))
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_workspaceImportDragSessionId))
+        {
+            BeginWorkspaceImportDragSession();
+        }
+
+        _chromeCoordinator.SetWorkspaceImportDropOverlayVisible(false);
+        var isWithinBundlePane = IsElevatedCompatibilityDropWithinBundlePane(e);
+        AppendDragDropInfo(
+            ResourceKeys.WorkspaceImportLogElevatedDropReceivedFormat,
+            ResolveWorkspaceImportDragSessionId(),
+            e.Paths.Count,
+            e.ClientX,
+            e.ClientY,
+            e.IsClientArea,
+            isWithinBundlePane,
+            DescribeFileSystemPaths(e.Paths));
+
+        try
+        {
+            if (!isWithinBundlePane)
+            {
+                AppendDragDropWarning(
+                    ResourceKeys.WorkspaceImportLogElevatedDropOutsideTargetFormat,
+                    ResolveWorkspaceImportDragSessionId());
+                return;
+            }
+
+            if (!ViewModel.WorkspaceShell.HasWorkspace)
+            {
+                AppendDragDropWarning(
+                    ResourceKeys.WorkspaceImportLogDragDropRejectedNoWorkspaceFormat,
+                    ResolveWorkspaceImportDragSessionId());
+                return;
+            }
+
+            var droppedPaths = e.Paths
+                .Where(static path => !string.IsNullOrWhiteSpace(path))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+            if (droppedPaths.Length == 0)
+            {
+                AppendDragDropWarning(
+                    ResourceKeys.WorkspaceImportLogElevatedDropNoPathsFormat,
+                    ResolveWorkspaceImportDragSessionId());
+                return;
+            }
+
+            await ViewModel.RequestDragDropImportAsync(droppedPaths);
+            AppendDragDropInfo(
+                ResourceKeys.WorkspaceImportLogDragDropDispatchResultFormat,
+                ResolveWorkspaceImportDragSessionId(),
+                droppedPaths.Length);
+        }
+        catch (Exception exception)
+        {
+            AppendDragDropError(
+                ResourceKeys.WorkspaceImportLogDragDropUnhandledFailureFormat,
+                ResolveWorkspaceImportDragSessionId(),
+                exception.GetType().Name,
+                $"0x{exception.HResult:X8}",
+                exception.Message);
+        }
+        finally
+        {
+            EndWorkspaceImportDragSession();
+        }
     }
 
     private void AppendWorkspaceImportDropEnvironmentDiagnostic()
@@ -185,6 +268,31 @@ public sealed partial class BundleExplorerPage
         _chromeCoordinator.SetWorkspaceImportDropOverlayVisible(canAcceptImport);
     }
 
+    private bool IsElevatedCompatibilityDropWithinBundlePane(
+        ElevatedFileDropReceivedEventArgs e)
+    {
+        if (!e.IsClientArea ||
+            BundlePaneHost.Visibility != Visibility.Visible ||
+            XamlRoot is null ||
+            BundlePaneHost.ActualWidth <= 0d ||
+            BundlePaneHost.ActualHeight <= 0d)
+        {
+            return false;
+        }
+
+        var rasterizationScale = Math.Max(0.01d, XamlRoot.RasterizationScale);
+        var dropPoint = new Point(
+            e.ClientX / rasterizationScale,
+            e.ClientY / rasterizationScale);
+        var bundlePaneOrigin = BundlePaneHost
+            .TransformToVisual(null)
+            .TransformPoint(new Point());
+        return dropPoint.X >= bundlePaneOrigin.X &&
+               dropPoint.X <= bundlePaneOrigin.X + BundlePaneHost.ActualWidth &&
+               dropPoint.Y >= bundlePaneOrigin.Y &&
+               dropPoint.Y <= bundlePaneOrigin.Y + BundlePaneHost.ActualHeight;
+    }
+
     private void AppendDragDropEventDiagnostic(string stage, DragEventArgs e)
     {
         AppendDragDropInfo(
@@ -247,6 +355,20 @@ public sealed partial class BundleExplorerPage
         if (storageItems.Count > MaximumLoggedDropItems)
         {
             descriptions.Add($"+{storageItems.Count - MaximumLoggedDropItems}");
+        }
+
+        return descriptions.Count == 0 ? "-" : string.Join(" | ", descriptions);
+    }
+
+    private static string DescribeFileSystemPaths(IReadOnlyList<string> paths)
+    {
+        var descriptions = paths
+            .Where(static path => !string.IsNullOrWhiteSpace(path))
+            .Take(MaximumLoggedDropItems)
+            .ToList();
+        if (paths.Count > MaximumLoggedDropItems)
+        {
+            descriptions.Add($"+{paths.Count - MaximumLoggedDropItems}");
         }
 
         return descriptions.Count == 0 ? "-" : string.Join(" | ", descriptions);

@@ -47,6 +47,7 @@ public partial class App : Microsoft.UI.Xaml.Application
             AssetEditDraftRestorePlanGateway = services.AssetEditDraftRestorePlanGateway;
             WorkspaceContextService = services.WorkspaceContextService;
             WorkspaceProcessCoordinatorService = services.WorkspaceProcessCoordinatorService;
+            ElevatedDragDropCompatibilityService = services.ElevatedDragDropCompatibilityService;
             ElevationRestartPromptCoordinator = services.ElevationRestartPromptCoordinator;
             FilePickerService = services.FilePickerService;
             PathNavigationService = services.PathNavigationService;
@@ -102,6 +103,8 @@ public partial class App : Microsoft.UI.Xaml.Application
     public IWorkspaceContextService WorkspaceContextService { get; }
 
     public IWorkspaceProcessCoordinatorService WorkspaceProcessCoordinatorService { get; }
+
+    internal IElevatedDragDropCompatibilityService ElevatedDragDropCompatibilityService { get; }
 
     internal ElevationRestartPromptCoordinator ElevationRestartPromptCoordinator { get; }
 

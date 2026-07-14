@@ -389,12 +389,13 @@ internal static class AppCompositionRoot
             () => workspaceContextService.TryGetCurrentWorkspaceEntry(out var entry) && entry is not null
                 ? entry.WorkspaceDataRootPath
                 : null);
+        var elevatedDragDropCompatibilityService = new WindowsElevatedDragDropCompatibilityService();
         var elevationRestartPromptCoordinator = new ElevationRestartPromptCoordinator(
             localizationService,
             appLogService,
             appNotificationService,
             appPreferencesService,
-            new WindowsElevatedDragDropCompatibilityService(),
+            elevatedDragDropCompatibilityService,
             new WindowsUnelevatedProcessRestartService());
         var appBackgroundTaskStatusService = new AppBackgroundTaskStatusService(localizationService);
         var backgroundTaskRunner = new ThreadPoolBackgroundTaskRunner();
@@ -427,6 +428,7 @@ internal static class AppCompositionRoot
             AssetEditDraftRestorePlanGateway: assetEditDraftRestorePlanGateway,
             WorkspaceContextService: workspaceContextService,
             WorkspaceProcessCoordinatorService: workspaceProcessCoordinatorService,
+            ElevatedDragDropCompatibilityService: elevatedDragDropCompatibilityService,
             ElevationRestartPromptCoordinator: elevationRestartPromptCoordinator,
             FilePickerService: filePickerService,
             PathNavigationService: pathNavigationService,

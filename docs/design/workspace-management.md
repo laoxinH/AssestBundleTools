@@ -209,7 +209,10 @@ Presentation 层保留两个协同层次：
 - 带降权重启标记的新实例若检测到自身仍被提权，必须停止再次展示重启对话框并记录失败，避免递归派生管理员实例
 - 设置页允许提供默认关闭的“管理员拖放兼容（实验性）”偏好；该选项只在下一次管理员模式启动时应用，
   通过 `ChangeWindowMessageFilterEx` 放行 `WM_DROPFILES / WM_COPYDATA / WM_COPYGLOBALDATA`，并对主窗口调用 `DragAcceptFiles`
-- 实验兼容只覆盖传统 Win32 消息入口，不承诺 WinUI OLE / DataPackage 在所有 Win10 / Win11 环境都能跨 UIPI 工作；
+- 启用实验兼容时还必须为主窗口安装可移除的 Win32 消息子类过程；收到 `WM_DROPFILES` 后通过 `DragQueryFile`
+  提取文件或目录路径、通过 `DragQueryPoint` 保留窗口客户区落点，并在 `finally` 中调用 `DragFinish` 释放 `HDROP`；
+  Presentation 工作台只在落点位于左侧资源包区域且存在活动工作区时，把路径投递给现有拖放导入入口
+- 实验兼容只覆盖传统 Win32 `WM_DROPFILES` 消息入口，不承诺 WinUI OLE / `DataPackage` 在所有 Win10 / Win11 环境都能跨 UIPI 工作；
   设置文案和启动诊断必须明确这一限制，不能把它描述为等价于普通权限运行
 - 管理员启动且实验兼容关闭时，继续显示“以非管理员模式重启”决策框并提示设置入口；实验兼容开启时，
   不再显示该决策框，只以 toast 报告兼容过滤器的启用结果，普通权限重启能力本身继续保留

@@ -53,6 +53,16 @@ public sealed class BundlePaneDragDropCompatibilityContractTests
         Assert.Contains("WorkspaceImportLogDragDropHandlerRegisteredFormat", dragDropCode);
         Assert.Contains("WorkspaceImportLogDragDropEventFormat", dragDropCode);
         Assert.Contains("_workspaceImportFirstDragOverLogged", dragDropCode);
+        Assert.Contains(
+            "ElevatedDragDropCompatibilityService.FilesDropped +=",
+            dragDropCode);
+        Assert.Contains("OnElevatedCompatibilityFilesDropped", dragDropCode);
+        Assert.Contains("IsElevatedCompatibilityDropWithinBundlePane", dragDropCode);
+        Assert.Contains("RequestDragDropImportAsync(droppedPaths)", dragDropCode);
+        Assert.Contains("WorkspaceImportLogElevatedDropReceivedFormat", dragDropCode);
+        Assert.Contains(
+            "ElevatedDragDropCompatibilityService.FilesDropped -=",
+            pageCode);
     }
 
     private static string FindRepositoryRoot()

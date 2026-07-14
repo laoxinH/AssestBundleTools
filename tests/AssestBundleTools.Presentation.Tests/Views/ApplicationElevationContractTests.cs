@@ -62,6 +62,12 @@ public sealed class ApplicationElevationContractTests
         Assert.Contains("ShowElevatedDragDropCompatibilityNotification", promptCode);
         Assert.Contains("ChangeWindowMessageFilterEx", compatibilityCode);
         Assert.Contains("DragAcceptFiles", compatibilityCode);
+        Assert.Contains("SetWindowSubclass", compatibilityCode);
+        Assert.Contains("RemoveWindowSubclass", compatibilityCode);
+        Assert.Contains("DragQueryFile", compatibilityCode);
+        Assert.Contains("DragQueryPoint", compatibilityCode);
+        Assert.Contains("DragFinish", compatibilityCode);
+        Assert.Contains("FilesDropped?.Invoke", compatibilityCode);
         Assert.Contains("WM_DROPFILES", compatibilityCode);
         Assert.Contains("WM_COPYDATA", compatibilityCode);
         Assert.Contains("WM_COPYGLOBALDATA", compatibilityCode);
