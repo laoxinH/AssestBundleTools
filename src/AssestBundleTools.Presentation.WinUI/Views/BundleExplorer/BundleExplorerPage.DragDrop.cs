@@ -4,7 +4,6 @@ using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
 using Microsoft.UI.Xaml;
 using Windows.ApplicationModel.DataTransfer;
-using Windows.Foundation;
 using Windows.Storage;
 
 namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer;
@@ -12,10 +11,14 @@ namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer;
 public sealed partial class BundleExplorerPage
 {
     private const int MaximumLoggedDropItems = 12;
+    private const string ElevatedWorkspaceImportTargetId = "workspace.bundle-pane.import";
+    private const string ElevatedWorkspaceImportFallbackTargetId = "workspace.window.import-fallback";
     private int _workspaceImportDragSessionSequence;
     private int _workspaceImportDragOverEventCount;
     private string? _workspaceImportDragSessionId;
     private bool _workspaceImportFirstDragOverLogged;
+    private IDisposable? _elevatedWorkspaceImportTargetRegistration;
+    private IDisposable? _elevatedWorkspaceImportFallbackRegistration;
 
     private void RegisterWorkspaceImportDropHandlers()
     {
@@ -35,22 +38,52 @@ public sealed partial class BundleExplorerPage
             DropEvent,
             new DragEventHandler(OnWorkspaceImportDrop),
             handledEventsToo: true);
-        App.CurrentApp.ElevatedDragDropCompatibilityService.FilesDropped +=
-            OnElevatedCompatibilityFilesDropped;
-
         AppendWorkspaceImportDropEnvironmentDiagnostic();
     }
 
-    private async void OnElevatedCompatibilityFilesDropped(
-        object? sender,
-        ElevatedFileDropReceivedEventArgs e)
+    private void RegisterElevatedWorkspaceImportDropTargets()
     {
-        if (!IsLoaded ||
-            !TryGetHostWindow(out var hostWindow) ||
-            !ReferenceEquals(hostWindow, e.SourceWindow))
+        if (_elevatedWorkspaceImportTargetRegistration is not null ||
+            _elevatedWorkspaceImportFallbackRegistration is not null ||
+            !TryGetHostWindow(out var hostWindow))
         {
             return;
         }
+
+        var router = App.CurrentApp.ElevatedFileDropRouter;
+        _elevatedWorkspaceImportTargetRegistration = router.RegisterTarget(
+            new ElevatedFileDropTargetRegistration(
+                ElevatedWorkspaceImportTargetId,
+                hostWindow,
+                BundlePaneHost,
+                ElevatedFileDropTargetPriorities.Surface,
+                ElevatedFileDropTargetHitTestMode.ElementBounds,
+                CanHandle: () => IsLoaded,
+                HandleDropAsync: HandleElevatedWorkspaceImportDropAsync));
+        _elevatedWorkspaceImportFallbackRegistration = router.RegisterTarget(
+            new ElevatedFileDropTargetRegistration(
+                ElevatedWorkspaceImportFallbackTargetId,
+                hostWindow,
+                this,
+                ElevatedFileDropTargetPriorities.WindowFallback,
+                ElevatedFileDropTargetHitTestMode.WindowFallback,
+                CanHandle: () => IsLoaded,
+                HandleDropAsync: HandleElevatedWorkspaceImportDropAsync));
+    }
+
+    private void UnregisterElevatedWorkspaceImportDropTargets()
+    {
+        _elevatedWorkspaceImportTargetRegistration?.Dispose();
+        _elevatedWorkspaceImportTargetRegistration = null;
+        _elevatedWorkspaceImportFallbackRegistration?.Dispose();
+        _elevatedWorkspaceImportFallbackRegistration = null;
+    }
+
+    private async Task HandleElevatedWorkspaceImportDropAsync(ElevatedFileDropContext context)
+    {
+        var nativePosition = context.NativePosition;
+        var isExactBundlePaneTarget =
+            context.HitTestMode == ElevatedFileDropTargetHitTestMode.ElementBounds;
 
         if (string.IsNullOrWhiteSpace(_workspaceImportDragSessionId))
         {
@@ -58,20 +91,19 @@ public sealed partial class BundleExplorerPage
         }
 
         _chromeCoordinator.SetWorkspaceImportDropOverlayVisible(false);
-        var isWithinBundlePane = IsElevatedCompatibilityDropWithinBundlePane(e);
         AppendDragDropInfo(
             ResourceKeys.WorkspaceImportLogElevatedDropReceivedFormat,
             ResolveWorkspaceImportDragSessionId(),
-            e.Paths.Count,
-            e.ClientX,
-            e.ClientY,
-            e.IsClientArea,
-            isWithinBundlePane,
-            DescribeFileSystemPaths(e.Paths));
+            context.Paths.Count,
+            nativePosition.ClientX,
+            nativePosition.ClientY,
+            nativePosition.IsClientArea,
+            isExactBundlePaneTarget,
+            DescribeFileSystemPaths(context.Paths));
 
         try
         {
-            if (!isWithinBundlePane)
+            if (!isExactBundlePaneTarget)
             {
                 AppendDragDropWarning(
                     ResourceKeys.WorkspaceImportLogElevatedDropWindowFallbackFormat,
@@ -86,7 +118,7 @@ public sealed partial class BundleExplorerPage
                 return;
             }
 
-            var droppedPaths = e.Paths
+            var droppedPaths = context.Paths
                 .Where(static path => !string.IsNullOrWhiteSpace(path))
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToArray();
@@ -265,31 +297,6 @@ public sealed partial class BundleExplorerPage
             : DataPackageOperation.None;
         e.Handled = true;
         _chromeCoordinator.SetWorkspaceImportDropOverlayVisible(canAcceptImport);
-    }
-
-    private bool IsElevatedCompatibilityDropWithinBundlePane(
-        ElevatedFileDropReceivedEventArgs e)
-    {
-        if (!e.IsClientArea ||
-            BundlePaneHost.Visibility != Visibility.Visible ||
-            XamlRoot is null ||
-            BundlePaneHost.ActualWidth <= 0d ||
-            BundlePaneHost.ActualHeight <= 0d)
-        {
-            return false;
-        }
-
-        var rasterizationScale = Math.Max(0.01d, XamlRoot.RasterizationScale);
-        var dropPoint = new Point(
-            e.ClientX / rasterizationScale,
-            e.ClientY / rasterizationScale);
-        var bundlePaneOrigin = BundlePaneHost
-            .TransformToVisual(null)
-            .TransformPoint(new Point());
-        return dropPoint.X >= bundlePaneOrigin.X &&
-               dropPoint.X <= bundlePaneOrigin.X + BundlePaneHost.ActualWidth &&
-               dropPoint.Y >= bundlePaneOrigin.Y &&
-               dropPoint.Y <= bundlePaneOrigin.Y + BundlePaneHost.ActualHeight;
     }
 
     private void AppendDragDropEventDiagnostic(string stage, DragEventArgs e)

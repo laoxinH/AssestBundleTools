@@ -1026,10 +1026,22 @@
     <value>拖放诊断 [{0}] 收到管理员兼容 WM_DROPFILES：路径={1}，客户区坐标=({2},{3})，客户区内={4}，资源包区域内={5}，摘要={6}。</value>
   </data>
   <data name="WorkspaceImport.Log.ElevatedDrop.WindowFallback.Format" xml:space="preserve">
-    <value>拖放诊断 [{0}] 管理员兼容落点未匹配 WinUI 资源包区域；来源仍是当前工作台主窗口，将使用窗口级回退继续导入。</value>
+    <value>拖放诊断 [{0}] 管理员兼容路由未命中已注册的精确元素目标，将使用当前工作台的窗口级资源包导入回退。</value>
   </data>
   <data name="WorkspaceImport.Log.ElevatedDrop.NoPaths.Format" xml:space="preserve">
     <value>拖放诊断 [{0}] WM_DROPFILES 中没有可用的文件系统路径。</value>
+  </data>
+  <data name="ElevatedDrop.Log.TargetMatched.Format" xml:space="preserve">
+    <value>管理员拖放路由已命中：目标={0}，模式={1}，路径={2}，客户区=({3},{4})，屏幕=({5},{6})，XAML 根=({7:F1},{8:F1})，目标局部=({9:F1},{10:F1})，换算比例=({11:F3},{12:F3})。</value>
+  </data>
+  <data name="ElevatedDrop.Log.NoTarget.Format" xml:space="preserve">
+    <value>管理员拖放路由未找到可用目标：路径={0}，客户区坐标=({1},{2})，客户区尺寸={3}x{4}。</value>
+  </data>
+  <data name="ElevatedDrop.Log.TargetFailed.Format" xml:space="preserve">
+    <value>管理员拖放目标“{0}”处理失败：{1}，HResult={2}，消息={3}。</value>
+  </data>
+  <data name="ElevatedDrop.Log.RoutingFailed.Format" xml:space="preserve">
+    <value>管理员拖放路由发生异常：{0}，HResult={1}，消息={2}。</value>
   </data>
   <data name="WorkspaceImport.Log.Processed.Format" xml:space="preserve">
     <value>工作区“{0}”已刷新导入索引：{1} 条来源、发现 {2} 个文件、初筛排除 {3} 个、新建索引 {4} 个资源包，复用缓存 {5} 个，读取跳过 {6} 个，失败 {7} 个。</value>

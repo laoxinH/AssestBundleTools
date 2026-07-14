@@ -14,27 +14,29 @@ internal sealed class ElevatedFileDropReceivedEventArgs : EventArgs
     public ElevatedFileDropReceivedEventArgs(
         Window sourceWindow,
         IReadOnlyList<string> paths,
-        int clientX,
-        int clientY,
-        bool isClientArea)
+        ElevatedNativeDropPosition position)
     {
         SourceWindow = sourceWindow ?? throw new ArgumentNullException(nameof(sourceWindow));
         Paths = paths ?? throw new ArgumentNullException(nameof(paths));
-        ClientX = clientX;
-        ClientY = clientY;
-        IsClientArea = isClientArea;
+        Position = position;
     }
 
     public Window SourceWindow { get; }
 
     public IReadOnlyList<string> Paths { get; }
 
-    public int ClientX { get; }
-
-    public int ClientY { get; }
-
-    public bool IsClientArea { get; }
+    public ElevatedNativeDropPosition Position { get; }
 }
+
+internal readonly record struct ElevatedNativeDropPosition(
+    int ClientX,
+    int ClientY,
+    bool IsClientArea,
+    int ClientWidth,
+    int ClientHeight,
+    int ScreenX,
+    int ScreenY,
+    bool HasScreenPosition);
 
 internal readonly record struct ElevatedDragDropCompatibilityResult(
     bool Succeeded,

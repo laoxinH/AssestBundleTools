@@ -48,6 +48,7 @@ public partial class App : Microsoft.UI.Xaml.Application
             WorkspaceContextService = services.WorkspaceContextService;
             WorkspaceProcessCoordinatorService = services.WorkspaceProcessCoordinatorService;
             ElevatedDragDropCompatibilityService = services.ElevatedDragDropCompatibilityService;
+            ElevatedFileDropRouter = services.ElevatedFileDropRouter;
             ElevationRestartPromptCoordinator = services.ElevationRestartPromptCoordinator;
             FilePickerService = services.FilePickerService;
             PathNavigationService = services.PathNavigationService;
@@ -105,6 +106,8 @@ public partial class App : Microsoft.UI.Xaml.Application
     public IWorkspaceProcessCoordinatorService WorkspaceProcessCoordinatorService { get; }
 
     internal IElevatedDragDropCompatibilityService ElevatedDragDropCompatibilityService { get; }
+
+    internal IElevatedFileDropRouter ElevatedFileDropRouter { get; }
 
     internal ElevationRestartPromptCoordinator ElevationRestartPromptCoordinator { get; }
 

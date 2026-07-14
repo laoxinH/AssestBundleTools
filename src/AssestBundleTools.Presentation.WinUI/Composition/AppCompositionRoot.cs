@@ -390,6 +390,11 @@ internal static class AppCompositionRoot
                 ? entry.WorkspaceDataRootPath
                 : null);
         var elevatedDragDropCompatibilityService = new WindowsElevatedDragDropCompatibilityService();
+        var elevatedFileDropRouter = new ElevatedFileDropRouter(
+            elevatedDragDropCompatibilityService,
+            new ElevatedDropCoordinateMapper(),
+            appLogService,
+            localizationService);
         var elevationRestartPromptCoordinator = new ElevationRestartPromptCoordinator(
             localizationService,
             appLogService,
@@ -429,6 +434,7 @@ internal static class AppCompositionRoot
             WorkspaceContextService: workspaceContextService,
             WorkspaceProcessCoordinatorService: workspaceProcessCoordinatorService,
             ElevatedDragDropCompatibilityService: elevatedDragDropCompatibilityService,
+            ElevatedFileDropRouter: elevatedFileDropRouter,
             ElevationRestartPromptCoordinator: elevationRestartPromptCoordinator,
             FilePickerService: filePickerService,
             PathNavigationService: pathNavigationService,

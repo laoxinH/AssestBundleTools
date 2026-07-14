@@ -138,14 +138,30 @@ internal sealed class WindowsElevatedDragDropCompatibilityService : IElevatedDra
                 return;
             }
 
+            var screenPoint = point;
+            var hasScreenPosition = ClientToScreen(windowHandle, ref screenPoint);
+            var hasClientBounds = GetClientRect(windowHandle, out var clientBounds);
+            var clientWidth = hasClientBounds
+                ? Math.Max(0, clientBounds.Right - clientBounds.Left)
+                : 0;
+            var clientHeight = hasClientBounds
+                ? Math.Max(0, clientBounds.Bottom - clientBounds.Top)
+                : 0;
+
             FilesDropped?.Invoke(
                 this,
                 new ElevatedFileDropReceivedEventArgs(
                     sourceWindow,
                     paths,
-                    point.X,
-                    point.Y,
-                    isClientArea));
+                    new ElevatedNativeDropPosition(
+                        point.X,
+                        point.Y,
+                        isClientArea,
+                        clientWidth,
+                        clientHeight,
+                        screenPoint.X,
+                        screenPoint.Y,
+                        hasScreenPosition)));
         }
         catch (Exception ex)
         {
@@ -235,6 +251,14 @@ internal sealed class WindowsElevatedDragDropCompatibilityService : IElevatedDra
     [DllImport("shell32.dll")]
     private static extern void DragFinish(IntPtr dropHandle);
 
+    [DllImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool ClientToScreen(IntPtr windowHandle, ref NativePoint point);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool GetClientRect(IntPtr windowHandle, out NativeRect rect);
+
     [StructLayout(LayoutKind.Sequential)]
     private struct ChangeFilterStruct
     {
@@ -247,6 +271,15 @@ internal sealed class WindowsElevatedDragDropCompatibilityService : IElevatedDra
     {
         public int X;
         public int Y;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct NativeRect
+    {
+        public int Left;
+        public int Top;
+        public int Right;
+        public int Bottom;
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]

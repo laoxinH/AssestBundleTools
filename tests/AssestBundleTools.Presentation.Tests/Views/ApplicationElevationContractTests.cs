@@ -31,6 +31,18 @@ public sealed class ApplicationElevationContractTests
             "Services",
             "Platform",
             "WindowsElevatedDragDropCompatibilityService.cs"));
+        var routerCode = File.ReadAllText(Path.Combine(
+            projectRoot,
+            "Services",
+            "Platform",
+            "DragDrop",
+            "ElevatedFileDropRouter.cs"));
+        var coordinateMapperCode = File.ReadAllText(Path.Combine(
+            projectRoot,
+            "Services",
+            "Platform",
+            "DragDrop",
+            "ElevatedDropCoordinateMapper.cs"));
         var explorerShellCode = File.ReadAllText(Path.Combine(
             projectRoot,
             "Services",
@@ -66,11 +78,23 @@ public sealed class ApplicationElevationContractTests
         Assert.Contains("RemoveWindowSubclass", compatibilityCode);
         Assert.Contains("DragQueryFile", compatibilityCode);
         Assert.Contains("DragQueryPoint", compatibilityCode);
+        Assert.Contains("ClientToScreen", compatibilityCode);
+        Assert.Contains("GetClientRect", compatibilityCode);
         Assert.Contains("DragFinish", compatibilityCode);
         Assert.Contains("FilesDropped?.Invoke", compatibilityCode);
         Assert.Contains("WM_DROPFILES", compatibilityCode);
         Assert.Contains("WM_COPYDATA", compatibilityCode);
         Assert.Contains("WM_COPYGLOBALDATA", compatibilityCode);
+        Assert.Contains("ElementBounds", routerCode);
+        Assert.Contains("WindowFallback", routerCode);
+        Assert.Contains("FindExactMatch", routerCode);
+        Assert.Contains("FindWindowFallback", routerCode);
+        Assert.True(
+            routerCode.IndexOf("FindExactMatch", StringComparison.Ordinal) <
+            routerCode.IndexOf("FindWindowFallback", StringComparison.Ordinal));
+        Assert.Contains("ClientWidth / rootWidth", coordinateMapperCode);
+        Assert.Contains("ClientHeight / rootHeight", coordinateMapperCode);
+        Assert.Contains("TransformToVisual(targetElement)", coordinateMapperCode);
         Assert.Contains("WindowsBuiltInRole.Administrator", elevationCode);
     }
 

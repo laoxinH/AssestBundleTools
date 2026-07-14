@@ -1026,10 +1026,22 @@
     <value>Drag-and-drop diagnostic [{0}] received elevated compatibility WM_DROPFILES: paths={1}, client point=({2},{3}), in client area={4}, in bundle pane={5}, summary={6}.</value>
   </data>
   <data name="WorkspaceImport.Log.ElevatedDrop.WindowFallback.Format" xml:space="preserve">
-    <value>Drag-and-drop diagnostic [{0}] could not match the elevated compatibility point to the WinUI bundle pane. The source is still the current workbench window, so import will continue through the window-level fallback.</value>
+    <value>Drag-and-drop diagnostic [{0}] did not match a registered exact element target. Import will continue through the current workbench window fallback.</value>
   </data>
   <data name="WorkspaceImport.Log.ElevatedDrop.NoPaths.Format" xml:space="preserve">
     <value>Drag-and-drop diagnostic [{0}] found no usable file-system paths in WM_DROPFILES.</value>
+  </data>
+  <data name="ElevatedDrop.Log.TargetMatched.Format" xml:space="preserve">
+    <value>Elevated drop route matched: target={0}, mode={1}, paths={2}, client=({3},{4}), screen=({5},{6}), XAML root=({7:F1},{8:F1}), target local=({9:F1},{10:F1}), mapping scale=({11:F3},{12:F3}).</value>
+  </data>
+  <data name="ElevatedDrop.Log.NoTarget.Format" xml:space="preserve">
+    <value>Elevated drop routing found no available target: paths={0}, client point=({1},{2}), client size={3}x{4}.</value>
+  </data>
+  <data name="ElevatedDrop.Log.TargetFailed.Format" xml:space="preserve">
+    <value>Elevated drop target "{0}" failed: {1}, HResult={2}, message={3}.</value>
+  </data>
+  <data name="ElevatedDrop.Log.RoutingFailed.Format" xml:space="preserve">
+    <value>Elevated drop routing failed: {0}, HResult={1}, message={2}.</value>
   </data>
   <data name="WorkspaceImport.Log.Processed.Format" xml:space="preserve">
     <value>Refreshed the import index for workspace \"{0}\": {1} sources, {2} discovered files, {3} screened out early, {4} bundles re-indexed, {5} cache hits reused, {6} read-stage skips, {7} failures.</value>
