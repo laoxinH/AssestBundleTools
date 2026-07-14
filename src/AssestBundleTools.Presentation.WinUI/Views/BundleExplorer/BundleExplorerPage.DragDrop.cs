@@ -12,13 +12,11 @@ public sealed partial class BundleExplorerPage
 {
     private const int MaximumLoggedDropItems = 12;
     private const string ElevatedWorkspaceImportTargetId = "workspace.bundle-pane.import";
-    private const string ElevatedWorkspaceImportFallbackTargetId = "workspace.window.import-fallback";
     private int _workspaceImportDragSessionSequence;
     private int _workspaceImportDragOverEventCount;
     private string? _workspaceImportDragSessionId;
     private bool _workspaceImportFirstDragOverLogged;
     private IDisposable? _elevatedWorkspaceImportTargetRegistration;
-    private IDisposable? _elevatedWorkspaceImportFallbackRegistration;
 
     private void RegisterWorkspaceImportDropHandlers()
     {
@@ -41,10 +39,9 @@ public sealed partial class BundleExplorerPage
         AppendWorkspaceImportDropEnvironmentDiagnostic();
     }
 
-    private void RegisterElevatedWorkspaceImportDropTargets()
+    private void RegisterElevatedWorkspaceImportDropTarget()
     {
         if (_elevatedWorkspaceImportTargetRegistration is not null ||
-            _elevatedWorkspaceImportFallbackRegistration is not null ||
             !TryGetHostWindow(out var hostWindow))
         {
             return;
@@ -57,33 +54,19 @@ public sealed partial class BundleExplorerPage
                 hostWindow,
                 BundlePaneHost,
                 ElevatedFileDropTargetPriorities.Surface,
-                ElevatedFileDropTargetHitTestMode.ElementBounds,
-                CanHandle: () => IsLoaded,
-                HandleDropAsync: HandleElevatedWorkspaceImportDropAsync));
-        _elevatedWorkspaceImportFallbackRegistration = router.RegisterTarget(
-            new ElevatedFileDropTargetRegistration(
-                ElevatedWorkspaceImportFallbackTargetId,
-                hostWindow,
-                this,
-                ElevatedFileDropTargetPriorities.WindowFallback,
-                ElevatedFileDropTargetHitTestMode.WindowFallback,
                 CanHandle: () => IsLoaded,
                 HandleDropAsync: HandleElevatedWorkspaceImportDropAsync));
     }
 
-    private void UnregisterElevatedWorkspaceImportDropTargets()
+    private void UnregisterElevatedWorkspaceImportDropTarget()
     {
         _elevatedWorkspaceImportTargetRegistration?.Dispose();
         _elevatedWorkspaceImportTargetRegistration = null;
-        _elevatedWorkspaceImportFallbackRegistration?.Dispose();
-        _elevatedWorkspaceImportFallbackRegistration = null;
     }
 
     private async Task HandleElevatedWorkspaceImportDropAsync(ElevatedFileDropContext context)
     {
         var nativePosition = context.NativePosition;
-        var isExactBundlePaneTarget =
-            context.HitTestMode == ElevatedFileDropTargetHitTestMode.ElementBounds;
 
         if (string.IsNullOrWhiteSpace(_workspaceImportDragSessionId))
         {
@@ -98,18 +81,10 @@ public sealed partial class BundleExplorerPage
             nativePosition.ClientX,
             nativePosition.ClientY,
             nativePosition.IsClientArea,
-            isExactBundlePaneTarget,
             DescribeFileSystemPaths(context.Paths));
 
         try
         {
-            if (!isExactBundlePaneTarget)
-            {
-                AppendDragDropWarning(
-                    ResourceKeys.WorkspaceImportLogElevatedDropWindowFallbackFormat,
-                    ResolveWorkspaceImportDragSessionId());
-            }
-
             if (!ViewModel.WorkspaceShell.HasWorkspace)
             {
                 AppendDragDropWarning(

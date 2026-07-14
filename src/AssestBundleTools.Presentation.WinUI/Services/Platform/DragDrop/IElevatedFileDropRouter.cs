@@ -13,15 +13,8 @@ internal sealed record ElevatedFileDropTargetRegistration(
     Window SourceWindow,
     FrameworkElement TargetElement,
     int Priority,
-    ElevatedFileDropTargetHitTestMode HitTestMode,
     Func<bool> CanHandle,
     Func<ElevatedFileDropContext, Task> HandleDropAsync);
-
-internal enum ElevatedFileDropTargetHitTestMode
-{
-    ElementBounds,
-    WindowFallback
-}
 
 internal enum ElevatedDropCoordinateValidationMode
 {
@@ -32,7 +25,6 @@ internal enum ElevatedDropCoordinateValidationMode
 
 internal static class ElevatedFileDropTargetPriorities
 {
-    public const int WindowFallback = -1000;
     public const int Surface = 100;
     public const int Item = 200;
     public const int Overlay = 300;
@@ -40,10 +32,9 @@ internal static class ElevatedFileDropTargetPriorities
 
 internal sealed record ElevatedFileDropContext(
     string TargetId,
-    ElevatedFileDropTargetHitTestMode HitTestMode,
     IReadOnlyList<string> Paths,
     ElevatedNativeDropPosition NativePosition,
-    ElevatedDropCoordinateMapping? Coordinates);
+    ElevatedDropCoordinateMapping Coordinates);
 
 internal sealed record ElevatedDropCoordinateMapping(
     Point RootPosition,

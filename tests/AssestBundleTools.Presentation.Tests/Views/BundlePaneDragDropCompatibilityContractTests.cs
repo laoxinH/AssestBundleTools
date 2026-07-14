@@ -55,24 +55,16 @@ public sealed class BundlePaneDragDropCompatibilityContractTests
         Assert.Contains("_workspaceImportFirstDragOverLogged", dragDropCode);
         Assert.Contains("ElevatedFileDropRouter", dragDropCode);
         Assert.Contains("RegisterTarget", dragDropCode);
-        Assert.Contains("ElevatedFileDropTargetHitTestMode.ElementBounds", dragDropCode);
-        Assert.Contains("ElevatedFileDropTargetHitTestMode.WindowFallback", dragDropCode);
         Assert.Contains("ElevatedFileDropTargetPriorities.Surface", dragDropCode);
-        Assert.Contains("ElevatedFileDropTargetPriorities.WindowFallback", dragDropCode);
+        Assert.DoesNotContain("WindowFallback", dragDropCode);
+        Assert.DoesNotContain("import-fallback", dragDropCode);
         Assert.Contains("HandleElevatedWorkspaceImportDropAsync", dragDropCode);
         Assert.DoesNotContain("IsElevatedCompatibilityDropWithinBundlePane", dragDropCode);
         Assert.Contains("RequestDragDropImportAsync(droppedPaths)", dragDropCode);
         Assert.Contains("WorkspaceImportLogElevatedDropReceivedFormat", dragDropCode);
-        Assert.Contains("WorkspaceImportLogElevatedDropWindowFallbackFormat", dragDropCode);
-        var elevatedDropHandler = dragDropCode[
-            dragDropCode.IndexOf("private async Task HandleElevatedWorkspaceImportDropAsync", StringComparison.Ordinal)..
-            dragDropCode.IndexOf("private void AppendWorkspaceImportDropEnvironmentDiagnostic", StringComparison.Ordinal)];
-        var windowFallbackBlock = elevatedDropHandler[
-            elevatedDropHandler.IndexOf("WorkspaceImportLogElevatedDropWindowFallbackFormat", StringComparison.Ordinal)..
-            elevatedDropHandler.IndexOf("if (!ViewModel.WorkspaceShell.HasWorkspace)", StringComparison.Ordinal)];
-        Assert.DoesNotContain("return;", windowFallbackBlock);
-        Assert.Contains("RegisterElevatedWorkspaceImportDropTargets();", pageCode);
-        Assert.Contains("UnregisterElevatedWorkspaceImportDropTargets();", pageCode);
+        Assert.DoesNotContain("WorkspaceImportLogElevatedDropWindowFallbackFormat", dragDropCode);
+        Assert.Contains("RegisterElevatedWorkspaceImportDropTarget();", pageCode);
+        Assert.Contains("UnregisterElevatedWorkspaceImportDropTarget();", pageCode);
     }
 
     private static string FindRepositoryRoot()

@@ -127,7 +127,7 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
     private async void OnLoaded(object sender, RoutedEventArgs e)
     {
         await _paneLayoutCoordinator.ApplyInitialStateAsync();
-        RegisterElevatedWorkspaceImportDropTargets();
+        RegisterElevatedWorkspaceImportDropTarget();
         await _navigationCoordinator.HandleLoadedAsync(_workspaceNavigationRequest);
         AppendWorkspaceImportDropEnvironmentDiagnostic();
         await _assetEditorWindowCoordinator.PromptPendingAssetEditorWindowsRestoreAsync();
@@ -391,7 +391,7 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
-        UnregisterElevatedWorkspaceImportDropTargets();
+        UnregisterElevatedWorkspaceImportDropTarget();
         ViewModel.FlushWorkspaceBrowserState();
         _assetEditorWindowCoordinator.CloseAll();
         ViewModel.DocumentWorkspace.PageStateChanged -= OnDocumentWorkspacePageStateChanged;

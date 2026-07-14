@@ -963,7 +963,7 @@
     <value>Elevated drag-and-drop compatibility (experimental)</value>
   </data>
   <data name="App.ElevatedDragDropCompatibility.EnabledMessage" xml:space="preserve">
-    <value>The traditional WM_DROPFILES receiver is enabled. It prefers the bundle pane hit test and falls back to the current workbench window when Shell and WinUI coordinates disagree. This path does not rely on WinUI/OLE Drop, but system policy can still block it; use the import buttons or run without administrator privileges if dragging still fails.</value>
+    <value>The traditional WM_DROPFILES receiver is enabled. Files are dispatched only when the drop precisely matches a registered target; dropping elsewhere will not import them. This path does not rely on WinUI/OLE Drop, but system policy can still block it; use the import buttons or run without administrator privileges if dragging still fails.</value>
   </data>
   <data name="App.ElevatedDragDropCompatibility.FailedMessage" xml:space="preserve">
     <value>The experimental drag-and-drop filters could not be enabled completely. The app will remain open; use the import buttons and check Diagnostics for details.</value>
@@ -1023,16 +1023,13 @@
     <value>Drag-and-drop diagnostic [{0}] failed: {1}, HResult={2}, message={3}.</value>
   </data>
   <data name="WorkspaceImport.Log.ElevatedDrop.Received.Format" xml:space="preserve">
-    <value>Drag-and-drop diagnostic [{0}] received elevated compatibility WM_DROPFILES: paths={1}, client point=({2},{3}), in client area={4}, in bundle pane={5}, summary={6}.</value>
-  </data>
-  <data name="WorkspaceImport.Log.ElevatedDrop.WindowFallback.Format" xml:space="preserve">
-    <value>Drag-and-drop diagnostic [{0}] did not match a registered exact element target. Import will continue through the current workbench window fallback.</value>
+    <value>Drag-and-drop diagnostic [{0}] received elevated compatibility WM_DROPFILES: paths={1}, client point=({2},{3}), in client area={4}, exact bundle pane target matched, summary={5}.</value>
   </data>
   <data name="WorkspaceImport.Log.ElevatedDrop.NoPaths.Format" xml:space="preserve">
     <value>Drag-and-drop diagnostic [{0}] found no usable file-system paths in WM_DROPFILES.</value>
   </data>
   <data name="ElevatedDrop.Log.TargetMatched.Format" xml:space="preserve">
-    <value>Elevated drop route matched: target={0}, mode={1}, paths={2}, client=({3},{4})/{5}x{6}, client-area flag={7}, coordinate validation={8}, screen=({9},{10}), screen valid={11}, XAML root=({12:F1},{13:F1}), target local=({14:F1},{15:F1}), mapping scale=({16:F3},{17:F3}).</value>
+    <value>Elevated drop route matched an exact target: target={0}, paths={1}, client=({2},{3})/{4}x{5}, client-area flag={6}, coordinate validation={7}, screen=({8},{9}), screen valid={10}, XAML root=({11:F1},{12:F1}), target local=({13:F1},{14:F1}), mapping scale=({15:F3},{16:F3}).</value>
   </data>
   <data name="ElevatedDrop.Log.NoTarget.Format" xml:space="preserve">
     <value>Elevated drop routing found no available target: paths={0}, client point=({1},{2}), client size={3}x{4}.</value>
@@ -3453,7 +3450,7 @@
     <value>Elevated drag-and-drop compatibility (experimental)</value>
   </data>
   <data name="SettingsDiagnosticsPage.ElevatedDragDropCompatibility.Description" xml:space="preserve">
-    <value>On the next administrator-mode launch, allow and receive traditional WM_DROPFILES, prefer the bundle pane hit test, and fall back to the current workbench window when Shell and WinUI coordinates disagree. This relaxes the window message filter and can still be blocked by system policy. Standard mode is unaffected.</value>
+    <value>On the next administrator-mode launch, allow and receive traditional WM_DROPFILES and dispatch files only to precisely matched registered drop targets. This relaxes the window message filter and can still be blocked by system policy. Standard mode is unaffected.</value>
   </data>
   <data name="SettingsDiagnosticsPage.ElevatedDragDropCompatibility.SaveFailedMessage" xml:space="preserve">
     <value>Failed to save the elevated drag-and-drop compatibility preference. Check the app data directory permissions.</value>

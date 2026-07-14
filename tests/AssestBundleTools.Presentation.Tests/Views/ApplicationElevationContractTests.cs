@@ -85,13 +85,9 @@ public sealed class ApplicationElevationContractTests
         Assert.Contains("WM_DROPFILES", compatibilityCode);
         Assert.Contains("WM_COPYDATA", compatibilityCode);
         Assert.Contains("WM_COPYGLOBALDATA", compatibilityCode);
-        Assert.Contains("ElementBounds", routerCode);
-        Assert.Contains("WindowFallback", routerCode);
         Assert.Contains("FindExactMatch", routerCode);
-        Assert.Contains("FindWindowFallback", routerCode);
-        Assert.True(
-            routerCode.IndexOf("FindExactMatch", StringComparison.Ordinal) <
-            routerCode.IndexOf("FindWindowFallback", StringComparison.Ordinal));
+        Assert.DoesNotContain("WindowFallback", routerCode);
+        Assert.DoesNotContain("FindWindowFallback", routerCode);
         Assert.Contains("ClientWidth / rootWidth", coordinateMapperCode);
         Assert.Contains("ClientHeight / rootHeight", coordinateMapperCode);
         Assert.Contains("TryValidateClientPoint", coordinateMapperCode);

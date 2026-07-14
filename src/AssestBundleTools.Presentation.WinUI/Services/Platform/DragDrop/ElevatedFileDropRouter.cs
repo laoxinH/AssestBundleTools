@@ -71,16 +71,11 @@ internal sealed class ElevatedFileDropRouter : IElevatedFileDropRouter
     private async Task RouteAsync(ElevatedFileDropReceivedEventArgs e)
     {
         var candidates = CaptureCandidates(e.SourceWindow);
-        var hasRootMapping = _coordinateMapper.TryMapToRoot(
-            e.SourceWindow,
-            e.Position,
-            out var rootMapping);
-
-        var match = hasRootMapping
-            ? FindExactMatch(candidates, rootMapping)
-            : null;
-        match ??= FindWindowFallback(candidates, hasRootMapping, rootMapping);
-        if (match is null)
+        if (!_coordinateMapper.TryMapToRoot(
+                e.SourceWindow,
+                e.Position,
+                out var rootMapping) ||
+            FindExactMatch(candidates, rootMapping) is not { } match)
         {
             _appLogService.AppendWarning(_localizationService.GetFormattedString(
                 ResourceKeys.ElevatedDropLogNoTargetFormat,
@@ -92,17 +87,14 @@ internal sealed class ElevatedFileDropRouter : IElevatedFileDropRouter
             return;
         }
 
-        var coordinates = hasRootMapping
-            ? new ElevatedDropCoordinateMapping(
-                rootMapping.RootPosition,
-                match.Value.LocalPosition,
-                rootMapping.ScaleX,
-                rootMapping.ScaleY,
-                rootMapping.ValidationMode)
-            : null;
+        var coordinates = new ElevatedDropCoordinateMapping(
+            rootMapping.RootPosition,
+            match.LocalPosition,
+            rootMapping.ScaleX,
+            rootMapping.ScaleY,
+            rootMapping.ValidationMode);
         var context = new ElevatedFileDropContext(
-            match.Value.Target.Registration.TargetId,
-            match.Value.Target.Registration.HitTestMode,
+            match.Target.Registration.TargetId,
             e.Paths,
             e.Position,
             coordinates);
@@ -110,7 +102,7 @@ internal sealed class ElevatedFileDropRouter : IElevatedFileDropRouter
         AppendMatchedDiagnostic(context);
         try
         {
-            await match.Value.Target.Registration.HandleDropAsync(context);
+            await match.Target.Registration.HandleDropAsync(context);
         }
         catch (Exception exception)
         {
@@ -141,8 +133,7 @@ internal sealed class ElevatedFileDropRouter : IElevatedFileDropRouter
     {
         foreach (var candidate in candidates)
         {
-            if (candidate.Registration.HitTestMode != ElevatedFileDropTargetHitTestMode.ElementBounds ||
-                !CanHandle(candidate) ||
+            if (!CanHandle(candidate) ||
                 !_coordinateMapper.TryMapToElement(
                     rootMapping,
                     candidate.Registration.TargetElement,
@@ -150,34 +141,6 @@ internal sealed class ElevatedFileDropRouter : IElevatedFileDropRouter
                 !Contains(candidate.Registration.TargetElement, localPosition))
             {
                 continue;
-            }
-
-            return new TargetMatch(candidate, localPosition);
-        }
-
-        return null;
-    }
-
-    private TargetMatch? FindWindowFallback(
-        IReadOnlyList<RegisteredTarget> candidates,
-        bool hasRootMapping,
-        ElevatedDropRootCoordinateMapping rootMapping)
-    {
-        foreach (var candidate in candidates)
-        {
-            if (candidate.Registration.HitTestMode != ElevatedFileDropTargetHitTestMode.WindowFallback ||
-                !CanHandle(candidate))
-            {
-                continue;
-            }
-
-            var localPosition = default(Point);
-            if (hasRootMapping)
-            {
-                _coordinateMapper.TryMapToElement(
-                    rootMapping,
-                    candidate.Registration.TargetElement,
-                    out localPosition);
             }
 
             return new TargetMatch(candidate, localPosition);
@@ -212,27 +175,25 @@ internal sealed class ElevatedFileDropRouter : IElevatedFileDropRouter
 
     private void AppendMatchedDiagnostic(ElevatedFileDropContext context)
     {
-        var coordinates = context.Coordinates;
         _appLogService.AppendInfo(_localizationService.GetFormattedString(
             ResourceKeys.ElevatedDropLogTargetMatchedFormat,
             context.TargetId,
-            context.HitTestMode,
             context.Paths.Count,
             context.NativePosition.ClientX,
             context.NativePosition.ClientY,
             context.NativePosition.ClientWidth,
             context.NativePosition.ClientHeight,
             context.NativePosition.IsClientArea,
-            coordinates?.ValidationMode.ToString() ?? "-",
+            context.Coordinates.ValidationMode,
             context.NativePosition.ScreenX,
             context.NativePosition.ScreenY,
             context.NativePosition.HasScreenPosition,
-            coordinates?.RootPosition.X ?? double.NaN,
-            coordinates?.RootPosition.Y ?? double.NaN,
-            coordinates?.LocalPosition.X ?? double.NaN,
-            coordinates?.LocalPosition.Y ?? double.NaN,
-            coordinates?.ScaleX ?? double.NaN,
-            coordinates?.ScaleY ?? double.NaN));
+            context.Coordinates.RootPosition.X,
+            context.Coordinates.RootPosition.Y,
+            context.Coordinates.LocalPosition.X,
+            context.Coordinates.LocalPosition.Y,
+            context.Coordinates.ScaleX,
+            context.Coordinates.ScaleY));
     }
 
     private void Unregister(long sequence)

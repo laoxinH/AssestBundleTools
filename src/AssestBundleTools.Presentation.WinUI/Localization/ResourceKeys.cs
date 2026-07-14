@@ -172,7 +172,6 @@ public static class ResourceKeys
     public const string WorkspaceImportLogDragDropDispatchResultFormat = "WorkspaceImport.Log.DragDrop.DispatchResult.Format";
     public const string WorkspaceImportLogDragDropUnhandledFailureFormat = "WorkspaceImport.Log.DragDrop.UnhandledFailure.Format";
     public const string WorkspaceImportLogElevatedDropReceivedFormat = "WorkspaceImport.Log.ElevatedDrop.Received.Format";
-    public const string WorkspaceImportLogElevatedDropWindowFallbackFormat = "WorkspaceImport.Log.ElevatedDrop.WindowFallback.Format";
     public const string WorkspaceImportLogElevatedDropNoPathsFormat = "WorkspaceImport.Log.ElevatedDrop.NoPaths.Format";
     public const string ElevatedDropLogTargetMatchedFormat = "ElevatedDrop.Log.TargetMatched.Format";
     public const string ElevatedDropLogNoTargetFormat = "ElevatedDrop.Log.NoTarget.Format";

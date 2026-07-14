@@ -963,7 +963,7 @@
     <value>管理员拖放兼容（实验性）</value>
   </data>
   <data name="App.ElevatedDragDropCompatibility.EnabledMessage" xml:space="preserve">
-    <value>已启用传统 WM_DROPFILES 接收器；优先识别资源包列表落点，坐标不兼容时会按当前工作台窗口回退导入。本模式不依赖 WinUI/OLE Drop，但仍可能受系统策略限制；如仍无法拖入，请改用导入按钮或以非管理员模式运行。</value>
+    <value>已启用传统 WM_DROPFILES 接收器；只有精确命中已注册拖放区域时才会分发文件，其他位置不会触发导入。本模式不依赖 WinUI/OLE Drop，但仍可能受系统策略限制；如仍无法拖入，请改用导入按钮或以非管理员模式运行。</value>
   </data>
   <data name="App.ElevatedDragDropCompatibility.FailedMessage" xml:space="preserve">
     <value>实验性拖放过滤器未能完整启用。应用将继续运行，请使用导入按钮并在诊断中心查看详细信息。</value>
@@ -1023,16 +1023,13 @@
     <value>拖放诊断 [{0}] 处理失败：{1}，HResult={2}，消息={3}。</value>
   </data>
   <data name="WorkspaceImport.Log.ElevatedDrop.Received.Format" xml:space="preserve">
-    <value>拖放诊断 [{0}] 收到管理员兼容 WM_DROPFILES：路径={1}，客户区坐标=({2},{3})，客户区内={4}，资源包区域内={5}，摘要={6}。</value>
-  </data>
-  <data name="WorkspaceImport.Log.ElevatedDrop.WindowFallback.Format" xml:space="preserve">
-    <value>拖放诊断 [{0}] 管理员兼容路由未命中已注册的精确元素目标，将使用当前工作台的窗口级资源包导入回退。</value>
+    <value>拖放诊断 [{0}] 收到管理员兼容 WM_DROPFILES：路径={1}，客户区坐标=({2},{3})，客户区内={4}，已精确命中资源包区域，摘要={5}。</value>
   </data>
   <data name="WorkspaceImport.Log.ElevatedDrop.NoPaths.Format" xml:space="preserve">
     <value>拖放诊断 [{0}] WM_DROPFILES 中没有可用的文件系统路径。</value>
   </data>
   <data name="ElevatedDrop.Log.TargetMatched.Format" xml:space="preserve">
-    <value>管理员拖放路由已命中：目标={0}，模式={1}，路径={2}，客户区=({3},{4})/{5}x{6}，客户区标志={7}，坐标验证={8}，屏幕=({9},{10})，屏幕有效={11}，XAML 根=({12:F1},{13:F1})，目标局部=({14:F1},{15:F1})，换算比例=({16:F3},{17:F3})。</value>
+    <value>管理员拖放路由已精确命中：目标={0}，路径={1}，客户区=({2},{3})/{4}x{5}，客户区标志={6}，坐标验证={7}，屏幕=({8},{9})，屏幕有效={10}，XAML 根=({11:F1},{12:F1})，目标局部=({13:F1},{14:F1})，换算比例=({15:F3},{16:F3})。</value>
   </data>
   <data name="ElevatedDrop.Log.NoTarget.Format" xml:space="preserve">
     <value>管理员拖放路由未找到可用目标：路径={0}，客户区坐标=({1},{2})，客户区尺寸={3}x{4}。</value>
@@ -3453,7 +3450,7 @@
     <value>管理员拖放兼容（实验性）</value>
   </data>
   <data name="SettingsDiagnosticsPage.ElevatedDragDropCompatibility.Description" xml:space="preserve">
-    <value>下次以管理员模式启动时放行并接收传统 WM_DROPFILES，优先识别资源包列表落点，坐标不兼容时按当前工作台窗口回退到现有导入流程，并改为仅显示启动提示。此设置会放宽窗口消息过滤，仍可能受系统策略限制；普通模式不受影响。</value>
+    <value>下次以管理员模式启动时放行并接收传统 WM_DROPFILES，只在精确命中已注册拖放区域时分发文件，并改为仅显示启动提示。此设置会放宽窗口消息过滤，仍可能受系统策略限制；普通模式不受影响。</value>
   </data>
   <data name="SettingsDiagnosticsPage.ElevatedDragDropCompatibility.SaveFailedMessage" xml:space="preserve">
     <value>保存管理员拖放兼容偏好失败，请检查应用数据目录权限。</value>
