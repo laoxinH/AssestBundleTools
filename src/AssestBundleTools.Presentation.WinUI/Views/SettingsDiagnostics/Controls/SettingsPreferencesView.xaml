@@ -116,6 +116,38 @@
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="32" />
                                 <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="190" />
+                            </Grid.ColumnDefinitions>
+
+                            <FontIcon
+                                Glyph="&#xE7BA;"
+                                Style="{StaticResource SettingsDiagnosticsSettingIconStyle}" />
+
+                            <StackPanel
+                                Grid.Column="1"
+                                MinWidth="0"
+                                Spacing="3">
+                                <TextBlock
+                                    x:Name="ElevatedDragDropCompatibilityLabelText"
+                                    Style="{StaticResource SettingsDiagnosticsSettingTitleTextStyle}" />
+                                <TextBlock
+                                    x:Name="ElevatedDragDropCompatibilityDescriptionText"
+                                    Style="{StaticResource SettingsDiagnosticsSettingDescriptionTextStyle}" />
+                            </StackPanel>
+
+                            <ToggleSwitch
+                                x:Name="ElevatedDragDropCompatibilityToggleSwitch"
+                                Grid.Column="2"
+                                IsOn="{x:Bind ViewModel.ElevatedDragDropCompatibilityEnabled, Mode=TwoWay}"
+                                Style="{StaticResource SettingsDiagnosticsTrailingToggleSwitchStyle}" />
+                        </Grid>
+                    </Border>
+
+                    <Border Style="{StaticResource SettingsDiagnosticsSettingRowStyle}">
+                        <Grid ColumnSpacing="22">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="32" />
+                                <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
 

@@ -160,6 +160,8 @@ public sealed class SettingsDiagnosticsPageContractTests
         Assert.Contains("x:Name=\"DisplayLanguageComboBox\"", preferencesXaml);
         Assert.Contains("DisplayLanguageSelectedIndex", preferencesXaml);
         Assert.Contains("x:Name=\"RestoreLastWorkspaceOnStartupToggleSwitch\"", preferencesXaml);
+        Assert.Contains("x:Name=\"ElevatedDragDropCompatibilityToggleSwitch\"", preferencesXaml);
+        Assert.Contains("ElevatedDragDropCompatibilityEnabled", preferencesXaml);
         Assert.Contains("Style=\"{StaticResource SettingsDiagnosticsTrailingToggleSwitchStyle}\"", preferencesXaml);
         Assert.Contains("x:Name=\"BundleArtifactCacheAutoPruneToggleSwitch\"", performanceCacheXaml);
         Assert.Contains("Style=\"{StaticResource SettingsDiagnosticsTrailingToggleSwitchStyle}\"", performanceCacheXaml);
@@ -175,6 +177,8 @@ public sealed class SettingsDiagnosticsPageContractTests
         Assert.Contains("ActivateSection", pageCode);
         Assert.DoesNotContain("OnSettingsSubPageNavigationSelectionChanged", pageCode);
         Assert.Contains("SettingsDiagnosticsRestoreLastWorkspaceToggleHeader", preferencesCode);
+        Assert.Contains("SettingsDiagnosticsElevatedDragDropCompatibilityLabel", preferencesCode);
+        Assert.Contains("SettingsDiagnosticsElevatedDragDropCompatibilityDescription", preferencesCode);
         Assert.Contains("SettingsDiagnosticsDisplayLanguageOptionSystemDefault", preferencesCode);
         Assert.Contains("SettingsDiagnosticsDisplayLanguageSaveFailedMessage", resourceKeys);
         Assert.Contains("SettingsDiagnosticsBundleArtifactCacheMaximumSizeRowDescription", performanceCacheCode);

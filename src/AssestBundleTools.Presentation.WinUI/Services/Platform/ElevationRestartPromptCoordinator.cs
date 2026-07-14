@@ -12,17 +12,23 @@ internal sealed class ElevationRestartPromptCoordinator
     private readonly ILocalizationService _localizationService;
     private readonly IAppLogService _appLogService;
     private readonly IAppNotificationService _appNotificationService;
+    private readonly IAppPreferencesService _appPreferencesService;
+    private readonly IElevatedDragDropCompatibilityService _dragDropCompatibilityService;
     private readonly IUnelevatedProcessRestartService _restartService;
 
     public ElevationRestartPromptCoordinator(
         ILocalizationService localizationService,
         IAppLogService appLogService,
         IAppNotificationService appNotificationService,
+        IAppPreferencesService appPreferencesService,
+        IElevatedDragDropCompatibilityService dragDropCompatibilityService,
         IUnelevatedProcessRestartService restartService)
     {
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
         _appLogService = appLogService ?? throw new ArgumentNullException(nameof(appLogService));
         _appNotificationService = appNotificationService ?? throw new ArgumentNullException(nameof(appNotificationService));
+        _appPreferencesService = appPreferencesService ?? throw new ArgumentNullException(nameof(appPreferencesService));
+        _dragDropCompatibilityService = dragDropCompatibilityService ?? throw new ArgumentNullException(nameof(dragDropCompatibilityService));
         _restartService = restartService ?? throw new ArgumentNullException(nameof(restartService));
     }
 
@@ -30,13 +36,22 @@ internal sealed class ElevationRestartPromptCoordinator
         UnelevatedRestartLaunchArguments.IsCurrentProcessRestartLaunch();
 
     public async Task<bool> PromptAndRestartIfRequestedAsync(
-        UIElement? contentRoot,
+        Window ownerWindow,
         ShellLaunchRequest? launchRequest)
     {
+        ArgumentNullException.ThrowIfNull(ownerWindow);
+
         var elevation = ProcessElevationDiagnostics.Capture();
         StartupDiagnostics.Log($"Process elevation state resolved: {elevation.DiagnosticValue}.");
         if (elevation.IsElevated != true)
         {
+            return false;
+        }
+
+        if (_appPreferencesService.ElevatedDragDropCompatibilityEnabled)
+        {
+            ShowElevatedDragDropCompatibilityNotification(
+                _dragDropCompatibilityService.TryEnable(ownerWindow));
             return false;
         }
 
@@ -58,7 +73,7 @@ internal sealed class ElevationRestartPromptCoordinator
         var message = _localizationService.GetRequiredString(ResourceKeys.AppElevationWarningMessage);
         _appLogService.AppendWarning(message);
 
-        var xamlRoot = await WaitForXamlRootAsync(contentRoot);
+        var xamlRoot = await WaitForXamlRootAsync(ownerWindow.Content);
         if (xamlRoot is null)
         {
             ShowWarningNotification(title, message);
@@ -124,6 +139,32 @@ internal sealed class ElevationRestartPromptCoordinator
             ShowWarningNotification(title, message);
             return false;
         }
+    }
+
+    private void ShowElevatedDragDropCompatibilityNotification(
+        ElevatedDragDropCompatibilityResult result)
+    {
+        var diagnostic = _localizationService.GetFormattedString(
+            ResourceKeys.AppElevatedDragDropCompatibilityLogFormat,
+            result.Succeeded,
+            result.DiagnosticDetail);
+        if (result.Succeeded)
+        {
+            _appLogService.AppendWarning(diagnostic);
+        }
+        else
+        {
+            _appLogService.AppendError(diagnostic);
+        }
+
+        StartupDiagnostics.Log(diagnostic);
+        _appNotificationService.Show(
+            _localizationService.GetRequiredString(ResourceKeys.AppElevatedDragDropCompatibilityTitle),
+            _localizationService.GetRequiredString(result.Succeeded
+                ? ResourceKeys.AppElevatedDragDropCompatibilityEnabledMessage
+                : ResourceKeys.AppElevatedDragDropCompatibilityFailedMessage),
+            result.Succeeded ? AppNotificationSeverity.Warning : AppNotificationSeverity.Error,
+            TimeSpan.FromSeconds(15));
     }
 
     private static async Task<XamlRoot?> WaitForXamlRootAsync(UIElement? contentRoot)

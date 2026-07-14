@@ -16,4 +16,5 @@ internal sealed record AppPreferencesPersistenceSnapshot(
     bool BundleArtifactCacheAutoPruneEnabled = true,
     long BundleArtifactCacheMaximumSizeInBytes = AppPreferencesService.DefaultBundleArtifactCacheMaximumSizeInBytes,
     int OperationRecordLimit = AppPreferencesService.DefaultOperationRecordLimit,
-    string DisplayLanguage = AppDisplayLanguageCodec.SystemDefaultPreferenceKey);
+    string DisplayLanguage = AppDisplayLanguageCodec.SystemDefaultPreferenceKey,
+    bool ElevatedDragDropCompatibilityEnabled = false);

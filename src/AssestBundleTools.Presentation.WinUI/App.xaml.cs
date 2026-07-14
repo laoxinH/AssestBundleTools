@@ -178,7 +178,7 @@ public partial class App : Microsoft.UI.Xaml.Application
         ShellLaunchRequest? launchRequest)
     {
         var restartStarted = await ElevationRestartPromptCoordinator.PromptAndRestartIfRequestedAsync(
-            window.Content,
+            window,
             launchRequest);
         if (!restartStarted)
         {

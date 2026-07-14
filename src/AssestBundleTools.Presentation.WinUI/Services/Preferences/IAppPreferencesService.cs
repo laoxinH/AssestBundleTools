@@ -28,6 +28,8 @@ public interface IAppPreferencesService
 
     int OperationRecordLimit { get; }
 
+    bool ElevatedDragDropCompatibilityEnabled { get; }
+
     bool TrySetRestoreLastWorkspaceOnStartup(bool value);
 
     bool TrySetRecentWorkspaceOpenBehavior(RecentWorkspaceOpenBehavior value);
@@ -45,4 +47,6 @@ public interface IAppPreferencesService
     bool TrySetBundleArtifactCacheMaximumSizeInBytes(long value);
 
     bool TrySetOperationRecordLimit(int value);
+
+    bool TrySetElevatedDragDropCompatibilityEnabled(bool value);
 }

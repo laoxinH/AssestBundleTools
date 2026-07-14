@@ -45,6 +45,20 @@ public sealed class AppPreferencesServiceTests
         Assert.Equal([AppDisplayLanguage.SystemDefault], languageOverride.AppliedLanguages);
     }
 
+    [Fact]
+    public void TrySetElevatedDragDropCompatibilityEnabled_ShouldPersistValue()
+    {
+        var store = new TestAppPreferencesPersistenceStore(CreateSnapshot("system"));
+        var service = new AppPreferencesService(store);
+
+        var succeeded = service.TrySetElevatedDragDropCompatibilityEnabled(true);
+
+        Assert.True(succeeded);
+        Assert.True(service.ElevatedDragDropCompatibilityEnabled);
+        Assert.True(store.SavedSnapshot?.ElevatedDragDropCompatibilityEnabled);
+        Assert.Equal(1, store.SaveCallCount);
+    }
+
     private static AppPreferencesPersistenceSnapshot CreateSnapshot(string displayLanguage)
     {
         return new AppPreferencesPersistenceSnapshot(

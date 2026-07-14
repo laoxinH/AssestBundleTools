@@ -28,6 +28,10 @@ internal static class InfrastructureTestSuite
             JsonAppPreferencesStoreTests.Load_ShouldUseSystemLanguage_WhenLegacySnapshotOmitsDisplayLanguage);
         await RunTestAsync(
             failures,
+            nameof(JsonAppPreferencesStoreTests.Save_ShouldRoundTripElevatedDragDropCompatibility),
+            JsonAppPreferencesStoreTests.Save_ShouldRoundTripElevatedDragDropCompatibility);
+        await RunTestAsync(
+            failures,
             nameof(JsonWorkspaceCatalogStoreTests.Load_ShouldReturnEmptySnapshot_WhenCatalogFileDoesNotExist),
             JsonWorkspaceCatalogStoreTests.Load_ShouldReturnEmptySnapshot_WhenCatalogFileDoesNotExist);
         await RunTestAsync(

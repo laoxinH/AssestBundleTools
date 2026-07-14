@@ -26,6 +26,11 @@ public sealed class ApplicationElevationContractTests
             "Services",
             "Platform",
             "WindowsUnelevatedProcessRestartService.cs"));
+        var compatibilityCode = File.ReadAllText(Path.Combine(
+            projectRoot,
+            "Services",
+            "Platform",
+            "WindowsElevatedDragDropCompatibilityService.cs"));
         var explorerShellCode = File.ReadAllText(Path.Combine(
             projectRoot,
             "Services",
@@ -42,7 +47,7 @@ public sealed class ApplicationElevationContractTests
         Assert.Contains("ProcessElevationDiagnostics.Capture()", promptCode);
         Assert.Contains("ResourceKeys.AppElevationWarningRestartButton", promptCode);
         Assert.Contains("ContentDialogResult.Primary", promptCode);
-        Assert.Contains("WaitForXamlRootAsync(contentRoot)", promptCode);
+        Assert.Contains("WaitForXamlRootAsync(ownerWindow.Content)", promptCode);
         Assert.Contains("contentRoot?.XamlRoot", promptCode);
         Assert.Contains("Shell.Application", explorerShellCode);
         Assert.Contains("FindWindowSW", explorerShellCode);
@@ -53,6 +58,13 @@ public sealed class ApplicationElevationContractTests
         Assert.Contains("TokenIsElevated", restartCode);
         Assert.Contains("ResourceKeys.AppElevationRestartStillElevatedMessage", promptCode);
         Assert.Contains("recursive prompt suppressed", promptCode);
+        Assert.Contains("ElevatedDragDropCompatibilityEnabled", promptCode);
+        Assert.Contains("ShowElevatedDragDropCompatibilityNotification", promptCode);
+        Assert.Contains("ChangeWindowMessageFilterEx", compatibilityCode);
+        Assert.Contains("DragAcceptFiles", compatibilityCode);
+        Assert.Contains("WM_DROPFILES", compatibilityCode);
+        Assert.Contains("WM_COPYDATA", compatibilityCode);
+        Assert.Contains("WM_COPYGLOBALDATA", compatibilityCode);
         Assert.Contains("WindowsBuiltInRole.Administrator", elevationCode);
     }
 

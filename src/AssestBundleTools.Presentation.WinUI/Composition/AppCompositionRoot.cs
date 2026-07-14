@@ -393,6 +393,8 @@ internal static class AppCompositionRoot
             localizationService,
             appLogService,
             appNotificationService,
+            appPreferencesService,
+            new WindowsElevatedDragDropCompatibilityService(),
             new WindowsUnelevatedProcessRestartService());
         var appBackgroundTaskStatusService = new AppBackgroundTaskStatusService(localizationService);
         var backgroundTaskRunner = new ThreadPoolBackgroundTaskRunner();

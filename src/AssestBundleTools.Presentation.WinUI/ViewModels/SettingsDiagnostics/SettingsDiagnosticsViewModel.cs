@@ -54,6 +54,8 @@ public sealed partial class SettingsDiagnosticsViewModel : ObservableObject, IDi
 
         LogPanel = _appLogService.LogPanel;
         _restoreLastWorkspaceOnStartup = _appPreferencesService.RestoreLastWorkspaceOnStartup;
+        _elevatedDragDropCompatibilityEnabled =
+            _appPreferencesService.ElevatedDragDropCompatibilityEnabled;
         _recentWorkspaceOpenBehaviorSelectedIndex =
             SettingsDiagnosticsPreferenceOptionMapper.ConvertRecentWorkspaceOpenBehaviorToSelectedIndex(
                 _appPreferencesService.RecentWorkspaceOpenBehavior);

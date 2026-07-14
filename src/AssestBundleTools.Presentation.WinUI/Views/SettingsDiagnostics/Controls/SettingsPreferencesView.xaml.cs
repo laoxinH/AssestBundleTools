@@ -36,6 +36,10 @@ public sealed partial class SettingsPreferencesView : UserControl
         StartupBehaviorHintText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsStartupBehaviorHint);
         RestoreLastWorkspaceOnStartupLabelText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsRestoreLastWorkspaceToggleHeader);
         RestoreLastWorkspaceOnStartupDescriptionText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsRestoreLastWorkspaceRowDescription);
+        ElevatedDragDropCompatibilityLabelText.Text = UiText.Get(
+            ResourceKeys.SettingsDiagnosticsElevatedDragDropCompatibilityLabel);
+        ElevatedDragDropCompatibilityDescriptionText.Text = UiText.Get(
+            ResourceKeys.SettingsDiagnosticsElevatedDragDropCompatibilityDescription);
         RecentWorkspaceOpenBehaviorLabelText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsRecentWorkspaceOpenBehaviorLabel);
         RecentWorkspaceOpenBehaviorDescriptionText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsRecentWorkspaceOpenBehaviorRowDescription);
         RecentWorkspaceOpenBehaviorComboBox.ItemsSource = new[]

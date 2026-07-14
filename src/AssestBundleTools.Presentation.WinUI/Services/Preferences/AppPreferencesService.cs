@@ -59,6 +59,9 @@ public sealed class AppPreferencesService : IAppPreferencesService
 
     public int OperationRecordLimit => CoerceOperationRecordLimit(_currentSnapshot.OperationRecordLimit);
 
+    public bool ElevatedDragDropCompatibilityEnabled =>
+        _currentSnapshot.ElevatedDragDropCompatibilityEnabled;
+
     public bool TrySetRestoreLastWorkspaceOnStartup(bool value)
     {
         if (_currentSnapshot.RestoreLastWorkspaceOnStartup == value)
@@ -310,6 +313,34 @@ public sealed class AppPreferencesService : IAppPreferencesService
         var updatedSnapshot = _currentSnapshot with
         {
             OperationRecordLimit = coercedValue
+        };
+
+        try
+        {
+            _preferencesStore.Save(updatedSnapshot);
+            _currentSnapshot = updatedSnapshot;
+            return true;
+        }
+        catch (IOException)
+        {
+            return false;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return false;
+        }
+    }
+
+    public bool TrySetElevatedDragDropCompatibilityEnabled(bool value)
+    {
+        if (_currentSnapshot.ElevatedDragDropCompatibilityEnabled == value)
+        {
+            return true;
+        }
+
+        var updatedSnapshot = _currentSnapshot with
+        {
+            ElevatedDragDropCompatibilityEnabled = value
         };
 
         try

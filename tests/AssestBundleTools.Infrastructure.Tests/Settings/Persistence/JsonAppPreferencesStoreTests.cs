@@ -44,5 +44,27 @@ internal static class JsonAppPreferencesStoreTests
             AppPreferencesSnapshot.DefaultDisplayLanguage,
             loadedSnapshot.DisplayLanguage,
             "Legacy preferences should default the display language to the system setting.");
+        TestAssert.Equal(
+            false,
+            loadedSnapshot.ElevatedDragDropCompatibilityEnabled,
+            "Legacy preferences should keep elevated drag-drop compatibility disabled.");
+    }
+
+    public static void Save_ShouldRoundTripElevatedDragDropCompatibility()
+    {
+        using var temporaryDirectory = new TemporaryDirectoryScope();
+        var store = new JsonAppPreferencesStore(temporaryDirectory.DirectoryPath);
+        var snapshot = AppPreferencesSnapshot.Default with
+        {
+            ElevatedDragDropCompatibilityEnabled = true
+        };
+
+        store.Save(snapshot);
+        var loadedSnapshot = store.Load();
+
+        TestAssert.Equal(
+            true,
+            loadedSnapshot.ElevatedDragDropCompatibilityEnabled,
+            "Elevated drag-drop compatibility should round-trip through the preferences store.");
     }
 }

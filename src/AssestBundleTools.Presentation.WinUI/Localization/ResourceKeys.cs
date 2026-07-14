@@ -143,6 +143,10 @@ public static class ResourceKeys
     public const string AppElevationRestartFailedMessage = "App.ElevationRestart.FailedMessage";
     public const string AppElevationRestartFailedLogFormat = "App.ElevationRestart.FailedLog.Format";
     public const string AppElevationRestartStillElevatedMessage = "App.ElevationRestart.StillElevatedMessage";
+    public const string AppElevatedDragDropCompatibilityTitle = "App.ElevatedDragDropCompatibility.Title";
+    public const string AppElevatedDragDropCompatibilityEnabledMessage = "App.ElevatedDragDropCompatibility.EnabledMessage";
+    public const string AppElevatedDragDropCompatibilityFailedMessage = "App.ElevatedDragDropCompatibility.FailedMessage";
+    public const string AppElevatedDragDropCompatibilityLogFormat = "App.ElevatedDragDropCompatibility.Log.Format";
     public const string AppNotificationErrorTitle = "AppNotification.ErrorTitle";
     public const string AppNotificationCloseButtonToolTip = "AppNotification.CloseButton.ToolTip";
     public const string CommonCancelButton = "Common.CancelButton";
@@ -353,6 +357,9 @@ public static class ResourceKeys
     public const string SettingsDiagnosticsRestoreLastWorkspaceToggleHeader = "SettingsDiagnosticsPage.RestoreLastWorkspaceOnStartupToggle.Header";
     public const string SettingsDiagnosticsRestoreLastWorkspaceToggleDescription = "SettingsDiagnosticsPage.RestoreLastWorkspaceOnStartupToggle.Description";
     public const string SettingsDiagnosticsRestoreLastWorkspaceRowDescription = "SettingsDiagnosticsPage.RestoreLastWorkspaceOnStartup.RowDescription";
+    public const string SettingsDiagnosticsElevatedDragDropCompatibilityLabel = "SettingsDiagnosticsPage.ElevatedDragDropCompatibility.Label";
+    public const string SettingsDiagnosticsElevatedDragDropCompatibilityDescription = "SettingsDiagnosticsPage.ElevatedDragDropCompatibility.Description";
+    public const string SettingsDiagnosticsElevatedDragDropCompatibilitySaveFailedMessage = "SettingsDiagnosticsPage.ElevatedDragDropCompatibility.SaveFailedMessage";
     public const string SettingsDiagnosticsRecentWorkspaceOpenBehaviorLabel = "SettingsDiagnosticsPage.RecentWorkspaceOpenBehavior.Label";
     public const string SettingsDiagnosticsRecentWorkspaceOpenBehaviorDescription = "SettingsDiagnosticsPage.RecentWorkspaceOpenBehavior.Description";
     public const string SettingsDiagnosticsRecentWorkspaceOpenBehaviorRowDescription = "SettingsDiagnosticsPage.RecentWorkspaceOpenBehavior.RowDescription";

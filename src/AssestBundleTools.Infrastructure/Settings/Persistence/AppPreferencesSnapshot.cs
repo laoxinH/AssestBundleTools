@@ -16,7 +16,8 @@ public sealed record AppPreferencesSnapshot(
     long BundleArtifactCacheMaximumSizeInBytes = AppPreferencesSnapshot.DefaultBundleArtifactCacheMaximumSizeInBytes,
     int OperationRecordLimit = AppPreferencesSnapshot.DefaultOperationRecordLimit,
     string AssetEditorCloseBehavior = AppPreferencesSnapshot.DefaultAssetEditorCloseBehavior,
-    string DisplayLanguage = AppPreferencesSnapshot.DefaultDisplayLanguage)
+    string DisplayLanguage = AppPreferencesSnapshot.DefaultDisplayLanguage,
+    bool ElevatedDragDropCompatibilityEnabled = false)
 {
     public const long DefaultBundleArtifactCacheMaximumSizeInBytes = 4L * 1024L * 1024L * 1024L;
     public const int DefaultOperationRecordLimit = 250;
@@ -32,5 +33,6 @@ public sealed record AppPreferencesSnapshot(
         BundleArtifactCacheAutoPruneEnabled: true,
         BundleArtifactCacheMaximumSizeInBytes: DefaultBundleArtifactCacheMaximumSizeInBytes,
         OperationRecordLimit: DefaultOperationRecordLimit,
-        DisplayLanguage: DefaultDisplayLanguage);
+        DisplayLanguage: DefaultDisplayLanguage,
+        ElevatedDragDropCompatibilityEnabled: false);
 }

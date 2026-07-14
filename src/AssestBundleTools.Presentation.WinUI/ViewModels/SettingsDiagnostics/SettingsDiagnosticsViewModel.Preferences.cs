@@ -5,6 +5,7 @@ namespace AssestBundleTools.Presentation.WinUI.ViewModels.SettingsDiagnostics;
 public sealed partial class SettingsDiagnosticsViewModel
 {
     private bool _restoreLastWorkspaceOnStartup;
+    private bool _elevatedDragDropCompatibilityEnabled;
     private int _recentWorkspaceOpenBehaviorSelectedIndex;
     private int _assetEditorCloseBehaviorSelectedIndex;
     private int _displayLanguageSelectedIndex;
@@ -85,6 +86,30 @@ public sealed partial class SettingsDiagnosticsViewModel
 
             _appLogService.AppendError(GetString(ResourceKeys.SettingsDiagnosticsAssetEditorCloseBehaviorSaveFailedMessage));
             ShowErrorNotification(ResourceKeys.SettingsDiagnosticsAssetEditorCloseBehaviorSaveFailedMessage);
+            OnPropertyChanged();
+        }
+    }
+
+    public bool ElevatedDragDropCompatibilityEnabled
+    {
+        get => _elevatedDragDropCompatibilityEnabled;
+        set
+        {
+            if (_elevatedDragDropCompatibilityEnabled == value)
+            {
+                return;
+            }
+
+            if (_appPreferencesService.TrySetElevatedDragDropCompatibilityEnabled(value))
+            {
+                SetProperty(ref _elevatedDragDropCompatibilityEnabled, value);
+                return;
+            }
+
+            _appLogService.AppendError(GetString(
+                ResourceKeys.SettingsDiagnosticsElevatedDragDropCompatibilitySaveFailedMessage));
+            ShowErrorNotification(
+                ResourceKeys.SettingsDiagnosticsElevatedDragDropCompatibilitySaveFailedMessage);
             OnPropertyChanged();
         }
     }

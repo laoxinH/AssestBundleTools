@@ -942,7 +942,7 @@
     <value>Administrator mode blocks drag and drop</value>
   </data>
   <data name="App.ElevationWarning.Message" xml:space="preserve">
-    <value>The app is running with administrator privileges, so Windows blocks file drag and drop from a standard Explorer process. Restart now without administrator privileges and restore the current launch target, or continue with the file and folder import buttons.</value>
+    <value>The app is running with administrator privileges, so Windows blocks file drag and drop from a standard Explorer process. Restart without administrator privileges and restore the current launch target, continue with the import buttons, or enable experimental elevated drag-and-drop compatibility under Settings and Diagnostics &gt; Preferences.</value>
   </data>
   <data name="App.ElevationWarning.RestartButton" xml:space="preserve">
     <value>Restart without administrator privileges</value>
@@ -958,6 +958,18 @@
   </data>
   <data name="App.ElevationRestart.StillElevatedMessage" xml:space="preserve">
     <value>The restarted process is still running as administrator. Further restart prompts were stopped to prevent a loop. Disable Run as administrator in compatibility or shortcut settings, then start the app again.</value>
+  </data>
+  <data name="App.ElevatedDragDropCompatibility.Title" xml:space="preserve">
+    <value>Elevated drag-and-drop compatibility (experimental)</value>
+  </data>
+  <data name="App.ElevatedDragDropCompatibility.EnabledMessage" xml:space="preserve">
+    <value>Traditional Win32 drag-and-drop messages were allowed. This mode cannot guarantee WinUI drag and drop on every system; use the import buttons or run without administrator privileges if dragging still fails.</value>
+  </data>
+  <data name="App.ElevatedDragDropCompatibility.FailedMessage" xml:space="preserve">
+    <value>The experimental drag-and-drop filters could not be enabled completely. The app will remain open; use the import buttons and check Diagnostics for details.</value>
+  </data>
+  <data name="App.ElevatedDragDropCompatibility.Log.Format" xml:space="preserve">
+    <value>Elevated drag-and-drop compatibility filters: succeeded={0}, detail={1}</value>
   </data>
   <data name="AppNotification.ErrorTitle" xml:space="preserve">
     <value>Action Failed</value>
@@ -3415,6 +3427,15 @@
   </data>
   <data name="SettingsDiagnosticsPage.RestoreLastWorkspaceOnStartup.RowDescription" xml:space="preserve">
     <value>Restore the latest available workspace at startup.</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.ElevatedDragDropCompatibility.Label" xml:space="preserve">
+    <value>Elevated drag-and-drop compatibility (experimental)</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.ElevatedDragDropCompatibility.Description" xml:space="preserve">
+    <value>On the next administrator-mode launch, allow traditional Win32 drag-and-drop messages and show only a startup notification. This relaxes the window message filter and cannot guarantee WinUI/OLE drag and drop on every Win10/Win11 system. Standard mode is unaffected.</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.ElevatedDragDropCompatibility.SaveFailedMessage" xml:space="preserve">
+    <value>Failed to save the elevated drag-and-drop compatibility preference. Check the app data directory permissions.</value>
   </data>
   <data name="SettingsDiagnosticsPage.RecentWorkspaceOpenBehavior.Label" xml:space="preserve">
     <value>Console recent-workspace open behavior</value>

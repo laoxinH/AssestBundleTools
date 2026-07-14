@@ -942,7 +942,7 @@
     <value>管理员模式会阻止拖放</value>
   </data>
   <data name="App.ElevationWarning.Message" xml:space="preserve">
-    <value>应用当前以管理员权限运行，Windows 会阻止从普通资源管理器拖放文件。可以立即以非管理员模式重启并恢复当前启动目标；也可以继续使用文件或目录导入按钮。</value>
+    <value>应用当前以管理员权限运行，Windows 会阻止从普通资源管理器拖放文件。可以立即以非管理员模式重启并恢复当前启动目标；也可以继续使用文件或目录导入按钮，或前往“设置与诊断 > 偏好”开启实验性管理员拖放兼容。</value>
   </data>
   <data name="App.ElevationWarning.RestartButton" xml:space="preserve">
     <value>以非管理员模式重启</value>
@@ -958,6 +958,18 @@
   </data>
   <data name="App.ElevationRestart.StillElevatedMessage" xml:space="preserve">
     <value>重启后的进程仍处于管理员模式，已停止再次重启以避免循环。请关闭兼容性或快捷方式中的“以管理员身份运行”，然后重新启动应用。</value>
+  </data>
+  <data name="App.ElevatedDragDropCompatibility.Title" xml:space="preserve">
+    <value>管理员拖放兼容（实验性）</value>
+  </data>
+  <data name="App.ElevatedDragDropCompatibility.EnabledMessage" xml:space="preserve">
+    <value>已放行传统 Win32 拖放消息。本模式不能保证 WinUI 拖放在所有系统上生效；如仍无法拖入，请改用导入按钮或以非管理员模式运行。</value>
+  </data>
+  <data name="App.ElevatedDragDropCompatibility.FailedMessage" xml:space="preserve">
+    <value>实验性拖放过滤器未能完整启用。应用将继续运行，请使用导入按钮并在诊断中心查看详细信息。</value>
+  </data>
+  <data name="App.ElevatedDragDropCompatibility.Log.Format" xml:space="preserve">
+    <value>管理员拖放兼容过滤器：成功={0}，详情={1}</value>
   </data>
   <data name="AppNotification.ErrorTitle" xml:space="preserve">
     <value>操作失败</value>
@@ -3415,6 +3427,15 @@
   </data>
   <data name="SettingsDiagnosticsPage.RestoreLastWorkspaceOnStartup.RowDescription" xml:space="preserve">
     <value>启动时自动恢复最近可用的工作区。</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.ElevatedDragDropCompatibility.Label" xml:space="preserve">
+    <value>管理员拖放兼容（实验性）</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.ElevatedDragDropCompatibility.Description" xml:space="preserve">
+    <value>下次以管理员模式启动时放行传统 Win32 拖放消息，并改为仅显示启动提示。此设置会放宽窗口消息过滤，且不能保证 WinUI/OLE 拖放在所有 Win10/Win11 系统生效；普通模式不受影响。</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.ElevatedDragDropCompatibility.SaveFailedMessage" xml:space="preserve">
+    <value>保存管理员拖放兼容偏好失败，请检查应用数据目录权限。</value>
   </data>
   <data name="SettingsDiagnosticsPage.RecentWorkspaceOpenBehavior.Label" xml:space="preserve">
     <value>控制台最近工作区打开方式</value>
