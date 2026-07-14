@@ -44,7 +44,7 @@
                             </Grid.ColumnDefinitions>
 
                             <FontIcon
-                                Glyph="&#xE909;"
+                                Glyph="&#xE99B;"
                                 Style="{StaticResource SettingsDiagnosticsSettingIconStyle}" />
 
                             <StackPanel
@@ -88,7 +88,7 @@
                             </Grid.ColumnDefinitions>
 
                             <FontIcon
-                                Glyph="&#xE777;"
+                                Glyph="&#xE13F;"
                                 Style="{StaticResource SettingsDiagnosticsSettingIconStyle}" />
 
                             <StackPanel
@@ -120,7 +120,7 @@
                             </Grid.ColumnDefinitions>
 
                             <FontIcon
-                                Glyph="&#xE7BA;"
+                                Glyph="&#xF561;"
                                 Style="{StaticResource SettingsDiagnosticsSettingIconStyle}" />
 
                             <StackPanel
@@ -152,7 +152,7 @@
                             </Grid.ColumnDefinitions>
 
                             <FontIcon
-                                Glyph="&#xE8A7;"
+                                Glyph="&#xECF4;"
                                 Style="{StaticResource SettingsDiagnosticsSettingIconStyle}" />
 
                             <StackPanel
@@ -185,7 +185,7 @@
                             </Grid.ColumnDefinitions>
 
                             <FontIcon
-                                Glyph="&#xE70F;"
+                                Glyph="&#xE837;"
                                 Style="{StaticResource SettingsDiagnosticsSettingIconStyle}" />
 
                             <StackPanel
@@ -229,7 +229,7 @@
                             </Grid.ColumnDefinitions>
 
                             <FontIcon
-                                Glyph="&#xE81C;"
+                                Glyph="&#xEA2E;"
                                 Style="{StaticResource SettingsDiagnosticsSettingIconStyle}" />
 
                             <StackPanel

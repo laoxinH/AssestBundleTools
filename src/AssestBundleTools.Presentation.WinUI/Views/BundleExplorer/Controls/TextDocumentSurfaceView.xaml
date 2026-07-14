@@ -47,10 +47,10 @@
                     </Grid.ColumnDefinitions>
                     <FontIcon
                         VerticalAlignment="Top"
-                        FontFamily="Segoe MDL2 Assets"
+                        FontFamily="{StaticResource AppIconFontFamily}"
                         FontSize="14"
                         Foreground="{ThemeResource SystemFillColorCautionBrush}"
-                        Glyph="&#xE946;" />
+                        Glyph="&#xEA88;" />
                     <StackPanel
                         Grid.Column="1"
                         Spacing="2">
@@ -71,9 +71,9 @@
                             Orientation="Horizontal"
                             Spacing="6">
                             <FontIcon
-                                FontFamily="Segoe MDL2 Assets"
+                                FontFamily="{StaticResource AppIconFontFamily}"
                                 FontSize="12"
-                                Glyph="&#xE8C8;" />
+                                Glyph="&#xE5D7;" />
                             <TextBlock x:Name="CopyFallbackDiagnosticButtonText" />
                         </StackPanel>
                     </Button>
@@ -207,9 +207,9 @@
                         Orientation="Horizontal"
                         Spacing="6">
                         <FontIcon
-                            FontFamily="Segoe MDL2 Assets"
+                            FontFamily="{StaticResource AppIconFontFamily}"
                             FontSize="12"
-                            Glyph="&#xE70D;" />
+                            Glyph="&#xE488;" />
                         <TextBlock x:Name="LoadMoreLinesButtonText" />
                     </StackPanel>
                 </Button>

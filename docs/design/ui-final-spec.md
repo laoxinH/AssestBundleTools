@@ -33,7 +33,7 @@
 
 主窗口使用标准高度的单行自定义标题栏，显示应用品牌图标与产品名，不再显示应用副标题；Shell 左侧导航也不再设置独立的 pane 标题或说明，标题栏下方直接进入实际导航项，避免重复标题占用纵向空间。窗口运行时图标、可执行文件图标与 MSIX 清单图标使用同一套品牌资源。左侧导航采用 `Left` 内联模式并设置 `48px` compact 宽度，默认展开为完整导航；用户可通过内置 pane toggle 收缩为图标栏，再次展开时恢复占位布局并推动内容区，不使用覆盖内容的 `LeftCompact` overlay。
 
-应用内 `FontIcon` 必须使用目标最低系统 Windows 10 自带的 `Segoe MDL2 Assets`，不得依赖只在较新系统完整提供的 `Segoe Fluent Icons` 系统字体；`SymbolIcon` 继续使用 WinUI 内置映射。新增 glyph 需要确认在最低目标版本存在，否则应改用已有兼容 glyph 或应用随包携带的矢量资源，不能让系统字体回退成缺字符方框。
+应用内 `FontIcon` 统一使用随应用发布的 Microsoft Fluent System Icons Resizable 字体，不得直接依赖目标电脑安装的 `Segoe MDL2 Assets` 或 `Segoe Fluent Icons` 系统字体；`SymbolIcon` 继续使用 WinUI 内置映射。随包字体及其许可证必须由 Presentation 项目显式纳入构建、发布和 MSIX 负载，新增 glyph 必须来自仓库内记录的官方码点映射。这样 Windows 10 与 Windows 11 使用同一套现代字形，不受系统字体版本和缺字回退影响。
 
 其中一级导航当前保留三个稳定入口位：
 

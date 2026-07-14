@@ -98,7 +98,7 @@ public sealed class BundleExplorerBundlePaneViewModel : ObservableObject, IBundl
 
     public bool CanToggleBundlePaneCollapse => _hasWorkspace && !_isBusy;
 
-    public string BundleSearchToggleGlyph => IsBundleSearchExpanded ? "\uE711" : "\uE721";
+    public string BundleSearchToggleGlyph => IsBundleSearchExpanded ? "\uE6D3" : "\uEFD7";
 
     public string BundleSearchToggleToolTip => IsBundleSearchExpanded
         ? GetString(ResourceKeys.BundleExplorerPageBundleSearchToggleButtonCloseToolTip)

@@ -100,10 +100,10 @@
                         <FontIcon
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center"
-                            FontFamily="Segoe MDL2 Assets"
+                            FontFamily="{StaticResource AppIconFontFamily}"
                             FontSize="11"
                             Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
-                            Glyph="&#xE8B7;" />
+                            Glyph="&#xE8EB;" />
                     </Border>
                     <TextBlock
                         x:Name="SourceSectionTitleText"
@@ -118,10 +118,10 @@
                         <FontIcon
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center"
-                            FontFamily="Segoe MDL2 Assets"
+                            FontFamily="{StaticResource AppIconFontFamily}"
                             FontSize="9"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                            Glyph="&#xE897;" />
+                            Glyph="&#xEF07;" />
                     </Button>
                 </StackPanel>
 
@@ -201,10 +201,10 @@
                             <FontIcon
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
-                                FontFamily="Segoe MDL2 Assets"
+                                FontFamily="{StaticResource AppIconFontFamily}"
                                 FontSize="11"
                                 Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
-                                Glyph="&#xE8A5;" />
+                                Glyph="&#xE6E9;" />
                         </Border>
                         <StackPanel
                             Grid.Column="1"
@@ -294,10 +294,10 @@
                                                 <FontIcon
                                                     HorizontalAlignment="Center"
                                                     VerticalAlignment="Center"
-                                                    FontFamily="Segoe MDL2 Assets"
+                                                    FontFamily="{StaticResource AppIconFontFamily}"
                                                     FontSize="16"
                                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                    Glyph="&#xE8A5;" />
+                                                    Glyph="&#xE6E9;" />
                                             </Border>
                                             <StackPanel
                                                 Grid.Column="2"
@@ -341,10 +341,10 @@
                                 <FontIcon
                                     HorizontalAlignment="Center"
                                     VerticalAlignment="Center"
-                                    FontFamily="Segoe MDL2 Assets"
+                                    FontFamily="{StaticResource AppIconFontFamily}"
                                     FontSize="24"
                                     Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
-                                    Glyph="&#xE8B7;" />
+                                    Glyph="&#xE8EB;" />
                             </Border>
                             <TextBlock
                                 x:Name="BundleEmptyTitleText"
@@ -386,10 +386,10 @@
                             <FontIcon
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
-                                FontFamily="Segoe MDL2 Assets"
+                                FontFamily="{StaticResource AppIconFontFamily}"
                                 FontSize="11"
                                 Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
-                                Glyph="&#xE8EF;" />
+                                Glyph="&#xE328;" />
                         </Border>
                         <StackPanel
                             Grid.Column="1"
@@ -451,9 +451,9 @@
                                 <FontIcon
                                     Grid.Column="1"
                                     VerticalAlignment="Center"
-                                    FontFamily="Segoe MDL2 Assets"
+                                    FontFamily="{StaticResource AppIconFontFamily}"
                                     FontSize="10"
-                                    Glyph="&#xE70D;" />
+                                    Glyph="&#xE488;" />
                             </Grid>
                             <Button.Flyout>
                                 <Flyout Placement="BottomEdgeAlignedLeft">
@@ -577,10 +577,10 @@
                                 <FontIcon
                                     HorizontalAlignment="Center"
                                     VerticalAlignment="Center"
-                                    FontFamily="Segoe MDL2 Assets"
+                                    FontFamily="{StaticResource AppIconFontFamily}"
                                     FontSize="24"
                                     Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
-                                    Glyph="&#xE8B7;" />
+                                    Glyph="&#xE8EB;" />
                             </Border>
                             <TextBlock
                                 x:Name="CandidateEmptyTitleText"

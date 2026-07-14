@@ -298,7 +298,7 @@ public sealed partial class AssetPaneViewModel : ObservableObject
     public bool HasCurrentSpineGroupListSnapshot =>
         IsSpineGroupViewMode && _spineGroupList.SourceCount > 0;
 
-    public string SearchToggleGlyph => IsSearchExpanded ? "\uE711" : "\uE721";
+    public string SearchToggleGlyph => IsSearchExpanded ? "\uE6D3" : "\uEFD7";
 
     public Visibility AssetListVisibility => IsAssetViewMode && Items.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
 
@@ -312,7 +312,7 @@ public sealed partial class AssetPaneViewModel : ObservableObject
     public Visibility EmptyStateIconVisibility =>
         !IsListLoading && CurrentVisibleItemCount == 0 ? Visibility.Visible : Visibility.Collapsed;
 
-    public string EmptyStateIconGlyph => IsSpineGroupViewMode ? "\uE8B7" : "\uE8A5";
+    public string EmptyStateIconGlyph => IsSpineGroupViewMode ? "\uE8EB" : "\uE6E9";
 
     public Visibility AssetFilterVisibility => IsAssetViewMode ? Visibility.Visible : Visibility.Collapsed;
 

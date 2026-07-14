@@ -10,9 +10,11 @@
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
             </ResourceDictionary.MergedDictionaries>
 
-            <!-- Win10 不保证提供较新的 Fluent 图标字体；统一使用系统内置的兼容图标字体。 -->
+            <FontFamily x:Key="AppIconFontFamily">ms-appx:///Assets/Fonts/FluentSystemIcons-Resizable.ttf#FluentSystemIcons-Resizable</FontFamily>
+
+            <!-- 图标字体随应用发布，避免不同 Windows 版本的系统字体字形和覆盖范围不一致。 -->
             <Style TargetType="FontIcon">
-                <Setter Property="FontFamily" Value="Segoe MDL2 Assets" />
+                <Setter Property="FontFamily" Value="{StaticResource AppIconFontFamily}" />
             </Style>
 
             <Style

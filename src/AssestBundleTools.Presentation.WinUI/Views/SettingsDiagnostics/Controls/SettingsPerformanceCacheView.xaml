@@ -44,7 +44,7 @@
                             </Grid.ColumnDefinitions>
 
                             <FontIcon
-                                Glyph="&#xE9D9;"
+                                Glyph="&#xF5FD;"
                                 Style="{StaticResource SettingsDiagnosticsSettingIconStyle}" />
 
                             <StackPanel
@@ -93,7 +93,7 @@
                             </Grid.ColumnDefinitions>
 
                             <FontIcon
-                                Glyph="&#xE7B3;"
+                                Glyph="&#xE883;"
                                 Style="{StaticResource SettingsDiagnosticsSettingIconStyle}" />
 
                             <StackPanel
@@ -153,7 +153,7 @@
                             </Grid.ColumnDefinitions>
 
                             <FontIcon
-                                Glyph="&#xE8B7;"
+                                Glyph="&#xE8EB;"
                                 Style="{StaticResource SettingsDiagnosticsSettingIconStyle}" />
 
                             <StackPanel
@@ -186,9 +186,9 @@
                                         Orientation="Horizontal"
                                         Spacing="7">
                                         <FontIcon
-                                            FontFamily="Segoe MDL2 Assets"
+                                            FontFamily="{StaticResource AppIconFontFamily}"
                                             FontSize="13"
-                                            Glyph="&#xE72C;" />
+                                            Glyph="&#xE0BF;" />
                                         <TextBlock
                                             x:Name="RefreshBundleArtifactCacheButtonText"
                                             VerticalAlignment="Center" />
@@ -202,9 +202,9 @@
                                         Orientation="Horizontal"
                                         Spacing="7">
                                         <FontIcon
-                                            FontFamily="Segoe MDL2 Assets"
+                                            FontFamily="{StaticResource AppIconFontFamily}"
                                             FontSize="13"
-                                            Glyph="&#xE74D;" />
+                                            Glyph="&#xE66D;" />
                                         <TextBlock
                                             x:Name="ClearBundleArtifactCacheButtonText"
                                             VerticalAlignment="Center" />
@@ -223,7 +223,7 @@
                             </Grid.ColumnDefinitions>
 
                             <FontIcon
-                                Glyph="&#xE74D;"
+                                Glyph="&#xE66D;"
                                 Style="{StaticResource SettingsDiagnosticsSettingIconStyle}" />
 
                             <StackPanel
@@ -255,7 +255,7 @@
                             </Grid.ColumnDefinitions>
 
                             <FontIcon
-                                Glyph="&#xE8D4;"
+                                Glyph="&#xF18B;"
                                 Style="{StaticResource SettingsDiagnosticsSettingIconStyle}" />
 
                             <StackPanel

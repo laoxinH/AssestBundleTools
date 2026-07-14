@@ -151,9 +151,9 @@
                             <FontIcon
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
-                                FontFamily="Segoe MDL2 Assets"
+                                FontFamily="{StaticResource AppIconFontFamily}"
                                 FontSize="15"
-                                Glyph="&#xE8AC;" />
+                                Glyph="&#xEF5D;" />
                         </Border>
 
                         <StackPanel
@@ -199,9 +199,9 @@
                             <FontIcon
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
-                                FontFamily="Segoe MDL2 Assets"
+                                FontFamily="{StaticResource AppIconFontFamily}"
                                 FontSize="15"
-                                Glyph="&#xE946;" />
+                                Glyph="&#xEA88;" />
                         </Border>
 
                         <StackPanel
@@ -247,9 +247,9 @@
                             <FontIcon
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
-                                FontFamily="Segoe MDL2 Assets"
+                                FontFamily="{StaticResource AppIconFontFamily}"
                                 FontSize="15"
-                                Glyph="&#xE787;" />
+                                Glyph="&#xE32E;" />
                         </Border>
 
                         <StackPanel
@@ -289,9 +289,9 @@
                             <FontIcon
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
-                                FontFamily="Segoe MDL2 Assets"
+                                FontFamily="{StaticResource AppIconFontFamily}"
                                 FontSize="15"
-                                Glyph="&#xE916;" />
+                                Glyph="&#xF47F;" />
                         </Border>
 
                         <StackPanel
@@ -338,9 +338,9 @@
                             <FontIcon
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
-                                FontFamily="Segoe MDL2 Assets"
+                                FontFamily="{StaticResource AppIconFontFamily}"
                                 FontSize="15"
-                                Glyph="&#xE70B;" />
+                                Glyph="&#xECB0;" />
                         </Border>
 
                         <StackPanel
@@ -386,9 +386,9 @@
                             <FontIcon
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
-                                FontFamily="Segoe MDL2 Assets"
+                                FontFamily="{StaticResource AppIconFontFamily}"
                                 FontSize="15"
-                                Glyph="&#xE8A5;" />
+                                Glyph="&#xE6E9;" />
                         </Border>
 
                         <StackPanel
@@ -457,9 +457,9 @@
                             <FontIcon
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
-                                FontFamily="Segoe MDL2 Assets"
+                                FontFamily="{StaticResource AppIconFontFamily}"
                                 FontSize="15"
-                                Glyph="&#xE756;" />
+                                Glyph="&#xF5CD;" />
                         </Border>
 
                         <StackPanel
@@ -505,9 +505,9 @@
                             <FontIcon
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
-                                FontFamily="Segoe MDL2 Assets"
+                                FontFamily="{StaticResource AppIconFontFamily}"
                                 FontSize="15"
-                                Glyph="&#xE838;" />
+                                Glyph="&#xE90B;" />
                         </Border>
 
                         <StackPanel
@@ -546,9 +546,9 @@
                             <FontIcon
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
-                                FontFamily="Segoe MDL2 Assets"
+                                FontFamily="{StaticResource AppIconFontFamily}"
                                 FontSize="15"
-                                Glyph="&#xE7C3;" />
+                                Glyph="&#xE6E9;" />
                         </Border>
 
                         <StackPanel

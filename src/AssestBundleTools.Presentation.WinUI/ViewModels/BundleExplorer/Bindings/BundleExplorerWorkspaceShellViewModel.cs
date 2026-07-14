@@ -216,40 +216,40 @@ public sealed class BundleExplorerWorkspaceShellViewModel : ObservableObject, IB
             WorkspaceStatusChips.Add(new WorkspaceStatusChipViewModel(
                 GetString(ResourceKeys.BundleExplorerStatusWorkspaceLabel),
                 GetString(ResourceKeys.BundleExplorerStatusNotLoaded),
-                "\uE8B7"));
+                "\uE8EB"));
 
             WorkspaceStatusChips.Add(new WorkspaceStatusChipViewModel(
                 GetString(ResourceKeys.BundleExplorerStatusWorkspaceCacheLabel),
                 GetString(ResourceKeys.BundleExplorerStatusNotLoaded),
-                "\uE8D7"));
+                "\uEAA7"));
 
             WorkspaceStatusChips.Add(new WorkspaceStatusChipViewModel(
                 GetString(ResourceKeys.BundleExplorerStatusCurrentDecryptorLabel),
                 GetString(ResourceKeys.BundleExplorerStatusNotLoaded),
-                "\uE9CA"));
+                "\uF593"));
             return;
         }
 
         WorkspaceStatusChips.Add(new WorkspaceStatusChipViewModel(
             GetString(ResourceKeys.BundleExplorerStatusWorkspaceLabel),
             _workspaceSummary.DisplayName,
-            "\uE8B7"));
+            "\uE8EB"));
         WorkspaceStatusChips.Add(new WorkspaceStatusChipViewModel(
             GetString(ResourceKeys.BundleExplorerStatusBundleCountLabel),
             _workspaceSummary.BundleCount.ToString(CultureInfo.CurrentCulture),
-            "\uE8B7"));
+            "\uE8EB"));
         WorkspaceStatusChips.Add(new WorkspaceStatusChipViewModel(
             GetString(ResourceKeys.BundleExplorerStatusAssetCountLabel),
             _workspaceSummary.AssetCount.ToString(CultureInfo.CurrentCulture),
-            "\uE8A5"));
+            "\uE6E9"));
         WorkspaceStatusChips.Add(new WorkspaceStatusChipViewModel(
             GetString(ResourceKeys.BundleExplorerStatusWorkspaceCacheLabel),
             _workspaceCacheUsageText,
-            "\uE8D7"));
+            "\uEAA7"));
         WorkspaceStatusChips.Add(new WorkspaceStatusChipViewModel(
             GetString(ResourceKeys.BundleExplorerStatusCurrentDecryptorLabel),
             ResolveCurrentDecryptorDisplayName(),
-            "\uE9CA"));
+            "\uF593"));
     }
 
     private void ScheduleWorkspaceCacheUsageRefresh()

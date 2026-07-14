@@ -420,7 +420,7 @@ public sealed partial class InspectorPreviewSurfaceView : UserControl
     {
         AudioTransportPlayPauseButton.IsEnabled = isEnabled;
         AudioTransportResetButton.IsEnabled = isEnabled;
-        AudioTransportPlayPauseIcon.Glyph = isPlaying ? "\uE769" : "\uE768";
+        AudioTransportPlayPauseIcon.Glyph = isPlaying ? "\uED5B" : "\uEE8D";
         ToolTipService.SetToolTip(
             AudioTransportPlayPauseButton,
             UiText.Get(isPlaying

@@ -104,10 +104,10 @@
                                     ToolTipService.ToolTip="{x:Bind OpenButtonToolTipText, Mode=OneTime}"
                                     Visibility="{x:Bind OpenButtonVisibility, Mode=OneTime}">
                                     <FontIcon
-                                        FontFamily="Segoe MDL2 Assets"
+                                        FontFamily="{StaticResource AppIconFontFamily}"
                                         FontSize="13"
                                         Foreground="#FFF8FAFC"
-                                        Glyph="&#xE8A7;" />
+                                        Glyph="&#xECF4;" />
                                 </Button>
                             </Grid>
                         </DataTemplate>

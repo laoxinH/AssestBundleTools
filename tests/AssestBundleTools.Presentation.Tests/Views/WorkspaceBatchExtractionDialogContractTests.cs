@@ -172,7 +172,7 @@ public sealed class WorkspaceBatchExtractionDialogContractTests
         Assert.Contains("PointerExited=\"OnSourceSectionHelpButtonPointerExited\"", contentXaml);
         Assert.Contains("FontIcon", contentXaml);
         Assert.Contains("FontSize=\"9\"", contentXaml);
-        Assert.Contains("Glyph=\"&#xE897;\"", contentXaml);
+        Assert.Contains("Glyph=\"&#xEF07;\"", contentXaml);
         Assert.DoesNotContain("Text=\"?\"", contentXaml);
         Assert.Contains("IsEnabled=\"{Binding HasBundles}\"", contentXaml);
         Assert.Contains("_sourceSectionHelpToolTip.IsOpen = true;", contentCode);
@@ -230,11 +230,11 @@ public sealed class WorkspaceBatchExtractionDialogContractTests
 
         Assert.Contains("AccentFillColorDefaultBrush", windowXaml);
         Assert.Contains("TextOnAccentFillColorPrimaryBrush", windowXaml);
-        Assert.Contains("Glyph=\"&#xE8A5;\"", windowXaml);
+        Assert.Contains("Glyph=\"&#xE6E9;\"", windowXaml);
         Assert.Contains("BatchExtractionCardTitleIconStyle", contentXaml);
         Assert.Contains("BundleEmptyStateTitleText", contentXaml);
         Assert.Contains("BundleEmptyStateDetailText", contentXaml);
-        Assert.Contains("Glyph=\"&#xE8B7;\"", contentXaml);
+        Assert.Contains("Glyph=\"&#xE8EB;\"", contentXaml);
         Assert.Contains("WorkspaceBatchExtractionDialogBundleEmptyDetail", contentCode);
         Assert.Contains("WorkspaceBatchExtractionDialogBundleEmptyDetail", resourceKeys);
         Assert.Contains("WorkspaceBatchExtractionDialog.Bundle.EmptyDetail", zhResources);

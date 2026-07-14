@@ -166,9 +166,9 @@
                     Click="OnSetupPoseButtonClick"
                     Style="{StaticResource SpinePreviewActionButtonStyle}">
                     <FontIcon
-                        FontFamily="Segoe MDL2 Assets"
+                        FontFamily="{StaticResource AppIconFontFamily}"
                         FontSize="13"
-                        Glyph="&#xE777;" />
+                        Glyph="&#xE13F;" />
                 </Button>
 
                 <Button
@@ -176,9 +176,9 @@
                     Click="OnStepPreviousButtonClick"
                     Style="{StaticResource SpinePreviewActionButtonStyle}">
                     <FontIcon
-                        FontFamily="Segoe MDL2 Assets"
+                        FontFamily="{StaticResource AppIconFontFamily}"
                         FontSize="13"
-                        Glyph="&#xE100;" />
+                        Glyph="&#xEED9;" />
                 </Button>
 
                 <Button
@@ -186,7 +186,7 @@
                     Click="OnPlayPauseButtonClick"
                     Style="{StaticResource SpinePreviewActionButtonStyle}">
                     <FontIcon
-                        FontFamily="Segoe MDL2 Assets"
+                        FontFamily="{StaticResource AppIconFontFamily}"
                         FontSize="13"
                         Glyph="{x:Bind ViewModel.PlayPauseGlyph, Mode=OneWay}" />
                 </Button>
@@ -196,9 +196,9 @@
                     Click="OnStepNextButtonClick"
                     Style="{StaticResource SpinePreviewActionButtonStyle}">
                     <FontIcon
-                        FontFamily="Segoe MDL2 Assets"
+                        FontFamily="{StaticResource AppIconFontFamily}"
                         FontSize="13"
-                        Glyph="&#xE101;" />
+                        Glyph="&#xECAE;" />
                 </Button>
 
                 <Button
@@ -206,9 +206,9 @@
                     Click="OnRestartButtonClick"
                     Style="{StaticResource SpinePreviewActionButtonStyle}">
                     <FontIcon
-                        FontFamily="Segoe MDL2 Assets"
+                        FontFamily="{StaticResource AppIconFontFamily}"
                         FontSize="13"
-                        Glyph="&#xE72C;" />
+                        Glyph="&#xE0BF;" />
                 </Button>
             </StackPanel>
 
@@ -219,9 +219,9 @@
                 Click="OnExportFramesButtonClick"
                 Style="{StaticResource SpinePreviewActionButtonStyle}">
                 <FontIcon
-                    FontFamily="Segoe MDL2 Assets"
+                    FontFamily="{StaticResource AppIconFontFamily}"
                     FontSize="14"
-                    Glyph="&#xE74E;" />
+                    Glyph="&#xEF99;" />
             </Button>
         </Grid>
 
@@ -267,7 +267,7 @@
                         Click="OnBackgroundModeButtonClick"
                         Style="{StaticResource SpinePreviewActionButtonStyle}">
                         <FontIcon
-                            FontFamily="Segoe MDL2 Assets"
+                            FontFamily="{StaticResource AppIconFontFamily}"
                             FontSize="13"
                             Glyph="{x:Bind ViewModel.BackgroundModeGlyph, Mode=OneWay}" />
                     </Button>
@@ -277,9 +277,9 @@
                         Click="OnZoomOutViewportButtonClick"
                         Style="{StaticResource SpinePreviewActionButtonStyle}">
                         <FontIcon
-                            FontFamily="Segoe MDL2 Assets"
+                            FontFamily="{StaticResource AppIconFontFamily}"
                             FontSize="13"
-                            Glyph="&#xE738;" />
+                            Glyph="&#xF1A3;" />
                     </Button>
 
                     <Button
@@ -287,9 +287,9 @@
                         Click="OnZoomInViewportButtonClick"
                         Style="{StaticResource SpinePreviewActionButtonStyle}">
                         <FontIcon
-                            FontFamily="Segoe MDL2 Assets"
+                            FontFamily="{StaticResource AppIconFontFamily}"
                             FontSize="13"
-                            Glyph="&#xE710;" />
+                            Glyph="&#xE00D;" />
                     </Button>
 
                     <Button
@@ -297,9 +297,9 @@
                         Click="OnResetViewportButtonClick"
                         Style="{StaticResource SpinePreviewActionButtonStyle}">
                         <FontIcon
-                            FontFamily="Segoe MDL2 Assets"
+                            FontFamily="{StaticResource AppIconFontFamily}"
                             FontSize="13"
-                            Glyph="&#xE72C;" />
+                            Glyph="&#xE0BF;" />
                     </Button>
                 </StackPanel>
             </Grid>

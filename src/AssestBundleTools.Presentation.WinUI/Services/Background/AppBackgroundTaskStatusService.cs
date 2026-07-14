@@ -11,8 +11,8 @@ namespace AssestBundleTools.Presentation.WinUI.Services;
 /// </summary>
 public sealed class AppBackgroundTaskStatusService : ObservableObject, IAppBackgroundTaskStatusService
 {
-    private const string IdleGlyph = "\uE73E";
-    private const string ActiveGlyph = "\uE895";
+    private const string IdleGlyph = "\uE460";
+    private const string ActiveGlyph = "\uE171";
 
     private readonly object _sync = new();
     private readonly ILocalizationService _localizationService;

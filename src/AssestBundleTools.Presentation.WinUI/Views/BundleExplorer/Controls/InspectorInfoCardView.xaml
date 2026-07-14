@@ -125,7 +125,7 @@
 
                         <FontIcon
                             VerticalAlignment="Center"
-                            FontFamily="Segoe MDL2 Assets"
+                            FontFamily="{StaticResource AppIconFontFamily}"
                             FontSize="12"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                             Glyph="{Binding ExpandGlyph}" />
@@ -151,8 +151,8 @@
                     ToolTipService.ToolTip="{Binding CopyToolTipText}"
                     Visibility="{Binding CopyButtonVisibility}">
                     <FontIcon
-                        FontFamily="Segoe MDL2 Assets"
-                        Glyph="&#xE8C8;" />
+                        FontFamily="{StaticResource AppIconFontFamily}"
+                        Glyph="&#xE5D7;" />
                 </Button>
             </Grid>
 
@@ -227,10 +227,10 @@
                                         <FontIcon
                                             HorizontalAlignment="Center"
                                             VerticalAlignment="Center"
-                                            FontFamily="Segoe MDL2 Assets"
+                                            FontFamily="{StaticResource AppIconFontFamily}"
                                             FontSize="15"
                                             Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                            Glyph="&#xEB9F;"
+                                            Glyph="&#xEA6A;"
                                             Visibility="{x:Bind ThumbnailPlaceholderVisibility, Mode=OneTime}" />
                                     </Grid>
                                 </Border>
@@ -256,9 +256,9 @@
                                     ToolTipService.ToolTip="{x:Bind OpenButtonToolTipText, Mode=OneTime}"
                                     Visibility="{x:Bind OpenButtonVisibility, Mode=OneTime}">
                                     <FontIcon
-                                        FontFamily="Segoe MDL2 Assets"
+                                        FontFamily="{StaticResource AppIconFontFamily}"
                                         FontSize="12"
-                                        Glyph="&#xE8A7;" />
+                                        Glyph="&#xECF4;" />
                                 </Button>
                             </Grid>
                         </DataTemplate>

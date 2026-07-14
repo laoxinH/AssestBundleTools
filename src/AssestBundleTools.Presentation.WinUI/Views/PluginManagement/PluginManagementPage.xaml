@@ -431,9 +431,9 @@
                         Orientation="Horizontal"
                         Spacing="7">
                         <FontIcon
-                            FontFamily="Segoe MDL2 Assets"
+                            FontFamily="{StaticResource AppIconFontFamily}"
                             FontSize="13"
-                            Glyph="&#xE72C;" />
+                            Glyph="&#xE0BF;" />
                         <TextBlock
                             x:Name="RefreshCatalogButtonText"
                             VerticalAlignment="Center" />
@@ -500,10 +500,10 @@
                                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                         TextTrimming="CharacterEllipsis" />
                                     <FontIcon
-                                        FontFamily="Segoe MDL2 Assets"
+                                        FontFamily="{StaticResource AppIconFontFamily}"
                                         FontSize="13"
                                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                        Glyph="&#xE946;" />
+                                        Glyph="&#xEA88;" />
                                 </StackPanel>
                             </StackPanel>
 
@@ -518,8 +518,8 @@
                                             Click="OnAddDecryptorMenuFlyoutItemClick">
                                             <MenuFlyoutItem.Icon>
                                                 <FontIcon
-                                                    FontFamily="Segoe MDL2 Assets"
-                                                    Glyph="&#xE710;" />
+                                                    FontFamily="{StaticResource AppIconFontFamily}"
+                                                    Glyph="&#xE00D;" />
                                             </MenuFlyoutItem.Icon>
                                         </MenuFlyoutItem>
                                         <MenuFlyoutItem
@@ -527,16 +527,16 @@
                                             Click="OnAddResourceProcessorMenuFlyoutItemClick">
                                             <MenuFlyoutItem.Icon>
                                                 <FontIcon
-                                                    FontFamily="Segoe MDL2 Assets"
-                                                    Glyph="&#xE710;" />
+                                                    FontFamily="{StaticResource AppIconFontFamily}"
+                                                    Glyph="&#xE00D;" />
                                             </MenuFlyoutItem.Icon>
                                         </MenuFlyoutItem>
                                     </MenuFlyout>
                                 </Button.Flyout>
                                 <FontIcon
-                                    FontFamily="Segoe MDL2 Assets"
+                                    FontFamily="{StaticResource AppIconFontFamily}"
                                     FontSize="16"
-                                    Glyph="&#xE710;" />
+                                    Glyph="&#xE00D;" />
                             </Button>
                         </Grid>
 
@@ -599,10 +599,10 @@
                             <FontIcon
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
-                                FontFamily="Segoe MDL2 Assets"
+                                FontFamily="{StaticResource AppIconFontFamily}"
                                 FontSize="19"
                                 Foreground="{ThemeResource AccentFillColorDefaultBrush}"
-                                Glyph="&#xE721;" />
+                                Glyph="&#xEFD7;" />
                         </Border>
                         <TextBlock
                             x:Name="PluginDirectoryEmptyTitleText"
@@ -708,7 +708,7 @@
                             <FontIcon
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
-                                FontFamily="Segoe MDL2 Assets"
+                                FontFamily="{StaticResource AppIconFontFamily}"
                                 FontSize="23"
                                 Foreground="{ThemeResource AccentFillColorDefaultBrush}"
                                 Glyph="{x:Bind ViewModel.SelectedPluginIconGlyph, Mode=OneWay}" />
@@ -777,9 +777,9 @@
                                 Orientation="Horizontal"
                                 Spacing="7">
                                 <FontIcon
-                                    FontFamily="Segoe MDL2 Assets"
+                                    FontFamily="{StaticResource AppIconFontFamily}"
                                     FontSize="13"
-                                    Glyph="&#xE70F;" />
+                                    Glyph="&#xE837;" />
                                 <TextBlock
                                     x:Name="EditSelectedPluginButtonText"
                                     VerticalAlignment="Center" />
@@ -792,9 +792,9 @@
                                 Orientation="Horizontal"
                                 Spacing="7">
                                 <FontIcon
-                                    FontFamily="Segoe MDL2 Assets"
+                                    FontFamily="{StaticResource AppIconFontFamily}"
                                     FontSize="13"
-                                    Glyph="&#xE73E;" />
+                                    Glyph="&#xE460;" />
                                 <TextBlock
                                     x:Name="ValidateSelectedPluginButtonText"
                                     VerticalAlignment="Center" />
@@ -807,9 +807,9 @@
                                 Orientation="Horizontal"
                                 Spacing="7">
                                 <FontIcon
-                                    FontFamily="Segoe MDL2 Assets"
+                                    FontFamily="{StaticResource AppIconFontFamily}"
                                     FontSize="13"
-                                    Glyph="&#xE8C8;" />
+                                    Glyph="&#xE5D7;" />
                                 <TextBlock
                                     x:Name="CopyDiagnosticsButtonText"
                                     VerticalAlignment="Center" />
@@ -823,9 +823,9 @@
                                 Orientation="Horizontal"
                                 Spacing="7">
                                 <FontIcon
-                                    FontFamily="Segoe MDL2 Assets"
+                                    FontFamily="{StaticResource AppIconFontFamily}"
                                     FontSize="13"
-                                    Glyph="&#xE8B7;" />
+                                    Glyph="&#xE8EB;" />
                                 <TextBlock
                                     x:Name="OpenPluginLocationButtonText"
                                     VerticalAlignment="Center" />
@@ -839,9 +839,9 @@
                                 Orientation="Horizontal"
                                 Spacing="7">
                                 <FontIcon
-                                    FontFamily="Segoe MDL2 Assets"
+                                    FontFamily="{StaticResource AppIconFontFamily}"
                                     FontSize="13"
-                                    Glyph="&#xE74D;" />
+                                    Glyph="&#xE66D;" />
                                 <TextBlock
                                     x:Name="DeleteSelectedPluginButtonText"
                                     VerticalAlignment="Center" />
@@ -904,10 +904,10 @@
                                 <FontIcon
                                     HorizontalAlignment="Center"
                                     VerticalAlignment="Center"
-                                    FontFamily="Segoe MDL2 Assets"
+                                    FontFamily="{StaticResource AppIconFontFamily}"
                                     FontSize="17"
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    Glyph="&#xE946;" />
+                                    Glyph="&#xEA88;" />
                             </Border>
 
                             <StackPanel

@@ -67,7 +67,7 @@ public sealed class HomeRecentWorkspaceItemViewModel
 
     public string PinButtonToolTipText { get; }
 
-    public string PinButtonGlyph => IsPinned ? "\uE77A" : "\uE718";
+    public string PinButtonGlyph => IsPinned ? "\uEE79" : "\uEE75";
 
     public Visibility SecondaryBadgeVisibility =>
         string.IsNullOrWhiteSpace(SecondaryBadgeText) ? Visibility.Collapsed : Visibility.Visible;

@@ -85,7 +85,7 @@ public sealed class InspectorInfoCardViewModel : ObservableObject
         }
     }
 
-    public string ExpandGlyph => IsExpanded ? "\uE70D" : "\uE76C";
+    public string ExpandGlyph => IsExpanded ? "\uE488" : "\uE48E";
 
     public Visibility ContentVisibility =>
         IsExpanded && (Rows.Count > 0 || Visual is { HasVisual: true })

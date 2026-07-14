@@ -50,9 +50,9 @@
                     Orientation="Horizontal"
                     Spacing="6">
                     <FontIcon
-                        FontFamily="Segoe MDL2 Assets"
+                        FontFamily="{StaticResource AppIconFontFamily}"
                         FontSize="12"
-                        Glyph="&#xE7C3;" />
+                        Glyph="&#xE6E9;" />
                     <TextBlock x:Name="LoadFullEditButtonText" />
                 </StackPanel>
             </Button>
@@ -70,9 +70,9 @@
                 IsEnabled="{x:Bind ViewModel.CanSearch, Mode=OneWay}"
                 Style="{StaticResource WorkspaceOperationButtonStyle}">
                 <FontIcon
-                    FontFamily="Segoe MDL2 Assets"
+                    FontFamily="{StaticResource AppIconFontFamily}"
                     FontSize="13"
-                    Glyph="&#xE721;" />
+                    Glyph="&#xEFD7;" />
             </Button>
         </Grid>
 

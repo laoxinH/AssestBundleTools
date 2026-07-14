@@ -23,12 +23,12 @@ public sealed class InspectorPreviewMeshViewModel : ObservableObject
     private const double MaxZoom = 6d;
     private const double MinRotationX = -89d;
     private const double MaxRotationX = 89d;
-    private const string WireframeDisplayModeGlyphValue = "\uE9D9";
-    private const string UvDisplayModeGlyphValue = "\uE8A9";
-    private const string TextureOverlaySelectedGlyphValue = "\uE91B";
-    private const string TextureOverlayHiddenGlyphValue = "\uE8F4";
-    private const string MeshGridSelectedGlyphValue = "\uE9D9";
-    private const string MeshGridHiddenGlyphValue = "\uE8F4";
+    private const string WireframeDisplayModeGlyphValue = "\uF5FD";
+    private const string UvDisplayModeGlyphValue = "\uE9C1";
+    private const string TextureOverlaySelectedGlyphValue = "\uEA52";
+    private const string TextureOverlayHiddenGlyphValue = "\uE8ED";
+    private const string MeshGridSelectedGlyphValue = "\uF5FD";
+    private const string MeshGridHiddenGlyphValue = "\uE8ED";
 
     private AssetPreviewMeshGeometryDto? _geometry;
     private byte[]? _textureOverlayContent;

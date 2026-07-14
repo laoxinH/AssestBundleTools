@@ -31,7 +31,7 @@ public sealed class WorkspaceBatchWindowShellContractTests
         Assert.Contains("Height=\"48\"", xaml);
         Assert.Contains("Background=\"{ThemeResource AccentFillColorDefaultBrush}\"", xaml);
         Assert.Contains("CornerRadius=\"12\"", xaml);
-        Assert.Contains("Glyph=\"&#xE8A5;\"", xaml);
+        Assert.Contains("Glyph=\"&#xE6E9;\"", xaml);
         Assert.Contains("FontSize=\"26\"", xaml);
         Assert.Contains("x:Name=\"WindowTitleText\"", xaml);
         Assert.Contains("FontSize=\"28\"", xaml);

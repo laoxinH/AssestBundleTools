@@ -32,10 +32,10 @@
                 </Grid.ColumnDefinitions>
                 <FontIcon
                     VerticalAlignment="Center"
-                    FontFamily="Segoe MDL2 Assets"
+                    FontFamily="{StaticResource AppIconFontFamily}"
                     FontSize="12"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                    Glyph="&#xE8B7;" />
+                    Glyph="&#xE8EB;" />
                 <TextBlock
                     x:Name="TitleBarText"
                     Grid.Column="1"
@@ -69,10 +69,10 @@
                     CornerRadius="12">
                     <FontIcon
                         VerticalAlignment="Center"
-                        FontFamily="Segoe MDL2 Assets"
+                        FontFamily="{StaticResource AppIconFontFamily}"
                         FontSize="26"
                         Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
-                        Glyph="&#xE8A5;" />
+                        Glyph="&#xE6E9;" />
                 </Border>
                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
                     <TextBlock
@@ -120,10 +120,10 @@
                         CornerRadius="10">
                         <FontIcon
                         VerticalAlignment="Center"
-                        FontFamily="Segoe MDL2 Assets"
+                        FontFamily="{StaticResource AppIconFontFamily}"
                         FontSize="20"
                         Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
-                        Glyph="&#xE8A5;" />
+                        Glyph="&#xE6E9;" />
                     </Border>
                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
                         <TextBlock x:Name="PlanSummaryTitleText" FontSize="13" FontWeight="SemiBold" />

@@ -182,7 +182,7 @@ public sealed class InspectorPreviewSpineAnimationViewModelTests
         viewModel.ToggleBackgroundMode();
 
         Assert.True(viewModel.IsCheckerboardBackgroundSelected);
-        Assert.Equal("\uECA5", viewModel.BackgroundModeGlyph);
+        Assert.Equal("\uE9C1", viewModel.BackgroundModeGlyph);
         Assert.Equal(Visibility.Visible, viewModel.CheckerboardBackgroundVisibility);
         Assert.Equal(Visibility.Collapsed, viewModel.SolidBackgroundVisibility);
         Assert.Contains(nameof(InspectorPreviewSpineAnimationViewModel.BackgroundModeGlyph), changedProperties);
@@ -190,7 +190,7 @@ public sealed class InspectorPreviewSpineAnimationViewModelTests
         viewModel.ToggleBackgroundMode();
 
         Assert.True(viewModel.IsSolidBackgroundSelected);
-        Assert.Equal("\uE790", viewModel.BackgroundModeGlyph);
+        Assert.Equal("\uE566", viewModel.BackgroundModeGlyph);
         Assert.Equal(Visibility.Collapsed, viewModel.CheckerboardBackgroundVisibility);
         Assert.Equal(Visibility.Visible, viewModel.SolidBackgroundVisibility);
     }

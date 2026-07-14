@@ -174,10 +174,10 @@
                     <FontIcon
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
-                        FontFamily="Segoe MDL2 Assets"
+                        FontFamily="{StaticResource AppIconFontFamily}"
                         FontSize="23"
                         Foreground="{ThemeResource AccentFillColorDefaultBrush}"
-                        Glyph="&#xE8A5;" />
+                        Glyph="&#xE6E9;" />
                 </Border>
                 <TextBlock
                     x:Name="EmptyStateTitleText"
@@ -333,9 +333,9 @@
                                                                         ToolTipService.ToolTip="{x:Bind OpenButtonToolTipText, Mode=OneTime}"
                                                                         Visibility="{x:Bind OpenButtonVisibility, Mode=OneTime}">
                                                                         <FontIcon
-                                                                            FontFamily="Segoe MDL2 Assets"
+                                                                            FontFamily="{StaticResource AppIconFontFamily}"
                                                                             FontSize="14"
-                                                                            Glyph="&#xE8A7;" />
+                                                                            Glyph="&#xECF4;" />
                                                                     </Button>
                                                                 </Grid>
                                                                 <TextBlock
@@ -395,9 +395,9 @@
                                                                         ToolTipService.ToolTip="{x:Bind OpenButtonToolTipText, Mode=OneTime}"
                                                                         Visibility="{x:Bind OpenButtonVisibility, Mode=OneTime}">
                                                                         <FontIcon
-                                                                            FontFamily="Segoe MDL2 Assets"
+                                                                            FontFamily="{StaticResource AppIconFontFamily}"
                                                                             FontSize="14"
-                                                                            Glyph="&#xE8A7;" />
+                                                                            Glyph="&#xECF4;" />
                                                                     </Button>
                                                                 </Grid>
                                                                 <TextBlock
@@ -457,9 +457,9 @@
                                                                         ToolTipService.ToolTip="{x:Bind OpenButtonToolTipText, Mode=OneTime}"
                                                                         Visibility="{x:Bind OpenButtonVisibility, Mode=OneTime}">
                                                                         <FontIcon
-                                                                            FontFamily="Segoe MDL2 Assets"
+                                                                            FontFamily="{StaticResource AppIconFontFamily}"
                                                                             FontSize="14"
-                                                                            Glyph="&#xE8A7;" />
+                                                                            Glyph="&#xECF4;" />
                                                                     </Button>
                                                                 </Grid>
                                                                 <TextBlock
@@ -702,7 +702,7 @@
                                                             Background="{ThemeResource SubtleFillColorSecondaryBrush}"
                                                             CornerRadius="16">
                                                             <FontIcon
-                                                                FontFamily="Segoe MDL2 Assets"
+                                                                FontFamily="{StaticResource AppIconFontFamily}"
                                                                 FontSize="14"
                                                                 Glyph="{x:Bind Glyph, Mode=OneTime}" />
                                                         </Border>
@@ -823,9 +823,9 @@
                             Style="{StaticResource WorkspaceOperationButtonStyle}">
                             <StackPanel Orientation="Horizontal" Spacing="5">
                                 <FontIcon
-                                    FontFamily="Segoe MDL2 Assets"
+                                    FontFamily="{StaticResource AppIconFontFamily}"
                                     FontSize="12"
-                                    Glyph="&#xE896;" />
+                                    Glyph="&#xE0DD;" />
                                 <TextBlock x:Name="ExtractButtonText" />
                             </StackPanel>
                         </Button>
@@ -846,7 +846,7 @@
                             ToolTipService.ToolTip="{x:Bind ViewModel.ModifyButtonText, Mode=OneWay}">
                             <StackPanel Orientation="Horizontal" Spacing="5">
                                 <FontIcon
-                                    FontFamily="Segoe MDL2 Assets"
+                                    FontFamily="{StaticResource AppIconFontFamily}"
                                     FontSize="12"
                                     Glyph="{x:Bind ViewModel.ModifyButtonIconGlyph, Mode=OneWay}" />
                                 <TextBlock
@@ -873,7 +873,7 @@
                             Visibility="{x:Bind ViewModel.EditButtonVisibility, Mode=OneWay}">
                             <StackPanel Orientation="Horizontal" Spacing="5">
                                 <FontIcon
-                                    FontFamily="Segoe MDL2 Assets"
+                                    FontFamily="{StaticResource AppIconFontFamily}"
                                     FontSize="12"
                                     Glyph="{x:Bind ViewModel.EditButtonIconGlyph, Mode=OneWay}" />
                                 <TextBlock Text="{x:Bind ViewModel.EditButtonText, Mode=OneWay}" />

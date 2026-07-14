@@ -295,13 +295,13 @@ internal sealed class BundleExplorerAssetChangeRecordPresenter
     private static string BuildGlyph(AssetChangeRecordDto record) =>
         record.Kind switch
         {
-            AssetChangeRecordKind.FileReplacement => "\uE8B7",
-            AssetChangeRecordKind.AssociatedFileReplacement => "\uE91B",
-            AssetChangeRecordKind.WorkspaceReplacement => "\uE8A5",
-            AssetChangeRecordKind.SpriteEdit => "\uE70F",
-            AssetChangeRecordKind.TextEdit => "\uE70F",
-            AssetChangeRecordKind.Extraction => "\uE896",
-            _ => "\uE946"
+            AssetChangeRecordKind.FileReplacement => "\uE8EB",
+            AssetChangeRecordKind.AssociatedFileReplacement => "\uEA52",
+            AssetChangeRecordKind.WorkspaceReplacement => "\uE6E9",
+            AssetChangeRecordKind.SpriteEdit => "\uE837",
+            AssetChangeRecordKind.TextEdit => "\uE837",
+            AssetChangeRecordKind.Extraction => "\uE0DD",
+            _ => "\uEA88"
         };
 
     private string GetString(string resourceKey) => _localizationService.GetRequiredString(resourceKey);

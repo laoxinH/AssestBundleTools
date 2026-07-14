@@ -46,7 +46,7 @@ public sealed class InspectorPreviewImageDisplayOptionsViewModelTests
 
         Assert.False(viewModel.IsCheckerboardBackgroundSelected);
         Assert.True(viewModel.IsSolidBackgroundSelected);
-        Assert.Equal("\uE790", viewModel.BackgroundModeGlyph);
+        Assert.Equal("\uE566", viewModel.BackgroundModeGlyph);
         Assert.Equal(Visibility.Collapsed, viewModel.CheckerboardBackgroundVisibility);
         Assert.Equal(Visibility.Visible, viewModel.SolidBackgroundVisibility);
     }
@@ -93,7 +93,7 @@ public sealed class InspectorPreviewImageDisplayOptionsViewModelTests
 
         Assert.False(viewModel.IsSpriteCropResultSelected);
         Assert.True(viewModel.IsSpriteCropPreviewSelected);
-        Assert.Equal("\uE8A9", viewModel.SpriteDisplayModeGlyph);
+        Assert.Equal("\uE9C1", viewModel.SpriteDisplayModeGlyph);
         Assert.Equal(Visibility.Visible, viewModel.FullImagePreviewVisibility);
         Assert.Equal(Visibility.Collapsed, viewModel.SpriteCropResultVisibility);
     }
@@ -117,17 +117,17 @@ public sealed class InspectorPreviewImageDisplayOptionsViewModelTests
         viewModel.ToggleSpriteDisplayMode();
 
         Assert.True(viewModel.IsSolidBackgroundSelected);
-        Assert.Equal("\uE790", viewModel.BackgroundModeGlyph);
+        Assert.Equal("\uE566", viewModel.BackgroundModeGlyph);
         Assert.True(viewModel.IsSpriteCropResultSelected);
-        Assert.Equal("\uEB9F", viewModel.SpriteDisplayModeGlyph);
+        Assert.Equal("\uEA6A", viewModel.SpriteDisplayModeGlyph);
 
         viewModel.ToggleBackgroundMode();
         viewModel.ToggleSpriteDisplayMode();
 
         Assert.True(viewModel.IsCheckerboardBackgroundSelected);
-        Assert.Equal("\uECA5", viewModel.BackgroundModeGlyph);
+        Assert.Equal("\uE9C1", viewModel.BackgroundModeGlyph);
         Assert.True(viewModel.IsSpriteCropPreviewSelected);
-        Assert.Equal("\uE8A9", viewModel.SpriteDisplayModeGlyph);
+        Assert.Equal("\uE9C1", viewModel.SpriteDisplayModeGlyph);
     }
 
     [Fact]

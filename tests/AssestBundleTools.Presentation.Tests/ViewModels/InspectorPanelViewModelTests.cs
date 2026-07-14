@@ -109,7 +109,7 @@ public sealed class InspectorPanelViewModelTests
             UndoButtonText: "Undo",
             RedoButtonText: "Redo",
             DeleteButtonText: "Delete",
-            Glyph: "\uE8B7");
+            Glyph: "\uE8EB");
 
         ApplyBasicDetails(
             viewModel,

@@ -4,8 +4,8 @@ namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Binding
 
 public sealed partial class InspectorPreviewSpineAnimationViewModel
 {
-    private const string CheckerboardBackgroundGlyphValue = "\uECA5";
-    private const string SolidBackgroundGlyphValue = "\uE790";
+    private const string CheckerboardBackgroundGlyphValue = "\uE9C1";
+    private const string SolidBackgroundGlyphValue = "\uE566";
 
     public bool IsCheckerboardBackgroundSelected =>
         _backgroundMode == InspectorPreviewImageBackgroundMode.Checkerboard;

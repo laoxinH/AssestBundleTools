@@ -77,10 +77,10 @@
                         <FontIcon
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center"
-                            FontFamily="Segoe MDL2 Assets"
+                            FontFamily="{StaticResource AppIconFontFamily}"
                             FontSize="12"
                             Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
-                            Glyph="&#xE8A5;" />
+                            Glyph="&#xE6E9;" />
                     </Border>
                     <StackPanel Grid.Column="1" Spacing="2">
                         <TextBlock
@@ -192,10 +192,10 @@
                                             <FontIcon
                                                 HorizontalAlignment="Center"
                                                 VerticalAlignment="Center"
-                                                FontFamily="Segoe MDL2 Assets"
+                                                FontFamily="{StaticResource AppIconFontFamily}"
                                                 FontSize="18"
                                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                Glyph="&#xE8A5;" />
+                                                Glyph="&#xE6E9;" />
                                         </Border>
                                         <StackPanel Grid.Column="2" VerticalAlignment="Center" Spacing="3">
                                             <TextBlock
@@ -270,10 +270,10 @@
                             <FontIcon
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
-                                FontFamily="Segoe MDL2 Assets"
+                                FontFamily="{StaticResource AppIconFontFamily}"
                                 FontSize="28"
                                 Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
-                                Glyph="&#xE8B7;" />
+                                Glyph="&#xE8EB;" />
                         </Border>
                         <TextBlock
                             x:Name="BundleEmptyStateTitleText"
@@ -315,10 +315,10 @@
                             <FontIcon
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
-                                FontFamily="Segoe MDL2 Assets"
+                                FontFamily="{StaticResource AppIconFontFamily}"
                                 FontSize="12"
                                 Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
-                                Glyph="&#xE713;" />
+                                Glyph="&#xF00F;" />
                         </Border>
                         <StackPanel Grid.Column="1" Spacing="2">
                             <TextBlock
@@ -345,10 +345,10 @@
                                 TextTrimming="CharacterEllipsis" />
                             <FontIcon
                                 x:Name="ResourceProcessorHelpIcon"
-                                FontFamily="Segoe MDL2 Assets"
+                                FontFamily="{StaticResource AppIconFontFamily}"
                                 FontSize="15"
                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Glyph="&#xE946;" />
+                                Glyph="&#xEA88;" />
                         </StackPanel>
                     </Grid>
                     <ListView
@@ -417,10 +417,10 @@
                                 <FontIcon
                                     HorizontalAlignment="Center"
                                     VerticalAlignment="Center"
-                                    FontFamily="Segoe MDL2 Assets"
+                                    FontFamily="{StaticResource AppIconFontFamily}"
                                     FontSize="12"
                                     Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
-                                    Glyph="&#xE9D5;" />
+                                    Glyph="&#xE4FE;" />
                             </Border>
                             <TextBlock
                                 x:Name="ExportOptionsSectionTitleText"
@@ -458,10 +458,10 @@
                                             x:Name="ForceAudioPayloadWriteHelpIcon"
                                             HorizontalAlignment="Center"
                                             VerticalAlignment="Center"
-                                            FontFamily="Segoe MDL2 Assets"
+                                            FontFamily="{StaticResource AppIconFontFamily}"
                                             FontSize="14"
                                             Foreground="{ThemeResource SystemFillColorCautionBrush}"
-                                            Glyph="&#xE946;" />
+                                            Glyph="&#xEA88;" />
                                     </Border>
                                 </StackPanel>
                             </CheckBox>
@@ -479,10 +479,10 @@
                                 <FontIcon
                                     HorizontalAlignment="Center"
                                     VerticalAlignment="Center"
-                                    FontFamily="Segoe MDL2 Assets"
+                                    FontFamily="{StaticResource AppIconFontFamily}"
                                     FontSize="12"
                                     Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
-                                    Glyph="&#xE8C7;" />
+                                    Glyph="&#xED63;" />
                             </Border>
                             <TextBlock
                                 x:Name="CompressionModeLabelText"

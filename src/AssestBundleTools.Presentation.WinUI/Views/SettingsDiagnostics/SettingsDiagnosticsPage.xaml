@@ -75,10 +75,10 @@
 
                                             <Border Style="{StaticResource SettingsDiagnosticsWorkspaceIconBadgeStyle}">
                                                 <FontIcon
-                                                    FontFamily="Segoe MDL2 Assets"
+                                                    FontFamily="{StaticResource AppIconFontFamily}"
                                                     FontSize="20"
                                                     Foreground="{ThemeResource AccentFillColorDefaultBrush}"
-                                                    Glyph="&#xE838;"
+                                                    Glyph="&#xE90B;"
                                                     HorizontalAlignment="Center"
                                                     VerticalAlignment="Center" />
                                             </Border>
@@ -150,7 +150,7 @@
 
                                                         <FontIcon
                                                             Style="{StaticResource SettingsDiagnosticsWorkspaceSummaryIconStyle}"
-                                                            Glyph="&#xE8A5;" />
+                                                            Glyph="&#xE6E9;" />
                                                         <TextBlock
                                                             Grid.Column="1"
                                                             MinWidth="0"
@@ -172,7 +172,7 @@
 
                                                         <FontIcon
                                                             Style="{StaticResource SettingsDiagnosticsWorkspaceSummaryIconStyle}"
-                                                            Glyph="&#xE8B7;" />
+                                                            Glyph="&#xE8EB;" />
                                                         <TextBlock
                                                             Grid.Column="1"
                                                             MinWidth="0"
@@ -194,7 +194,7 @@
 
                                                         <FontIcon
                                                             Style="{StaticResource SettingsDiagnosticsWorkspaceSummaryIconStyle}"
-                                                            Glyph="&#xE823;" />
+                                                            Glyph="&#xE508;" />
                                                         <TextBlock
                                                             Grid.Column="1"
                                                             MinWidth="0"

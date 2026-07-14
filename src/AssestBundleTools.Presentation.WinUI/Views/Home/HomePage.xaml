@@ -130,9 +130,9 @@
 
                                     <Border Style="{StaticResource HomeIconBadgeStyle}">
                                         <FontIcon
-                                            FontFamily="Segoe MDL2 Assets"
+                                            FontFamily="{StaticResource AppIconFontFamily}"
                                             FontSize="15"
-                                            Glyph="&#xE710;" />
+                                            Glyph="&#xE00D;" />
                                     </Border>
 
                                     <TextBlock
@@ -144,8 +144,8 @@
                                     <FontIcon
                                         Grid.Column="2"
                                         VerticalAlignment="Center"
-                                        FontFamily="Segoe MDL2 Assets"
-                                        Glyph="&#xE76C;" />
+                                        FontFamily="{StaticResource AppIconFontFamily}"
+                                        Glyph="&#xE48E;" />
                                 </Grid>
                             </Button>
 
@@ -169,9 +169,9 @@
 
                                     <Border Style="{StaticResource HomeIconBadgeStyle}">
                                         <FontIcon
-                                            FontFamily="Segoe MDL2 Assets"
+                                            FontFamily="{StaticResource AppIconFontFamily}"
                                             FontSize="15"
-                                            Glyph="&#xE8B7;" />
+                                            Glyph="&#xE8EB;" />
                                     </Border>
 
                                     <TextBlock
@@ -183,8 +183,8 @@
                                     <FontIcon
                                         Grid.Column="2"
                                         VerticalAlignment="Center"
-                                        FontFamily="Segoe MDL2 Assets"
-                                        Glyph="&#xE76C;" />
+                                        FontFamily="{StaticResource AppIconFontFamily}"
+                                        Glyph="&#xE48E;" />
                                 </Grid>
                             </Button>
 
@@ -209,9 +209,9 @@
 
                                     <Border Style="{StaticResource HomeIconBadgeStyle}">
                                         <FontIcon
-                                            FontFamily="Segoe MDL2 Assets"
+                                            FontFamily="{StaticResource AppIconFontFamily}"
                                             FontSize="15"
-                                            Glyph="&#xE823;" />
+                                            Glyph="&#xE508;" />
                                     </Border>
 
                                     <TextBlock
@@ -223,8 +223,8 @@
                                     <FontIcon
                                         Grid.Column="2"
                                         VerticalAlignment="Center"
-                                        FontFamily="Segoe MDL2 Assets"
-                                        Glyph="&#xE76C;" />
+                                        FontFamily="{StaticResource AppIconFontFamily}"
+                                        Glyph="&#xE48E;" />
                                 </Grid>
                             </Button>
                         </StackPanel>
@@ -282,9 +282,9 @@
                                                     CornerRadius="6"
                                                     Background="{ThemeResource LayerFillColorDefaultBrush}">
                                                     <FontIcon
-                                                        FontFamily="Segoe MDL2 Assets"
+                                                        FontFamily="{StaticResource AppIconFontFamily}"
                                                         FontSize="12"
-                                                        Glyph="&#xE823;" />
+                                                        Glyph="&#xE508;" />
                                                 </Border>
 
                                                 <StackPanel
@@ -313,9 +313,9 @@
                                 Visibility="{x:Bind ViewModel.RecentActivityEmptyStateVisibility, Mode=OneWay}">
                                 <Border Style="{StaticResource HomeIconBadgeStyle}">
                                     <FontIcon
-                                        FontFamily="Segoe MDL2 Assets"
+                                        FontFamily="{StaticResource AppIconFontFamily}"
                                         FontSize="15"
-                                        Glyph="&#xE9D9;" />
+                                        Glyph="&#xF5FD;" />
                                 </Border>
                                 <TextBlock
                                     x:Name="RecentActivityEmptyText"
@@ -396,9 +396,9 @@
 
                                                     <Border Style="{StaticResource HomeIconBadgeStyle}">
                                                         <FontIcon
-                                                            FontFamily="Segoe MDL2 Assets"
+                                                            FontFamily="{StaticResource AppIconFontFamily}"
                                                             FontSize="15"
-                                                            Glyph="&#xE8B7;" />
+                                                            Glyph="&#xE8EB;" />
                                                     </Border>
 
                                                     <Grid
@@ -467,8 +467,8 @@
                                                         Grid.Column="2"
                                                         VerticalAlignment="Center"
                                                         FontSize="13"
-                                                        FontFamily="Segoe MDL2 Assets"
-                                                        Glyph="&#xE76C;" />
+                                                        FontFamily="{StaticResource AppIconFontFamily}"
+                                                        Glyph="&#xE48E;" />
                                                 </Grid>
                                             </Button>
 
@@ -484,7 +484,7 @@
                                                     Style="{StaticResource HomeListActionButtonStyle}"
                                                     ToolTipService.ToolTip="{x:Bind PinButtonToolTipText}">
                                                     <FontIcon
-                                                        FontFamily="Segoe MDL2 Assets"
+                                                        FontFamily="{StaticResource AppIconFontFamily}"
                                                         FontSize="12"
                                                         Glyph="{x:Bind PinButtonGlyph}" />
                                                 </Button>
@@ -494,9 +494,9 @@
                                                     Style="{StaticResource HomeListActionButtonStyle}"
                                                     ToolTipService.ToolTip="{Binding RecentWorkspaceDeleteToolTipText, ElementName=RootPage}">
                                                     <FontIcon
-                                                        FontFamily="Segoe MDL2 Assets"
+                                                        FontFamily="{StaticResource AppIconFontFamily}"
                                                         FontSize="12"
-                                                        Glyph="&#xE74D;" />
+                                                        Glyph="&#xE66D;" />
                                                 </Button>
                                             </StackPanel>
                                         </Grid>
@@ -513,9 +513,9 @@
                             Visibility="{x:Bind ViewModel.RecentWorkspaceEmptyStateVisibility, Mode=OneWay}">
                             <Border Style="{StaticResource HomeIconBadgeStyle}">
                                 <FontIcon
-                                    FontFamily="Segoe MDL2 Assets"
+                                    FontFamily="{StaticResource AppIconFontFamily}"
                                     FontSize="15"
-                                    Glyph="&#xE838;" />
+                                    Glyph="&#xE90B;" />
                             </Border>
                             <TextBlock
                                 x:Name="RecentWorkspaceEmptyText"
@@ -531,9 +531,9 @@
                             Visibility="{x:Bind ViewModel.RecentWorkspaceNoMatchesStateVisibility, Mode=OneWay}">
                             <Border Style="{StaticResource HomeIconBadgeStyle}">
                                 <FontIcon
-                                    FontFamily="Segoe MDL2 Assets"
+                                    FontFamily="{StaticResource AppIconFontFamily}"
                                     FontSize="15"
-                                    Glyph="&#xE721;" />
+                                    Glyph="&#xEFD7;" />
                             </Border>
                             <TextBlock
                                 x:Name="RecentWorkspaceNoMatchesText"

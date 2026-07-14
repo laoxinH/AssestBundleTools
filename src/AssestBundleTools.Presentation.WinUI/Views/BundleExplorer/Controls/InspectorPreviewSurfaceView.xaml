@@ -281,9 +281,9 @@
                         Style="{StaticResource InspectorPreviewActionButtonStyle}"
                         Visibility="{x:Bind ViewModel.Preview.Image.ImageViewportControlsVisibility, Mode=OneWay}">
                         <FontIcon
-                            FontFamily="Segoe MDL2 Assets"
+                            FontFamily="{StaticResource AppIconFontFamily}"
                             FontSize="13"
-                            Glyph="&#xE738;" />
+                            Glyph="&#xF1A3;" />
                     </Button>
 
                     <Button
@@ -292,7 +292,7 @@
                         Style="{StaticResource InspectorPreviewActionButtonStyle}"
                         Visibility="{x:Bind ViewModel.Preview.Image.DisplayOptions.BackgroundModeSwitchVisibility, Mode=OneWay}">
                         <FontIcon
-                            FontFamily="Segoe MDL2 Assets"
+                            FontFamily="{StaticResource AppIconFontFamily}"
                             FontSize="13"
                             Glyph="{x:Bind ViewModel.Preview.Image.DisplayOptions.BackgroundModeGlyph, Mode=OneWay}" />
                     </Button>
@@ -303,9 +303,9 @@
                         Style="{StaticResource InspectorPreviewActionButtonStyle}"
                         Visibility="{x:Bind ViewModel.Preview.Image.SpriteEditActionControlsVisibility, Mode=OneWay}">
                         <FontIcon
-                            FontFamily="Segoe MDL2 Assets"
+                            FontFamily="{StaticResource AppIconFontFamily}"
                             FontSize="13"
-                            Glyph="&#xE7A7;" />
+                            Glyph="&#xE1A5;" />
                     </Button>
 
                     <Button
@@ -314,9 +314,9 @@
                         Style="{StaticResource InspectorPreviewActionButtonStyle}"
                         Visibility="{x:Bind ViewModel.Preview.Image.SpriteEditActionControlsVisibility, Mode=OneWay}">
                         <FontIcon
-                            FontFamily="Segoe MDL2 Assets"
+                            FontFamily="{StaticResource AppIconFontFamily}"
                             FontSize="13"
-                            Glyph="&#xE740;" />
+                            Glyph="&#xE951;" />
                     </Button>
 
                     <Button
@@ -325,9 +325,9 @@
                         Style="{StaticResource InspectorPreviewActionButtonStyle}"
                         Visibility="{x:Bind ViewModel.Preview.Image.SpriteEditActionControlsVisibility, Mode=OneWay}">
                         <FontIcon
-                            FontFamily="Segoe MDL2 Assets"
+                            FontFamily="{StaticResource AppIconFontFamily}"
                             FontSize="13"
-                            Glyph="&#xEB9F;" />
+                            Glyph="&#xEA6A;" />
                     </Button>
 
                     <Button
@@ -336,7 +336,7 @@
                         Style="{StaticResource InspectorPreviewActionButtonStyle}"
                         Visibility="{x:Bind ViewModel.Preview.Image.SpriteDisplayModeControlVisibility, Mode=OneWay}">
                         <FontIcon
-                            FontFamily="Segoe MDL2 Assets"
+                            FontFamily="{StaticResource AppIconFontFamily}"
                             FontSize="13"
                             Glyph="{x:Bind ViewModel.Preview.Image.DisplayOptions.SpriteDisplayModeGlyph, Mode=OneWay}" />
                     </Button>
@@ -347,9 +347,9 @@
                         Style="{StaticResource InspectorPreviewActionButtonStyle}"
                         Visibility="{x:Bind ViewModel.Preview.Image.ImageViewportControlsVisibility, Mode=OneWay}">
                         <FontIcon
-                            FontFamily="Segoe MDL2 Assets"
+                            FontFamily="{StaticResource AppIconFontFamily}"
                             FontSize="13"
-                            Glyph="&#xE710;" />
+                            Glyph="&#xE00D;" />
                     </Button>
 
                     <Button
@@ -358,9 +358,9 @@
                         Style="{StaticResource InspectorPreviewActionButtonStyle}"
                         Visibility="{x:Bind ViewModel.Preview.Image.ImageViewportControlsVisibility, Mode=OneWay}">
                         <FontIcon
-                            FontFamily="Segoe MDL2 Assets"
+                            FontFamily="{StaticResource AppIconFontFamily}"
                             FontSize="13"
-                            Glyph="&#xE72C;" />
+                            Glyph="&#xE0BF;" />
                     </Button>
 
                     <Button
@@ -369,9 +369,9 @@
                         Style="{StaticResource InspectorPreviewActionButtonStyle}"
                         Visibility="{x:Bind ViewModel.Preview.Mesh.ControlsVisibility, Mode=OneWay}">
                         <FontIcon
-                            FontFamily="Segoe MDL2 Assets"
+                            FontFamily="{StaticResource AppIconFontFamily}"
                             FontSize="13"
-                            Glyph="&#xE738;" />
+                            Glyph="&#xF1A3;" />
                     </Button>
 
                     <Button
@@ -380,7 +380,7 @@
                         Style="{StaticResource InspectorPreviewActionButtonStyle}"
                         Visibility="{x:Bind ViewModel.Preview.Mesh.DisplayModeSwitchVisibility, Mode=OneWay}">
                         <FontIcon
-                            FontFamily="Segoe MDL2 Assets"
+                            FontFamily="{StaticResource AppIconFontFamily}"
                             FontSize="13"
                             Glyph="{x:Bind ViewModel.Preview.Mesh.DisplayModeGlyph, Mode=OneWay}" />
                     </Button>
@@ -391,7 +391,7 @@
                         Style="{StaticResource InspectorPreviewActionButtonStyle}"
                         Visibility="{x:Bind ViewModel.Preview.Mesh.TextureOverlaySwitchVisibility, Mode=OneWay}">
                         <FontIcon
-                            FontFamily="Segoe MDL2 Assets"
+                            FontFamily="{StaticResource AppIconFontFamily}"
                             FontSize="13"
                             Glyph="{x:Bind ViewModel.Preview.Mesh.TextureOverlayGlyph, Mode=OneWay}" />
                     </Button>
@@ -402,7 +402,7 @@
                         Style="{StaticResource InspectorPreviewActionButtonStyle}"
                         Visibility="{x:Bind ViewModel.Preview.Mesh.MeshGridSwitchVisibility, Mode=OneWay}">
                         <FontIcon
-                            FontFamily="Segoe MDL2 Assets"
+                            FontFamily="{StaticResource AppIconFontFamily}"
                             FontSize="13"
                             Glyph="{x:Bind ViewModel.Preview.Mesh.MeshGridGlyph, Mode=OneWay}" />
                     </Button>
@@ -413,9 +413,9 @@
                         Style="{StaticResource InspectorPreviewActionButtonStyle}"
                         Visibility="{x:Bind ViewModel.Preview.Mesh.ControlsVisibility, Mode=OneWay}">
                         <FontIcon
-                            FontFamily="Segoe MDL2 Assets"
+                            FontFamily="{StaticResource AppIconFontFamily}"
                             FontSize="13"
-                            Glyph="&#xE710;" />
+                            Glyph="&#xE00D;" />
                     </Button>
 
                     <Button
@@ -424,9 +424,9 @@
                         Style="{StaticResource InspectorPreviewActionButtonStyle}"
                         Visibility="{x:Bind ViewModel.Preview.Mesh.ControlsVisibility, Mode=OneWay}">
                         <FontIcon
-                            FontFamily="Segoe MDL2 Assets"
+                            FontFamily="{StaticResource AppIconFontFamily}"
                             FontSize="13"
-                            Glyph="&#xE72C;" />
+                            Glyph="&#xE0BF;" />
                     </Button>
                 </StackPanel>
 
@@ -438,9 +438,9 @@
                     Style="{StaticResource InspectorPreviewActionButtonStyle}"
                     Visibility="{x:Bind ViewModel.Preview.PreviewOpenLocationVisibility, Mode=OneWay}">
                     <FontIcon
-                        FontFamily="Segoe MDL2 Assets"
+                        FontFamily="{StaticResource AppIconFontFamily}"
                         FontSize="14"
-                        Glyph="&#xE838;" />
+                        Glyph="&#xE90B;" />
                 </Button>
             </Grid>
 
@@ -468,9 +468,9 @@
                     Spacing="10"
                     Visibility="{x:Bind ViewModel.Preview.PreviewMessageVisibility, Mode=OneWay}">
                     <FontIcon
-                        FontFamily="Segoe MDL2 Assets"
+                        FontFamily="{StaticResource AppIconFontFamily}"
                         FontSize="26"
-                        Glyph="&#xE7BA;" />
+                        Glyph="&#xF561;" />
                     <TextBlock
                         Style="{StaticResource InspectorPreviewStateTextStyle}"
                         Text="{x:Bind ViewModel.Preview.PreviewStatusText, Mode=OneWay}" />
@@ -565,10 +565,10 @@
                             <FontIcon
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
-                                FontFamily="Segoe MDL2 Assets"
+                                FontFamily="{StaticResource AppIconFontFamily}"
                                 FontSize="18"
                                 Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
-                                Glyph="&#xE8D6;" />
+                                Glyph="&#xEC90;" />
                         </Border>
 
                         <StackPanel
@@ -673,9 +673,9 @@
                                 Style="{StaticResource InspectorAudioTransportButtonStyle}">
                                 <FontIcon
                                     x:Name="AudioTransportPlayPauseIcon"
-                                    FontFamily="Segoe MDL2 Assets"
+                                    FontFamily="{StaticResource AppIconFontFamily}"
                                     FontSize="14"
-                                    Glyph="&#xE768;" />
+                                    Glyph="&#xEE8D;" />
                             </Button>
 
                             <Button
@@ -684,9 +684,9 @@
                                 Click="OnAudioTransportResetButtonClick"
                                 Style="{StaticResource InspectorAudioTransportButtonStyle}">
                                 <FontIcon
-                                    FontFamily="Segoe MDL2 Assets"
+                                    FontFamily="{StaticResource AppIconFontFamily}"
                                     FontSize="14"
-                                    Glyph="&#xE72C;" />
+                                    Glyph="&#xE0BF;" />
                             </Button>
 
                             <TextBlock
@@ -724,9 +724,9 @@
                     Spacing="10"
                     Visibility="{x:Bind ViewModel.Preview.PreviewSummaryVisibility, Mode=OneWay}">
                     <FontIcon
-                        FontFamily="Segoe MDL2 Assets"
+                        FontFamily="{StaticResource AppIconFontFamily}"
                         FontSize="26"
-                        Glyph="&#xE7BA;" />
+                        Glyph="&#xF561;" />
                     <TextBlock
                         Style="{StaticResource InspectorPreviewStateTextStyle}"
                         Text="{x:Bind ViewModel.Preview.PreviewText, Mode=OneWay}" />

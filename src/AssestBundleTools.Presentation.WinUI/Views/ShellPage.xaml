@@ -90,8 +90,8 @@
                             Tag="settings-diagnostics-performance-cache">
                             <NavigationViewItem.Icon>
                                 <FontIcon
-                                    FontFamily="Segoe MDL2 Assets"
-                                    Glyph="&#xE9D9;" />
+                                    FontFamily="{StaticResource AppIconFontFamily}"
+                                    Glyph="&#xF5FD;" />
                             </NavigationViewItem.Icon>
                         </NavigationViewItem>
                         <NavigationViewItem
@@ -99,8 +99,8 @@
                             Tag="settings-diagnostics-logs">
                             <NavigationViewItem.Icon>
                                 <FontIcon
-                                    FontFamily="Segoe MDL2 Assets"
-                                    Glyph="&#xE9D5;" />
+                                    FontFamily="{StaticResource AppIconFontFamily}"
+                                    Glyph="&#xE4FE;" />
                             </NavigationViewItem.Icon>
                         </NavigationViewItem>
                     </NavigationViewItem.MenuItems>
@@ -139,7 +139,7 @@
                     Orientation="Horizontal"
                     Spacing="7">
                     <FontIcon
-                        FontFamily="Segoe MDL2 Assets"
+                        FontFamily="{StaticResource AppIconFontFamily}"
                         FontSize="11"
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                         Glyph="{Binding StatusGlyph, Mode=OneWay}" />
@@ -177,10 +177,10 @@
                         Orientation="Horizontal"
                         Spacing="5">
                         <FontIcon
-                            FontFamily="Segoe MDL2 Assets"
+                            FontFamily="{StaticResource AppIconFontFamily}"
                             FontSize="10"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                            Glyph="&#xE823;" />
+                            Glyph="&#xE508;" />
                         <TextBlock
                             VerticalAlignment="Center"
                             FontSize="12"
@@ -207,9 +207,9 @@
                     ToolTipService.ToolTip="{x:Bind CancelBackgroundTaskToolTipText, Mode=OneTime}"
                     Visibility="{Binding CancelVisibility, Mode=OneWay}">
                     <FontIcon
-                        FontFamily="Segoe MDL2 Assets"
+                        FontFamily="{StaticResource AppIconFontFamily}"
                         FontSize="10"
-                        Glyph="&#xE711;" />
+                        Glyph="&#xE6D3;" />
                 </Button>
 
                 <ProgressBar
@@ -283,7 +283,7 @@
                                             Width="18"
                                             Margin="0,2,0,0"
                                             HorizontalAlignment="Center"
-                                            FontFamily="Segoe MDL2 Assets"
+                                            FontFamily="{StaticResource AppIconFontFamily}"
                                             FontSize="11"
                                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                             Glyph="{Binding StatusGlyph}" />
@@ -322,9 +322,9 @@
                                             ToolTipService.ToolTip="{Binding CancelToolTipText}"
                                             Visibility="{Binding CancelVisibility}">
                                             <FontIcon
-                                                FontFamily="Segoe MDL2 Assets"
+                                                FontFamily="{StaticResource AppIconFontFamily}"
                                                 FontSize="10"
-                                                Glyph="&#xE711;" />
+                                                Glyph="&#xE6D3;" />
                                         </Button>
                                         <TextBlock
                                             Grid.Row="1"

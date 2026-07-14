@@ -46,10 +46,10 @@
                 <FontIcon
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
-                    FontFamily="Segoe MDL2 Assets"
+                    FontFamily="{StaticResource AppIconFontFamily}"
                     FontSize="18"
                     Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
-                    Glyph="&#xE8F1;" />
+                    Glyph="&#xEB38;" />
             </Border>
 
             <StackPanel

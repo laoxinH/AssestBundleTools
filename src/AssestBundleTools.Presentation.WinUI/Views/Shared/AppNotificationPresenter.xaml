@@ -47,7 +47,7 @@
                 CornerRadius="999">
                 <FontIcon
                     x:Name="NotificationIcon"
-                    FontFamily="Segoe MDL2 Assets"
+                    FontFamily="{StaticResource AppIconFontFamily}"
                     FontSize="15"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center" />

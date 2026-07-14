@@ -1,7 +1,6 @@
 using System.Globalization;
 using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Workspace.Dtos;
-using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Domain.Workspace;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
@@ -16,7 +15,7 @@ namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Present
 /// </summary>
 internal sealed class SpineAssetGroupInspectorPresenter
 {
-    private const string EditGlyph = "\uE70F";
+    private const string EditGlyph = "\uE837";
 
     private readonly IBundleExplorerBundlePaneHost _bundlePane;
     private readonly ILocalizationService _localizationService;
@@ -24,6 +23,7 @@ internal sealed class SpineAssetGroupInspectorPresenter
     private readonly PreviewDiagnosticDisplayTextResolver _previewDiagnosticDisplayTextResolver;
     private readonly SpineAssetGroupDiagnosticDisplayFormatter _diagnosticDisplayFormatter;
     private readonly SpineAssetGroupChangeRecordPresenter _changeRecordPresenter;
+    private readonly SpineAssetGroupInspectorTextFormatter _textFormatter;
     private readonly Func<WorkspaceId?> _workspaceIdProvider;
 
     public SpineAssetGroupInspectorPresenter(
@@ -40,6 +40,7 @@ internal sealed class SpineAssetGroupInspectorPresenter
         _changeRecordPresenter = new SpineAssetGroupChangeRecordPresenter(
             _localizationService,
             pendingTracker);
+        _textFormatter = new SpineAssetGroupInspectorTextFormatter(_localizationService);
         _workspaceIdProvider = workspaceIdProvider ?? (() => null);
     }
 
@@ -110,7 +111,7 @@ internal sealed class SpineAssetGroupInspectorPresenter
         }
 
         groupTab.Inspector.ApplySummaryPreview(
-            BuildSummaryText(group, details, diagnostics),
+            _textFormatter.BuildSummaryText(group, details, diagnostics),
             BuildGroupPreviewInfoRows(group, details, diagnostics));
     }
 
@@ -160,13 +161,15 @@ internal sealed class SpineAssetGroupInspectorPresenter
 
     private AssetDependencyViewModel CreatePartDependency(SpineAssetGroupPartDto part)
     {
-        var assetTypeText = ResolveAssetTypeDisplayName(part.AssetType, part.AssetTypeDisplayName);
+        var assetTypeText = _textFormatter.ResolveAssetTypeDisplayName(
+            part.AssetType,
+            part.AssetTypeDisplayName);
         return new AssetDependencyViewModel(
             Name: ResolvePartName(part),
             BundleName: ResolveBundleDisplayName(part),
             MetadataText: _localizationService.GetFormattedString(
                 ResourceKeys.InspectorSpineGroupPartMetadataFormat,
-                ResolvePartRoleText(part.Role),
+                _textFormatter.ResolvePartRoleText(part.Role),
                 assetTypeText),
             SupplementaryText: NormalizePartPath(part),
             Target: new ResolvedAssetNavigationTarget(
@@ -222,7 +225,7 @@ internal sealed class SpineAssetGroupInspectorPresenter
         {
             rows.Add(new InspectorInfoRowViewModel(
                 GetString(ResourceKeys.InspectorSpineGroupRuntimeAdapterLabel),
-                BuildRuntimeAdapterText(runtime)));
+                _textFormatter.BuildRuntimeAdapterText(runtime)));
         }
 
         inspector.ApplySpineAnimationPreview(
@@ -230,22 +233,6 @@ internal sealed class SpineAssetGroupInspectorPresenter
             animationTextures,
             rows,
             previewState);
-    }
-
-    private string BuildRuntimeAdapterText(SpineAnimationRuntimeDto runtime)
-    {
-        if (runtime.SupportKind == SpineAnimationRuntimeSupportKind.OfficialAdapterAvailable &&
-            !string.IsNullOrWhiteSpace(runtime.AdapterKey))
-        {
-            return _localizationService.GetFormattedString(
-                ResourceKeys.InspectorSpineGroupRuntimeAdapterFormat,
-                runtime.SpineVersion ?? string.Empty,
-                runtime.AdapterKey);
-        }
-
-        return _localizationService.GetFormattedString(
-            ResourceKeys.InspectorSpineGroupRuntimeAdapterUnavailableFormat,
-            runtime.SpineVersion ?? string.Empty);
     }
 
     private IReadOnlyList<InspectorInfoRowViewModel> BuildGroupPreviewInfoRows(
@@ -309,7 +296,9 @@ internal sealed class SpineAssetGroupInspectorPresenter
                 : _localizationService.GetFormattedString(
                     ResourceKeys.InspectorSpineGroupSkeletonStructureLabelFormat,
                     (index + 1).ToString(CultureInfo.CurrentCulture));
-            rows.Add(new InspectorInfoRowViewModel(label, BuildSkeletonStructureText(summaries[index])));
+            rows.Add(new InspectorInfoRowViewModel(
+                label,
+                _textFormatter.BuildSkeletonStructureText(summaries[index])));
 
             if (summaries[index].Format != SpineSkeletonAssetFormat.Json)
             {
@@ -325,7 +314,7 @@ internal sealed class SpineAssetGroupInspectorPresenter
 
             rows.Add(new InspectorInfoRowViewModel(
                 GetString(ResourceKeys.InspectorSpineGroupSkeletonConstraintLabel),
-                BuildSkeletonConstraintText(summaries[index])));
+                _textFormatter.BuildSkeletonConstraintText(summaries[index])));
         }
     }
 
@@ -364,21 +353,6 @@ internal sealed class SpineAssetGroupInspectorPresenter
                 regions.Length.ToString(CultureInfo.CurrentCulture)));
     }
 
-    private string BuildSummaryText(
-        SpineAssetGroupDto group,
-        SpineAssetGroupDetailsDto? details,
-        IReadOnlyList<SpineAssetGroupDiagnosticDto> diagnostics)
-    {
-        return _localizationService.GetFormattedString(
-            ResourceKeys.InspectorSpineGroupSummaryFormat,
-            group.SkeletonAssets.Count.ToString(CultureInfo.CurrentCulture),
-            group.AtlasAssets.Count.ToString(CultureInfo.CurrentCulture),
-            group.TexturePageAssets.Count.ToString(CultureInfo.CurrentCulture),
-            (details?.AtlasPages.Count ?? 0).ToString(CultureInfo.CurrentCulture),
-            (details is null ? 0 : CountAtlasRegions(details)).ToString(CultureInfo.CurrentCulture),
-            diagnostics.Count.ToString(CultureInfo.CurrentCulture));
-    }
-
     private void ApplyPreviewDiagnostic(
         InspectorPanelViewModel inspector,
         AssetPreviewDiagnosticDto diagnostic)
@@ -389,79 +363,6 @@ internal sealed class SpineAssetGroupInspectorPresenter
             diagnosticDetailText: LocalizedMessageDisplayFormatter.Format(
                 diagnostic.DetailMessage,
                 _localizationService));
-    }
-
-    private string ResolvePartRoleText(SpineAssetGroupPartRole role)
-    {
-        return role switch
-        {
-            SpineAssetGroupPartRole.Skeleton => GetString(ResourceKeys.InspectorSpineGroupPartRoleSkeleton),
-            SpineAssetGroupPartRole.Atlas => GetString(ResourceKeys.InspectorSpineGroupPartRoleAtlas),
-            SpineAssetGroupPartRole.TexturePage => GetString(ResourceKeys.InspectorSpineGroupPartRoleTexturePage),
-            _ => role.ToString()
-        };
-    }
-
-    private string BuildSkeletonStructureText(SpineSkeletonSummaryDto summary)
-    {
-        if (summary.Format == SpineSkeletonAssetFormat.Binary)
-        {
-            return GetString(ResourceKeys.InspectorSpineGroupSkeletonBinarySummaryText);
-        }
-
-        return _localizationService.GetFormattedString(
-            ResourceKeys.InspectorSpineGroupSkeletonStructureFormat,
-            ResolveSkeletonFormatText(summary.Format),
-            ResolveNullableCountText(summary.BoneCount),
-            ResolveNullableCountText(summary.SlotCount),
-            ResolveNullableCountText(summary.SkinCount),
-            ResolveNullableCountText(summary.AnimationCount));
-    }
-
-    private string BuildSkeletonConstraintText(SpineSkeletonSummaryDto summary)
-    {
-        return _localizationService.GetFormattedString(
-            ResourceKeys.InspectorSpineGroupSkeletonConstraintFormat,
-            ResolveNullableCountText(summary.EventCount),
-            ResolveNullableCountText(summary.IkConstraintCount),
-            ResolveNullableCountText(summary.TransformConstraintCount),
-            ResolveNullableCountText(summary.PathConstraintCount));
-    }
-
-    private string ResolveSkeletonFormatText(SpineSkeletonAssetFormat format)
-    {
-        return format switch
-        {
-            SpineSkeletonAssetFormat.Json => GetString(ResourceKeys.InspectorSpineGroupSkeletonFormatJson),
-            SpineSkeletonAssetFormat.Binary => GetString(ResourceKeys.InspectorSpineGroupSkeletonFormatBinary),
-            _ => GetString(ResourceKeys.InspectorSpineGroupSkeletonFormatUnknown)
-        };
-    }
-
-    private string ResolveNullableCountText(int? value)
-    {
-        return value.HasValue
-            ? value.Value.ToString(CultureInfo.CurrentCulture)
-            : GetString(ResourceKeys.InspectorSpineGroupSkeletonCountUnknownText);
-    }
-
-    private string ResolveAssetTypeDisplayName(AssetType assetType, string? assetTypeDisplayName)
-    {
-        if (!string.IsNullOrWhiteSpace(assetTypeDisplayName))
-        {
-            return assetTypeDisplayName.Trim();
-        }
-
-        return assetType switch
-        {
-            AssetType.Texture2D => GetString(ResourceKeys.AssetTypeDisplayTexture2D),
-            AssetType.TextAsset => GetString(ResourceKeys.AssetTypeDisplayTextAsset),
-            AssetType.Sprite => GetString(ResourceKeys.AssetTypeDisplaySprite),
-            AssetType.AudioClip => GetString(ResourceKeys.AssetTypeDisplayAudioClip),
-            AssetType.Mesh => GetString(ResourceKeys.AssetTypeDisplayMesh),
-            AssetType.Material => GetString(ResourceKeys.AssetTypeDisplayMaterial),
-            _ => GetString(ResourceKeys.AssetTypeDisplayUnknown)
-        };
     }
 
     private string ResolveBundleDisplayName(SpineAssetGroupPartDto part)

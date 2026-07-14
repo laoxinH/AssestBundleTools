@@ -94,10 +94,10 @@
                             <FontIcon
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
-                                FontFamily="Segoe MDL2 Assets"
+                                FontFamily="{StaticResource AppIconFontFamily}"
                                 FontSize="12"
                                 Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
-                                Glyph="&#xE8A5;" />
+                                Glyph="&#xE6E9;" />
                         </Border>
                         <StackPanel
                             Grid.Column="1"
@@ -216,10 +216,10 @@
                             <FontIcon
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
-                                FontFamily="Segoe MDL2 Assets"
+                                FontFamily="{StaticResource AppIconFontFamily}"
                                 FontSize="28"
                                 Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
-                                Glyph="&#xE8B7;" />
+                                Glyph="&#xE8EB;" />
                         </Border>
                         <TextBlock
                             x:Name="BundleEmptyStateTitleText"
@@ -274,10 +274,10 @@
                             <FontIcon
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
-                                FontFamily="Segoe MDL2 Assets"
+                                FontFamily="{StaticResource AppIconFontFamily}"
                                 FontSize="12"
                                 Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
-                                Glyph="&#xE8EF;" />
+                                Glyph="&#xE328;" />
                         </Border>
                         <StackPanel
                             Grid.Column="1"

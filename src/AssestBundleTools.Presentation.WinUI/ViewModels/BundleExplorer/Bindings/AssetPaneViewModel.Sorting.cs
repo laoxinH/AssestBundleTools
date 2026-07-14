@@ -2,9 +2,9 @@ namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Binding
 
 public sealed partial class AssetPaneViewModel
 {
-    private const string NeutralSortGlyph = "\uE8CB";
-    private const string AscendingSortGlyph = "\uE70E";
-    private const string DescendingSortGlyph = "\uE70D";
+    private const string NeutralSortGlyph = "\uE14F";
+    private const string AscendingSortGlyph = "\uE490";
+    private const string DescendingSortGlyph = "\uE488";
 
     private AssetPaneSortColumn _assetSortColumn;
     private AssetPaneSortDirection _assetSortDirection = AssetPaneSortDirection.Ascending;

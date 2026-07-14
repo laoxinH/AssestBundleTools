@@ -45,9 +45,9 @@
                 <FontIcon
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
-                    FontFamily="Segoe MDL2 Assets"
+                    FontFamily="{StaticResource AppIconFontFamily}"
                     FontSize="12"
-                    Glyph="&#xE700;" />
+                    Glyph="&#xEC9A;" />
             </Border>
 
             <TabView
@@ -178,9 +178,9 @@
                                     Style="{StaticResource WorkspaceOperationButtonStyle}">
                                     <StackPanel Orientation="Horizontal" Spacing="5">
                                         <FontIcon
-                                            FontFamily="Segoe MDL2 Assets"
+                                            FontFamily="{StaticResource AppIconFontFamily}"
                                             FontSize="12"
-                                            Glyph="&#xE896;" />
+                                            Glyph="&#xE0DD;" />
                                         <TextBlock x:Name="ExtractButtonText" />
                                     </StackPanel>
                                 </Button>
@@ -201,7 +201,7 @@
                                     ToolTipService.ToolTip="{x:Bind ViewModel.Inspector.ModifyButtonText, Mode=OneWay}">
                                     <StackPanel Orientation="Horizontal" Spacing="5">
                                         <FontIcon
-                                            FontFamily="Segoe MDL2 Assets"
+                                            FontFamily="{StaticResource AppIconFontFamily}"
                                             FontSize="12"
                                             Glyph="{x:Bind ViewModel.Inspector.ModifyButtonIconGlyph, Mode=OneWay}" />
                                         <TextBlock
@@ -228,7 +228,7 @@
                                     Visibility="{x:Bind ViewModel.Inspector.EditButtonVisibility, Mode=OneWay}">
                                     <StackPanel Orientation="Horizontal" Spacing="5">
                                         <FontIcon
-                                            FontFamily="Segoe MDL2 Assets"
+                                            FontFamily="{StaticResource AppIconFontFamily}"
                                             FontSize="12"
                                             Glyph="{x:Bind ViewModel.Inspector.EditButtonIconGlyph, Mode=OneWay}" />
                                         <TextBlock Text="{x:Bind ViewModel.Inspector.EditButtonText, Mode=OneWay}" />
@@ -247,9 +247,9 @@
                                     Style="{StaticResource WorkspaceOperationButtonStyle}">
                                     <StackPanel Orientation="Horizontal" Spacing="5">
                                         <FontIcon
-                                            FontFamily="Segoe MDL2 Assets"
+                                            FontFamily="{StaticResource AppIconFontFamily}"
                                             FontSize="12"
-                                            Glyph="&#xE74E;" />
+                                            Glyph="&#xEF99;" />
                                         <TextBlock x:Name="SaveSpriteEditButtonText" />
                                     </StackPanel>
                                 </Button>
@@ -267,9 +267,9 @@
                                     Style="{StaticResource WorkspaceOperationButtonStyle}">
                                     <StackPanel Orientation="Horizontal" Spacing="5">
                                         <FontIcon
-                                            FontFamily="Segoe MDL2 Assets"
+                                            FontFamily="{StaticResource AppIconFontFamily}"
                                             FontSize="12"
-                                            Glyph="&#xE72B;" />
+                                            Glyph="&#xE115;" />
                                         <TextBlock x:Name="ExitSpriteEditButtonText" />
                                     </StackPanel>
                                 </Button>
@@ -288,9 +288,9 @@
                                     Style="{StaticResource WorkspaceOperationButtonStyle}">
                                     <StackPanel Orientation="Horizontal" Spacing="5">
                                         <FontIcon
-                                            FontFamily="Segoe MDL2 Assets"
+                                            FontFamily="{StaticResource AppIconFontFamily}"
                                             FontSize="12"
-                                            Glyph="&#xE7A7;" />
+                                            Glyph="&#xE1A5;" />
                                         <TextBlock x:Name="UndoSpriteEditButtonText" />
                                     </StackPanel>
                                 </Button>
@@ -309,9 +309,9 @@
                                     Style="{StaticResource WorkspaceOperationButtonStyle}">
                                     <StackPanel Orientation="Horizontal" Spacing="5">
                                         <FontIcon
-                                            FontFamily="Segoe MDL2 Assets"
+                                            FontFamily="{StaticResource AppIconFontFamily}"
                                             FontSize="12"
-                                            Glyph="&#xE7A6;" />
+                                            Glyph="&#xE131;" />
                                         <TextBlock x:Name="RedoSpriteEditButtonText" />
                                     </StackPanel>
                                 </Button>
@@ -328,9 +328,9 @@
                                     Style="{StaticResource WorkspaceOperationButtonStyle}">
                                     <StackPanel Orientation="Horizontal" Spacing="5">
                                         <FontIcon
-                                            FontFamily="Segoe MDL2 Assets"
+                                            FontFamily="{StaticResource AppIconFontFamily}"
                                             FontSize="12"
-                                            Glyph="&#xE74E;" />
+                                            Glyph="&#xEF99;" />
                                         <TextBlock x:Name="SaveSpineEditButtonText" />
                                     </StackPanel>
                                 </Button>
@@ -348,9 +348,9 @@
                                     Style="{StaticResource WorkspaceOperationButtonStyle}">
                                     <StackPanel Orientation="Horizontal" Spacing="5">
                                         <FontIcon
-                                            FontFamily="Segoe MDL2 Assets"
+                                            FontFamily="{StaticResource AppIconFontFamily}"
                                             FontSize="12"
-                                            Glyph="&#xE72B;" />
+                                            Glyph="&#xE115;" />
                                         <TextBlock x:Name="ExitSpineEditButtonText" />
                                     </StackPanel>
                                 </Button>
@@ -369,9 +369,9 @@
                                     Style="{StaticResource WorkspaceOperationButtonStyle}">
                                     <StackPanel Orientation="Horizontal" Spacing="5">
                                         <FontIcon
-                                            FontFamily="Segoe MDL2 Assets"
+                                            FontFamily="{StaticResource AppIconFontFamily}"
                                             FontSize="12"
-                                            Glyph="&#xE7A7;" />
+                                            Glyph="&#xE1A5;" />
                                         <TextBlock x:Name="UndoSpineEditButtonText" />
                                     </StackPanel>
                                 </Button>
@@ -390,9 +390,9 @@
                                     Style="{StaticResource WorkspaceOperationButtonStyle}">
                                     <StackPanel Orientation="Horizontal" Spacing="5">
                                         <FontIcon
-                                            FontFamily="Segoe MDL2 Assets"
+                                            FontFamily="{StaticResource AppIconFontFamily}"
                                             FontSize="12"
-                                            Glyph="&#xE7A6;" />
+                                            Glyph="&#xE131;" />
                                         <TextBlock x:Name="RedoSpineEditButtonText" />
                                     </StackPanel>
                                 </Button>
@@ -414,9 +414,9 @@
                                             IsActive="{x:Bind ViewModel.IsTextEditBusy, Mode=OneWay}"
                                             Visibility="{x:Bind ViewModel.TextEditBusyVisibility, Mode=OneWay}" />
                                         <FontIcon
-                                            FontFamily="Segoe MDL2 Assets"
+                                            FontFamily="{StaticResource AppIconFontFamily}"
                                             FontSize="12"
-                                            Glyph="&#xE74E;"
+                                            Glyph="&#xEF99;"
                                             Visibility="{x:Bind ViewModel.SaveTextEditIconVisibility, Mode=OneWay}" />
                                         <TextBlock x:Name="SaveTextEditButtonText" />
                                     </StackPanel>
@@ -435,9 +435,9 @@
                                     Style="{StaticResource WorkspaceOperationButtonStyle}">
                                     <StackPanel Orientation="Horizontal" Spacing="5">
                                         <FontIcon
-                                            FontFamily="Segoe MDL2 Assets"
+                                            FontFamily="{StaticResource AppIconFontFamily}"
                                             FontSize="12"
-                                            Glyph="&#xE72B;" />
+                                            Glyph="&#xE115;" />
                                         <TextBlock x:Name="ExitTextEditButtonText" />
                                     </StackPanel>
                                 </Button>

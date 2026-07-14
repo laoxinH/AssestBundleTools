@@ -57,9 +57,9 @@
                 Style="{StaticResource SpineEditSmallTagButtonStyle}">
                 <StackPanel Orientation="Horizontal" Spacing="5">
                     <FontIcon
-                        FontFamily="Segoe MDL2 Assets"
+                        FontFamily="{StaticResource AppIconFontFamily}"
                         FontSize="12"
-                        Glyph="&#xE8B7;" />
+                        Glyph="&#xE8EB;" />
                     <TextBlock Text="{x:Bind ViewModel.BatchMatchButtonText, Mode=OneWay}" />
                 </StackPanel>
             </Button>
@@ -158,9 +158,9 @@
                                     Tag="{Binding}">
                                     <StackPanel Orientation="Horizontal" Spacing="5">
                                         <FontIcon
-                                            FontFamily="Segoe MDL2 Assets"
+                                            FontFamily="{StaticResource AppIconFontFamily}"
                                             FontSize="12"
-                                            Glyph="&#xE8E5;" />
+                                            Glyph="&#xE6F3;" />
                                         <TextBlock Text="{x:Bind SelectButtonText, Mode=OneWay}" />
                                     </StackPanel>
                                 </Button>

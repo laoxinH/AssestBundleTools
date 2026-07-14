@@ -120,7 +120,7 @@ public sealed class BundleExplorerAssetInspectorPresenterTests
         presenter.PresentAssetDocumentTab(assetTab, details, canEdit: true, isBusy: false);
 
         Assert.Equal(ResourceKeys.InspectorReplaceFileButton, assetTab.Inspector.ModifyButtonText);
-        Assert.Equal("\uE8AC", assetTab.Inspector.ModifyButtonIconGlyph);
+        Assert.Equal("\uEF5D", assetTab.Inspector.ModifyButtonIconGlyph);
     }
 
     [Fact]
@@ -147,7 +147,7 @@ public sealed class BundleExplorerAssetInspectorPresenterTests
         presenter.PresentAssetDocumentTab(assetTab, details, canEdit: true, isBusy: false);
 
         Assert.Equal(ResourceKeys.InspectorModifyButton, assetTab.Inspector.ModifyButtonText);
-        Assert.Equal("\uE70F", assetTab.Inspector.ModifyButtonIconGlyph);
+        Assert.Equal("\uE837", assetTab.Inspector.ModifyButtonIconGlyph);
     }
 
     [Fact]
@@ -185,7 +185,7 @@ public sealed class BundleExplorerAssetInspectorPresenterTests
         Assert.True(groupTab.Inspector.CanModify);
         Assert.False(groupTab.Inspector.CanSelectFileReplacementSource);
         Assert.Equal(ResourceKeys.InspectorModifyButton, groupTab.Inspector.ModifyButtonText);
-        Assert.Equal("\uE70F", groupTab.Inspector.ModifyButtonIconGlyph);
+        Assert.Equal("\uE837", groupTab.Inspector.ModifyButtonIconGlyph);
 
         presenter.SyncInspectorActionStates(groupTab.Inspector, groupTab, isBusy: true);
 

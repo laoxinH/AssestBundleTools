@@ -17,7 +17,7 @@ public sealed class ShellBackgroundTaskItemViewModel : ObservableObject
     private string _detailText = string.Empty;
     private string _statusText = string.Empty;
     private string _progressText = string.Empty;
-    private string _statusGlyph = "\uE823";
+    private string _statusGlyph = "\uE508";
     private double _progressValue;
     private bool _isProgressIndeterminate;
     private bool _canCancel;
@@ -178,9 +178,9 @@ public sealed class ShellBackgroundTaskItemViewModel : ObservableObject
     private static string ResolveStatusGlyph(BackgroundWorkTaskStatus status) =>
         status switch
         {
-            BackgroundWorkTaskStatus.Running => "\uE895",
-            BackgroundWorkTaskStatus.CancellationRequested => "\uE711",
-            _ => "\uE823"
+            BackgroundWorkTaskStatus.Running => "\uE171",
+            BackgroundWorkTaskStatus.CancellationRequested => "\uE6D3",
+            _ => "\uE508"
         };
 
     private static string ResolveProfileTitleKey(BackgroundWorkProfile profile) =>

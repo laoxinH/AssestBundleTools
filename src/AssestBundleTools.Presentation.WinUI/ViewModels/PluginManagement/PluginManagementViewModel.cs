@@ -147,7 +147,7 @@ public sealed partial class PluginManagementViewModel : ObservableObject
 
     public bool HasSelectedPlugin => SelectedPlugin is not null;
 
-    public string SelectedPluginIconGlyph => SelectedPlugin?.IsDecryptor == true ? "\uE8B7" : "\uE8A5";
+    public string SelectedPluginIconGlyph => SelectedPlugin?.IsDecryptor == true ? "\uE8EB" : "\uE6E9";
 
     public bool CanEditSelectedPlugin => SelectedPlugin?.CanEdit == true;
 

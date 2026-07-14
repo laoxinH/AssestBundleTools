@@ -20,10 +20,10 @@ public enum InspectorPreviewSpriteDisplayMode
 /// </summary>
 public sealed class InspectorPreviewImageDisplayOptionsViewModel : ObservableObject
 {
-    private const string CheckerboardBackgroundGlyphValue = "\uECA5";
-    private const string SolidBackgroundGlyphValue = "\uE790";
-    private const string SpriteCropResultGlyphValue = "\uEB9F";
-    private const string SpriteCropPreviewGlyphValue = "\uE8A9";
+    private const string CheckerboardBackgroundGlyphValue = "\uE9C1";
+    private const string SolidBackgroundGlyphValue = "\uE566";
+    private const string SpriteCropResultGlyphValue = "\uEA6A";
+    private const string SpriteCropPreviewGlyphValue = "\uE9C1";
 
     private InspectorPreviewImageBackgroundMode _backgroundMode = InspectorPreviewImageBackgroundMode.Checkerboard;
     private InspectorPreviewSpriteDisplayMode _spriteDisplayMode = InspectorPreviewSpriteDisplayMode.CropPreview;

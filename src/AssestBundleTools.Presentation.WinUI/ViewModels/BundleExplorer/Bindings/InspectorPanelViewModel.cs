@@ -26,9 +26,9 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
     private string _replacementStatusText = string.Empty;
     private string _changeSummaryText = string.Empty;
     private string _modifyButtonText = string.Empty;
-    private string _modifyButtonIconGlyph = "\uE8AC";
+    private string _modifyButtonIconGlyph = "\uEF5D";
     private string _editButtonText = string.Empty;
-    private string _editButtonIconGlyph = "\uE70F";
+    private string _editButtonIconGlyph = "\uE837";
     private bool _canExtract;
     private bool _canSelectFileReplacementSource;
     private bool _canSelectReplacementSource;
@@ -291,9 +291,9 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
         ReplacementStatusText = string.Empty;
         ChangeSummaryText = string.Empty;
         ModifyButtonText = string.Empty;
-        ModifyButtonIconGlyph = "\uE8AC";
+        ModifyButtonIconGlyph = "\uEF5D";
         EditButtonText = string.Empty;
-        EditButtonIconGlyph = "\uE70F";
+        EditButtonIconGlyph = "\uE837";
         CanExtract = false;
         CanSelectFileReplacementSource = false;
         CanSelectReplacementSource = false;
@@ -363,9 +363,9 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
         ReplacementStatusText = replacementStatusText;
         ChangeSummaryText = changeSummaryText;
         ModifyButtonText = modifyButtonText ?? string.Empty;
-        ModifyButtonIconGlyph = modifyButtonIconGlyph ?? "\uE8AC";
+        ModifyButtonIconGlyph = modifyButtonIconGlyph ?? "\uEF5D";
         EditButtonText = editButtonText ?? string.Empty;
-        EditButtonIconGlyph = editButtonIconGlyph ?? "\uE70F";
+        EditButtonIconGlyph = editButtonIconGlyph ?? "\uE837";
         CanExtract = canExtract;
         CanSelectFileReplacementSource = canSelectFileReplacementSource;
         CanSelectReplacementSource = canSelectReplacementSource;

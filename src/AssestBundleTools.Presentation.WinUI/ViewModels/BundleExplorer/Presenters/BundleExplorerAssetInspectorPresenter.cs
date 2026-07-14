@@ -18,8 +18,8 @@ namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Present
 /// </summary>
 internal sealed class BundleExplorerAssetInspectorPresenter
 {
-    private const string EditGlyph = "\uE70F";
-    private const string ReplaceFileGlyph = "\uE8AC";
+    private const string EditGlyph = "\uE837";
+    private const string ReplaceFileGlyph = "\uEF5D";
 
     private static readonly AssetType[] PreferredAssetTypeOrder =
     [

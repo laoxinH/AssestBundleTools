@@ -239,10 +239,10 @@ public sealed partial class AppNotificationPresenter : UserControl
 
         var (glyph, accentColor, iconBackgroundColor, iconForegroundColor) = severity switch
         {
-            AppNotificationSeverity.Success => ("\uE73E", ColorHelper.FromArgb(255, 45, 125, 70), ColorHelper.FromArgb(255, 232, 245, 233), ColorHelper.FromArgb(255, 45, 125, 70)),
-            AppNotificationSeverity.Warning => ("\uE7BA", ColorHelper.FromArgb(255, 198, 124, 18), ColorHelper.FromArgb(255, 255, 244, 220), ColorHelper.FromArgb(255, 140, 84, 0)),
-            AppNotificationSeverity.Error => ("\uEA39", ColorHelper.FromArgb(255, 196, 43, 28), ColorHelper.FromArgb(255, 253, 232, 232), ColorHelper.FromArgb(255, 164, 38, 44)),
-            _ => ("\uE946", ColorHelper.FromArgb(255, 79, 107, 237), ColorHelper.FromArgb(255, 236, 242, 255), ColorHelper.FromArgb(255, 58, 91, 201))
+            AppNotificationSeverity.Success => ("\uE460", ColorHelper.FromArgb(255, 45, 125, 70), ColorHelper.FromArgb(255, 232, 245, 233), ColorHelper.FromArgb(255, 45, 125, 70)),
+            AppNotificationSeverity.Warning => ("\uF561", ColorHelper.FromArgb(255, 198, 124, 18), ColorHelper.FromArgb(255, 255, 244, 220), ColorHelper.FromArgb(255, 140, 84, 0)),
+            AppNotificationSeverity.Error => ("\uE877", ColorHelper.FromArgb(255, 196, 43, 28), ColorHelper.FromArgb(255, 253, 232, 232), ColorHelper.FromArgb(255, 164, 38, 44)),
+            _ => ("\uEA88", ColorHelper.FromArgb(255, 79, 107, 237), ColorHelper.FromArgb(255, 236, 242, 255), ColorHelper.FromArgb(255, 58, 91, 201))
         };
 
         NotificationAccentBar.Background = new SolidColorBrush(accentColor);
