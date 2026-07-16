@@ -16,7 +16,6 @@ internal sealed class AssetPaneDragExportSourceCoordinator
     private readonly Func<object, Task<AssetPaneDragExportPayload?>> _prepareAsync;
     private readonly Func<string, Task> _cleanupAsync;
     private readonly Dictionary<ListViewItem, object> _itemsByContainer = [];
-    private string? _activeStagingSessionPath;
 
     public AssetPaneDragExportSourceCoordinator(
         ListView assetListView,
@@ -52,7 +51,6 @@ internal sealed class AssetPaneDragExportSourceCoordinator
         {
             container.CanDrag = false;
             container.DragStarting -= OnDragStarting;
-            container.DropCompleted -= OnDropCompleted;
             _itemsByContainer.Remove(container);
             return;
         }
@@ -74,7 +72,6 @@ internal sealed class AssetPaneDragExportSourceCoordinator
     private void ConfigureContainer(ListViewItem container, object? item)
     {
         container.DragStarting -= OnDragStarting;
-        container.DropCompleted -= OnDropCompleted;
 
         if (item is null || !CanExport(item))
         {
@@ -86,59 +83,51 @@ internal sealed class AssetPaneDragExportSourceCoordinator
         _itemsByContainer[container] = item;
         container.CanDrag = _canStartDrag();
         container.DragStarting += OnDragStarting;
-        container.DropCompleted += OnDropCompleted;
     }
 
-    private async void OnDragStarting(UIElement sender, DragStartingEventArgs args)
+    private void OnDragStarting(UIElement sender, DragStartingEventArgs args)
     {
-        var deferral = args.GetDeferral();
+        if (!_canStartDrag() ||
+            sender is not ListViewItem container ||
+            !_itemsByContainer.TryGetValue(container, out var item))
+        {
+            args.Cancel = true;
+            return;
+        }
+
+        var payloadTask = new Lazy<Task<AssetPaneDragExportPayload?>>(
+            () => _prepareAsync(item),
+            LazyThreadSafetyMode.ExecutionAndPublication);
+        args.Data.RequestedOperation = DataPackageOperation.Copy;
+        args.Data.SetDataProvider(
+            StandardDataFormats.StorageItems,
+            request => ProvideStorageItemsAsync(payloadTask, request));
+    }
+
+    private async void ProvideStorageItemsAsync(
+        Lazy<Task<AssetPaneDragExportPayload?>> payloadTask,
+        DataProviderRequest request)
+    {
+        var deferral = request.GetDeferral();
+        AssetPaneDragExportPayload? payload = null;
         try
         {
-            if (!_canStartDrag() ||
-                sender is not ListViewItem container ||
-                !_itemsByContainer.TryGetValue(container, out var item))
+            payload = await payloadTask.Value;
+            if (payload is { StorageItems.Count: > 0 })
             {
-                args.Cancel = true;
-                return;
+                request.SetData(payload.StorageItems);
             }
-
-            // Windows 资源管理器可能在 DropCompleted 后延迟消费文件，旧会话交给过期清理。
-            _activeStagingSessionPath = null;
-            var payload = await _prepareAsync(item);
-            if (payload is null || payload.StorageItems.Count == 0)
-            {
-                args.Cancel = true;
-                return;
-            }
-
-            _activeStagingSessionPath = payload.StagingSessionPath;
-            args.Data.RequestedOperation = DataPackageOperation.Copy;
-            args.Data.SetStorageItems(payload.StorageItems);
         }
         catch
         {
-            args.Cancel = true;
-            await CleanupActiveSessionAsync();
+            if (payload is not null)
+            {
+                await _cleanupAsync(payload.StagingSessionPath);
+            }
         }
         finally
         {
             deferral.Complete();
-        }
-    }
-
-    private void OnDropCompleted(UIElement sender, DropCompletedEventArgs args)
-    {
-        // 这里只释放源端引用，不能删除资源管理器仍可能延迟读取或重试的暂存项。
-        _activeStagingSessionPath = null;
-    }
-
-    private async Task CleanupActiveSessionAsync()
-    {
-        var stagingSessionPath = _activeStagingSessionPath;
-        _activeStagingSessionPath = null;
-        if (!string.IsNullOrWhiteSpace(stagingSessionPath))
-        {
-            await _cleanupAsync(stagingSessionPath);
         }
     }
 

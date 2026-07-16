@@ -413,7 +413,7 @@ BackgroundWorkProgress
 接入方式：
 
 1. 单资源提取和单 Spine 组提取在用户完成保存位置 / 目录选择后必须提交可见后台任务。当前实现复用 `BatchExtraction` profile 的单项任务壳，以便统一状态条、取消、进度和操作变更通知；后续若恢复独立 `SingleExtraction` profile，也必须保持同样的后台与状态投影语义，不能回退为 UI 线程直接等待。
-2. 资产列表拖出提取同样提交上述单项可见任务。WinUI `DragStarting` 只持有异步 deferral 等待任务结果并组装 Windows `DataPackage`，不得在 UI 线程直接解析或转换资产；取消拖放不推断或撤销已经成功提交的 Application 提取事实。
+2. 资产列表拖出提取同样提交上述单项可见任务。WinUI `DragStarting` 只注册 `DataPackage.SetDataProvider` 并立即返回，目标请求 `StorageItems` 时再通过 provider deferral 等待单项任务结果；不得在拖拽启动回调或 UI 线程直接解析、转换资产。目标未请求数据时不启动提取；取消拖放不推断或撤销已经成功提交的 Application 提取事实。
 2. 普通资源多选和 Spine 组多选提交 `BatchExtraction`。
 3. 提取内部继续复用 Application 提取命令和预览 / 导出载荷管线。
 4. 每个成功导出的组成资源按操作记录模型追加 `ExtractAsset`，批量或 Spine 组入口追加 `ExtractBatch` 汇总。

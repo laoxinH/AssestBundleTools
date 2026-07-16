@@ -71,33 +71,23 @@ public sealed class AssetPaneViewSelectionContractTests
     }
 
     [Fact]
-    public void AssetPaneDragExport_ShouldRetainDeliveredStagingSessionUntilExpiration()
+    public void AssetPaneDragExport_ShouldUseDelayedProvider_AndRetainDeliveredStagingSession()
     {
         var repositoryRoot = FindRepositoryRoot();
         var sourceCoordinator = File.ReadAllText(
-            Path.Combine(
-                repositoryRoot,
-                "src",
-                "AssestBundleTools.Presentation.WinUI",
-                "Views",
-                "BundleExplorer",
-                "Controls",
-                "AssetPaneDragExportSourceCoordinator.cs"));
+            Path.Combine(repositoryRoot, "src", "AssestBundleTools.Presentation.WinUI", "Views",
+                "BundleExplorer", "Controls", "AssetPaneDragExportSourceCoordinator.cs"));
         var stagingService = File.ReadAllText(
-            Path.Combine(
-                repositoryRoot,
-                "src",
-                "AssestBundleTools.Presentation.WinUI",
-                "Views",
-                "BundleExplorer",
-                "Coordinators",
-                "AssetDragExportStagingService.cs"));
-        var dropCompletedHandler = sourceCoordinator[
-            sourceCoordinator.IndexOf("private void OnDropCompleted", StringComparison.Ordinal)..
-            sourceCoordinator.IndexOf("private async Task CleanupActiveSessionAsync", StringComparison.Ordinal)];
+            Path.Combine(repositoryRoot, "src", "AssestBundleTools.Presentation.WinUI", "Views",
+                "BundleExplorer", "Coordinators", "AssetDragExportStagingService.cs"));
 
-        Assert.Contains("_activeStagingSessionPath = null;", dropCompletedHandler);
-        Assert.DoesNotContain("CleanupActiveSessionAsync", dropCompletedHandler);
+        Assert.Contains("SetDataProvider(", sourceCoordinator);
+        Assert.Contains("StandardDataFormats.StorageItems", sourceCoordinator);
+        Assert.Contains("request.GetDeferral()", sourceCoordinator);
+        Assert.Contains("request.SetData(payload.StorageItems)", sourceCoordinator);
+        Assert.Contains("LazyThreadSafetyMode.ExecutionAndPublication", sourceCoordinator);
+        Assert.DoesNotContain("args.GetDeferral()", sourceCoordinator);
+        Assert.DoesNotContain("DropCompleted +=", sourceCoordinator);
         Assert.Contains("TimeSpan.FromHours(24)", stagingService);
         Assert.Contains("PruneStaleSessions(rootPath)", stagingService);
     }

@@ -375,7 +375,7 @@ items[]
 
 - 普通资产只有在 Application 读模型标记为可提取时才是拖拽源；拖出必须复用单资源 `ExtractAssetCommand`，不能在 Presentation 重新实现格式转换或直接读取 bundle。
 - Spine 资源组在至少包含一个 skeleton、atlas 或 texture page 组成资源时可以拖出；拖出必须复用单组 `ExtractSpineAssetGroupCommand`，并以组目录作为 Windows 拖放项，保证整组文件结构不被打散。
-- 拖拽开始后通过 WinUI 异步拖放 deferral 等待现有可见 `BatchExtraction` 后台任务完成，再把输出文件或目录写入 `DataPackage`。提取失败、取消或没有产生真实输出时取消本次拖放，并通过结构化错误、本地化 toast 与诊断日志反馈。
+- `DragStarting` 只能立即声明 `StorageItems` 格式并注册 `DataPackage.SetDataProvider` 延迟数据提供器，不能持有 deferral 等待提取完成；目标真正请求数据时再提交现有可见 `BatchExtraction` 后台任务并返回输出文件或目录。每次拖拽必须复用同一个惰性准备任务，避免资源管理器重复请求格式时重复提取。提取失败、取消或没有产生真实输出时不返回数据，并通过结构化错误、本地化 toast 与诊断日志反馈。
 - 拖出使用应用临时目录作为中转。临时目录只承担 Windows 拖放数据传递，不写入工作区元数据；Windows 资源管理器可能在 `DropCompleted` 后才延迟读取或重试复制，因此成功交付的数据不能在拖放结束时立即删除，只能由后续拖出会话按保留期清理过期目录。准备失败且尚未交付给 Windows 的目录可以立即清理。
 - 拖出提取仍追加既有 `ExtractAsset` / Spine 组 `ExtractBatch` 操作记录并触发工作区操作变更通知；它不是批量提取，因此不生成 `_abt-export-manifest.json`。
 - 多选模式继续保留框选 / 划选语义，行拖出只在普通单选浏览模式启用，避免和现有多选拖动手势冲突。
