@@ -35,6 +35,7 @@ public sealed partial class AssetPaneView : UserControl
     public AssetPaneView()
     {
         InitializeComponent();
+        InitializeDragExport();
         _searchCoordinator = new AssetPaneSearchViewCoordinator(
             SearchHost,
             SearchTranslateTransform,

@@ -37,6 +37,11 @@ public sealed class SpineAssetGroupEntryViewModel : ObservableObject
 
     public string StateText { get; }
 
+    public bool CanDragExport =>
+        Item.SkeletonAssets.Count > 0 ||
+        Item.AtlasAssets.Count > 0 ||
+        Item.TexturePageAssets.Count > 0;
+
     public bool IsSelected
     {
         get => _isSelected;

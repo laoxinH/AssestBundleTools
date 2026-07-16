@@ -20,4 +20,5 @@ public sealed record AssetListItemDto(
     DateTimeOffset? LastExtractedAtUtc = null,
     long PathId = 0,
     string? DisplayName = null,
-    string? ExportFileName = null);
+    string? ExportFileName = null,
+    bool CanExtract = false);

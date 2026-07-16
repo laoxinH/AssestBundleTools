@@ -5,6 +5,7 @@ using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
 using AssestBundleTools.Presentation.WinUI.Views;
 using AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls;
+using AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Coordinators;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
@@ -57,6 +58,18 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
 
         InitializeComponent();
         RegisterWorkspaceImportDropHandlers();
+
+        _assetDragExportCoordinator = new BundleExplorerAssetDragExportCoordinator(
+            App.CurrentApp.WorkspaceAssetOperationGateway,
+            App.CurrentApp.AppLogService,
+            App.CurrentApp.AppNotificationService,
+            App.CurrentApp.LocalizationService,
+            App.CurrentApp.BackgroundTaskRunner,
+            App.CurrentApp.AppBackgroundTaskStatusService,
+            App.CurrentApp.WorkspaceOperationChangeNotifier,
+            App.CurrentApp.BackgroundWorkScheduler);
+        PrimaryAssetPaneView.DragExportRequested += OnPrimaryPaneDragExportRequested;
+        PrimaryAssetPaneView.DragExportCleanupRequested += OnPrimaryPaneDragExportCleanupRequested;
 
         _chromeCoordinator = new BundleExplorerPageChromeCoordinator(this);
         _navigationCoordinator = new BundleExplorerPageNavigationCoordinator(this);

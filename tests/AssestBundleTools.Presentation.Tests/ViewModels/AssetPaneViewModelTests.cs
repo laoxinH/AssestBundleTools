@@ -493,11 +493,26 @@ public sealed class AssetPaneViewModelTests
         Assert.Null(viewModel.SelectedSpineGroup);
     }
 
+    [Fact]
+    public void DragExportEligibility_ShouldFollowAssetCapability_AndSpineGroupParts()
+    {
+        var extractableAsset = CreateAssetEntry("extractable", canExtract: true);
+        var unsupportedAsset = CreateAssetEntry("unsupported", canExtract: false);
+        var populatedSpineGroup = CreateSpineGroupEntry("hero");
+        var emptySpineGroup = CreateSpineGroupEntry("empty", hasParts: false);
+
+        Assert.True(extractableAsset.CanDragExport);
+        Assert.False(unsupportedAsset.CanDragExport);
+        Assert.True(populatedSpineGroup.CanDragExport);
+        Assert.False(emptySpineGroup.CanDragExport);
+    }
+
     private static AssetListEntryViewModel CreateAssetEntry(
         string assetId,
         bool isModified = false,
         long sizeInBytes = 128,
-        long? preferredDisplaySizeInBytes = null)
+        long? preferredDisplaySizeInBytes = null,
+        bool canExtract = true)
     {
         return new AssetListEntryViewModel(
             new AssetListItemDto(
@@ -509,7 +524,8 @@ public sealed class AssetPaneViewModelTests
                 SizeInBytes: sizeInBytes,
                 PreferredDisplaySizeInBytes: preferredDisplaySizeInBytes,
                 HasPreview: true,
-                IsModified: isModified),
+                IsModified: isModified,
+                CanExtract: canExtract),
             "Texture2D",
             "128 B",
             isModified ? "Modified" : "Original");
@@ -546,7 +562,7 @@ public sealed class AssetPaneViewModelTests
             Dependencies: Array.Empty<AssetDependencyDto>());
     }
 
-    private static SpineAssetGroupEntryViewModel CreateSpineGroupEntry(string groupId)
+    private static SpineAssetGroupEntryViewModel CreateSpineGroupEntry(string groupId, bool hasParts = true)
     {
         return new SpineAssetGroupEntryViewModel(
             new SpineAssetGroupDto(
@@ -554,18 +570,19 @@ public sealed class AssetPaneViewModelTests
                 new BundleId("bundle-ui"),
                 "hero",
                 "characters/hero",
-                SkeletonAssets:
-                [
-                    new SpineAssetGroupPartDto(
-                        SpineAssetGroupPartRole.Skeleton,
-                        new BundleId("bundle-ui"),
-                        new AssetId("hero-json"),
-                        "ui.ab",
-                        "hero.json",
-                        "Assets/hero.json",
-                        AssetType.TextAsset,
-                        "TextAsset")
-                ],
+                SkeletonAssets: hasParts
+                    ? [
+                        new SpineAssetGroupPartDto(
+                            SpineAssetGroupPartRole.Skeleton,
+                            new BundleId("bundle-ui"),
+                            new AssetId("hero-json"),
+                            "ui.ab",
+                            "hero.json",
+                            "Assets/hero.json",
+                            AssetType.TextAsset,
+                            "TextAsset")
+                    ]
+                    : Array.Empty<SpineAssetGroupPartDto>(),
                 AtlasAssets: Array.Empty<SpineAssetGroupPartDto>(),
                 TexturePageAssets: Array.Empty<SpineAssetGroupPartDto>(),
                 Diagnostics: Array.Empty<SpineAssetGroupDiagnosticDto>()),

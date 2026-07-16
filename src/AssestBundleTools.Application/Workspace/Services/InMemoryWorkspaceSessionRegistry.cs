@@ -138,7 +138,8 @@ public sealed partial class InMemoryWorkspaceSessionRegistry : IWorkspaceSession
                     IsModified: asset.IsModified,
                     AssetTypeDisplayName: asset.AssetTypeDisplayName,
                     LastExtractedAtUtc: asset.LastExtractedAtUtc,
-                    PathId: asset.PathId))
+                    PathId: asset.PathId,
+                    CanExtract: true))
                 .ToArray();
 
             assetListResult = new AssetListResultDto(

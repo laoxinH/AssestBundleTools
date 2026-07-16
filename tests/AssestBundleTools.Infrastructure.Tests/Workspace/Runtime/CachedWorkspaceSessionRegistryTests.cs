@@ -279,7 +279,7 @@ internal static class CachedWorkspaceSessionRegistryTests
             Assets:
             [
                 CreateAsset("texture-1", "HeroTexture", AssetType.Texture2D, "Texture2D", pathId: 10),
-                CreateAsset("material-1", "HeroMaterial", AssetType.Material, "Material", pathId: 20),
+                CreateAsset("material-1", "HeroMaterial", AssetType.Material, "Material", pathId: 20, canExtract: false),
                 CreateAsset(shaderId, "HeroShader", AssetType.Unknown, "Shader", pathId: 30),
                 CreateAsset(shaderVariantId, "HeroShaderVariant", AssetType.Unknown, "shader", pathId: 31),
                 CreateAsset("renderer-1", "HeroRenderer", AssetType.Unknown, "MeshRenderer", pathId: 40, includeInList: false)
@@ -312,6 +312,12 @@ internal static class CachedWorkspaceSessionRegistryTests
 
         TestAssert.True(hasAllAssets, "Asset list should be available.");
         TestAssert.Equal(4, allAssets!.TotalCount, "Hidden renderer helper nodes should not be counted as visible assets.");
+        TestAssert.True(
+            allAssets.Items.Single(item => item.AssetId.Value == "texture-1").CanExtract,
+            "Extractable cache entries should retain their capability in the asset list projection.");
+        TestAssert.False(
+            allAssets.Items.Single(item => item.AssetId.Value == "material-1").CanExtract,
+            "Unsupported cache entries should remain non-extractable in the asset list projection.");
         var shaderFacet = allAssets.TypeFacets!.FirstOrDefault(facet =>
             facet.AssetType == AssetType.Unknown &&
             string.Equals(facet.AssetTypeDisplayName, "Shader", StringComparison.OrdinalIgnoreCase));

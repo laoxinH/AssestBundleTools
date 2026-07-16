@@ -277,5 +277,6 @@ public sealed partial class AssetPaneView
         SpineGroupListView.SelectionMode = useSpineGroupMultiSelection
             ? ListViewSelectionMode.Multiple
             : ListViewSelectionMode.Extended;
+        _dragExportSourceCoordinator?.UpdateContainerEligibility();
     }
 }

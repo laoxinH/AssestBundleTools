@@ -480,6 +480,10 @@ public static class ResourceKeys
     public const string BundleExplorerLogAssetPreviewFailedFormat = "BundleExplorer.Log.AssetPreviewFailed.Format";
     public const string BundleExplorerLogFilterApplied = "BundleExplorer.Log.FilterApplied";
     public const string BundleExplorerLogAssetExtracted = "BundleExplorer.Log.AssetExtracted";
+    public const string BundleExplorerLogDragExportPreparedFormat = "BundleExplorer.Log.DragExportPrepared.Format";
+    public const string BundleExplorerLogDragExportMissingOutputFormat = "BundleExplorer.Log.DragExportMissingOutput.Format";
+    public const string BundleExplorerLogDragExportUnexpectedFailureFormat = "BundleExplorer.Log.DragExportUnexpectedFailure.Format";
+    public const string BundleExplorerLogDragExportCleanupFailedFormat = "BundleExplorer.Log.DragExportCleanupFailed.Format";
     public const string BundleExplorerLogAssetExtractionSelectionCancelled = "BundleExplorer.Log.AssetExtractionSelectionCancelled";
     public const string BundleExplorerLogBatchAssetExtractionSelectionCancelled = "BundleExplorer.Log.BatchAssetExtractionSelectionCancelled";
     public const string BundleExplorerLogBatchAssetsExtracted = "BundleExplorer.Log.BatchAssetsExtracted";
@@ -509,6 +513,7 @@ public static class ResourceKeys
     public const string BundleExplorerNotificationResolvedAssetBundleUnavailableFormat = "BundleExplorer.Notification.ResolvedAssetBundleUnavailable.Format";
     public const string BundleExplorerNotificationResolvedAssetNavigationUnavailableFormat = "BundleExplorer.Notification.ResolvedAssetNavigationUnavailable.Format";
     public const string BundleExplorerNotificationAssetExtracted = "BundleExplorer.Notification.AssetExtracted";
+    public const string BundleExplorerNotificationDragExportFailed = "BundleExplorer.Notification.DragExportFailed";
     public const string BundleExplorerNotificationBatchAssetsExtracted = "BundleExplorer.Notification.BatchAssetsExtracted";
     public const string BundleExplorerStatusLoadPreviewFormat = "BundleExplorer.Status.LoadPreview.Format";
     public const string BundleExplorerStatusExtractSelectedAssets = "BundleExplorer.Status.ExtractSelectedAssets";

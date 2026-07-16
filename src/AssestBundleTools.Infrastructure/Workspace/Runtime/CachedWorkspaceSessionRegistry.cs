@@ -166,7 +166,8 @@ public sealed partial class CachedWorkspaceSessionRegistry :
                     IsModified: asset.IsModified,
                     AssetTypeDisplayName: asset.AssetTypeDisplayName,
                     LastExtractedAtUtc: asset.LastExtractedAtUtc,
-                    PathId: asset.PathId))
+                    PathId: asset.PathId,
+                    CanExtract: asset.CanExtract))
                 .ToArray();
 
             assetListResult = new AssetListResultDto(

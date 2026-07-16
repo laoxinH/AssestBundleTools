@@ -62,6 +62,8 @@ public sealed class AssetListEntryViewModel : ObservableObject
     /// </summary>
     public string DisplayNameToolTipText => Item.Name;
 
+    public bool CanDragExport => Item.CanExtract;
+
     /// <summary>
     /// 行级选中态由窗格 ViewModel 统一维护，
     /// 这样资产列表可以稳定复用“浅背景 + 左侧强调条”的选中语言。

@@ -3812,6 +3812,18 @@
   <data name="BundleExplorer.Log.AssetExtracted" xml:space="preserve">
     <value>Extracted asset "{0}". Output path: {1}</value>
   </data>
+  <data name="BundleExplorer.Log.DragExportPrepared.Format" xml:space="preserve">
+    <value>Prepared "{0}" for drag export. Windows drag item: {1}.</value>
+  </data>
+  <data name="BundleExplorer.Log.DragExportMissingOutput.Format" xml:space="preserve">
+    <value>Drag export for "{0}" did not produce a usable output item.</value>
+  </data>
+  <data name="BundleExplorer.Log.DragExportUnexpectedFailure.Format" xml:space="preserve">
+    <value>An unexpected error occurred while preparing "{0}" for drag export: {1}.</value>
+  </data>
+  <data name="BundleExplorer.Log.DragExportCleanupFailed.Format" xml:space="preserve">
+    <value>Failed to clean up the drag export staging directory: {0}.</value>
+  </data>
   <data name="BundleExplorer.Log.AssetExtractionSelectionCancelled" xml:space="preserve">
     <value>Cancelled selecting an extraction output path for "{0}".</value>
   </data>
@@ -3898,6 +3910,9 @@
   </data>
   <data name="BundleExplorer.Notification.AssetExtracted" xml:space="preserve">
     <value>Asset extracted: {0}</value>
+  </data>
+  <data name="BundleExplorer.Notification.DragExportFailed" xml:space="preserve">
+    <value>Could not prepare the drag export. See diagnostics for details.</value>
   </data>
   <data name="BundleExplorer.Notification.BatchAssetsExtracted" xml:space="preserve">
     <value>Exported {0} assets.</value>
