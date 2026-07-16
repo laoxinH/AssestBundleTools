@@ -102,7 +102,8 @@ internal sealed class AssetPaneDragExportSourceCoordinator
                 return;
             }
 
-            await CleanupActiveSessionAsync();
+            // Windows 资源管理器可能在 DropCompleted 后延迟消费文件，旧会话交给过期清理。
+            _activeStagingSessionPath = null;
             var payload = await _prepareAsync(item);
             if (payload is null || payload.StorageItems.Count == 0)
             {
@@ -125,9 +126,10 @@ internal sealed class AssetPaneDragExportSourceCoordinator
         }
     }
 
-    private async void OnDropCompleted(UIElement sender, DropCompletedEventArgs args)
+    private void OnDropCompleted(UIElement sender, DropCompletedEventArgs args)
     {
-        await CleanupActiveSessionAsync();
+        // 这里只释放源端引用，不能删除资源管理器仍可能延迟读取或重试的暂存项。
+        _activeStagingSessionPath = null;
     }
 
     private async Task CleanupActiveSessionAsync()

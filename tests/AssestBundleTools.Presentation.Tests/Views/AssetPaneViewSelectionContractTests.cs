@@ -71,6 +71,38 @@ public sealed class AssetPaneViewSelectionContractTests
     }
 
     [Fact]
+    public void AssetPaneDragExport_ShouldRetainDeliveredStagingSessionUntilExpiration()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var sourceCoordinator = File.ReadAllText(
+            Path.Combine(
+                repositoryRoot,
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "Controls",
+                "AssetPaneDragExportSourceCoordinator.cs"));
+        var stagingService = File.ReadAllText(
+            Path.Combine(
+                repositoryRoot,
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "Views",
+                "BundleExplorer",
+                "Coordinators",
+                "AssetDragExportStagingService.cs"));
+        var dropCompletedHandler = sourceCoordinator[
+            sourceCoordinator.IndexOf("private void OnDropCompleted", StringComparison.Ordinal)..
+            sourceCoordinator.IndexOf("private async Task CleanupActiveSessionAsync", StringComparison.Ordinal)];
+
+        Assert.Contains("_activeStagingSessionPath = null;", dropCompletedHandler);
+        Assert.DoesNotContain("CleanupActiveSessionAsync", dropCompletedHandler);
+        Assert.Contains("TimeSpan.FromHours(24)", stagingService);
+        Assert.Contains("PruneStaleSessions(rootPath)", stagingService);
+    }
+
+    [Fact]
     public void AssetPaneMultiSelectionMode_ShouldInterceptRowPointerPressForToggle()
     {
         var root = FindRepositoryRoot();
