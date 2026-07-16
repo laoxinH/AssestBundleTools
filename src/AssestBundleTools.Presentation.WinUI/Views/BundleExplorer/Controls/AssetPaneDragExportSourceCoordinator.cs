@@ -2,6 +2,7 @@ using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;
 
@@ -21,7 +22,9 @@ internal sealed class AssetPaneDragExportSourceCoordinator
     private readonly bool _isElevated;
     private readonly Action<object> _elevatedDragAttempted;
     private readonly Dictionary<ListViewItem, object> _itemsByContainer = [];
+    private ListView? _elevatedGestureListView;
     private ListViewItem? _elevatedGestureContainer;
+    private object? _elevatedGestureItem;
     private uint _elevatedGesturePointerId;
     private Point _elevatedGestureStartPosition;
 
@@ -44,6 +47,11 @@ internal sealed class AssetPaneDragExportSourceCoordinator
 
         _assetListView.ContainerContentChanging += OnContainerContentChanging;
         _spineGroupListView.ContainerContentChanging += OnContainerContentChanging;
+        if (_isElevated)
+        {
+            AttachElevatedGestureHandlers(_assetListView);
+            AttachElevatedGestureHandlers(_spineGroupListView);
+        }
     }
 
     public void UpdateContainerEligibility()
@@ -95,11 +103,6 @@ internal sealed class AssetPaneDragExportSourceCoordinator
         if (_isElevated)
         {
             container.CanDrag = false;
-            if (_canStartDrag())
-            {
-                AttachElevatedGestureHandlers(container);
-            }
-
             return;
         }
 
@@ -111,59 +114,65 @@ internal sealed class AssetPaneDragExportSourceCoordinator
     {
         container.CanDrag = false;
         container.DragStarting -= OnDragStarting;
-        container.PointerPressed -= OnElevatedPointerPressed;
-        container.PointerMoved -= OnElevatedPointerMoved;
-        container.PointerExited -= OnElevatedPointerExited;
-        container.PointerReleased -= OnElevatedPointerReleased;
-        container.PointerCanceled -= OnElevatedPointerCanceled;
-        container.PointerCaptureLost -= OnElevatedPointerCanceled;
-
-        if (ReferenceEquals(_elevatedGestureContainer, container))
-        {
-            ResetElevatedGesture();
-        }
     }
 
-    private void AttachElevatedGestureHandlers(ListViewItem container)
+    private void AttachElevatedGestureHandlers(ListView listView)
     {
-        container.PointerPressed += OnElevatedPointerPressed;
-        container.PointerMoved += OnElevatedPointerMoved;
-        container.PointerExited += OnElevatedPointerExited;
-        container.PointerReleased += OnElevatedPointerReleased;
-        container.PointerCanceled += OnElevatedPointerCanceled;
-        container.PointerCaptureLost += OnElevatedPointerCanceled;
+        listView.AddHandler(
+            UIElement.PointerPressedEvent,
+            new PointerEventHandler(OnElevatedPointerPressed),
+            handledEventsToo: true);
+        listView.AddHandler(
+            UIElement.PointerMovedEvent,
+            new PointerEventHandler(OnElevatedPointerMoved),
+            handledEventsToo: true);
+        listView.AddHandler(
+            UIElement.PointerReleasedEvent,
+            new PointerEventHandler(OnElevatedPointerReleased),
+            handledEventsToo: true);
+        listView.AddHandler(
+            UIElement.PointerCanceledEvent,
+            new PointerEventHandler(OnElevatedPointerCanceled),
+            handledEventsToo: true);
+        listView.AddHandler(
+            UIElement.PointerCaptureLostEvent,
+            new PointerEventHandler(OnElevatedPointerCanceled),
+            handledEventsToo: true);
     }
 
     private void OnElevatedPointerPressed(object sender, PointerRoutedEventArgs args)
     {
         if (!_canStartDrag() ||
-            sender is not ListViewItem container ||
-            !_itemsByContainer.ContainsKey(container))
+            sender is not ListView listView ||
+            !TryResolveGestureTarget(listView, args.OriginalSource, out var container, out var item) ||
+            !CanExport(item))
         {
             ResetElevatedGesture();
             return;
         }
 
-        var point = args.GetCurrentPoint(container);
+        var point = args.GetCurrentPoint(listView);
         if (!point.Properties.IsLeftButtonPressed)
         {
             ResetElevatedGesture();
             return;
         }
 
+        _elevatedGestureListView = listView;
         _elevatedGestureContainer = container;
+        _elevatedGestureItem = item;
         _elevatedGesturePointerId = args.Pointer.PointerId;
         _elevatedGestureStartPosition = point.Position;
     }
 
     private void OnElevatedPointerMoved(object sender, PointerRoutedEventArgs args)
     {
-        if (!IsCurrentElevatedGesture(sender, args, out var container))
+        if (!IsCurrentElevatedGesture(sender, args, out var listView))
         {
             return;
         }
 
-        var point = args.GetCurrentPoint(container);
+        var point = args.GetCurrentPoint(listView);
         if (!point.Properties.IsLeftButtonPressed)
         {
             ResetElevatedGesture();
@@ -178,23 +187,6 @@ internal sealed class AssetPaneDragExportSourceCoordinator
         }
     }
 
-    private void OnElevatedPointerExited(object sender, PointerRoutedEventArgs args)
-    {
-        if (!IsCurrentElevatedGesture(sender, args, out var container))
-        {
-            return;
-        }
-
-        if (args.GetCurrentPoint(container).Properties.IsLeftButtonPressed)
-        {
-            ReportElevatedDragAttempt();
-        }
-        else
-        {
-            ResetElevatedGesture();
-        }
-    }
-
     private void OnElevatedPointerReleased(object sender, PointerRoutedEventArgs args) =>
         ResetElevatedGesture();
 
@@ -204,18 +196,17 @@ internal sealed class AssetPaneDragExportSourceCoordinator
     private bool IsCurrentElevatedGesture(
         object sender,
         PointerRoutedEventArgs args,
-        out ListViewItem container)
+        out ListView listView)
     {
-        container = sender as ListViewItem ?? null!;
-        return container is not null &&
-               ReferenceEquals(container, _elevatedGestureContainer) &&
+        listView = sender as ListView ?? null!;
+        return listView is not null &&
+               ReferenceEquals(listView, _elevatedGestureListView) &&
                args.Pointer.PointerId == _elevatedGesturePointerId;
     }
 
     private void ReportElevatedDragAttempt()
     {
-        if (_elevatedGestureContainer is not { } container ||
-            !_itemsByContainer.TryGetValue(container, out var item))
+        if (_elevatedGestureItem is not { } item)
         {
             ResetElevatedGesture();
             return;
@@ -227,9 +218,40 @@ internal sealed class AssetPaneDragExportSourceCoordinator
 
     private void ResetElevatedGesture()
     {
+        var listView = _elevatedGestureListView;
+        var container = _elevatedGestureContainer;
+        _elevatedGestureListView = null;
         _elevatedGestureContainer = null;
+        _elevatedGestureItem = null;
         _elevatedGesturePointerId = 0;
         _elevatedGestureStartPosition = default;
+        container?.ReleasePointerCaptures();
+        listView?.ReleasePointerCaptures();
+    }
+
+    private static bool TryResolveGestureTarget(
+        ListView listView,
+        object? originalSource,
+        out ListViewItem container,
+        out object item)
+    {
+        var current = originalSource as DependencyObject;
+        while (current is not null && !ReferenceEquals(current, listView))
+        {
+            if (current is ListViewItem listViewItem &&
+                listView.ItemFromContainer(listViewItem) is { } resolvedItem)
+            {
+                container = listViewItem;
+                item = resolvedItem;
+                return true;
+            }
+
+            current = VisualTreeHelper.GetParent(current);
+        }
+
+        container = null!;
+        item = null!;
+        return false;
     }
 
     private void OnDragStarting(UIElement sender, DragStartingEventArgs args)

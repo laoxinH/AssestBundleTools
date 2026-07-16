@@ -486,6 +486,7 @@ public static class ResourceKeys
     public const string BundleExplorerLogDragExportMissingOutputFormat = "BundleExplorer.Log.DragExportMissingOutput.Format";
     public const string BundleExplorerLogDragExportUnexpectedFailureFormat = "BundleExplorer.Log.DragExportUnexpectedFailure.Format";
     public const string BundleExplorerLogDragExportCleanupFailedFormat = "BundleExplorer.Log.DragExportCleanupFailed.Format";
+    public const string BundleExplorerLogElevatedDragExportStarted = "BundleExplorer.Log.ElevatedDragExportStarted";
     public const string BundleExplorerLogElevatedDragExportBrokerFormat = "BundleExplorer.Log.ElevatedDragExportBroker.Format";
     public const string BundleExplorerLogAssetExtractionSelectionCancelled = "BundleExplorer.Log.AssetExtractionSelectionCancelled";
     public const string BundleExplorerLogBatchAssetExtractionSelectionCancelled = "BundleExplorer.Log.BatchAssetExtractionSelectionCancelled";

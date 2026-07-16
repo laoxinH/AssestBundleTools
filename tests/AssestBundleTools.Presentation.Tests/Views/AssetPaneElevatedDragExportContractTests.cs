@@ -22,7 +22,11 @@ public sealed class AssetPaneElevatedDragExportContractTests
         Assert.Contains("if (_isElevated)", coordinator);
         Assert.Contains("container.CanDrag = false", coordinator);
         Assert.Contains("ElevatedDragThreshold", coordinator);
-        Assert.Contains("PointerMoved += OnElevatedPointerMoved", coordinator);
+        Assert.Contains("AttachElevatedGestureHandlers(_assetListView)", coordinator);
+        Assert.Contains("UIElement.PointerMovedEvent", coordinator);
+        Assert.Contains("handledEventsToo: true", coordinator);
+        Assert.Contains("container?.ReleasePointerCaptures()", coordinator);
+        Assert.Contains("listView?.ReleasePointerCaptures()", coordinator);
         Assert.Contains("_elevatedDragAttempted(item)", coordinator);
         Assert.DoesNotContain("StartDragAsync", coordinator);
         Assert.Contains("ProcessElevationDiagnostics.Capture().IsElevated == true", view);

@@ -79,6 +79,9 @@ public sealed partial class BundleExplorerPage
 
     private async Task StartElevatedCompatibleDragExportAsync(object item)
     {
+        App.CurrentApp.AppLogService.AppendInfo(
+            App.CurrentApp.LocalizationService.GetRequiredString(
+                ResourceKeys.BundleExplorerLogElevatedDragExportStarted));
         var result = await App.CurrentApp.ElevatedDragExportBrokerService.StartDragAsync(
             async () =>
             {

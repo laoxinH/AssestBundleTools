@@ -3830,6 +3830,9 @@
   <data name="BundleExplorer.Log.DragExportCleanupFailed.Format" xml:space="preserve">
     <value>Failed to clean up the drag export staging directory: {0}.</value>
   </data>
+  <data name="BundleExplorer.Log.ElevatedDragExportStarted" xml:space="preserve">
+    <value>An elevated-compatible drag gesture was detected. Handing the drag operation to the standard-user broker.</value>
+  </data>
   <data name="BundleExplorer.Log.ElevatedDragExportBroker.Format" xml:space="preserve">
     <value>Elevated-compatible drag export: succeeded={0}, detail={1}</value>
   </data>

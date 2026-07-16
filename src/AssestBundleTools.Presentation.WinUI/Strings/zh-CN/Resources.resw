@@ -3830,6 +3830,9 @@
   <data name="BundleExplorer.Log.DragExportCleanupFailed.Format" xml:space="preserve">
     <value>清理拖拽导出暂存目录失败：{0}。</value>
   </data>
+  <data name="BundleExplorer.Log.ElevatedDragExportStarted" xml:space="preserve">
+    <value>已检测到管理员兼容拖出手势，正在将拖拽操作交给普通权限代理。</value>
+  </data>
   <data name="BundleExplorer.Log.ElevatedDragExportBroker.Format" xml:space="preserve">
     <value>管理员兼容拖拽导出：成功={0}，详情={1}</value>
   </data>
