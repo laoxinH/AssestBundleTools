@@ -395,13 +395,17 @@ internal static class AppCompositionRoot
             new ElevatedDropCoordinateMapper(),
             appLogService,
             localizationService);
+        var unelevatedProcessRestartService = new WindowsUnelevatedProcessRestartService();
+        var elevatedDragExportBrokerService = new WindowsElevatedDragExportBrokerService(
+            unelevatedProcessRestartService);
         var elevationRestartPromptCoordinator = new ElevationRestartPromptCoordinator(
             localizationService,
             appLogService,
             appNotificationService,
             appPreferencesService,
             elevatedDragDropCompatibilityService,
-            new WindowsUnelevatedProcessRestartService());
+            elevatedDragExportBrokerService,
+            unelevatedProcessRestartService);
         var appBackgroundTaskStatusService = new AppBackgroundTaskStatusService(localizationService);
         var backgroundTaskRunner = new ThreadPoolBackgroundTaskRunner();
         var backgroundWorkScheduler = new BackgroundWorkScheduler(
@@ -435,6 +439,7 @@ internal static class AppCompositionRoot
             WorkspaceProcessCoordinatorService: workspaceProcessCoordinatorService,
             ElevatedDragDropCompatibilityService: elevatedDragDropCompatibilityService,
             ElevatedFileDropRouter: elevatedFileDropRouter,
+            ElevatedDragExportBrokerService: elevatedDragExportBrokerService,
             ElevationRestartPromptCoordinator: elevationRestartPromptCoordinator,
             FilePickerService: filePickerService,
             PathNavigationService: pathNavigationService,

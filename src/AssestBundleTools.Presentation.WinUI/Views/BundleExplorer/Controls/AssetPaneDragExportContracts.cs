@@ -29,3 +29,13 @@ internal sealed class AssetPaneDragExportRequestedEventArgs : EventArgs
         PreparationTask = preparationTask;
     }
 }
+
+internal sealed class AssetPaneElevatedDragExportRequestedEventArgs : EventArgs
+{
+    public AssetPaneElevatedDragExportRequestedEventArgs(object item)
+    {
+        Item = item ?? throw new ArgumentNullException(nameof(item));
+    }
+
+    public object Item { get; }
+}

@@ -138,6 +138,8 @@ public static class ResourceKeys
     public const string AppNotificationWarningTitle = "AppNotification.WarningTitle";
     public const string AppElevationWarningTitle = "App.ElevationWarning.Title";
     public const string AppElevationWarningMessage = "App.ElevationWarning.Message";
+    public const string AppElevationDragExportWarningTitle = "App.ElevationDragExportWarning.Title";
+    public const string AppElevationDragExportWarningMessage = "App.ElevationDragExportWarning.Message";
     public const string AppElevationWarningRestartButton = "App.ElevationWarning.RestartButton";
     public const string AppElevationWarningContinueButton = "App.ElevationWarning.ContinueButton";
     public const string AppElevationRestartFailedMessage = "App.ElevationRestart.FailedMessage";
@@ -484,6 +486,7 @@ public static class ResourceKeys
     public const string BundleExplorerLogDragExportMissingOutputFormat = "BundleExplorer.Log.DragExportMissingOutput.Format";
     public const string BundleExplorerLogDragExportUnexpectedFailureFormat = "BundleExplorer.Log.DragExportUnexpectedFailure.Format";
     public const string BundleExplorerLogDragExportCleanupFailedFormat = "BundleExplorer.Log.DragExportCleanupFailed.Format";
+    public const string BundleExplorerLogElevatedDragExportBrokerFormat = "BundleExplorer.Log.ElevatedDragExportBroker.Format";
     public const string BundleExplorerLogAssetExtractionSelectionCancelled = "BundleExplorer.Log.AssetExtractionSelectionCancelled";
     public const string BundleExplorerLogBatchAssetExtractionSelectionCancelled = "BundleExplorer.Log.BatchAssetExtractionSelectionCancelled";
     public const string BundleExplorerLogBatchAssetsExtracted = "BundleExplorer.Log.BatchAssetsExtracted";

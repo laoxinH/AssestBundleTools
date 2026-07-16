@@ -6,11 +6,13 @@ public sealed class AssetEditorWindowPickerOwnerContractTests
     public void AssetEditorWindowCreation_ShouldRegisterWindowAsFilePickerOwner()
     {
         var repositoryRoot = FindRepositoryRoot();
-        var appCode = File.ReadAllText(Path.Combine(
+        var appProjectRoot = Path.Combine(
             repositoryRoot,
             "src",
-            "AssestBundleTools.Presentation.WinUI",
-            "App.xaml.cs"));
+            "AssestBundleTools.Presentation.WinUI");
+        var appCode = string.Concat(
+            File.ReadAllText(Path.Combine(appProjectRoot, "App.xaml.cs")),
+            File.ReadAllText(Path.Combine(appProjectRoot, "App.WorkspaceWindows.cs")));
         var coordinatorCode = File.ReadAllText(Path.Combine(
             repositoryRoot,
             "src",

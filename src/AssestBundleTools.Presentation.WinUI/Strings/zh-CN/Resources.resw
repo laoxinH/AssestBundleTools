@@ -944,6 +944,12 @@
   <data name="App.ElevationWarning.Message" xml:space="preserve">
     <value>应用当前以管理员权限运行，Windows 会阻止从普通资源管理器拖放文件。可以立即以非管理员模式重启并恢复当前启动目标；也可以继续使用文件或目录导入按钮，或前往“设置与诊断 > 偏好”开启实验性管理员拖放兼容。</value>
   </data>
+  <data name="App.ElevationDragExportWarning.Title" xml:space="preserve">
+    <value>管理员模式无法拖拽导出</value>
+  </data>
+  <data name="App.ElevationDragExportWarning.Message" xml:space="preserve">
+    <value>Windows 不允许管理员权限应用向普通权限的资源管理器发起标准文件拖放。“管理员拖放兼容（实验性）”只支持把文件拖入应用，不能支持从资产列表拖出。可以立即以非管理员模式重启并恢复当前工作区。</value>
+  </data>
   <data name="App.ElevationWarning.RestartButton" xml:space="preserve">
     <value>以非管理员模式重启</value>
   </data>
@@ -963,10 +969,10 @@
     <value>管理员拖放兼容（实验性）</value>
   </data>
   <data name="App.ElevatedDragDropCompatibility.EnabledMessage" xml:space="preserve">
-    <value>已启用传统 WM_DROPFILES 接收器；只有精确命中已注册拖放区域时才会分发文件，其他位置不会触发导入。本模式不依赖 WinUI/OLE Drop，但仍可能受系统策略限制；如仍无法拖入，请改用导入按钮或以非管理员模式运行。</value>
+    <value>已启用管理员拖放兼容：拖入文件使用精确区域 WM_DROPFILES 路由，资产拖出使用普通权限 OLE 代理。该功能仍可能受系统策略限制；失败时请查看诊断日志，或以非管理员模式运行。</value>
   </data>
   <data name="App.ElevatedDragDropCompatibility.FailedMessage" xml:space="preserve">
-    <value>实验性拖放过滤器未能完整启用。应用将继续运行，请使用导入按钮并在诊断中心查看详细信息。</value>
+    <value>管理员拖放兼容未能完整启用，拖入接收器或拖出代理至少有一项不可用。应用将继续运行，请在诊断中心查看详细信息，或以非管理员模式运行。</value>
   </data>
   <data name="App.ElevatedDragDropCompatibility.Log.Format" xml:space="preserve">
     <value>管理员拖放兼容过滤器：成功={0}，详情={1}</value>
@@ -3450,7 +3456,7 @@
     <value>管理员拖放兼容（实验性）</value>
   </data>
   <data name="SettingsDiagnosticsPage.ElevatedDragDropCompatibility.Description" xml:space="preserve">
-    <value>下次以管理员模式启动时放行并接收传统 WM_DROPFILES，只在精确命中已注册拖放区域时分发文件，并改为仅显示启动提示。此设置会放宽窗口消息过滤，仍可能受系统策略限制；普通模式不受影响。</value>
+    <value>下次以管理员模式启动时启用精确区域 WM_DROPFILES 拖入和普通权限 OLE 代理拖出，并改为仅显示启动提示。此设置会放宽窗口消息过滤并启动一个无窗口代理进程，仍可能受系统策略限制；普通模式不受影响。</value>
   </data>
   <data name="SettingsDiagnosticsPage.ElevatedDragDropCompatibility.SaveFailedMessage" xml:space="preserve">
     <value>保存管理员拖放兼容偏好失败，请检查应用数据目录权限。</value>
@@ -3823,6 +3829,9 @@
   </data>
   <data name="BundleExplorer.Log.DragExportCleanupFailed.Format" xml:space="preserve">
     <value>清理拖拽导出暂存目录失败：{0}。</value>
+  </data>
+  <data name="BundleExplorer.Log.ElevatedDragExportBroker.Format" xml:space="preserve">
+    <value>管理员兼容拖拽导出：成功={0}，详情={1}</value>
   </data>
   <data name="BundleExplorer.Log.AssetExtractionSelectionCancelled" xml:space="preserve">
     <value>已取消为“{0}”选择提取保存位置。</value>

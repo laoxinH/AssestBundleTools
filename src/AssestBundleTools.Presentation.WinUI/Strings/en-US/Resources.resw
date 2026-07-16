@@ -944,6 +944,12 @@
   <data name="App.ElevationWarning.Message" xml:space="preserve">
     <value>The app is running with administrator privileges, so Windows blocks file drag and drop from a standard Explorer process. Restart without administrator privileges and restore the current launch target, continue with the import buttons, or enable experimental elevated drag-and-drop compatibility under Settings and Diagnostics &gt; Preferences.</value>
   </data>
+  <data name="App.ElevationDragExportWarning.Title" xml:space="preserve">
+    <value>Drag export is unavailable in administrator mode</value>
+  </data>
+  <data name="App.ElevationDragExportWarning.Message" xml:space="preserve">
+    <value>Windows does not allow an elevated app to start standard file drag-and-drop to a non-elevated File Explorer. Experimental elevated drag-and-drop compatibility supports files dragged into the app only; it cannot drag assets out. Restart without administrator privileges now and restore the current workspace.</value>
+  </data>
   <data name="App.ElevationWarning.RestartButton" xml:space="preserve">
     <value>Restart without administrator privileges</value>
   </data>
@@ -963,10 +969,10 @@
     <value>Elevated drag-and-drop compatibility (experimental)</value>
   </data>
   <data name="App.ElevatedDragDropCompatibility.EnabledMessage" xml:space="preserve">
-    <value>The traditional WM_DROPFILES receiver is enabled. Files are dispatched only when the drop precisely matches a registered target; dropping elsewhere will not import them. This path does not rely on WinUI/OLE Drop, but system policy can still block it; use the import buttons or run without administrator privileges if dragging still fails.</value>
+    <value>Elevated drag-and-drop compatibility is enabled. Files dragged in use precise WM_DROPFILES target routing; assets dragged out use a standard-user OLE broker. System policy can still restrict this feature; check Diagnostics after a failure or run without administrator privileges.</value>
   </data>
   <data name="App.ElevatedDragDropCompatibility.FailedMessage" xml:space="preserve">
-    <value>The experimental drag-and-drop filters could not be enabled completely. The app will remain open; use the import buttons and check Diagnostics for details.</value>
+    <value>Elevated drag-and-drop compatibility could not be enabled completely. Either the inbound receiver or outbound broker is unavailable. The app will remain open; check Diagnostics or run without administrator privileges.</value>
   </data>
   <data name="App.ElevatedDragDropCompatibility.Log.Format" xml:space="preserve">
     <value>Elevated drag-and-drop compatibility filters: succeeded={0}, detail={1}</value>
@@ -3450,7 +3456,7 @@
     <value>Elevated drag-and-drop compatibility (experimental)</value>
   </data>
   <data name="SettingsDiagnosticsPage.ElevatedDragDropCompatibility.Description" xml:space="preserve">
-    <value>On the next administrator-mode launch, allow and receive traditional WM_DROPFILES and dispatch files only to precisely matched registered drop targets. This relaxes the window message filter and can still be blocked by system policy. Standard mode is unaffected.</value>
+    <value>On the next administrator-mode launch, enable precise WM_DROPFILES targets for files dragged in and a standard-user OLE broker for assets dragged out, then show only a startup notice. This relaxes the window message filter and starts a windowless broker process; system policy can still restrict it. Standard mode is unaffected.</value>
   </data>
   <data name="SettingsDiagnosticsPage.ElevatedDragDropCompatibility.SaveFailedMessage" xml:space="preserve">
     <value>Failed to save the elevated drag-and-drop compatibility preference. Check the app data directory permissions.</value>
@@ -3823,6 +3829,9 @@
   </data>
   <data name="BundleExplorer.Log.DragExportCleanupFailed.Format" xml:space="preserve">
     <value>Failed to clean up the drag export staging directory: {0}.</value>
+  </data>
+  <data name="BundleExplorer.Log.ElevatedDragExportBroker.Format" xml:space="preserve">
+    <value>Elevated-compatible drag export: succeeded={0}, detail={1}</value>
   </data>
   <data name="BundleExplorer.Log.AssetExtractionSelectionCancelled" xml:space="preserve">
     <value>Cancelled selecting an extraction output path for "{0}".</value>

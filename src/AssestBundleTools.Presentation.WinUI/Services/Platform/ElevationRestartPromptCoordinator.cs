@@ -14,6 +14,7 @@ internal sealed class ElevationRestartPromptCoordinator
     private readonly IAppNotificationService _appNotificationService;
     private readonly IAppPreferencesService _appPreferencesService;
     private readonly IElevatedDragDropCompatibilityService _dragDropCompatibilityService;
+    private readonly IElevatedDragExportBrokerService _dragExportBrokerService;
     private readonly IUnelevatedProcessRestartService _restartService;
 
     public ElevationRestartPromptCoordinator(
@@ -22,6 +23,7 @@ internal sealed class ElevationRestartPromptCoordinator
         IAppNotificationService appNotificationService,
         IAppPreferencesService appPreferencesService,
         IElevatedDragDropCompatibilityService dragDropCompatibilityService,
+        IElevatedDragExportBrokerService dragExportBrokerService,
         IUnelevatedProcessRestartService restartService)
     {
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
@@ -29,6 +31,7 @@ internal sealed class ElevationRestartPromptCoordinator
         _appNotificationService = appNotificationService ?? throw new ArgumentNullException(nameof(appNotificationService));
         _appPreferencesService = appPreferencesService ?? throw new ArgumentNullException(nameof(appPreferencesService));
         _dragDropCompatibilityService = dragDropCompatibilityService ?? throw new ArgumentNullException(nameof(dragDropCompatibilityService));
+        _dragExportBrokerService = dragExportBrokerService ?? throw new ArgumentNullException(nameof(dragExportBrokerService));
         _restartService = restartService ?? throw new ArgumentNullException(nameof(restartService));
     }
 
@@ -50,27 +53,52 @@ internal sealed class ElevationRestartPromptCoordinator
 
         if (_appPreferencesService.ElevatedDragDropCompatibilityEnabled)
         {
+            var inboundResult = _dragDropCompatibilityService.TryEnable(ownerWindow);
+            var brokerResult = await _dragExportBrokerService.EnsureStartedAsync();
             ShowElevatedDragDropCompatibilityNotification(
-                _dragDropCompatibilityService.TryEnable(ownerWindow));
+                inboundResult,
+                brokerResult);
             return false;
         }
 
-        if (IsUnelevatedRestartLaunch)
+        if (TryReportRecursiveRestart())
         {
-            var restartStillElevatedMessage = _localizationService.GetRequiredString(
-                ResourceKeys.AppElevationRestartStillElevatedMessage);
-            _appLogService.AppendError(restartStillElevatedMessage);
-            StartupDiagnostics.Log("Unelevated restart process remained elevated; recursive prompt suppressed.");
-            _appNotificationService.Show(
-                _localizationService.GetRequiredString(ResourceKeys.AppNotificationErrorTitle),
-                restartStillElevatedMessage,
-                AppNotificationSeverity.Error,
-                TimeSpan.FromSeconds(15));
             return false;
         }
 
-        var title = _localizationService.GetRequiredString(ResourceKeys.AppElevationWarningTitle);
-        var message = _localizationService.GetRequiredString(ResourceKeys.AppElevationWarningMessage);
+        return await PromptForRestartAsync(
+            ownerWindow,
+            launchRequest,
+            ResourceKeys.AppElevationWarningTitle,
+            ResourceKeys.AppElevationWarningMessage);
+    }
+
+    public async Task<bool> PromptForDragExportRestartAsync(
+        Window ownerWindow,
+        ShellLaunchRequest? launchRequest)
+    {
+        ArgumentNullException.ThrowIfNull(ownerWindow);
+
+        if (ProcessElevationDiagnostics.Capture().IsElevated != true || TryReportRecursiveRestart())
+        {
+            return false;
+        }
+
+        return await PromptForRestartAsync(
+            ownerWindow,
+            launchRequest,
+            ResourceKeys.AppElevationDragExportWarningTitle,
+            ResourceKeys.AppElevationDragExportWarningMessage);
+    }
+
+    private async Task<bool> PromptForRestartAsync(
+        Window ownerWindow,
+        ShellLaunchRequest? launchRequest,
+        string titleResourceKey,
+        string messageResourceKey)
+    {
+        var title = _localizationService.GetRequiredString(titleResourceKey);
+        var message = _localizationService.GetRequiredString(messageResourceKey);
         _appLogService.AppendWarning(message);
 
         var xamlRoot = await WaitForXamlRootAsync(ownerWindow.Content);
@@ -141,14 +169,35 @@ internal sealed class ElevationRestartPromptCoordinator
         }
     }
 
-    private void ShowElevatedDragDropCompatibilityNotification(
-        ElevatedDragDropCompatibilityResult result)
+    private bool TryReportRecursiveRestart()
     {
+        if (!IsUnelevatedRestartLaunch)
+        {
+            return false;
+        }
+
+        var restartStillElevatedMessage = _localizationService.GetRequiredString(
+            ResourceKeys.AppElevationRestartStillElevatedMessage);
+        _appLogService.AppendError(restartStillElevatedMessage);
+        StartupDiagnostics.Log("Unelevated restart process remained elevated; recursive prompt suppressed.");
+        _appNotificationService.Show(
+            _localizationService.GetRequiredString(ResourceKeys.AppNotificationErrorTitle),
+            restartStillElevatedMessage,
+            AppNotificationSeverity.Error,
+            TimeSpan.FromSeconds(15));
+        return true;
+    }
+
+    private void ShowElevatedDragDropCompatibilityNotification(
+        ElevatedDragDropCompatibilityResult inboundResult,
+        ElevatedDragExportBrokerResult outboundResult)
+    {
+        var succeeded = inboundResult.Succeeded && outboundResult.Succeeded;
         var diagnostic = _localizationService.GetFormattedString(
             ResourceKeys.AppElevatedDragDropCompatibilityLogFormat,
-            result.Succeeded,
-            result.DiagnosticDetail);
-        if (result.Succeeded)
+            succeeded,
+            $"Inbound={inboundResult.DiagnosticDetail}; Outbound={outboundResult.DiagnosticDetail}");
+        if (succeeded)
         {
             _appLogService.AppendWarning(diagnostic);
         }
@@ -160,10 +209,10 @@ internal sealed class ElevationRestartPromptCoordinator
         StartupDiagnostics.Log(diagnostic);
         _appNotificationService.Show(
             _localizationService.GetRequiredString(ResourceKeys.AppElevatedDragDropCompatibilityTitle),
-            _localizationService.GetRequiredString(result.Succeeded
+            _localizationService.GetRequiredString(succeeded
                 ? ResourceKeys.AppElevatedDragDropCompatibilityEnabledMessage
                 : ResourceKeys.AppElevatedDragDropCompatibilityFailedMessage),
-            result.Succeeded ? AppNotificationSeverity.Warning : AppNotificationSeverity.Error,
+            succeeded ? AppNotificationSeverity.Warning : AppNotificationSeverity.Error,
             TimeSpan.FromSeconds(15));
     }
 

@@ -1,3 +1,5 @@
+using AssestBundleTools.Presentation.WinUI.Diagnostics;
+
 namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls;
 
 public sealed partial class AssetPaneView
@@ -8,6 +10,8 @@ public sealed partial class AssetPaneView
 
     internal event EventHandler<AssetPaneDragExportCleanupRequestedEventArgs>? DragExportCleanupRequested;
 
+    internal event EventHandler<AssetPaneElevatedDragExportRequestedEventArgs>? ElevatedDragExportAttempted;
+
     private void InitializeDragExport()
     {
         _dragExportSourceCoordinator = new AssetPaneDragExportSourceCoordinator(
@@ -15,7 +19,11 @@ public sealed partial class AssetPaneView
             SpineGroupListView,
             () => ViewModel is { IsMultiSelectionMode: false },
             RequestDragExportAsync,
-            CleanupDragExportAsync);
+            CleanupDragExportAsync,
+            ProcessElevationDiagnostics.Capture().IsElevated == true,
+            item => ElevatedDragExportAttempted?.Invoke(
+                this,
+                new AssetPaneElevatedDragExportRequestedEventArgs(item)));
     }
 
     private Task<AssetPaneDragExportPayload?> RequestDragExportAsync(object item)

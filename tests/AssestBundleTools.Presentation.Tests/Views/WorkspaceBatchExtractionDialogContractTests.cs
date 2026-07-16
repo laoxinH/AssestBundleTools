@@ -58,11 +58,13 @@ public sealed class WorkspaceBatchExtractionDialogContractTests
     public void WorkspaceBatchReplacement_ShouldRegisterIndependentWindowWithMainOwner()
     {
         var repositoryRoot = FindRepositoryRoot();
-        var appCode = File.ReadAllText(Path.Combine(
+        var appProjectRoot = Path.Combine(
             repositoryRoot,
             "src",
-            "AssestBundleTools.Presentation.WinUI",
-            "App.xaml.cs"));
+            "AssestBundleTools.Presentation.WinUI");
+        var appCode = string.Concat(
+            File.ReadAllText(Path.Combine(appProjectRoot, "App.xaml.cs")),
+            File.ReadAllText(Path.Combine(appProjectRoot, "App.WorkspaceWindows.cs")));
         var coordinator = File.ReadAllText(Path.Combine(
             repositoryRoot,
             "src",

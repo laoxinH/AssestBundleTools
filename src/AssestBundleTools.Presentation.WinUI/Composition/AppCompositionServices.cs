@@ -25,6 +25,7 @@ internal sealed record AppCompositionServices(
     IWorkspaceProcessCoordinatorService WorkspaceProcessCoordinatorService,
     IElevatedDragDropCompatibilityService ElevatedDragDropCompatibilityService,
     IElevatedFileDropRouter ElevatedFileDropRouter,
+    IElevatedDragExportBrokerService ElevatedDragExportBrokerService,
     ElevationRestartPromptCoordinator ElevationRestartPromptCoordinator,
     IFilePickerService FilePickerService,
     IPathNavigationService PathNavigationService,

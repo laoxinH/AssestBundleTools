@@ -70,6 +70,7 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
             App.CurrentApp.BackgroundWorkScheduler);
         PrimaryAssetPaneView.DragExportRequested += OnPrimaryPaneDragExportRequested;
         PrimaryAssetPaneView.DragExportCleanupRequested += OnPrimaryPaneDragExportCleanupRequested;
+        PrimaryAssetPaneView.ElevatedDragExportAttempted += OnPrimaryPaneElevatedDragExportAttempted;
 
         _chromeCoordinator = new BundleExplorerPageChromeCoordinator(this);
         _navigationCoordinator = new BundleExplorerPageNavigationCoordinator(this);
