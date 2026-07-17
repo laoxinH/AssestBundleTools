@@ -20,13 +20,14 @@ internal sealed class AssetPaneDragExportSourceCoordinator
     private readonly Func<object, Task<AssetPaneDragExportPayload?>> _prepareAsync;
     private readonly Func<string, Task> _cleanupAsync;
     private readonly bool _isElevated;
-    private readonly Action<object> _elevatedDragAttempted;
+    private readonly Func<object, Task> _elevatedDragAttempted;
     private readonly Dictionary<ListViewItem, object> _itemsByContainer = [];
     private ListView? _elevatedGestureListView;
     private ListViewItem? _elevatedGestureContainer;
     private object? _elevatedGestureItem;
     private uint _elevatedGesturePointerId;
     private Point _elevatedGestureStartPosition;
+    private bool _isElevatedDragActive;
 
     public AssetPaneDragExportSourceCoordinator(
         ListView assetListView,
@@ -35,7 +36,7 @@ internal sealed class AssetPaneDragExportSourceCoordinator
         Func<object, Task<AssetPaneDragExportPayload?>> prepareAsync,
         Func<string, Task> cleanupAsync,
         bool isElevated,
-        Action<object> elevatedDragAttempted)
+        Func<object, Task> elevatedDragAttempted)
     {
         _assetListView = assetListView ?? throw new ArgumentNullException(nameof(assetListView));
         _spineGroupListView = spineGroupListView ?? throw new ArgumentNullException(nameof(spineGroupListView));
@@ -142,7 +143,8 @@ internal sealed class AssetPaneDragExportSourceCoordinator
 
     private void OnElevatedPointerPressed(object sender, PointerRoutedEventArgs args)
     {
-        if (!_canStartDrag() ||
+        if (_isElevatedDragActive ||
+            !_canStartDrag() ||
             sender is not ListView listView ||
             !TryResolveGestureTarget(listView, args.OriginalSource, out var container, out var item) ||
             !CanExport(item))
@@ -204,16 +206,39 @@ internal sealed class AssetPaneDragExportSourceCoordinator
                args.Pointer.PointerId == _elevatedGesturePointerId;
     }
 
-    private void ReportElevatedDragAttempt()
+    private async void ReportElevatedDragAttempt()
     {
-        if (_elevatedGestureItem is not { } item)
+        if (_elevatedGestureListView is not { } listView ||
+            _elevatedGestureContainer is not { } container ||
+            _elevatedGestureItem is not { } item)
         {
             ResetElevatedGesture();
             return;
         }
 
         ResetElevatedGesture();
-        _elevatedDragAttempted(item);
+        _isElevatedDragActive = true;
+        var originalOpacity = container.Opacity;
+        container.Opacity = 0.62;
+        if (listView is AssetDragExportListView dragExportListView)
+        {
+            dragExportListView.SetElevatedDragFeedback(isActive: true);
+        }
+
+        try
+        {
+            await _elevatedDragAttempted(item);
+        }
+        finally
+        {
+            container.Opacity = originalOpacity;
+            if (listView is AssetDragExportListView completedListView)
+            {
+                completedListView.SetElevatedDragFeedback(isActive: false);
+            }
+
+            _isElevatedDragActive = false;
+        }
     }
 
     private void ResetElevatedGesture()

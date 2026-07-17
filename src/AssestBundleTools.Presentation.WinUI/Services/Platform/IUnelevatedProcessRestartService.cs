@@ -11,9 +11,11 @@ internal readonly record struct UnelevatedProcessRestartResult(
     int? NativeErrorCode,
     string DiagnosticDetail)
 {
-    public static UnelevatedProcessRestartResult Success(int processId)
+    public static UnelevatedProcessRestartResult Success(
+        int processId,
+        string diagnosticDetail = "")
     {
-        return new UnelevatedProcessRestartResult(true, processId, null, string.Empty);
+        return new UnelevatedProcessRestartResult(true, processId, null, diagnosticDetail);
     }
 
     public static UnelevatedProcessRestartResult Failure(

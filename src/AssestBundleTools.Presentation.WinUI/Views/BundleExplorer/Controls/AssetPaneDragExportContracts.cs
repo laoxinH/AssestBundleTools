@@ -38,4 +38,18 @@ internal sealed class AssetPaneElevatedDragExportRequestedEventArgs : EventArgs
     }
 
     public object Item { get; }
+
+    internal Task? OperationTask { get; private set; }
+
+    public void SetOperationTask(Task operationTask)
+    {
+        ArgumentNullException.ThrowIfNull(operationTask);
+
+        if (OperationTask is not null)
+        {
+            throw new InvalidOperationException("An elevated drag-export operation task has already been assigned.");
+        }
+
+        OperationTask = operationTask;
+    }
 }

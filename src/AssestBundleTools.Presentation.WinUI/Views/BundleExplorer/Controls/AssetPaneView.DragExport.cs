@@ -21,9 +21,7 @@ public sealed partial class AssetPaneView
             RequestDragExportAsync,
             CleanupDragExportAsync,
             ProcessElevationDiagnostics.Capture().IsElevated == true,
-            item => ElevatedDragExportAttempted?.Invoke(
-                this,
-                new AssetPaneElevatedDragExportRequestedEventArgs(item)));
+            RequestElevatedDragExportAsync);
     }
 
     private Task<AssetPaneDragExportPayload?> RequestDragExportAsync(object item)
@@ -38,6 +36,13 @@ public sealed partial class AssetPaneView
         var args = new AssetPaneDragExportCleanupRequestedEventArgs(stagingSessionPath);
         DragExportCleanupRequested?.Invoke(this, args);
         return args.CleanupTask ?? Task.CompletedTask;
+    }
+
+    private Task RequestElevatedDragExportAsync(object item)
+    {
+        var args = new AssetPaneElevatedDragExportRequestedEventArgs(item);
+        ElevatedDragExportAttempted?.Invoke(this, args);
+        return args.OperationTask ?? Task.CompletedTask;
     }
 }
 

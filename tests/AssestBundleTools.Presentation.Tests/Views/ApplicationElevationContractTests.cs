@@ -26,6 +26,16 @@ public sealed class ApplicationElevationContractTests
             "Services",
             "Platform",
             "WindowsUnelevatedProcessRestartService.cs"));
+        var linkedTokenCode = File.ReadAllText(Path.Combine(
+            projectRoot,
+            "Services",
+            "Platform",
+            "WindowsUnelevatedProcessRestartService.LinkedToken.cs"));
+        var processLaunchCode = File.ReadAllText(Path.Combine(
+            projectRoot,
+            "Services",
+            "Platform",
+            "WindowsUnelevatedProcessRestartService.ProcessLaunch.cs"));
         var compatibilityCode = File.ReadAllText(Path.Combine(
             projectRoot,
             "Services",
@@ -65,7 +75,14 @@ public sealed class ApplicationElevationContractTests
         Assert.Contains("FindWindowSW", explorerShellCode);
         Assert.Contains("desktopApplication", explorerShellCode);
         Assert.Contains("WaitForUnelevatedProcessAsync", restartCode);
-        Assert.Contains("CreateProcessWithTokenW", restartCode);
+        Assert.Contains("TryRestartWithLinkedToken", restartCode);
+        Assert.Contains("TokenLinkedTokenInformationClass", linkedTokenCode);
+        Assert.Contains("SecurityMandatoryMediumRid", linkedTokenCode);
+        Assert.Contains("SecurityMandatoryHighRid", linkedTokenCode);
+        Assert.Contains("DuplicateTokenEx", linkedTokenCode);
+        Assert.Contains("CreateProcessWithTokenW", processLaunchCode);
+        Assert.Contains("TryReadProcessHandleElevation", processLaunchCode);
+        Assert.Contains("TerminateProcess", processLaunchCode);
         Assert.Contains("GetShellWindow", restartCode);
         Assert.Contains("TokenIsElevated", restartCode);
         Assert.Contains("ResourceKeys.AppElevationRestartStillElevatedMessage", promptCode);

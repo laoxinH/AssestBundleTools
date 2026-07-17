@@ -17,6 +17,11 @@ namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Coordinators
 /// </summary>
 internal sealed class BundleExplorerAssetDragExportCoordinator
 {
+    private sealed record PreparedDragExportOutput(
+        string OutputPath,
+        bool IsDirectory,
+        string StagingSessionPath);
+
     private readonly BundleExplorerBatchExtractionBackgroundExecutor _extractionExecutor;
     private readonly AssetDragExportStagingService _stagingService;
     private readonly IAppLogService _appLogService;
@@ -47,38 +52,69 @@ internal sealed class BundleExplorerAssetDragExportCoordinator
             backgroundWorkScheduler);
     }
 
-    public async Task<AssetPaneDragExportPayload?> PrepareAsync(
+    public Task<AssetPaneDragExportPayload?> PrepareAsync(
         WorkspaceSummaryDto workspaceSummary,
-        object item)
+        object item) =>
+        PrepareCoreAsync(
+            workspaceSummary,
+            item,
+            async output =>
+            {
+                var storageItem = output.IsDirectory
+                    ? await _stagingService.GetFolderAsync(output.OutputPath)
+                    : await _stagingService.GetFileAsync(output.OutputPath);
+                return new AssetPaneDragExportPayload(
+                    [storageItem],
+                    output.StagingSessionPath);
+            });
+
+    public Task<IReadOnlyList<string>?> PreparePathsAsync(
+        WorkspaceSummaryDto workspaceSummary,
+        object item) =>
+        PrepareCoreAsync<IReadOnlyList<string>>(
+            workspaceSummary,
+            item,
+            output => Task.FromResult<IReadOnlyList<string>>([output.OutputPath]));
+
+    private async Task<TResult?> PrepareCoreAsync<TResult>(
+        WorkspaceSummaryDto workspaceSummary,
+        object item,
+        Func<PreparedDragExportOutput, Task<TResult>> projectResultAsync)
+        where TResult : class
     {
         ArgumentNullException.ThrowIfNull(workspaceSummary);
         ArgumentNullException.ThrowIfNull(item);
+        ArgumentNullException.ThrowIfNull(projectResultAsync);
 
         AssetDragExportStagingSession? session = null;
         var displayName = ResolveDisplayName(item);
         try
         {
             session = await _stagingService.CreateSessionAsync();
-            var storageItem = item switch
+            var output = item switch
             {
                 AssetListEntryViewModel { CanDragExport: true } asset =>
-                    await ExtractAssetAsync(workspaceSummary, asset, session),
+                    await ExtractAssetPathAsync(workspaceSummary, asset, session),
                 SpineAssetGroupEntryViewModel { CanDragExport: true } spineGroup =>
-                    await ExtractSpineGroupAsync(workspaceSummary, spineGroup, session),
+                    await ExtractSpineGroupPathAsync(workspaceSummary, spineGroup, session),
                 _ => null
             };
 
-            if (storageItem is null)
+            if (output is not { } preparedOutput)
             {
                 await CleanupQuietlyAsync(session.Path);
                 return null;
             }
 
+            var result = await projectResultAsync(new PreparedDragExportOutput(
+                preparedOutput.OutputPath,
+                preparedOutput.IsDirectory,
+                session.Path));
             _appLogService.AppendInfo(_localizationService.GetFormattedString(
                 ResourceKeys.BundleExplorerLogDragExportPreparedFormat,
                 displayName,
-                storageItem.Name));
-            return new AssetPaneDragExportPayload([storageItem], session.Path);
+                Path.GetFileName(preparedOutput.OutputPath)));
+            return result;
         }
         catch (Exception ex)
         {
@@ -110,7 +146,7 @@ internal sealed class BundleExplorerAssetDragExportCoordinator
         }
     }
 
-    private async Task<IStorageItem?> ExtractAssetAsync(
+    private async Task<(string OutputPath, bool IsDirectory)?> ExtractAssetPathAsync(
         WorkspaceSummaryDto workspaceSummary,
         AssetListEntryViewModel asset,
         AssetDragExportStagingSession session)
@@ -141,10 +177,10 @@ internal sealed class BundleExplorerAssetDragExportCoordinator
             return null;
         }
 
-        return await _stagingService.GetFileAsync(outputPath);
+        return (outputPath, false);
     }
 
-    private async Task<IStorageItem?> ExtractSpineGroupAsync(
+    private async Task<(string OutputPath, bool IsDirectory)?> ExtractSpineGroupPathAsync(
         WorkspaceSummaryDto workspaceSummary,
         SpineAssetGroupEntryViewModel spineGroup,
         AssetDragExportStagingSession session)
@@ -172,7 +208,7 @@ internal sealed class BundleExplorerAssetDragExportCoordinator
             return null;
         }
 
-        return await _stagingService.GetFolderAsync(result.Value.SuggestedOutputDirectory);
+        return (result.Value.SuggestedOutputDirectory, true);
     }
 
     private void HandleResultFailure(bool isCancelled, IReadOnlyList<AppError> errors)

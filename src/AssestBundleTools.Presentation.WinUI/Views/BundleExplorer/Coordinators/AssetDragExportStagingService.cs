@@ -12,12 +12,13 @@ internal sealed class AssetDragExportStagingService
 {
     private const string RootFolderName = "asset-drag-export";
     private static readonly TimeSpan StaleSessionAge = TimeSpan.FromHours(24);
+    private static int _stalePruneScheduled;
 
     public Task<AssetDragExportStagingSession> CreateSessionAsync()
     {
         var rootPath = GetRootDirectoryPath();
         Directory.CreateDirectory(rootPath);
-        PruneStaleSessions(rootPath);
+        ScheduleStaleSessionPrune(rootPath);
         var sessionName = string.Concat(
             DateTimeOffset.UtcNow.ToString("yyyyMMddHHmmss", CultureInfo.InvariantCulture),
             "-",
@@ -62,23 +63,40 @@ internal sealed class AssetDragExportStagingService
 
     private static void PruneStaleSessions(string rootPath)
     {
-        var cutoffUtc = DateTime.UtcNow - StaleSessionAge;
-        foreach (var sessionPath in Directory.EnumerateDirectories(rootPath))
+        try
         {
-            if (Directory.GetCreationTimeUtc(sessionPath) >= cutoffUtc)
+            var cutoffUtc = DateTime.UtcNow - StaleSessionAge;
+            foreach (var sessionPath in Directory.EnumerateDirectories(rootPath))
             {
-                continue;
-            }
+                if (Directory.GetCreationTimeUtc(sessionPath) >= cutoffUtc)
+                {
+                    continue;
+                }
 
-            try
-            {
-                Directory.Delete(sessionPath, recursive: true);
-            }
-            catch
-            {
-                // 遗留目录清理不应阻止新的拖出会话。
+                try
+                {
+                    Directory.Delete(sessionPath, recursive: true);
+                }
+                catch
+                {
+                    // 遗留目录清理不应阻止新的拖出会话。
+                }
             }
         }
+        catch
+        {
+            // 根目录枚举失败同样不能阻塞当前拖出。
+        }
+    }
+
+    private static void ScheduleStaleSessionPrune(string rootPath)
+    {
+        if (Interlocked.Exchange(ref _stalePruneScheduled, 1) != 0)
+        {
+            return;
+        }
+
+        _ = Task.Run(() => PruneStaleSessions(rootPath));
     }
 
     private static bool IsChildPath(string rootPath, string candidatePath)

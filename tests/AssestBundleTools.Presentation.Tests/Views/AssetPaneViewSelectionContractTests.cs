@@ -89,7 +89,8 @@ public sealed class AssetPaneViewSelectionContractTests
         Assert.DoesNotContain("args.GetDeferral()", sourceCoordinator);
         Assert.DoesNotContain("DropCompleted +=", sourceCoordinator);
         Assert.Contains("TimeSpan.FromHours(24)", stagingService);
-        Assert.Contains("PruneStaleSessions(rootPath)", stagingService);
+        Assert.Contains("ScheduleStaleSessionPrune(rootPath)", stagingService);
+        Assert.Contains("Task.Run(() => PruneStaleSessions(rootPath))", stagingService);
     }
 
     [Fact]

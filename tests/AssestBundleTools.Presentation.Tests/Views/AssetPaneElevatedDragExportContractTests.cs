@@ -18,6 +18,12 @@ public sealed class AssetPaneElevatedDragExportContractTests
             "BundleExplorer",
             "Controls",
             "AssetPaneView.DragExport.cs"));
+        var listView = File.ReadAllText(Path.Combine(
+            projectRoot,
+            "Views",
+            "BundleExplorer",
+            "Controls",
+            "AssetDragExportListView.cs"));
 
         Assert.Contains("if (_isElevated)", coordinator);
         Assert.Contains("container.CanDrag = false", coordinator);
@@ -27,10 +33,17 @@ public sealed class AssetPaneElevatedDragExportContractTests
         Assert.Contains("handledEventsToo: true", coordinator);
         Assert.Contains("container?.ReleasePointerCaptures()", coordinator);
         Assert.Contains("listView?.ReleasePointerCaptures()", coordinator);
+        Assert.Contains("container.Opacity = 0.62", coordinator);
+        Assert.Contains("await _elevatedDragAttempted(item)", coordinator);
+        Assert.Contains("SetElevatedDragFeedback(isActive: true)", coordinator);
+        Assert.Contains("SetElevatedDragFeedback(isActive: false)", coordinator);
         Assert.Contains("_elevatedDragAttempted(item)", coordinator);
         Assert.DoesNotContain("StartDragAsync", coordinator);
+        Assert.Contains("InputSystemCursorShape.SizeAll", listView);
+        Assert.Contains("ProtectedCursor", listView);
         Assert.Contains("ProcessElevationDiagnostics.Capture().IsElevated == true", view);
         Assert.Contains("ElevatedDragExportAttempted", view);
+        Assert.Contains("OperationTask ?? Task.CompletedTask", view);
     }
 
     [Fact]
@@ -100,6 +113,8 @@ public sealed class AssetPaneElevatedDragExportContractTests
         Assert.Contains("TryRestartAsync(", brokerService);
         Assert.Contains("WritePayloadAsync", brokerService);
         Assert.Contains("WaitForCompletionAsync", brokerService);
+        Assert.Contains("BrokerReady=", brokerService);
+        Assert.Contains("Preparation=", brokerService);
     }
 
     private static string GetPresentationProjectRoot()

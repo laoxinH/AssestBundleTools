@@ -30,9 +30,14 @@ public sealed partial class BundleExplorerPage
         args.SetCleanupTask(_assetDragExportCoordinator.CleanupAsync(args.StagingSessionPath));
     }
 
-    private async void OnPrimaryPaneElevatedDragExportAttempted(
+    private void OnPrimaryPaneElevatedDragExportAttempted(
         object? sender,
         AssetPaneElevatedDragExportRequestedEventArgs args)
+    {
+        args.SetOperationTask(HandlePrimaryPaneElevatedDragExportAsync(args.Item));
+    }
+
+    private async Task HandlePrimaryPaneElevatedDragExportAsync(object item)
     {
         if (_isElevatedDragExportActionRunning)
         {
@@ -44,7 +49,7 @@ public sealed partial class BundleExplorerPage
         {
             if (App.CurrentApp.AppPreferencesService.ElevatedDragDropCompatibilityEnabled)
             {
-                await StartElevatedCompatibleDragExportAsync(args.Item);
+                await StartElevatedCompatibleDragExportAsync(item);
                 return;
             }
 
@@ -71,6 +76,20 @@ public sealed partial class BundleExplorerPage
             App.CurrentApp.WorkspaceProcessCoordinatorService.ClearWorkspaceRegistration();
             App.CurrentApp.Exit();
         }
+        catch (Exception exception)
+        {
+            App.CurrentApp.AppLogService.AppendError(
+                App.CurrentApp.LocalizationService.GetFormattedString(
+                    ResourceKeys.BundleExplorerLogElevatedDragExportBrokerFormat,
+                    false,
+                    exception.Message));
+            App.CurrentApp.AppNotificationService.Show(
+                App.CurrentApp.LocalizationService.GetRequiredString(
+                    ResourceKeys.AppNotificationErrorTitle),
+                App.CurrentApp.LocalizationService.GetRequiredString(
+                    ResourceKeys.BundleExplorerNotificationDragExportFailed),
+                AppNotificationSeverity.Error);
+        }
         finally
         {
             _isElevatedDragExportActionRunning = false;
@@ -90,10 +109,7 @@ public sealed partial class BundleExplorerPage
                     return null;
                 }
 
-                var payload = await _assetDragExportCoordinator.PrepareAsync(workspaceSummary, item);
-                return payload?.StorageItems
-                    .Select(static storageItem => storageItem.Path)
-                    .ToArray();
+                return await _assetDragExportCoordinator.PreparePathsAsync(workspaceSummary, item);
             });
         var diagnostic = App.CurrentApp.LocalizationService.GetFormattedString(
             ResourceKeys.BundleExplorerLogElevatedDragExportBrokerFormat,

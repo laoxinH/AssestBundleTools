@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using System.Diagnostics;
 
 namespace AssestBundleTools.Presentation.WinUI.Services;
 
@@ -11,6 +12,7 @@ internal sealed class WindowsElevatedDragExportBrokerService : IElevatedDragExpo
     private readonly SemaphoreSlim _startGate = new(1, 1);
     private string? _sessionPath;
     private int? _brokerProcessId;
+    private string _brokerLaunchDiagnostic = string.Empty;
 
     public WindowsElevatedDragExportBrokerService(
         IUnelevatedProcessRestartService unelevatedProcessService)
@@ -41,6 +43,7 @@ internal sealed class WindowsElevatedDragExportBrokerService : IElevatedDragExpo
             }
 
             _brokerProcessId = launchResult.ProcessId;
+            _brokerLaunchDiagnostic = launchResult.DiagnosticDetail;
             GrantForegroundActivation();
 
             for (var attempt = 0; attempt < ReadyWaitAttemptCount; attempt++)
@@ -48,7 +51,8 @@ internal sealed class WindowsElevatedDragExportBrokerService : IElevatedDragExpo
                 if (IsReady())
                 {
                     return ElevatedDragExportBrokerResult.Success(
-                        $"The standard-user OLE broker is ready. ProcessId={launchResult.ProcessId}.");
+                        $"The standard-user OLE broker is ready. ProcessId={launchResult.ProcessId}. " +
+                        launchResult.DiagnosticDetail);
                 }
 
                 await Task.Delay(ReadyWaitInterval);
@@ -68,10 +72,13 @@ internal sealed class WindowsElevatedDragExportBrokerService : IElevatedDragExpo
     {
         ArgumentNullException.ThrowIfNull(preparePathsAsync);
 
+        var totalStopwatch = Stopwatch.StartNew();
+        var brokerReadyStopwatch = Stopwatch.StartNew();
         var startResult = await EnsureStartedAsync();
+        var brokerReadyMilliseconds = brokerReadyStopwatch.ElapsedMilliseconds;
         if (!startResult.Succeeded || _sessionPath is null)
         {
-            return startResult;
+            return AppendTimings(startResult, brokerReadyMilliseconds, 0, totalStopwatch.ElapsedMilliseconds);
         }
 
         GrantForegroundActivation();
@@ -82,7 +89,9 @@ internal sealed class WindowsElevatedDragExportBrokerService : IElevatedDragExpo
 
         try
         {
+            var preparationStopwatch = Stopwatch.StartNew();
             var paths = await preparePathsAsync();
+            var preparationMilliseconds = preparationStopwatch.ElapsedMilliseconds;
             var existingPaths = paths?
                 .Where(static path => !string.IsNullOrWhiteSpace(path) &&
                                       (File.Exists(path) || Directory.Exists(path)))
@@ -94,21 +103,35 @@ internal sealed class WindowsElevatedDragExportBrokerService : IElevatedDragExpo
                     Path.Combine(requestPath, ElevatedDragExportBrokerProtocol.FailureFileName),
                     "No exported file or directory was produced.");
                 return ElevatedDragExportBrokerResult.Failure(
-                    "The drag export preparation did not produce an existing file or directory.");
+                    "The drag export preparation did not produce an existing file or directory. " +
+                    FormatTimings(
+                        brokerReadyMilliseconds,
+                        preparationMilliseconds,
+                        totalStopwatch.ElapsedMilliseconds));
             }
 
             await ElevatedDragExportBrokerProtocol.WritePayloadAsync(
                 requestPath,
                 existingPaths,
                 CancellationToken.None);
-            return await WaitForCompletionAsync(requestPath, existingPaths.Length);
+            var completionResult = await WaitForCompletionAsync(requestPath, existingPaths.Length);
+            return AppendTimings(
+                completionResult,
+                brokerReadyMilliseconds,
+                preparationMilliseconds,
+                totalStopwatch.ElapsedMilliseconds);
         }
         catch (Exception exception)
         {
             File.WriteAllText(
                 Path.Combine(requestPath, ElevatedDragExportBrokerProtocol.FailureFileName),
                 exception.Message);
-            return ElevatedDragExportBrokerResult.Failure(exception.Message);
+            return ElevatedDragExportBrokerResult.Failure(
+                exception.Message + " " +
+                FormatTimings(
+                    brokerReadyMilliseconds,
+                    preparationMilliseconds: 0,
+                    totalStopwatch.ElapsedMilliseconds));
         }
     }
 
@@ -157,6 +180,35 @@ internal sealed class WindowsElevatedDragExportBrokerService : IElevatedDragExpo
             _ = AllowSetForegroundWindow(checked((uint)_brokerProcessId.Value));
         }
     }
+
+    private ElevatedDragExportBrokerResult AppendTimings(
+        ElevatedDragExportBrokerResult result,
+        long brokerReadyMilliseconds,
+        long preparationMilliseconds,
+        long totalMilliseconds)
+    {
+        var launchDiagnostic = string.IsNullOrWhiteSpace(_brokerLaunchDiagnostic)
+            ? string.Empty
+            : string.Concat(_brokerLaunchDiagnostic, " ");
+        return result with
+        {
+            DiagnosticDetail = string.Concat(
+                result.DiagnosticDetail,
+                " ",
+                launchDiagnostic,
+                FormatTimings(
+                    brokerReadyMilliseconds,
+                    preparationMilliseconds,
+                    totalMilliseconds))
+        };
+    }
+
+    private static string FormatTimings(
+        long brokerReadyMilliseconds,
+        long preparationMilliseconds,
+        long totalMilliseconds) =>
+        $"Timings: BrokerReady={brokerReadyMilliseconds}ms; " +
+        $"Preparation={preparationMilliseconds}ms; DragLifetime={totalMilliseconds}ms.";
 
     private static string CreateSessionPath()
     {
