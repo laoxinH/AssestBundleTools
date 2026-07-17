@@ -216,7 +216,7 @@ internal sealed class AssetPaneDragExportSourceCoordinator
             return;
         }
 
-        ResetElevatedGesture();
+        ResetElevatedGesture(releasePointerCaptures: false);
         _isElevatedDragActive = true;
         var originalOpacity = container.Opacity;
         container.Opacity = 0.62;
@@ -232,7 +232,7 @@ internal sealed class AssetPaneDragExportSourceCoordinator
         }
     }
 
-    private void ResetElevatedGesture()
+    private void ResetElevatedGesture(bool releasePointerCaptures = true)
     {
         var listView = _elevatedGestureListView;
         var container = _elevatedGestureContainer;
@@ -241,8 +241,11 @@ internal sealed class AssetPaneDragExportSourceCoordinator
         _elevatedGestureItem = null;
         _elevatedGesturePointerId = 0;
         _elevatedGestureStartPosition = default;
-        container?.ReleasePointerCaptures();
-        listView?.ReleasePointerCaptures();
+        if (releasePointerCaptures)
+        {
+            container?.ReleasePointerCaptures();
+            listView?.ReleasePointerCaptures();
+        }
     }
 
     private static bool TryResolveGestureTarget(

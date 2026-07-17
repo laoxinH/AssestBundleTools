@@ -4,7 +4,6 @@ namespace AssestBundleTools.Presentation.WinUI.Services;
 
 internal sealed class NativeOlePointerReleaseMonitor : IDisposable
 {
-    private const int VirtualKeyLeftButton = 0x01;
     private const uint WindowMessageMouseMove = 0x0200;
     private const uint WindowMessageLeftButtonUp = 0x0202;
     private const int PollIntervalMilliseconds = 8;
@@ -14,6 +13,7 @@ internal sealed class NativeOlePointerReleaseMonitor : IDisposable
     private readonly string? _diagnosticPath;
     private readonly NativeOleDragReleaseGate _releaseGate;
     private readonly NativeOleDragFeedbackWindow? _feedbackWindow;
+    private readonly Func<NativePointerReleaseSignal?> _pointerReleaseProvider;
     private readonly CancellationTokenSource _cancellation = new();
     private readonly Thread _thread;
 
@@ -21,12 +21,15 @@ internal sealed class NativeOlePointerReleaseMonitor : IDisposable
         IntPtr sourceWindow,
         NativeOleDragReleaseGate releaseGate,
         NativeOleDragFeedbackWindow? feedbackWindow,
+        Func<NativePointerReleaseSignal?> pointerReleaseProvider,
         string? diagnosticPath)
     {
         _sourceWindow = sourceWindow;
         _ownerThreadId = GetCurrentThreadId();
         _releaseGate = releaseGate;
         _feedbackWindow = feedbackWindow;
+        _pointerReleaseProvider = pointerReleaseProvider ??
+            throw new ArgumentNullException(nameof(pointerReleaseProvider));
         _diagnosticPath = diagnosticPath;
         _thread = new Thread(MonitorPointerRelease)
         {
@@ -40,8 +43,9 @@ internal sealed class NativeOlePointerReleaseMonitor : IDisposable
         IntPtr sourceWindow,
         NativeOleDragReleaseGate releaseGate,
         NativeOleDragFeedbackWindow? feedbackWindow,
+        Func<NativePointerReleaseSignal?> pointerReleaseProvider,
         string? diagnosticPath) =>
-        new(sourceWindow, releaseGate, feedbackWindow, diagnosticPath);
+        new(sourceWindow, releaseGate, feedbackWindow, pointerReleaseProvider, diagnosticPath);
 
     public void Dispose()
     {
@@ -52,20 +56,29 @@ internal sealed class NativeOlePointerReleaseMonitor : IDisposable
 
     private void MonitorPointerRelease()
     {
-        var observedPressed = false;
-        var releasedPollCount = 0;
         while (!_cancellation.IsCancellationRequested)
         {
             _feedbackWindow?.UpdatePosition();
-            var isPressed = (GetAsyncKeyState(VirtualKeyLeftButton) & 0x8000) != 0;
-            if (isPressed)
+            NativePointerReleaseSignal? signal;
+            try
             {
-                observedPressed = true;
-                releasedPollCount = 0;
+                signal = _pointerReleaseProvider();
             }
-            else if (observedPressed || ++releasedPollCount >= 4)
+            catch (Exception exception)
             {
-                PostPointerRelease(observedPressed);
+                CancelDrag($"Pointer release relay failed: {exception.GetType().Name}.");
+                return;
+            }
+
+            if (signal is { DropRequested: true } dropSignal)
+            {
+                PostPointerRelease(dropSignal);
+                return;
+            }
+
+            if (signal is { DropRequested: false })
+            {
+                CancelDrag("Pointer release relay requested cancellation.");
                 return;
             }
 
@@ -73,17 +86,13 @@ internal sealed class NativeOlePointerReleaseMonitor : IDisposable
         }
     }
 
-    private void PostPointerRelease(bool observedPressed)
+    private void PostPointerRelease(NativePointerReleaseSignal signal)
     {
         _feedbackWindow?.Hide();
         var messageWindow = ResolveMessageWindow();
-        var screenPoint = new NativePoint();
-        var clientPoint = new NativePoint();
-        if (GetCursorPos(out screenPoint))
-        {
-            clientPoint = screenPoint;
-            _ = ScreenToClient(messageWindow, ref clientPoint);
-        }
+        var screenPoint = new NativePoint { X = signal.ScreenX, Y = signal.ScreenY };
+        var clientPoint = screenPoint;
+        _ = ScreenToClient(messageWindow, ref clientPoint);
 
         var packedPosition = unchecked(
             (clientPoint.X & 0xFFFF) |
@@ -105,12 +114,18 @@ internal sealed class NativeOlePointerReleaseMonitor : IDisposable
             IntPtr.Zero,
             new IntPtr(packedPosition));
         AppendDiagnostic(
-            string.Concat(
-                observedPressed
-                    ? "Pointer release monitor posted WM_LBUTTONUP after the physical button was released. "
-                    : "Pointer release monitor posted WM_LBUTTONUP because the drag started after physical release. ",
-                $"Window=0x{messageWindow.ToInt64():X}; Screen=({screenPoint.X},{screenPoint.Y}); " +
-                $"Client=({clientPoint.X},{clientPoint.Y})."));
+            $"Pointer release monitor posted WM_LBUTTONUP after the elevated process relayed release. " +
+            $"Window=0x{messageWindow.ToInt64():X}; Screen=({screenPoint.X},{screenPoint.Y}); " +
+            $"Client=({clientPoint.X},{clientPoint.Y}).");
+    }
+
+    private void CancelDrag(string diagnostic)
+    {
+        _feedbackWindow?.Hide();
+        _releaseGate.Cancel();
+        var messageWindow = ResolveMessageWindow();
+        _ = PostMessageW(messageWindow, WindowMessageMouseMove, IntPtr.Zero, IntPtr.Zero);
+        AppendDiagnostic($"{diagnostic} Window=0x{messageWindow.ToInt64():X}.");
     }
 
     private IntPtr ResolveMessageWindow()
@@ -141,19 +156,12 @@ internal sealed class NativeOlePointerReleaseMonitor : IDisposable
         }
     }
 
-    [DllImport("user32.dll")]
-    private static extern short GetAsyncKeyState(int virtualKey);
-
     [DllImport("kernel32.dll")]
     private static extern uint GetCurrentThreadId();
 
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool GetGUIThreadInfo(uint threadId, ref GuiThreadInfo threadInfo);
-
-    [DllImport("user32.dll")]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool GetCursorPos(out NativePoint point);
 
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
@@ -200,9 +208,18 @@ internal sealed class NativeOlePointerReleaseMonitor : IDisposable
 
 internal sealed class NativeOleDragReleaseGate
 {
-    private int _dropAllowed;
+    private const int ContinueDecision = 0;
+    private const int DropDecision = 1;
+    private const int CancelDecision = 2;
+    private int _decision;
 
-    public bool IsDropAllowed => Volatile.Read(ref _dropAllowed) != 0;
+    public bool IsDropAllowed => Volatile.Read(ref _decision) == DropDecision;
 
-    public void AllowDrop() => Volatile.Write(ref _dropAllowed, 1);
+    public bool IsCancelRequested => Volatile.Read(ref _decision) == CancelDecision;
+
+    public void AllowDrop() =>
+        _ = Interlocked.CompareExchange(ref _decision, DropDecision, ContinueDecision);
+
+    public void Cancel() =>
+        _ = Interlocked.CompareExchange(ref _decision, CancelDecision, ContinueDecision);
 }

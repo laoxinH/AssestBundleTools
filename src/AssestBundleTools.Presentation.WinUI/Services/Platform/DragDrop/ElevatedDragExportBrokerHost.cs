@@ -81,6 +81,7 @@ internal static class ElevatedDragExportBrokerHost
                     throw new InvalidDataException("The drag-export broker command is invalid.");
                 result = NativeOleFileDrag.Run(
                     () => WaitForPayload(requestPath, parentProcessId),
+                    () => ElevatedDragExportBrokerProtocol.ReadPointerRelease(requestPath),
                     command.DisplayName,
                     command.ItemCount,
                     Path.Combine(requestPath, "ole.trace"));

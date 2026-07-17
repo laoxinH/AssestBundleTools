@@ -10,6 +10,7 @@ internal static class NativeOleFileDrag
 
     public static NativeOleDragResult Run(
         Func<IReadOnlyList<string>> pathsProvider,
+        Func<NativePointerReleaseSignal?> pointerReleaseProvider,
         string displayName,
         int itemCount,
         string? diagnosticPath = null)
@@ -50,6 +51,7 @@ internal static class NativeOleFileDrag
                 sourceWindow,
                 releaseGate,
                 feedbackWindow,
+                pointerReleaseProvider,
                 diagnosticPath);
             var hResult = DoDragDrop(dataObject, dropSource, DropEffectCopy, out var effect);
             return new NativeOleDragResult(hResult, effect);
@@ -144,6 +146,11 @@ internal static class NativeOleFileDrag
             }
 
             if (escapePressed)
+            {
+                return DragDropCancel;
+            }
+
+            if (_releaseGate.IsCancelRequested)
             {
                 return DragDropCancel;
             }

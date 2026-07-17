@@ -9,6 +9,7 @@ internal static class ElevatedDragExportBrokerProtocol
     public const string PayloadFileName = "payload.bin";
     public const string FailureFileName = "payload.failed";
     public const string CompletionFileName = "drag.completed";
+    public const string PointerReleaseFileName = "pointer.released";
 
     public static string RootPath =>
         Path.Combine(Path.GetTempPath(), "AssestBundleTools", "elevated-drag-export-broker");
@@ -135,6 +136,39 @@ internal static class ElevatedDragExportBrokerProtocol
             : null;
     }
 
+    public static void WritePointerRelease(
+        string requestPath,
+        NativePointerReleaseSignal signal)
+    {
+        var signalPath = Path.Combine(requestPath, PointerReleaseFileName);
+        var temporaryPath = string.Concat(signalPath, ".tmp");
+        using (var stream = new FileStream(temporaryPath, FileMode.Create, FileAccess.Write, FileShare.None))
+        using (var writer = new BinaryWriter(stream, System.Text.Encoding.UTF8, leaveOpen: false))
+        {
+            writer.Write(signal.DropRequested);
+            writer.Write(signal.ScreenX);
+            writer.Write(signal.ScreenY);
+        }
+
+        File.Move(temporaryPath, signalPath, overwrite: true);
+    }
+
+    public static NativePointerReleaseSignal? ReadPointerRelease(string requestPath)
+    {
+        var signalPath = Path.Combine(requestPath, PointerReleaseFileName);
+        if (!File.Exists(signalPath))
+        {
+            return null;
+        }
+
+        using var stream = new FileStream(signalPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+        using var reader = new BinaryReader(stream, System.Text.Encoding.UTF8, leaveOpen: false);
+        return new NativePointerReleaseSignal(
+            reader.ReadBoolean(),
+            reader.ReadInt32(),
+            reader.ReadInt32());
+    }
+
     private static string SanitizeDiagnosticDetail(string? detail) =>
         string.IsNullOrWhiteSpace(detail)
             ? string.Empty
@@ -189,3 +223,8 @@ internal sealed record ElevatedDragExportBrokerCompletion(
     int HResult,
     uint Effect,
     string DiagnosticDetail);
+
+internal readonly record struct NativePointerReleaseSignal(
+    bool DropRequested,
+    int ScreenX,
+    int ScreenY);

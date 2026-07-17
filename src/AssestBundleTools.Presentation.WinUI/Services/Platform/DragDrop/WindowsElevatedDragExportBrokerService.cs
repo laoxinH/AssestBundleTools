@@ -5,6 +5,7 @@ namespace AssestBundleTools.Presentation.WinUI.Services;
 
 internal sealed class WindowsElevatedDragExportBrokerService : IElevatedDragExportBrokerService
 {
+    private const int VirtualKeyLeftButton = 0x01;
     private const int ReadyWaitAttemptCount = 800;
     private const int CompletionWaitAttemptCount = 4800;
     private static readonly TimeSpan ReadyWaitInterval = TimeSpan.FromMilliseconds(25);
@@ -86,6 +87,10 @@ internal sealed class WindowsElevatedDragExportBrokerService : IElevatedDragExpo
 
         var requestPath = Path.Combine(_sessionPath, Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(requestPath);
+        using var pointerRelayCancellation = new CancellationTokenSource();
+        var pointerRelayTask = RelayPointerReleaseAsync(
+            requestPath,
+            pointerRelayCancellation.Token);
         ElevatedDragExportBrokerProtocol.WriteCommand(requestPath, descriptor);
 
         try
@@ -134,6 +139,73 @@ internal sealed class WindowsElevatedDragExportBrokerService : IElevatedDragExpo
                     preparationMilliseconds: 0,
                     totalStopwatch.ElapsedMilliseconds));
         }
+        finally
+        {
+            pointerRelayCancellation.Cancel();
+            await ObservePointerRelayCompletionAsync(pointerRelayTask);
+        }
+    }
+
+    private static async Task RelayPointerReleaseAsync(
+        string requestPath,
+        CancellationToken cancellationToken)
+    {
+        if (!IsLeftButtonPressed())
+        {
+            ElevatedDragExportBrokerProtocol.WritePointerRelease(
+                requestPath,
+                CapturePointerSignal(dropRequested: false));
+            return;
+        }
+
+        try
+        {
+            while (IsLeftButtonPressed())
+            {
+                await Task.Delay(TimeSpan.FromMilliseconds(8), cancellationToken)
+                    .ConfigureAwait(false);
+            }
+
+            ElevatedDragExportBrokerProtocol.WritePointerRelease(
+                requestPath,
+                CapturePointerSignal(dropRequested: true));
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+        }
+        catch
+        {
+            try
+            {
+                ElevatedDragExportBrokerProtocol.WritePointerRelease(
+                    requestPath,
+                    CapturePointerSignal(dropRequested: false));
+            }
+            catch
+            {
+            }
+        }
+    }
+
+    private static async Task ObservePointerRelayCompletionAsync(Task pointerRelayTask)
+    {
+        try
+        {
+            await pointerRelayTask;
+        }
+        catch (OperationCanceledException)
+        {
+        }
+    }
+
+    private static bool IsLeftButtonPressed() =>
+        (GetAsyncKeyState(VirtualKeyLeftButton) & 0x8000) != 0;
+
+    private static NativePointerReleaseSignal CapturePointerSignal(bool dropRequested)
+    {
+        return GetCursorPos(out var point)
+            ? new NativePointerReleaseSignal(dropRequested, point.X, point.Y)
+            : new NativePointerReleaseSignal(false, 0, 0);
     }
 
     private static async Task<ElevatedDragExportBrokerResult> WaitForCompletionAsync(
@@ -226,4 +298,18 @@ internal sealed class WindowsElevatedDragExportBrokerService : IElevatedDragExpo
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool AllowSetForegroundWindow(uint processId);
+
+    [DllImport("user32.dll")]
+    private static extern short GetAsyncKeyState(int virtualKey);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool GetCursorPos(out NativePoint point);
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct NativePoint
+    {
+        public int X;
+        public int Y;
+    }
 }

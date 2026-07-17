@@ -33,8 +33,8 @@ public sealed class AssetPaneElevatedDragExportContractTests
         Assert.Contains("AttachElevatedGestureHandlers(_assetListView)", coordinator);
         Assert.Contains("UIElement.PointerMovedEvent", coordinator);
         Assert.Contains("handledEventsToo: true", coordinator);
-        Assert.Contains("container?.ReleasePointerCaptures()", coordinator);
-        Assert.Contains("listView?.ReleasePointerCaptures()", coordinator);
+        Assert.Contains("ResetElevatedGesture(releasePointerCaptures: false)", coordinator);
+        Assert.Contains("if (releasePointerCaptures)", coordinator);
         Assert.Contains("container.Opacity = 0.62", coordinator);
         Assert.Contains("await _elevatedDragAttempted(item)", coordinator);
         Assert.Contains("_elevatedDragAttempted(item)", coordinator);
@@ -150,12 +150,14 @@ public sealed class AssetPaneElevatedDragExportContractTests
         Assert.Contains("ApplyExplicitAlpha", dragImage);
         Assert.Contains("feedbackBitmap", dragImage);
         Assert.Contains("shellBitmap", dragImage);
-        Assert.Contains("GetAsyncKeyState", releaseMonitor);
-        Assert.Contains("GetCursorPos", releaseMonitor);
+        Assert.DoesNotContain("GetAsyncKeyState", releaseMonitor);
+        Assert.Contains("_pointerReleaseProvider", releaseMonitor);
         Assert.Contains("ScreenToClient", releaseMonitor);
         Assert.Contains("GetGUIThreadInfo", releaseMonitor);
         Assert.Contains("CaptureWindow", releaseMonitor);
         Assert.Contains("NativeOleDragReleaseGate", releaseMonitor);
+        Assert.Contains("Pointer release relay requested cancellation", releaseMonitor);
+        Assert.DoesNotContain("because the drag started after physical release", releaseMonitor);
         Assert.Contains("packedPosition", releaseMonitor);
         Assert.Contains("_feedbackWindow?.Hide()", releaseMonitor);
         Assert.Contains("WindowMessageLeftButtonUp", releaseMonitor);
@@ -172,11 +174,17 @@ public sealed class AssetPaneElevatedDragExportContractTests
         Assert.DoesNotContain("SetData is not supported", dataObject);
         Assert.Contains("TryRestartAsync(", brokerService);
         Assert.Contains("WriteCommand(requestPath, descriptor)", brokerService);
+        Assert.Contains("RelayPointerReleaseAsync", brokerService);
+        Assert.Contains("GetAsyncKeyState", brokerService);
+        Assert.Contains("GetCursorPos", brokerService);
+        Assert.Contains("new NativePointerReleaseSignal(false, 0, 0)", brokerService);
+        Assert.Contains("WritePointerRelease", brokerService);
         Assert.Contains("WritePayloadAsync", brokerService);
         Assert.Contains("WaitForCompletionAsync", brokerService);
         Assert.Contains("BrokerReady=", brokerService);
         Assert.Contains("Preparation=", brokerService);
         Assert.Contains("completion.HResult == 0x00040100 && completion.Effect == 0", brokerService);
+        Assert.Contains("_releaseGate.IsCancelRequested", nativeDrag);
         Assert.Contains("writer.Write(SanitizeDisplayName(descriptor.DisplayName))", protocol);
     }
 
@@ -201,6 +209,33 @@ public sealed class AssetPaneElevatedDragExportContractTests
             Assert.NotNull(command);
             Assert.Equal("sample  asset.png", command.DisplayName);
             Assert.Equal(3, command.ItemCount);
+        }
+        finally
+        {
+            Directory.Delete(requestPath, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void ElevatedAssetDragExportPointerRelease_ShouldRoundTripDropCoordinates()
+    {
+        var requestPath = Path.Combine(
+            Path.GetTempPath(),
+            "AssestBundleTools.Presentation.Tests",
+            Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(requestPath);
+        try
+        {
+            ElevatedDragExportBrokerProtocol.WritePointerRelease(
+                requestPath,
+                new NativePointerReleaseSignal(true, 1720, 840));
+
+            var signal = ElevatedDragExportBrokerProtocol.ReadPointerRelease(requestPath);
+
+            Assert.NotNull(signal);
+            Assert.True(signal.Value.DropRequested);
+            Assert.Equal(1720, signal.Value.ScreenX);
+            Assert.Equal(840, signal.Value.ScreenY);
         }
         finally
         {
