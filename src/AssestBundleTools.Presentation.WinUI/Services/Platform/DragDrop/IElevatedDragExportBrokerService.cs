@@ -5,8 +5,13 @@ internal interface IElevatedDragExportBrokerService
     Task<ElevatedDragExportBrokerResult> EnsureStartedAsync();
 
     Task<ElevatedDragExportBrokerResult> StartDragAsync(
+        ElevatedDragExportDescriptor descriptor,
         Func<Task<IReadOnlyList<string>?>> preparePathsAsync);
 }
+
+internal readonly record struct ElevatedDragExportDescriptor(
+    string DisplayName,
+    int ItemCount);
 
 internal readonly record struct ElevatedDragExportBrokerResult(
     bool Succeeded,

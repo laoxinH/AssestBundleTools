@@ -1,3 +1,5 @@
+using AssestBundleTools.Presentation.WinUI.Services;
+
 namespace AssestBundleTools.Presentation.Tests.Views;
 
 public sealed class AssetPaneElevatedDragExportContractTests
@@ -18,12 +20,12 @@ public sealed class AssetPaneElevatedDragExportContractTests
             "BundleExplorer",
             "Controls",
             "AssetPaneView.DragExport.cs"));
-        var listView = File.ReadAllText(Path.Combine(
+        var assetPaneXaml = File.ReadAllText(Path.Combine(
             projectRoot,
             "Views",
             "BundleExplorer",
             "Controls",
-            "AssetDragExportListView.cs"));
+            "AssetPaneView.xaml"));
 
         Assert.Contains("if (_isElevated)", coordinator);
         Assert.Contains("container.CanDrag = false", coordinator);
@@ -35,12 +37,11 @@ public sealed class AssetPaneElevatedDragExportContractTests
         Assert.Contains("listView?.ReleasePointerCaptures()", coordinator);
         Assert.Contains("container.Opacity = 0.62", coordinator);
         Assert.Contains("await _elevatedDragAttempted(item)", coordinator);
-        Assert.Contains("SetElevatedDragFeedback(isActive: true)", coordinator);
-        Assert.Contains("SetElevatedDragFeedback(isActive: false)", coordinator);
         Assert.Contains("_elevatedDragAttempted(item)", coordinator);
         Assert.DoesNotContain("StartDragAsync", coordinator);
-        Assert.Contains("InputSystemCursorShape.SizeAll", listView);
-        Assert.Contains("ProtectedCursor", listView);
+        Assert.DoesNotContain("InputSystemCursorShape.SizeAll", coordinator);
+        Assert.DoesNotContain("ProtectedCursor", coordinator);
+        Assert.DoesNotContain("AssetDragExportListView", assetPaneXaml);
         Assert.Contains("ProcessElevationDiagnostics.Capture().IsElevated == true", view);
         Assert.Contains("ElevatedDragExportAttempted", view);
         Assert.Contains("OperationTask ?? Task.CompletedTask", view);
@@ -104,17 +105,82 @@ public sealed class AssetPaneElevatedDragExportContractTests
             "Platform",
             "DragDrop",
             "WindowsElevatedDragExportBrokerService.cs"));
+        var dragImage = File.ReadAllText(Path.Combine(
+            projectRoot,
+            "Services",
+            "Platform",
+            "DragDrop",
+            "NativeOleDragImage.cs"));
+        var releaseMonitor = File.ReadAllText(Path.Combine(
+            projectRoot,
+            "Services",
+            "Platform",
+            "DragDrop",
+            "NativeOlePointerReleaseMonitor.cs"));
+        var dataObject = File.ReadAllText(Path.Combine(
+            projectRoot,
+            "Services",
+            "Platform",
+            "DragDrop",
+            "NativeOleFileDropDataObject.cs"));
+        var protocol = File.ReadAllText(Path.Combine(
+            projectRoot,
+            "Services",
+            "Platform",
+            "DragDrop",
+            "ElevatedDragExportBrokerProtocol.cs"));
 
         Assert.Contains("ElevatedDragExportBrokerHost.TryRunCurrentProcess()", app);
         Assert.Contains("_dragExportBrokerService.EnsureStartedAsync()", prompt);
         Assert.Contains("DoDragDrop(", nativeDrag);
-        Assert.Contains("ClipboardFormatFileDrop = 15", nativeDrag);
-        Assert.Contains("CreateFileDropHandle", nativeDrag);
+        Assert.Contains("NativeOleDragImage.TryInitialize", nativeDrag);
+        Assert.Contains("NativeOlePointerReleaseMonitor.Start", nativeDrag);
+        Assert.Contains("IDragSourceHelper", dragImage);
+        Assert.Contains("InitializeFromBitmap", dragImage);
+        Assert.Contains("ShellDragImage", dragImage);
+        Assert.Contains("GetAsyncKeyState", releaseMonitor);
+        Assert.Contains("WindowMessageLeftButtonUp", releaseMonitor);
+        Assert.Contains("PostMessageW", releaseMonitor);
+        Assert.Contains("ClipboardFormatFileDrop = 15", dataObject);
+        Assert.Contains("CreateFileDropHandle", dataObject);
+        Assert.Contains("_storedFormats", dataObject);
+        Assert.Contains("ReleaseStgMedium", dataObject);
+        Assert.DoesNotContain("SetData is not supported", dataObject);
         Assert.Contains("TryRestartAsync(", brokerService);
+        Assert.Contains("WriteCommand(requestPath, descriptor)", brokerService);
         Assert.Contains("WritePayloadAsync", brokerService);
         Assert.Contains("WaitForCompletionAsync", brokerService);
         Assert.Contains("BrokerReady=", brokerService);
         Assert.Contains("Preparation=", brokerService);
+        Assert.Contains("writer.Write(SanitizeDisplayName(descriptor.DisplayName))", protocol);
+    }
+
+    [Fact]
+    public void ElevatedAssetDragExportBrokerCommand_ShouldRoundTripSanitizedVisualMetadata()
+    {
+        var requestPath = Path.Combine(
+            Path.GetTempPath(),
+            "AssestBundleTools.Presentation.Tests",
+            Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(requestPath);
+        try
+        {
+            ElevatedDragExportBrokerProtocol.WriteCommand(
+                requestPath,
+                new ElevatedDragExportDescriptor("  sample\r\nasset.png  ", 3));
+
+            var command = ElevatedDragExportBrokerProtocol.ReadCommand(Path.Combine(
+                requestPath,
+                ElevatedDragExportBrokerProtocol.CommandFileName));
+
+            Assert.NotNull(command);
+            Assert.Equal("sample  asset.png", command.DisplayName);
+            Assert.Equal(3, command.ItemCount);
+        }
+        finally
+        {
+            Directory.Delete(requestPath, recursive: true);
+        }
     }
 
     private static string GetPresentationProjectRoot()

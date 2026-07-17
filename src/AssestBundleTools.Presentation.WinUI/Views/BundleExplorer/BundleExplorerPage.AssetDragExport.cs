@@ -1,5 +1,6 @@
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using AssestBundleTools.Presentation.WinUI.ViewModels.Shell.Contracts;
 using AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls;
 using AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Coordinators;
@@ -102,6 +103,7 @@ public sealed partial class BundleExplorerPage
             App.CurrentApp.LocalizationService.GetRequiredString(
                 ResourceKeys.BundleExplorerLogElevatedDragExportStarted));
         var result = await App.CurrentApp.ElevatedDragExportBrokerService.StartDragAsync(
+            CreateElevatedDragExportDescriptor(item),
             async () =>
             {
                 if (ViewModel.WorkspaceShell.WorkspaceSummary is not { } workspaceSummary)
@@ -129,4 +131,12 @@ public sealed partial class BundleExplorerPage
                 ResourceKeys.BundleExplorerNotificationDragExportFailed),
             AppNotificationSeverity.Error);
     }
+
+    private static ElevatedDragExportDescriptor CreateElevatedDragExportDescriptor(object item) =>
+        item switch
+        {
+            AssetListEntryViewModel asset => new(asset.DisplayName, 1),
+            SpineAssetGroupEntryViewModel spineGroup => new(spineGroup.DisplayName, 1),
+            _ => new(item.GetType().Name, 1)
+        };
 }

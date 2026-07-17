@@ -5,7 +5,6 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:local="using:AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls"
     xmlns:viewModels="using:AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings"
     xmlns:controls="using:Microsoft.UI.Xaml.Controls"
     mc:Ignorable="d">
@@ -376,7 +375,7 @@
         </Grid>
 
         <Grid Grid.Row="3">
-            <local:AssetDragExportListView
+            <ListView
                 x:Name="AssetListView"
                 HorizontalContentAlignment="Stretch"
                 ItemsSource="{x:Bind ViewModel.Items, Mode=OneWay}"
@@ -585,9 +584,9 @@
                         </Grid>
                     </DataTemplate>
                 </ListView.ItemTemplate>
-            </local:AssetDragExportListView>
+            </ListView>
 
-            <local:AssetDragExportListView
+            <ListView
                 x:Name="SpineGroupListView"
                 HorizontalContentAlignment="Stretch"
                 ItemsSource="{x:Bind ViewModel.SpineGroupItems, Mode=OneWay}"
@@ -763,7 +762,7 @@
                         </Grid>
                     </DataTemplate>
                 </ListView.ItemTemplate>
-            </local:AssetDragExportListView>
+            </ListView>
 
             <Border
                 x:Name="AssetPaneEmptyStateCard"

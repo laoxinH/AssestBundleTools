@@ -68,6 +68,7 @@ internal sealed class WindowsElevatedDragExportBrokerService : IElevatedDragExpo
     }
 
     public async Task<ElevatedDragExportBrokerResult> StartDragAsync(
+        ElevatedDragExportDescriptor descriptor,
         Func<Task<IReadOnlyList<string>?>> preparePathsAsync)
     {
         ArgumentNullException.ThrowIfNull(preparePathsAsync);
@@ -85,7 +86,7 @@ internal sealed class WindowsElevatedDragExportBrokerService : IElevatedDragExpo
 
         var requestPath = Path.Combine(_sessionPath, Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(requestPath);
-        File.WriteAllText(Path.Combine(requestPath, ElevatedDragExportBrokerProtocol.CommandFileName), string.Empty);
+        ElevatedDragExportBrokerProtocol.WriteCommand(requestPath, descriptor);
 
         try
         {

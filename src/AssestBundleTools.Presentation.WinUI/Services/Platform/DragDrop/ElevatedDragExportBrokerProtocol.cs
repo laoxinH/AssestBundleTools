@@ -38,6 +38,33 @@ internal static class ElevatedDragExportBrokerProtocol
         return true;
     }
 
+    public static void WriteCommand(
+        string requestPath,
+        ElevatedDragExportDescriptor descriptor)
+    {
+        var commandPath = Path.Combine(requestPath, CommandFileName);
+        var temporaryPath = string.Concat(commandPath, ".tmp");
+        using (var stream = new FileStream(temporaryPath, FileMode.Create, FileAccess.Write, FileShare.None))
+        using (var writer = new BinaryWriter(stream, System.Text.Encoding.UTF8, leaveOpen: false))
+        {
+            writer.Write(Math.Clamp(descriptor.ItemCount, 1, 1024));
+            writer.Write(SanitizeDisplayName(descriptor.DisplayName));
+        }
+
+        File.Move(temporaryPath, commandPath, overwrite: true);
+    }
+
+    public static ElevatedDragExportBrokerCommand? ReadCommand(string commandPath)
+    {
+        using var stream = new FileStream(commandPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+        using var reader = new BinaryReader(stream, System.Text.Encoding.UTF8, leaveOpen: false);
+        var itemCount = reader.ReadInt32();
+        var displayName = SanitizeDisplayName(reader.ReadString());
+        return itemCount is > 0 and <= 1024 && displayName.Length > 0
+            ? new ElevatedDragExportBrokerCommand(displayName, itemCount)
+            : null;
+    }
+
     public static Task WritePayloadAsync(
         string requestPath,
         IReadOnlyList<string> paths,
@@ -113,6 +140,17 @@ internal static class ElevatedDragExportBrokerProtocol
             ? string.Empty
             : detail.Replace('\r', ' ').Replace('\n', ' ');
 
+    private static string SanitizeDisplayName(string? displayName)
+    {
+        if (string.IsNullOrWhiteSpace(displayName))
+        {
+            return string.Empty;
+        }
+
+        var normalized = displayName.Trim().Replace('\r', ' ').Replace('\n', ' ');
+        return normalized.Length <= 160 ? normalized : normalized[..160];
+    }
+
     private static bool TryNormalizeSessionPath(string candidatePath, out string sessionPath)
     {
         sessionPath = string.Empty;
@@ -140,6 +178,10 @@ internal static class ElevatedDragExportBrokerProtocol
 internal readonly record struct ElevatedDragExportBrokerLaunch(
     string SessionPath,
     int ParentProcessId);
+
+internal sealed record ElevatedDragExportBrokerCommand(
+    string DisplayName,
+    int ItemCount);
 
 internal sealed record ElevatedDragExportBrokerPayload(string[] Paths);
 

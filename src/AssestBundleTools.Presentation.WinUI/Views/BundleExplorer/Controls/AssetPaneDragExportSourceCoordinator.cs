@@ -208,7 +208,7 @@ internal sealed class AssetPaneDragExportSourceCoordinator
 
     private async void ReportElevatedDragAttempt()
     {
-        if (_elevatedGestureListView is not { } listView ||
+        if (_elevatedGestureListView is null ||
             _elevatedGestureContainer is not { } container ||
             _elevatedGestureItem is not { } item)
         {
@@ -220,10 +220,6 @@ internal sealed class AssetPaneDragExportSourceCoordinator
         _isElevatedDragActive = true;
         var originalOpacity = container.Opacity;
         container.Opacity = 0.62;
-        if (listView is AssetDragExportListView dragExportListView)
-        {
-            dragExportListView.SetElevatedDragFeedback(isActive: true);
-        }
 
         try
         {
@@ -232,11 +228,6 @@ internal sealed class AssetPaneDragExportSourceCoordinator
         finally
         {
             container.Opacity = originalOpacity;
-            if (listView is AssetDragExportListView completedListView)
-            {
-                completedListView.SetElevatedDragFeedback(isActive: false);
-            }
-
             _isElevatedDragActive = false;
         }
     }
