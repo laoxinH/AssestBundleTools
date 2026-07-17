@@ -5,8 +5,11 @@ namespace AssestBundleTools.Presentation.WinUI.Services;
 
 internal sealed class NativeOleDragImage : IDisposable
 {
-    private const int ImageWidth = 280;
-    private const int ImageHeight = 58;
+    internal const int ImageWidth = 280;
+    internal const int ImageHeight = 58;
+    internal const int HotspotX = 18;
+    internal const int HotspotY = 18;
+    internal const uint TransparentColorKey = 0x00FF00FF;
     private const int DefaultGuiFont = 17;
     private const int TransparentBackgroundMode = 1;
     private const int PenStyleSolid = 0;
@@ -18,7 +21,6 @@ internal sealed class NativeOleDragImage : IDisposable
     private const uint DrawTextVerticalCenter = 0x00000004;
     private const uint DrawTextEndEllipsis = 0x00008000;
     private const uint DrawTextNoPrefix = 0x00000800;
-    private const uint ColorKey = 0x00FF00FF;
     private IntPtr _bitmap;
 
     private NativeOleDragImage(IntPtr bitmap)
@@ -26,47 +28,54 @@ internal sealed class NativeOleDragImage : IDisposable
         _bitmap = bitmap;
     }
 
+    internal IntPtr BitmapHandle => _bitmap;
+
     public static NativeOleDragImage? TryInitialize(
         IDataObject dataObject,
         string displayName,
         int itemCount,
         string? diagnosticPath)
     {
-        IntPtr bitmap = IntPtr.Zero;
+        IntPtr feedbackBitmap;
+        try
+        {
+            feedbackBitmap = CreateDragBitmap(displayName, itemCount);
+        }
+        catch (Exception exception)
+        {
+            AppendDiagnostic(diagnosticPath, $"Creating the drag feedback bitmap failed: {exception.Message}");
+            return null;
+        }
+
+        IntPtr shellBitmap = IntPtr.Zero;
         object? helper = null;
         try
         {
-            bitmap = CreateDragBitmap(displayName, itemCount);
+            shellBitmap = CreateDragBitmap(displayName, itemCount);
             var dragImage = new ShellDragImage
             {
                 Size = new NativeSize(ImageWidth, ImageHeight),
-                Offset = new NativePoint(18, 18),
-                Bitmap = bitmap,
-                ColorKey = ColorKey
+                Offset = new NativePoint(HotspotX, HotspotY),
+                Bitmap = shellBitmap,
+                ColorKey = TransparentColorKey
             };
             helper = new DragDropHelper();
             var hResult = ((IDragSourceHelper)helper).InitializeFromBitmap(ref dragImage, dataObject);
             if (hResult < 0)
             {
                 AppendDiagnostic(diagnosticPath, $"IDragSourceHelper.InitializeFromBitmap failed: 0x{hResult:X8}.");
-                _ = DeleteObject(bitmap);
-                return null;
             }
-
-            AppendDiagnostic(
-                diagnosticPath,
-                $"Shell drag image initialized. DisplayName={displayName}; ItemCount={itemCount}.");
-            return new NativeOleDragImage(bitmap);
+            else
+            {
+                shellBitmap = IntPtr.Zero;
+                AppendDiagnostic(
+                    diagnosticPath,
+                    $"Shell drag image initialized. DisplayName={displayName}; ItemCount={itemCount}.");
+            }
         }
         catch (Exception exception)
         {
-            if (bitmap != IntPtr.Zero)
-            {
-                _ = DeleteObject(bitmap);
-            }
-
             AppendDiagnostic(diagnosticPath, $"Shell drag image initialization failed: {exception.Message}");
-            return null;
         }
         finally
         {
@@ -74,7 +83,14 @@ internal sealed class NativeOleDragImage : IDisposable
             {
                 _ = Marshal.FinalReleaseComObject(helper);
             }
+
+            if (shellBitmap != IntPtr.Zero)
+            {
+                _ = DeleteObject(shellBitmap);
+            }
         }
+
+        return new NativeOleDragImage(feedbackBitmap);
     }
 
     public void Dispose()
@@ -98,19 +114,26 @@ internal sealed class NativeOleDragImage : IDisposable
 
         IntPtr memoryDc = IntPtr.Zero;
         IntPtr bitmap = IntPtr.Zero;
+        IntPtr pixels = IntPtr.Zero;
         IntPtr previousBitmap = IntPtr.Zero;
         var succeeded = false;
         try
         {
             memoryDc = CreateCompatibleDC(screenDc);
-            bitmap = CreateCompatibleBitmap(screenDc, ImageWidth, ImageHeight);
+            bitmap = CreateDragDib(screenDc, out pixels);
             if (memoryDc == IntPtr.Zero || bitmap == IntPtr.Zero)
             {
                 throw new InvalidOperationException("Creating the shell drag bitmap failed.");
             }
 
             previousBitmap = SelectObject(memoryDc, bitmap);
+            if (previousBitmap == IntPtr.Zero || previousBitmap == new IntPtr(-1))
+            {
+                throw new InvalidOperationException("Selecting the shell drag bitmap failed.");
+            }
+
             DrawDragImage(memoryDc, displayName, itemCount);
+            ApplyExplicitAlpha(pixels);
             succeeded = true;
             return bitmap;
         }
@@ -134,9 +157,50 @@ internal sealed class NativeOleDragImage : IDisposable
         }
     }
 
+    private static IntPtr CreateDragDib(IntPtr screenDc, out IntPtr pixels)
+    {
+        var bitmapInfo = new BitmapInfo
+        {
+            Header = new BitmapInfoHeader
+            {
+                Size = checked((uint)Marshal.SizeOf<BitmapInfoHeader>()),
+                Width = ImageWidth,
+                Height = -ImageHeight,
+                Planes = 1,
+                BitCount = 32,
+                Compression = 0,
+                SizeImage = checked((uint)(ImageWidth * ImageHeight * sizeof(int)))
+            }
+        };
+        return CreateDIBSection(
+            screenDc,
+            ref bitmapInfo,
+            usage: 0,
+            out pixels,
+            IntPtr.Zero,
+            offset: 0);
+    }
+
+    private static void ApplyExplicitAlpha(IntPtr pixels)
+    {
+        if (pixels == IntPtr.Zero)
+        {
+            throw new InvalidOperationException("The shell drag bitmap did not expose pixel memory.");
+        }
+
+        var pixelCount = ImageWidth * ImageHeight;
+        for (var index = 0; index < pixelCount; index++)
+        {
+            var offset = index * sizeof(int);
+            var color = unchecked((uint)Marshal.ReadInt32(pixels, offset));
+            var alpha = (color & 0x00FFFFFF) == TransparentColorKey ? 0u : 0xFF000000u;
+            Marshal.WriteInt32(pixels, offset, unchecked((int)((color & 0x00FFFFFF) | alpha)));
+        }
+    }
+
     private static void DrawDragImage(IntPtr dc, string displayName, int itemCount)
     {
-        Fill(dc, new NativeRect(0, 0, ImageWidth, ImageHeight), ColorKey);
+        Fill(dc, new NativeRect(0, 0, ImageWidth, ImageHeight), TransparentColorKey);
 
         var backgroundBrush = CreateSolidBrush(GetSysColor(ColorWindow));
         var borderPen = CreatePen(PenStyleSolid, 1, GetSysColor(ColorHighlight));
@@ -292,6 +356,29 @@ internal sealed class NativeOleDragImage : IDisposable
         public int Bottom;
     }
 
+    [StructLayout(LayoutKind.Sequential)]
+    private struct BitmapInfoHeader
+    {
+        public uint Size;
+        public int Width;
+        public int Height;
+        public ushort Planes;
+        public ushort BitCount;
+        public uint Compression;
+        public uint SizeImage;
+        public int XPixelsPerMeter;
+        public int YPixelsPerMeter;
+        public uint ColorsUsed;
+        public uint ColorsImportant;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct BitmapInfo
+    {
+        public BitmapInfoHeader Header;
+        public uint Colors;
+    }
+
     [DllImport("user32.dll")]
     private static extern IntPtr GetDC(IntPtr window);
 
@@ -302,7 +389,13 @@ internal sealed class NativeOleDragImage : IDisposable
     private static extern IntPtr CreateCompatibleDC(IntPtr dc);
 
     [DllImport("gdi32.dll")]
-    private static extern IntPtr CreateCompatibleBitmap(IntPtr dc, int width, int height);
+    private static extern IntPtr CreateDIBSection(
+        IntPtr dc,
+        ref BitmapInfo bitmapInfo,
+        uint usage,
+        out IntPtr bits,
+        IntPtr section,
+        uint offset);
 
     [DllImport("gdi32.dll")]
     private static extern IntPtr SelectObject(IntPtr dc, IntPtr value);

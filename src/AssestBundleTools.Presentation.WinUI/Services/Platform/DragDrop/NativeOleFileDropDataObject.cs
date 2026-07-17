@@ -14,13 +14,18 @@ internal sealed class NativeOleFileDropDataObject : IDataObject, IDisposable
     private const int AdviseNotSupported = unchecked((int)0x80040003);
     private const int SameFormat = 0x00040130;
     private readonly Func<IReadOnlyList<string>> _pathsProvider;
+    private readonly string? _diagnosticPath;
     private readonly List<StoredFormat> _storedFormats = [];
+    private readonly HashSet<short> _queriedFormats = [];
     private IReadOnlyList<string>? _paths;
     private bool _disposed;
 
-    public NativeOleFileDropDataObject(Func<IReadOnlyList<string>> pathsProvider)
+    public NativeOleFileDropDataObject(
+        Func<IReadOnlyList<string>> pathsProvider,
+        string? diagnosticPath = null)
     {
         _pathsProvider = pathsProvider ?? throw new ArgumentNullException(nameof(pathsProvider));
+        _diagnosticPath = diagnosticPath;
     }
 
     public void GetData(ref FORMATETC format, out STGMEDIUM medium)
@@ -29,6 +34,7 @@ internal sealed class NativeOleFileDropDataObject : IDataObject, IDisposable
         if (IsFileDropFormat(format))
         {
             _paths ??= _pathsProvider();
+            AppendDiagnostic($"CF_HDROP requested. Paths={_paths.Count}.");
             medium = new STGMEDIUM
             {
                 tymed = TYMED.TYMED_HGLOBAL,
@@ -46,6 +52,7 @@ internal sealed class NativeOleFileDropDataObject : IDataObject, IDisposable
             throw new COMException("The requested drag format is unavailable.", DataFormatError);
         }
 
+        AppendDiagnostic($"Private drag format requested. Format={stored.Format.cfFormat}.");
         medium = CloneMedium(stored.Medium, stored.Format.cfFormat);
     }
 
@@ -56,10 +63,15 @@ internal sealed class NativeOleFileDropDataObject : IDataObject, IDisposable
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         var requestedFormat = format;
-        return IsFileDropFormat(requestedFormat) ||
-               _storedFormats.Any(candidate => Matches(candidate.Format, requestedFormat))
-            ? 0
-            : DataFormatError;
+        var available = IsFileDropFormat(requestedFormat) ||
+                        _storedFormats.Any(candidate => Matches(candidate.Format, requestedFormat));
+        if (_queriedFormats.Add(requestedFormat.cfFormat))
+        {
+            AppendDiagnostic(
+                $"Drag format queried. Format={requestedFormat.cfFormat}; Available={available}.");
+        }
+
+        return available ? 0 : DataFormatError;
     }
 
     public int GetCanonicalFormatEtc(ref FORMATETC formatIn, out FORMATETC formatOut)
@@ -91,6 +103,7 @@ internal sealed class NativeOleFileDropDataObject : IDataObject, IDisposable
         }
 
         _storedFormats.Add(new StoredFormat(normalizedFormat, ownedMedium));
+        AppendDiagnostic($"Private drag format stored. Format={normalizedFormat.cfFormat}.");
     }
 
     public IEnumFORMATETC EnumFormatEtc(DATADIR direction)
@@ -235,6 +248,22 @@ internal sealed class NativeOleFileDropDataObject : IDataObject, IDisposable
         }
 
         return handle;
+    }
+
+    private void AppendDiagnostic(string message)
+    {
+        if (_diagnosticPath is null)
+        {
+            return;
+        }
+
+        try
+        {
+            File.AppendAllText(_diagnosticPath, string.Concat(message, Environment.NewLine));
+        }
+        catch
+        {
+        }
     }
 
     private sealed class StoredFormat

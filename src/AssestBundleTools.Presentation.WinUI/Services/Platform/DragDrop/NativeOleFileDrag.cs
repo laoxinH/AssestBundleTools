@@ -7,7 +7,6 @@ internal static class NativeOleFileDrag
     private const uint DropEffectCopy = 1;
     private const uint ExtendedStyleToolWindow = 0x00000080;
     private const uint WindowStylePopup = 0x80000000;
-    private const uint WindowStyleVisible = 0x10000000;
 
     public static NativeOleDragResult Run(
         Func<IReadOnlyList<string>> pathsProvider,
@@ -15,14 +14,15 @@ internal static class NativeOleFileDrag
         int itemCount,
         string? diagnosticPath = null)
     {
-        using var dataObject = new NativeOleFileDropDataObject(pathsProvider);
-        var dropSource = new OleDropSource(diagnosticPath);
+        using var dataObject = new NativeOleFileDropDataObject(pathsProvider, diagnosticPath);
+        var releaseGate = new NativeOleDragReleaseGate();
+        var dropSource = new OleDropSource(releaseGate, diagnosticPath);
         _ = GetCursorPos(out var cursorPosition);
         var sourceWindow = CreateWindowExW(
             ExtendedStyleToolWindow,
             "STATIC",
             string.Empty,
-            WindowStylePopup | WindowStyleVisible,
+            WindowStylePopup,
             cursorPosition.X,
             cursorPosition.Y,
             1,
@@ -38,22 +38,24 @@ internal static class NativeOleFileDrag
 
         try
         {
-            _ = SetForegroundWindow(sourceWindow);
-            _ = SetCapture(sourceWindow);
             using var dragImage = NativeOleDragImage.TryInitialize(
                 dataObject,
                 displayName,
                 itemCount,
                 diagnosticPath);
+            using var feedbackWindow = NativeOleDragFeedbackWindow.TryCreate(
+                dragImage?.BitmapHandle ?? IntPtr.Zero,
+                diagnosticPath);
             using var releaseMonitor = NativeOlePointerReleaseMonitor.Start(
                 sourceWindow,
+                releaseGate,
+                feedbackWindow,
                 diagnosticPath);
             var hResult = DoDragDrop(dataObject, dropSource, DropEffectCopy, out var effect);
             return new NativeOleDragResult(hResult, effect);
         }
         finally
         {
-            _ = ReleaseCapture();
             _ = DestroyWindow(sourceWindow);
         }
     }
@@ -87,19 +89,8 @@ internal static class NativeOleFileDrag
         IntPtr parameter);
 
     [DllImport("user32.dll")]
-    private static extern IntPtr SetCapture(IntPtr window);
-
-    [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool GetCursorPos(out NativePoint point);
-
-    [DllImport("user32.dll")]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool SetForegroundWindow(IntPtr window);
-
-    [DllImport("user32.dll")]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool ReleaseCapture();
 
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
@@ -128,16 +119,19 @@ internal static class NativeOleFileDrag
     [ClassInterface(ClassInterfaceType.None)]
     private sealed class OleDropSource : IOleDropSource
     {
-        private const uint MouseKeyLeftButton = 0x0001;
         private const int DragDropCancel = 0x00040101;
         private const int DragDropDrop = 0x00040100;
         private const int UseDefaultCursors = 0x00040102;
         private readonly string? _diagnosticPath;
+        private readonly NativeOleDragReleaseGate _releaseGate;
         private bool _queryLogged;
         private bool _feedbackLogged;
 
-        public OleDropSource(string? diagnosticPath)
+        public OleDropSource(
+            NativeOleDragReleaseGate releaseGate,
+            string? diagnosticPath)
         {
+            _releaseGate = releaseGate;
             _diagnosticPath = diagnosticPath;
         }
 
@@ -154,7 +148,7 @@ internal static class NativeOleFileDrag
                 return DragDropCancel;
             }
 
-            return (keyState & MouseKeyLeftButton) == 0 ? DragDropDrop : 0;
+            return _releaseGate.IsDropAllowed ? DragDropDrop : 0;
         }
 
         public int GiveFeedback(uint effect)

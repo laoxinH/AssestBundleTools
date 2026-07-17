@@ -117,6 +117,12 @@ public sealed class AssetPaneElevatedDragExportContractTests
             "Platform",
             "DragDrop",
             "NativeOlePointerReleaseMonitor.cs"));
+        var feedbackWindow = File.ReadAllText(Path.Combine(
+            projectRoot,
+            "Services",
+            "Platform",
+            "DragDrop",
+            "NativeOleDragFeedbackWindow.cs"));
         var dataObject = File.ReadAllText(Path.Combine(
             projectRoot,
             "Services",
@@ -133,18 +139,36 @@ public sealed class AssetPaneElevatedDragExportContractTests
         Assert.Contains("ElevatedDragExportBrokerHost.TryRunCurrentProcess()", app);
         Assert.Contains("_dragExportBrokerService.EnsureStartedAsync()", prompt);
         Assert.Contains("DoDragDrop(", nativeDrag);
+        Assert.DoesNotContain("SetCapture(", nativeDrag);
         Assert.Contains("NativeOleDragImage.TryInitialize", nativeDrag);
+        Assert.Contains("NativeOleDragFeedbackWindow.TryCreate", nativeDrag);
         Assert.Contains("NativeOlePointerReleaseMonitor.Start", nativeDrag);
         Assert.Contains("IDragSourceHelper", dragImage);
         Assert.Contains("InitializeFromBitmap", dragImage);
         Assert.Contains("ShellDragImage", dragImage);
+        Assert.Contains("CreateDIBSection", dragImage);
+        Assert.Contains("ApplyExplicitAlpha", dragImage);
+        Assert.Contains("feedbackBitmap", dragImage);
+        Assert.Contains("shellBitmap", dragImage);
         Assert.Contains("GetAsyncKeyState", releaseMonitor);
+        Assert.Contains("GetCursorPos", releaseMonitor);
+        Assert.Contains("ScreenToClient", releaseMonitor);
+        Assert.Contains("GetGUIThreadInfo", releaseMonitor);
+        Assert.Contains("CaptureWindow", releaseMonitor);
+        Assert.Contains("NativeOleDragReleaseGate", releaseMonitor);
+        Assert.Contains("packedPosition", releaseMonitor);
+        Assert.Contains("_feedbackWindow?.Hide()", releaseMonitor);
         Assert.Contains("WindowMessageLeftButtonUp", releaseMonitor);
         Assert.Contains("PostMessageW", releaseMonitor);
+        Assert.Contains("ExtendedStyleNoActivate", feedbackWindow);
+        Assert.Contains("ExtendedStyleTransparent", feedbackWindow);
+        Assert.Contains("UpdateLayeredWindow", feedbackWindow);
+        Assert.Contains("UpdatePosition", feedbackWindow);
         Assert.Contains("ClipboardFormatFileDrop = 15", dataObject);
         Assert.Contains("CreateFileDropHandle", dataObject);
         Assert.Contains("_storedFormats", dataObject);
         Assert.Contains("ReleaseStgMedium", dataObject);
+        Assert.Contains("CF_HDROP requested", dataObject);
         Assert.DoesNotContain("SetData is not supported", dataObject);
         Assert.Contains("TryRestartAsync(", brokerService);
         Assert.Contains("WriteCommand(requestPath, descriptor)", brokerService);
@@ -152,6 +176,7 @@ public sealed class AssetPaneElevatedDragExportContractTests
         Assert.Contains("WaitForCompletionAsync", brokerService);
         Assert.Contains("BrokerReady=", brokerService);
         Assert.Contains("Preparation=", brokerService);
+        Assert.Contains("completion.HResult == 0x00040100 && completion.Effect == 0", brokerService);
         Assert.Contains("writer.Write(SanitizeDisplayName(descriptor.DisplayName))", protocol);
     }
 

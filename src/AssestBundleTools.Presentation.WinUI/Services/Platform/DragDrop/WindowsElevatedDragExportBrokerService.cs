@@ -154,9 +154,11 @@ internal sealed class WindowsElevatedDragExportBrokerService : IElevatedDragExpo
                         "The standard-user OLE broker returned an invalid completion record.");
                 }
 
-                return completion.HResult < 0
+                return completion.HResult < 0 ||
+                       (completion.HResult == 0x00040100 && completion.Effect == 0)
                     ? ElevatedDragExportBrokerResult.Failure(
                         $"OLE drag failed with 0x{completion.HResult:X8}. " +
+                        $"Effect={completion.Effect}. " +
                         completion.DiagnosticDetail)
                     : ElevatedDragExportBrokerResult.Success(
                         $"OLE drag completed. HResult=0x{completion.HResult:X8}; " +
