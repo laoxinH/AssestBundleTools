@@ -16,7 +16,6 @@ internal sealed class NativeOleDragFeedbackWindow : IDisposable
     private const byte AlphaBlendSourceOver = 0;
     private const byte AlphaBlendSourceAlpha = 1;
     private const int ShowWindowWithoutActivation = 8;
-    private const int CursorGap = 22;
     private IntPtr _window;
     private IntPtr _memoryDc;
     private IntPtr _previousBitmap;
@@ -171,23 +170,9 @@ internal sealed class NativeOleDragFeedbackWindow : IDisposable
     private static NativePoint CalculatePosition()
     {
         _ = GetCursorPos(out var cursor);
-        var virtualLeft = GetSystemMetrics(76);
-        var virtualTop = GetSystemMetrics(77);
-        var virtualRight = virtualLeft + GetSystemMetrics(78);
-        var virtualBottom = virtualTop + GetSystemMetrics(79);
-        var left = cursor.X + CursorGap;
-        var top = cursor.Y + CursorGap;
-        if (left + NativeOleDragImage.ImageWidth > virtualRight)
-        {
-            left = cursor.X - CursorGap - NativeOleDragImage.ImageWidth;
-        }
-
-        if (top + NativeOleDragImage.ImageHeight > virtualBottom)
-        {
-            top = cursor.Y - CursorGap - NativeOleDragImage.ImageHeight;
-        }
-
-        return new NativePoint(left, top);
+        return new NativePoint(
+            cursor.X - NativeOleDragImage.HotspotX,
+            cursor.Y - NativeOleDragImage.HotspotY);
     }
 
     private static void AppendDiagnostic(string? path, string message)
@@ -248,9 +233,6 @@ internal sealed class NativeOleDragFeedbackWindow : IDisposable
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool GetCursorPos(out NativePoint point);
-
-    [DllImport("user32.dll")]
-    private static extern int GetSystemMetrics(int index);
 
     [DllImport("user32.dll")]
     private static extern IntPtr GetDC(IntPtr window);

@@ -111,6 +111,24 @@ public sealed class AssetPaneElevatedDragExportContractTests
             "Platform",
             "DragDrop",
             "NativeOleDragImage.cs"));
+        var bitmapRenderer = File.ReadAllText(Path.Combine(
+            projectRoot,
+            "Services",
+            "Platform",
+            "DragDrop",
+            "NativeOleDragBitmapRenderer.cs"));
+        var bitmapRendererInterop = File.ReadAllText(Path.Combine(
+            projectRoot,
+            "Services",
+            "Platform",
+            "DragDrop",
+            "NativeOleDragBitmapRenderer.Interop.cs"));
+        var visualTheme = File.ReadAllText(Path.Combine(
+            projectRoot,
+            "Services",
+            "Platform",
+            "DragDrop",
+            "NativeOleDragVisualTheme.cs"));
         var releaseMonitor = File.ReadAllText(Path.Combine(
             projectRoot,
             "Services",
@@ -146,10 +164,19 @@ public sealed class AssetPaneElevatedDragExportContractTests
         Assert.Contains("IDragSourceHelper", dragImage);
         Assert.Contains("InitializeFromBitmap", dragImage);
         Assert.Contains("ShellDragImage", dragImage);
-        Assert.Contains("CreateDIBSection", dragImage);
-        Assert.Contains("ApplyExplicitAlpha", dragImage);
+        Assert.Contains("NativeOleDragVisualThemeResolver.Resolve", dragImage);
+        Assert.Contains("premultiplyAlpha: true", dragImage);
+        Assert.Contains("premultiplyAlpha: false", dragImage);
         Assert.Contains("feedbackBitmap", dragImage);
         Assert.Contains("shellBitmap", dragImage);
+        Assert.Contains("Segoe UI Variable Text", bitmapRenderer);
+        Assert.Contains("SignedDistanceToRoundedRectangle", bitmapRenderer);
+        Assert.Contains("ShadowOpacity", bitmapRenderer);
+        Assert.Contains("ApplyAlpha", bitmapRenderer);
+        Assert.Contains("CreateDIBSection", bitmapRendererInterop);
+        Assert.Contains("AppsUseLightTheme", visualTheme);
+        Assert.Contains("NativeOleDragVisualTheme.Light", visualTheme);
+        Assert.Contains("NativeOleDragVisualTheme.Dark", visualTheme);
         Assert.DoesNotContain("GetAsyncKeyState", releaseMonitor);
         Assert.Contains("_pointerReleaseProvider", releaseMonitor);
         Assert.Contains("ScreenToClient", releaseMonitor);
@@ -166,6 +193,9 @@ public sealed class AssetPaneElevatedDragExportContractTests
         Assert.Contains("ExtendedStyleTransparent", feedbackWindow);
         Assert.Contains("UpdateLayeredWindow", feedbackWindow);
         Assert.Contains("UpdatePosition", feedbackWindow);
+        Assert.Contains("NativeOleDragImage.HotspotX", feedbackWindow);
+        Assert.Contains("NativeOleDragImage.HotspotY", feedbackWindow);
+        Assert.DoesNotContain("GetSystemMetrics", feedbackWindow);
         Assert.Contains("ClipboardFormatFileDrop = 15", dataObject);
         Assert.Contains("CreateFileDropHandle", dataObject);
         Assert.Contains("_storedFormats", dataObject);
@@ -186,6 +216,20 @@ public sealed class AssetPaneElevatedDragExportContractTests
         Assert.Contains("completion.HResult == 0x00040100 && completion.Effect == 0", brokerService);
         Assert.Contains("_releaseGate.IsCancelRequested", nativeDrag);
         Assert.Contains("writer.Write(SanitizeDisplayName(descriptor.DisplayName))", protocol);
+    }
+
+    [Fact]
+    public void ElevatedAssetDragExportVisualThemes_ShouldKeepReadableLightAndDarkPalettes()
+    {
+        var light = NativeOleDragVisualTheme.Light;
+        var dark = NativeOleDragVisualTheme.Dark;
+
+        Assert.Equal("Light", light.Name);
+        Assert.Equal("Dark", dark.Name);
+        Assert.NotEqual(light.CardSurface, dark.CardSurface);
+        Assert.NotEqual(light.PrimaryText, dark.PrimaryText);
+        Assert.Equal(0x00FFFFFFu, light.IconGlyph);
+        Assert.Equal(0x00FFFFFFu, dark.IconGlyph);
     }
 
     [Fact]
