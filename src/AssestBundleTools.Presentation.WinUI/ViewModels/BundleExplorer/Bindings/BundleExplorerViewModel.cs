@@ -530,6 +530,9 @@ public sealed class BundleExplorerViewModel : ObservableObject, IDisposable
 
     public Task SelectFileReplacementSourceAsync() => _assetWorkflow.SelectFileReplacementSourceAsync();
 
+    internal BundleExplorerDragReplacementCommandCoordinator DragReplacementCommands =>
+        _assetWorkflow.DragReplacementCommands;
+
     public Task ModifyFromFileReplacementSourceAsync() => _assetWorkflow.ModifyFromFileReplacementSourceAsync();
 
     public Task SelectSpriteTextureReplacementSourceAsync() =>

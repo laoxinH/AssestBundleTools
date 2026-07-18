@@ -138,7 +138,8 @@ internal sealed class ElevatedFileDropRouter : IElevatedFileDropRouter
                     rootMapping,
                     candidate.Registration.TargetElement,
                     out var localPosition) ||
-                !Contains(candidate.Registration.TargetElement, localPosition))
+                !Contains(candidate.Registration.TargetElement, localPosition) ||
+                !AcceptsPosition(candidate, localPosition))
             {
                 continue;
             }
@@ -161,6 +162,20 @@ internal sealed class ElevatedFileDropRouter : IElevatedFileDropRouter
         {
             StartupDiagnostics.Log(
                 $"Elevated drop target '{target.Registration.TargetId}' availability check failed: {exception}");
+            return false;
+        }
+    }
+
+    private static bool AcceptsPosition(RegisteredTarget target, Point localPosition)
+    {
+        try
+        {
+            return target.Registration.HitTest?.Invoke(localPosition) != false;
+        }
+        catch (Exception exception)
+        {
+            StartupDiagnostics.Log(
+                $"Elevated drop target '{target.Registration.TargetId}' hit test failed: {exception}");
             return false;
         }
     }

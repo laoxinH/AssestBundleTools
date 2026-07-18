@@ -1,3 +1,4 @@
+using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Replacement.Dtos;
 using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Application.Workspace.Services;
@@ -128,6 +129,20 @@ internal sealed class BundleExplorerSpineEditActionHandler
         }
     }
 
+    public SpineAssetGroupEditDraftViewModel? CreateDirectoryMatchDraft(
+        SpineAssetGroupDto group,
+        string sourceDirectoryPath)
+    {
+        ArgumentNullException.ThrowIfNull(group);
+        if (string.IsNullOrWhiteSpace(sourceDirectoryPath))
+        {
+            return null;
+        }
+
+        var draft = new SpineAssetGroupEditDraftViewModel(group, _localizationService);
+        return draft.ApplyDirectoryMatches(sourceDirectoryPath) ? draft : null;
+    }
+
     public async Task<bool> ApplySpineEditAsync(
         WorkspaceSummaryDto workspaceSummary,
         SpineAssetGroupDocumentTabViewModel spineGroupTab,
@@ -141,6 +156,50 @@ internal sealed class BundleExplorerSpineEditActionHandler
 
         var draft = spineGroupTab.SpineEditDraft;
         if (draft is null || !draft.HasChanges)
+        {
+            return false;
+        }
+
+        return await ApplySpineEditCoreAsync(
+            workspaceSummary,
+            draft.Group,
+            draft,
+            setBusyState,
+            appendResultFailure,
+            spineGroupTab.NotifySpineEditStateChanged);
+    }
+
+    public Task<bool> ApplySpineEditAsync(
+        WorkspaceSummaryDto workspaceSummary,
+        SpineAssetGroupEditDraftViewModel draft,
+        Action<bool> setBusyState,
+        Action<IReadOnlyList<AppError>> appendResultFailure)
+    {
+        ArgumentNullException.ThrowIfNull(draft);
+        return ApplySpineEditCoreAsync(
+            workspaceSummary,
+            draft.Group,
+            draft,
+            setBusyState,
+            appendResultFailure,
+            notifyDraftStateChanged: null);
+    }
+
+    private async Task<bool> ApplySpineEditCoreAsync(
+        WorkspaceSummaryDto workspaceSummary,
+        SpineAssetGroupDto group,
+        SpineAssetGroupEditDraftViewModel draft,
+        Action<bool> setBusyState,
+        Action<IReadOnlyList<AppError>> appendResultFailure,
+        Action? notifyDraftStateChanged)
+    {
+        ArgumentNullException.ThrowIfNull(workspaceSummary);
+        ArgumentNullException.ThrowIfNull(group);
+        ArgumentNullException.ThrowIfNull(draft);
+        ArgumentNullException.ThrowIfNull(setBusyState);
+        ArgumentNullException.ThrowIfNull(appendResultFailure);
+
+        if (!draft.HasChanges)
         {
             return false;
         }
@@ -175,7 +234,7 @@ internal sealed class BundleExplorerSpineEditActionHandler
                     part.DisplayName,
                     candidate,
                     appendResultFailure,
-                    CreateSpineReplacementOperationContext(spineGroupTab, draft));
+                    CreateSpineReplacementOperationContext(group, draft));
                 if (!applied)
                 {
                     return false;
@@ -187,7 +246,7 @@ internal sealed class BundleExplorerSpineEditActionHandler
             if (appliedAny)
             {
                 draft.MarkSaved();
-                spineGroupTab.NotifySpineEditStateChanged();
+                notifyDraftStateChanged?.Invoke();
             }
 
             return appliedAny;
@@ -199,7 +258,7 @@ internal sealed class BundleExplorerSpineEditActionHandler
     }
 
     private static ReplacementOperationContextDto CreateSpineReplacementOperationContext(
-        SpineAssetGroupDocumentTabViewModel spineGroupTab,
+        SpineAssetGroupDto group,
         SpineAssetGroupEditDraftViewModel draft) =>
         new(
             BatchId: draft.BatchId,
@@ -210,10 +269,10 @@ internal sealed class BundleExplorerSpineEditActionHandler
                     RelationKind: WorkspaceOperationRelationNames.LinkedResourceOperation,
                     Role: WorkspaceOperationRelationNames.SubjectRole,
                     RelatedTarget: new WorkspaceOperationTargetDto(
-                        BundleId: spineGroupTab.BundleId.Value,
-                        AssetName: spineGroupTab.DisplayName,
+                        BundleId: group.BundleId.Value,
+                        AssetName: group.DisplayName,
                         AssetType: "SpineAssetGroup",
-                        SourceFingerprint: spineGroupTab.GroupId))
+                        SourceFingerprint: group.GroupId))
             ]);
 
     private void ShowOperationNotification(string title, string message, AppNotificationSeverity severity)

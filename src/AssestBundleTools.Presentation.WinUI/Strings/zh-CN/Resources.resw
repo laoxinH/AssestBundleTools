@@ -1331,6 +1331,33 @@
   <data name="AssetPaneView.Context.EnterMultiSelection.Text" xml:space="preserve">
     <value>进入多选</value>
   </data>
+  <data name="AssetPaneView.DragReplacement.Confirm.Title" xml:space="preserve">
+    <value>确认拖拽替换</value>
+  </data>
+  <data name="AssetPaneView.DragReplacement.Confirm.Button" xml:space="preserve">
+    <value>确认替换</value>
+  </data>
+  <data name="AssetPaneView.DragReplacement.AssetConfirm.Format" xml:space="preserve">
+    <value>将使用“{1}”替换资产“{0}”。确认后会立即追加一条可撤销的替换记录。</value>
+  </data>
+  <data name="AssetPaneView.DragReplacement.SpineConfirm.Format" xml:space="preserve">
+    <value>目录“{2}”已匹配 Spine 组“{0}”中的 {1} 个组成资源。确认后会立即逐项应用替换。</value>
+  </data>
+  <data name="AssetPaneView.DragReplacement.InvalidSource" xml:space="preserve">
+    <value>普通资产只接受一个文件，Spine 组只接受一个包含组成文件的目录。</value>
+  </data>
+  <data name="AssetPaneView.DragReplacement.NoSpineMatches.Format" xml:space="preserve">
+    <value>所选目录中没有可匹配到 Spine 组“{0}”的组成文件。</value>
+  </data>
+  <data name="AssetPaneView.DragReplacement.Busy" xml:space="preserve">
+    <value>当前正在处理另一项资产操作，请完成后再重试。</value>
+  </data>
+  <data name="AssetPaneView.DragReplacement.Log.Received.Format" xml:space="preserve">
+    <value>收到资产行拖拽替换请求：目标={0}，来源={1}。</value>
+  </data>
+  <data name="AssetPaneView.DragReplacement.Log.ReadFailed.Format" xml:space="preserve">
+    <value>读取拖拽替换来源失败：异常={0}，错误码={1}。</value>
+  </data>
   <data name="InspectorPanelView.DetailsTab.Header" xml:space="preserve">
     <value>详情</value>
   </data>

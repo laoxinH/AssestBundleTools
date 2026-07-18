@@ -1,16 +1,20 @@
 using AssestBundleTools.Presentation.WinUI.Diagnostics;
+using AssestBundleTools.Presentation.WinUI.Services;
 
 namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls;
 
 public sealed partial class AssetPaneView
 {
     private AssetPaneDragExportSourceCoordinator? _dragExportSourceCoordinator;
+    private AssetPaneDragReplacementTargetCoordinator? _dragReplacementTargetCoordinator;
 
     internal event EventHandler<AssetPaneDragExportRequestedEventArgs>? DragExportRequested;
 
     internal event EventHandler<AssetPaneDragExportCleanupRequestedEventArgs>? DragExportCleanupRequested;
 
     internal event EventHandler<AssetPaneElevatedDragExportRequestedEventArgs>? ElevatedDragExportAttempted;
+
+    internal event EventHandler<AssetPaneDragReplacementRequestedEventArgs>? DragReplacementRequested;
 
     private void InitializeDragExport()
     {
@@ -22,7 +26,20 @@ public sealed partial class AssetPaneView
             CleanupDragExportAsync,
             ProcessElevationDiagnostics.Capture().IsElevated == true,
             RequestElevatedDragExportAsync);
+        _dragReplacementTargetCoordinator = new AssetPaneDragReplacementTargetCoordinator(
+            AssetListView,
+            SpineGroupListView,
+            () => ViewModel is { IsMultiSelectionMode: false },
+            RequestDragReplacementAsync);
     }
+
+    internal bool IsExactDragReplacementTarget(Microsoft.UI.Xaml.DragEventArgs args) =>
+        _dragReplacementTargetCoordinator?.IsExactTarget(args) == true;
+
+    internal IReadOnlyList<IDisposable> RegisterElevatedDragReplacementTargets(
+        Microsoft.UI.Xaml.Window sourceWindow,
+        IElevatedFileDropRouter router) =>
+        _dragReplacementTargetCoordinator?.RegisterElevatedTargets(sourceWindow, router) ?? [];
 
     private Task<AssetPaneDragExportPayload?> RequestDragExportAsync(object item)
     {
@@ -42,6 +59,13 @@ public sealed partial class AssetPaneView
     {
         var args = new AssetPaneElevatedDragExportRequestedEventArgs(item);
         ElevatedDragExportAttempted?.Invoke(this, args);
+        return args.OperationTask ?? Task.CompletedTask;
+    }
+
+    private Task RequestDragReplacementAsync(object item, IReadOnlyList<string> sourcePaths)
+    {
+        var args = new AssetPaneDragReplacementRequestedEventArgs(item, sourcePaths);
+        DragReplacementRequested?.Invoke(this, args);
         return args.OperationTask ?? Task.CompletedTask;
     }
 }

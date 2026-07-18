@@ -14,7 +14,8 @@ internal sealed record ElevatedFileDropTargetRegistration(
     FrameworkElement TargetElement,
     int Priority,
     Func<bool> CanHandle,
-    Func<ElevatedFileDropContext, Task> HandleDropAsync);
+    Func<ElevatedFileDropContext, Task> HandleDropAsync,
+    Func<Point, bool>? HitTest = null);
 
 internal enum ElevatedDropCoordinateValidationMode
 {

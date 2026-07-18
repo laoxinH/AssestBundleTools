@@ -529,6 +529,26 @@ BackgroundWorkRequest<Result<WorkspaceBatchReplacementResultDto>>
 - 资源详情、独立窗口和 Spine 组预览通过现有 `WorkspaceOperationChangeRefreshCoordinator` 处理。
 - 不允许为了批量替换在 ViewModel 中手动读写 `staging/changes` 或直接刷新关联资源。
 
+### 8.1 资产列表拖入替换快捷入口
+
+资产列表允许把外部文件直接拖到普通资产行，或把单个 Spine 组导出目录拖到 Spine 组行。该入口是现有单资产 / Spine 编辑替换链路的 Presentation 快捷方式，不引入新的操作类型、匹配事实或持久化状态。
+
+交互与路由约束：
+
+- 只有指针实际落在已实现的资产行或 Spine 组行内才进入替换；列表空白、表头和其他窗格继续沿用原有行为。
+- 普通模式使用 WinUI `StorageItems`，管理员兼容模式使用统一 `WM_DROPFILES` 精确目标路由；两种入口必须生成相同的“目标行 + 来源路径”请求。
+- 管理员模式下，资产行目标使用 `Item` 优先级，高于资源包窗格的工作区导入 `Surface` 目标，避免替换来源被误导入为新 AB。
+- 普通资产首版只接受一个文件。Spine 组首版只接受一个目录，并复用现有 `ApplyDirectoryMatches` 对 skeleton、atlas 和 texture page 做角色、扩展名及名称键匹配。
+- 路径形态不符合目标要求、普通资产类型校验失败、Spine 目录没有匹配组成资源时，不显示替换确认，也不写操作记录。
+
+确认与执行约束：
+
+- 候选校验或 Spine 目录匹配完成后，必须显示本地化确认对话框；普通资产显示目标名和来源文件名，Spine 组同时显示命中的组成资源数量。
+- 用户取消时不得应用替换、不得追加 `ReplaceFromFile`，也不得遗留 Spine 编辑草稿。
+- 用户确认后，普通资产逐项复用 `GetFileReplacementCandidate / ReplaceAssetFromFile`；Spine 组逐组成资源复用相同链路并共享现有 `batchId / relationId`。
+- 成功后的列表状态、详情、关联资源和 Spine 预览只通过现有 workspace operation notification 与读模型重读刷新，拖放处理器不得手动读写 `staging/changes`。
+- 从资产列表拖出后再把生成文件或 Spine 组目录拖回同一目标，应形成完整的提取 -> 用户确认 -> 替换闭环；拖出临时目录的保留期规则保持不变。
+
 ## 9. 与批量提取 Manifest 的关系
 
 批量替换是批量提取 manifest 的主要消费方。
@@ -558,6 +578,7 @@ BackgroundWorkRequest<Result<WorkspaceBatchReplacementResultDto>>
 - 已逐项复用单资源文件替换能力，并通过现有记录器写入 `ReplaceFromFile` 操作记录。
 - 已按“普通候选先执行、Spine 组候选后执行”的顺序处理；Spine 组候选拆成组成资产替换，并共享批次关系和 Spine 组关联关系。
 - 已让批量替换候选区将 manifest / 启发式计划中的 Spine 组成文件按组展示，类型筛选显示独立 `Spine` 选项，提交时再展开为真实组成资产执行。
+- 已让主工作台资产列表支持行级拖入替换：普通资产通过 WinUI `StorageItems` 或管理员 `WM_DROPFILES` 精确行路由进入单文件候选校验，Spine 组通过同一路由复用目录角色匹配；两者都在用户确认后才调用现有 `ReplaceFromFile` 链路。
 - 已接入 `BatchReplacement` 可见后台任务、进度、完成摘要和操作通知聚合。
 - 当前仍未开放低置信/多候选的目标手动确认执行页；这些候选若被用户勾选，会按支持范围执行或进入跳过结果。
 - 批处理任务页中的旧批量替换卡片、旧 source kind 和旧摘要 ViewModel 已移除；工作台级批量替换窗口是唯一入口。

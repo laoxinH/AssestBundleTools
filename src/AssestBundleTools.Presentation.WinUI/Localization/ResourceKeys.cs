@@ -875,6 +875,15 @@ public static class ResourceKeys
     public const string AssetPaneViewContextReplaceText = "AssetPaneView.Context.Replace.Text";
     public const string AssetPaneViewContextEditText = "AssetPaneView.Context.Edit.Text";
     public const string AssetPaneViewContextEnterMultiSelectionText = "AssetPaneView.Context.EnterMultiSelection.Text";
+    public const string AssetPaneDragReplacementConfirmTitle = "AssetPaneView.DragReplacement.Confirm.Title";
+    public const string AssetPaneDragReplacementConfirmButton = "AssetPaneView.DragReplacement.Confirm.Button";
+    public const string AssetPaneDragReplacementAssetConfirmFormat = "AssetPaneView.DragReplacement.AssetConfirm.Format";
+    public const string AssetPaneDragReplacementSpineConfirmFormat = "AssetPaneView.DragReplacement.SpineConfirm.Format";
+    public const string AssetPaneDragReplacementInvalidSource = "AssetPaneView.DragReplacement.InvalidSource";
+    public const string AssetPaneDragReplacementNoSpineMatchesFormat = "AssetPaneView.DragReplacement.NoSpineMatches.Format";
+    public const string AssetPaneDragReplacementBusy = "AssetPaneView.DragReplacement.Busy";
+    public const string AssetPaneDragReplacementReceivedLogFormat = "AssetPaneView.DragReplacement.Log.Received.Format";
+    public const string AssetPaneDragReplacementReadFailedLogFormat = "AssetPaneView.DragReplacement.Log.ReadFailed.Format";
 
     public const string ErrorBundleDecryptorCatalogIdRequired = "Error.Bundle.Decryptor.Catalog.IdRequired";
     public const string ErrorBundleDecryptorCatalogDisplayNameRequired = "Error.Bundle.Decryptor.Catalog.DisplayNameRequired";

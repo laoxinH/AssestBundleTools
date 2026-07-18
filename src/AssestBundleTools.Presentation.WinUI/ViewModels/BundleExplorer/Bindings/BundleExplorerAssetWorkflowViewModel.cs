@@ -121,6 +121,16 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
             workspaceBatchOperationsGateway,
             backgroundWorkScheduler,
             OperationPendingTracker);
+        var dragReplacementActionHandler = new BundleExplorerDragReplacementActionHandler(
+            workspaceAssetOperationGateway,
+            appLogService,
+            appNotificationService,
+            _localizationService,
+            filePickerService,
+            workspaceOperationChangeNotifier);
+        DragReplacementCommands = new BundleExplorerDragReplacementCommandCoordinator(
+            _workspaceShell, dragReplacementActionHandler, _operationFeedbackBridge,
+            () => IsBusy, _setBusyState);
         PrimaryPane = new AssetPaneViewModel();
         _assetDocumentHostCoordinator = new BundleExplorerAssetDocumentHostCoordinator(
             _documentWorkspace,
@@ -227,6 +237,8 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
     public AssetPaneViewModel PrimaryPane { get; }
 
     public WorkspaceOperationPendingTracker OperationPendingTracker { get; }
+
+    internal BundleExplorerDragReplacementCommandCoordinator DragReplacementCommands { get; }
 
     public InspectorPanelViewModel Inspector => _assetDocumentHostCoordinator.CurrentInspector;
 

@@ -95,7 +95,8 @@ public sealed class SpineAssetGroupEditDraftViewModelTests
                 CreateGroup(),
                 new TestLocalizationService());
 
-            draft.ApplyDirectoryMatches(directoryPath);
+            Assert.True(draft.ApplyDirectoryMatches(directoryPath));
+            Assert.Equal(3, draft.ChangedParts.Count);
 
             Assert.Equal(
                 skeletonPath,
@@ -109,6 +110,28 @@ public sealed class SpineAssetGroupEditDraftViewModelTests
                 texturePath,
                 Assert.Single(draft.Parts, static part => part.Part.Role == SpineAssetGroupPartRole.TexturePage)
                     .SelectedSourceFilePath);
+        }
+        finally
+        {
+            Directory.Delete(directoryPath, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void ApplyDirectoryMatches_ShouldNotCreateChanges_WhenExportDirectoryHasNoCompatibleNames()
+    {
+        var directoryPath = Path.Combine(Path.GetTempPath(), $"abt-spine-edit-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(directoryPath);
+        try
+        {
+            File.WriteAllText(Path.Combine(directoryPath, "unrelated.png"), "png");
+            var draft = new SpineAssetGroupEditDraftViewModel(
+                CreateGroup(),
+                new TestLocalizationService());
+
+            Assert.False(draft.ApplyDirectoryMatches(directoryPath));
+            Assert.False(draft.HasChanges);
+            Assert.Empty(draft.ChangedParts);
         }
         finally
         {

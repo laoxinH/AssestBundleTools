@@ -1331,6 +1331,33 @@
   <data name="AssetPaneView.Context.EnterMultiSelection.Text" xml:space="preserve">
     <value>Enter Multi-Select</value>
   </data>
+  <data name="AssetPaneView.DragReplacement.Confirm.Title" xml:space="preserve">
+    <value>Confirm Drag Replacement</value>
+  </data>
+  <data name="AssetPaneView.DragReplacement.Confirm.Button" xml:space="preserve">
+    <value>Replace</value>
+  </data>
+  <data name="AssetPaneView.DragReplacement.AssetConfirm.Format" xml:space="preserve">
+    <value>Replace asset “{0}” with “{1}”? Confirming immediately adds an undoable replacement record.</value>
+  </data>
+  <data name="AssetPaneView.DragReplacement.SpineConfirm.Format" xml:space="preserve">
+    <value>Folder “{2}” matched {1} parts in Spine group “{0}”. Confirming applies each replacement immediately.</value>
+  </data>
+  <data name="AssetPaneView.DragReplacement.InvalidSource" xml:space="preserve">
+    <value>Drop one file onto an asset, or one folder containing component files onto a Spine group.</value>
+  </data>
+  <data name="AssetPaneView.DragReplacement.NoSpineMatches.Format" xml:space="preserve">
+    <value>No files in the selected folder match Spine group “{0}”.</value>
+  </data>
+  <data name="AssetPaneView.DragReplacement.Busy" xml:space="preserve">
+    <value>Another asset operation is in progress. Try again after it completes.</value>
+  </data>
+  <data name="AssetPaneView.DragReplacement.Log.Received.Format" xml:space="preserve">
+    <value>Asset-row drag replacement received: target={0}, source={1}.</value>
+  </data>
+  <data name="AssetPaneView.DragReplacement.Log.ReadFailed.Format" xml:space="preserve">
+    <value>Failed to read the drag-replacement source: exception={0}, error={1}.</value>
+  </data>
   <data name="InspectorPanelView.DetailsTab.Header" xml:space="preserve">
     <value>Details</value>
   </data>

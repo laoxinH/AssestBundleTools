@@ -140,6 +140,11 @@ public sealed partial class BundleExplorerPage
 
     private void OnWorkspaceImportDragEnter(object sender, DragEventArgs e)
     {
+        if (SuppressWorkspaceImportForAssetReplacement(e, endSession: false))
+        {
+            return;
+        }
+
         BeginWorkspaceImportDragSession();
         ApplyWorkspaceImportDragAcceptance(e);
         AppendDragDropEventDiagnostic("DragEnter", e);
@@ -147,6 +152,11 @@ public sealed partial class BundleExplorerPage
 
     private void OnWorkspaceImportDragOver(object sender, DragEventArgs e)
     {
+        if (SuppressWorkspaceImportForAssetReplacement(e, endSession: false))
+        {
+            return;
+        }
+
         var startedWithoutDragEnter = string.IsNullOrWhiteSpace(_workspaceImportDragSessionId);
         if (startedWithoutDragEnter)
         {
@@ -178,6 +188,11 @@ public sealed partial class BundleExplorerPage
 
     private async void OnWorkspaceImportDrop(object sender, DragEventArgs e)
     {
+        if (SuppressWorkspaceImportForAssetReplacement(e, endSession: true))
+        {
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(_workspaceImportDragSessionId))
         {
             BeginWorkspaceImportDragSession();
@@ -272,6 +287,25 @@ public sealed partial class BundleExplorerPage
             : DataPackageOperation.None;
         e.Handled = true;
         _chromeCoordinator.SetWorkspaceImportDropOverlayVisible(canAcceptImport);
+    }
+
+    private bool SuppressWorkspaceImportForAssetReplacement(
+        DragEventArgs args,
+        bool endSession)
+    {
+        if (!PrimaryAssetPaneView.IsExactDragReplacementTarget(args))
+        {
+            return false;
+        }
+
+        args.Handled = true;
+        _chromeCoordinator.SetWorkspaceImportDropOverlayVisible(false);
+        if (endSession)
+        {
+            EndWorkspaceImportDragSession();
+        }
+
+        return true;
     }
 
     private void AppendDragDropEventDiagnostic(string stage, DragEventArgs e)

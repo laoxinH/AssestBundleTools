@@ -71,6 +71,12 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
         PrimaryAssetPaneView.DragExportRequested += OnPrimaryPaneDragExportRequested;
         PrimaryAssetPaneView.DragExportCleanupRequested += OnPrimaryPaneDragExportCleanupRequested;
         PrimaryAssetPaneView.ElevatedDragExportAttempted += OnPrimaryPaneElevatedDragExportAttempted;
+        PrimaryAssetPaneView.DragReplacementRequested += OnPrimaryPaneDragReplacementRequested;
+        _assetDragReplacementCoordinator = new BundleExplorerAssetDragReplacementCoordinator(
+            this,
+            App.CurrentApp.AppLogService,
+            App.CurrentApp.AppNotificationService,
+            App.CurrentApp.LocalizationService);
 
         _chromeCoordinator = new BundleExplorerPageChromeCoordinator(this);
         _navigationCoordinator = new BundleExplorerPageNavigationCoordinator(this);
@@ -142,6 +148,7 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
     {
         await _paneLayoutCoordinator.ApplyInitialStateAsync();
         RegisterElevatedWorkspaceImportDropTarget();
+        RegisterElevatedAssetReplacementDropTargets();
         await _navigationCoordinator.HandleLoadedAsync(_workspaceNavigationRequest);
         AppendWorkspaceImportDropEnvironmentDiagnostic();
         await _assetEditorWindowCoordinator.PromptPendingAssetEditorWindowsRestoreAsync();
@@ -406,6 +413,7 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
         UnregisterElevatedWorkspaceImportDropTarget();
+        UnregisterElevatedAssetReplacementDropTargets();
         ViewModel.FlushWorkspaceBrowserState();
         _assetEditorWindowCoordinator.CloseAll();
         ViewModel.DocumentWorkspace.PageStateChanged -= OnDocumentWorkspacePageStateChanged;
