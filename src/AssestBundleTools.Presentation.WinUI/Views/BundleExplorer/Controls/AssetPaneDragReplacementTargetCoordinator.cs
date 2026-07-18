@@ -2,7 +2,6 @@ using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using AssestBundleTools.Presentation.WinUI.Services;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Media;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;
 
@@ -184,12 +183,34 @@ internal sealed class AssetPaneDragReplacementTargetCoordinator
             return false;
         }
 
-        item = VisualTreeHelper
-            .FindElementsInHostCoordinates(position, listView)
-            .OfType<FrameworkElement>()
-            .Select(static element => element.Tag)
-            .FirstOrDefault(static tag => tag is AssetListEntryViewModel or SpineAssetGroupEntryViewModel)!;
-        return item is not null;
+        foreach (var candidate in listView.Items)
+        {
+            if (candidate is not AssetListEntryViewModel and not SpineAssetGroupEntryViewModel ||
+                listView.ContainerFromItem(candidate) is not FrameworkElement container ||
+                container.ActualWidth <= 0 ||
+                container.ActualHeight <= 0)
+            {
+                continue;
+            }
+
+            var origin = container
+                .TransformToVisual(listView)
+                .TransformPoint(default);
+            var bounds = new Rect(
+                origin.X,
+                origin.Y,
+                container.ActualWidth,
+                container.ActualHeight);
+            if (!bounds.Contains(position))
+            {
+                continue;
+            }
+
+            item = candidate;
+            return true;
+        }
+
+        return false;
     }
 
     private IEnumerable<ListView> EnumerateVisibleLists()
