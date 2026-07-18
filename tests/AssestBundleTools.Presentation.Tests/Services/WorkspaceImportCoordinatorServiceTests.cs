@@ -51,7 +51,7 @@ public sealed class WorkspaceImportCoordinatorServiceTests
             appLogService.InfoMessages,
             message => string.Equals(
                 message,
-                $"{ResourceKeys.WorkspaceImportLogPerformanceFormat}:2|120|30|12|70|8",
+                $"{ResourceKeys.WorkspaceImportLogPerformanceFormat}:2|120|30|12|70|8|0|0|0",
                 StringComparison.Ordinal));
         Assert.Contains(
             appLogService.InfoMessages,

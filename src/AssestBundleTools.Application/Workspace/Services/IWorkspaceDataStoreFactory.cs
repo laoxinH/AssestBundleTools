@@ -17,6 +17,9 @@ public interface IWorkspaceDataStoreFactory
 
     IBundleIndexCacheStore CreateBundleIndexCacheStore(string? rootDirectoryPath = null);
 
+    IWorkspaceImportRecognitionCacheStore CreateWorkspaceImportRecognitionCacheStore(string? rootDirectoryPath = null) =>
+        NoOpWorkspaceImportRecognitionCacheStore.Instance;
+
     ISpineGroupCatalogCacheStore CreateSpineGroupCatalogCacheStore(string? rootDirectoryPath = null) =>
         NoOpSpineGroupCatalogCacheStore.Instance;
 

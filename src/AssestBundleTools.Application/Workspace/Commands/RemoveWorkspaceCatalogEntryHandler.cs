@@ -90,6 +90,9 @@ public sealed class RemoveWorkspaceCatalogEntryHandler
         var bundleIndexCacheStore = _workspaceDataStoreFactory.CreateBundleIndexCacheStore(workspaceDataRootPath);
         bundleIndexCacheStore.DeleteWorkspace(workspaceKey);
 
+        var recognitionCacheStore = _workspaceDataStoreFactory.CreateWorkspaceImportRecognitionCacheStore(workspaceDataRootPath);
+        recognitionCacheStore.DeleteWorkspace(workspaceKey);
+
         var previewCacheStore = _workspaceDataStoreFactory.CreatePreviewCacheStore(workspaceDataRootPath);
         previewCacheStore.DeleteWorkspace(workspaceKey);
 

@@ -331,7 +331,10 @@ public sealed class WorkspaceImportCoordinatorService : IWorkspaceImportCoordina
             diagnostic.PlanningDurationMs,
             diagnostic.ScreeningDurationMs,
             diagnostic.WorkerDurationMs,
-            diagnostic.CommitDurationMs));
+            diagnostic.CommitDurationMs,
+            diagnostic.FingerprintEvaluationCount,
+            diagnostic.RecognitionCacheHitCount,
+            diagnostic.ProbeInputFileCount));
     }
 
     private void AppendProbePerformanceDiagnostic(WorkspaceImportProcessingResultDto processingResult)

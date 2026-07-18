@@ -134,6 +134,7 @@ public sealed class RemoveWorkspaceBundleHandler
         {
             var bundleArtifactStore = _workspaceDataStoreFactory.CreateBundleArtifactStore(command.WorkspaceDataRootPath);
             var bundleIndexCacheStore = _workspaceDataStoreFactory.CreateBundleIndexCacheStore(command.WorkspaceDataRootPath);
+            var recognitionCacheStore = _workspaceDataStoreFactory.CreateWorkspaceImportRecognitionCacheStore(command.WorkspaceDataRootPath);
             var previewCacheStore = _workspaceDataStoreFactory.CreatePreviewCacheStore(command.WorkspaceDataRootPath);
             WorkspaceBundleArtifactCleanupHelper.DeleteBundleArtifacts(
                 command.WorkspaceKey,
@@ -142,6 +143,7 @@ public sealed class RemoveWorkspaceBundleHandler
                 bundleIndexCacheStore,
                 previewCacheStore,
                 bundleArtifactSessionInvalidator: _bundleArtifactSessionInvalidator);
+            recognitionCacheStore.Delete(command.WorkspaceKey, bundleCacheKey);
         }
 
         return Task.FromResult(Result<WorkspaceBundleRemovalResultDto>.Success(

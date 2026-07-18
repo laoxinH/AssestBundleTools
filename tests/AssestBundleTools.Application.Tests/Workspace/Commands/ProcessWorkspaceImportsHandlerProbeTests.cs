@@ -36,6 +36,11 @@ internal static partial class ProcessWorkspaceImportsHandlerTests
             FileSizeInBytes: 2048,
             LastWriteTimeUtc: new DateTimeOffset(2026, 4, 28, 14, 2, 0, TimeSpan.Zero),
             ContentHash: "hash-standard-source");
+        var unrelatedFingerprint = new WorkspaceFileFingerprintDto(
+            SourcePath: unrelatedSourcePath,
+            FileSizeInBytes: 128,
+            LastWriteTimeUtc: new DateTimeOffset(2026, 4, 28, 14, 3, 0, TimeSpan.Zero),
+            ContentHash: "hash-unrelated-source");
         var metadataStore = new TestWorkspaceMetadataStore(
             CreateAutoDetectWorkspaceMetadata(
                 workspaceKey,
@@ -45,6 +50,7 @@ internal static partial class ProcessWorkspaceImportsHandlerTests
                 unrelatedSourcePath));
         var bundleIndexCacheStore = new TestBundleIndexCacheStore(Array.Empty<BundleIndexCacheEntryDto>());
         var previewCacheStore = new TestPreviewCacheStore(Array.Empty<PreviewCacheDescriptorDto>());
+        var recognitionCacheStore = new TestWorkspaceImportRecognitionCacheStore();
         var autoDecryptorDescriptor = CreateAutoDetectDecryptorDescriptor("test.auto", "Test Auto");
         var autoDecryptor = new TestAssetBundleDecryptor(autoDecryptorDescriptor)
         {
@@ -72,7 +78,8 @@ internal static partial class ProcessWorkspaceImportsHandlerTests
             new Dictionary<string, WorkspaceFileFingerprintDto>(StringComparer.OrdinalIgnoreCase)
             {
                 [sourcePath] = sourceFingerprint,
-                [standardSourcePath] = standardFingerprint
+                [standardSourcePath] = standardFingerprint,
+                [unrelatedSourcePath] = unrelatedFingerprint
             });
         var inspector = new TestAssetBundleSourceInspector
         {
@@ -97,7 +104,7 @@ internal static partial class ProcessWorkspaceImportsHandlerTests
         };
         var handler = new ProcessWorkspaceImportsHandler(
             new TestWorkspaceMetadataStoreFactory(metadataStore),
-            new TestWorkspaceDataStoreFactory(bundleIndexCacheStore, previewCacheStore),
+            new TestWorkspaceDataStoreFactory(bundleIndexCacheStore, previewCacheStore, recognitionCacheStore),
             sourceDiscoveryService,
             fileSystemService,
             new WorkspaceImportExecutionGate(),
@@ -119,7 +126,8 @@ internal static partial class ProcessWorkspaceImportsHandlerTests
         TestAssert.Equal(1, fallbackDecryptor.DecryptCallCount, "Only the standard bundle with no codec match should use pass-through.");
         TestAssert.Equal(2, processingResult.IndexedBundleCount, "Both matched and pass-through sources should be indexed.");
         TestAssert.Equal(1, processingResult.ScreenedOutFileCount, "A known non-bundle source should be screened out only after no codec matches.");
-        TestAssert.Equal(0, metadataStore.SaveCallCount, "Per-bundle codec selections must not replace the workspace auto-detection strategy.");
+        TestAssert.Equal(1, metadataStore.SaveCallCount, "A stable invalid direct file should be removed from registered import sources.");
+        TestAssert.Equal(2, metadataStore.Metadata?.ImportedSources?.Count ?? -1, "Only recognized bundle sources should remain directly registered.");
         TestAssert.Equal(AssetBundleDecryptorIds.BuiltInAutoDetect, metadataStore.Metadata?.AssetBundleDecryptorId, "Workspace metadata should retain auto detection.");
         TestAssert.Equal(
             autoDecryptorDescriptor.Id,
@@ -141,6 +149,16 @@ internal static partial class ProcessWorkspaceImportsHandlerTests
         TestAssert.Equal(3, processingResult.PerformanceDiagnostic?.ProbeEvaluationCount ?? 0, "Probe telemetry should count every evaluated source, including the rejected PNG.");
         TestAssert.Equal(1, processingResult.AutoDetectionDiagnostic?.ProbeDiagnostics.Count ?? 0, "Auto-detection diagnostic should include the probe summary.");
         TestAssert.True(processingResult.AutoDetectionDiagnostic?.ProbeDiagnostics[0].WasSelected ?? false, "Probe diagnostic should mark the selected decryptor.");
+
+        var secondResult = await handler.HandleAsync(new ProcessWorkspaceImportsCommand(
+            WorkspaceKey: workspaceKey,
+            WorkspaceDataRootPath: workspaceDataRootPath));
+
+        TestAssert.True(secondResult.IsSuccess, "An unchanged workspace should reuse persisted recognition results.");
+        TestAssert.Equal(3, autoDecryptor.ProbeCallCount, "Unchanged sources must not start additional codec probes.");
+        TestAssert.Equal(3, secondResult.Value?.PerformanceDiagnostic?.RecognitionCacheHitCount ?? -1, "All unchanged sources should hit the recognition cache.");
+        TestAssert.Equal(0, secondResult.Value?.PerformanceDiagnostic?.ProbeInputFileCount ?? -1, "No unchanged source should enter recognition again.");
+        TestAssert.Equal(0, secondResult.Value?.PerformanceDiagnostic?.ProbeEvaluationCount ?? -1, "The second pass should perform zero probe evaluations.");
     }
 
     public static async Task HandleAsync_ShouldKeepAutoDetection_WhenProbeExecutionFails()
@@ -156,6 +174,7 @@ internal static partial class ProcessWorkspaceImportsHandlerTests
             ContentHash: "hash-probe-failure");
         var metadataStore = new TestWorkspaceMetadataStore(
             CreateAutoDetectWorkspaceMetadata(workspaceKey, "Probe Failure Workspace", sourcePath));
+        var recognitionCacheStore = new TestWorkspaceImportRecognitionCacheStore();
         var autoDecryptor = new TestAssetBundleDecryptor(
             CreateAutoDetectDecryptorDescriptor("test.auto.failure", "Test Auto Failure"))
         {
@@ -185,7 +204,8 @@ internal static partial class ProcessWorkspaceImportsHandlerTests
             new TestWorkspaceMetadataStoreFactory(metadataStore),
             new TestWorkspaceDataStoreFactory(
                 new TestBundleIndexCacheStore(Array.Empty<BundleIndexCacheEntryDto>()),
-                new TestPreviewCacheStore(Array.Empty<PreviewCacheDescriptorDto>())),
+                new TestPreviewCacheStore(Array.Empty<PreviewCacheDescriptorDto>()),
+                recognitionCacheStore),
             new TestWorkspaceImportSourceDiscoveryService(
             [
                 new DiscoveredWorkspaceImportFileDto(sourcePath, logicalPath)
@@ -219,6 +239,14 @@ internal static partial class ProcessWorkspaceImportsHandlerTests
             AssetBundleDecryptorIds.BuiltInAutoDetect,
             metadataStore.Metadata?.AssetBundleDecryptorId,
             "Workspace metadata should keep auto detection so a later refresh probes again.");
+
+        var secondResult = await handler.HandleAsync(new ProcessWorkspaceImportsCommand(
+            WorkspaceKey: workspaceKey,
+            WorkspaceDataRootPath: workspaceDataRootPath));
+
+        TestAssert.True(secondResult.IsSuccess, "A later refresh should retry after a transient probe failure.");
+        TestAssert.Equal(2, autoDecryptor.ProbeCallCount, "Transient probe failures must not be persisted as recognition cache hits.");
+        TestAssert.Equal(0, recognitionCacheStore.Entries.Count, "Transient probe failure results should not enter the recognition cache.");
     }
 
     public static async Task HandleAsync_ShouldProbeEverySource_WhenDecryptorIsExplicitlyConfigured()

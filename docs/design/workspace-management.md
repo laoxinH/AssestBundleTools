@@ -113,15 +113,22 @@
 3. Reader 路径识别
    解密或直通后再进入 `IAssetBundleReader.CanRead(...)` 和真实读取，只有真实 Unity 内容解析成功才建立 bundle index；内部 `normalized.bundle` 文件名、来源扩展名或启发式空结果都不得放行无关文件。无 Probe 的旧显式解密器以 `Decrypt -> 真实 Reader` 作为兼容识别。
    Reader 不承担加密格式探测职责。
-4. 缓存命中识别
-   最后根据 `source fingerprint + decryptorId + decryptorVersion + parserVersion + toolVersion`
-   等维度自动判断索引和预览缓存能否复用，还是必须失效重建。
+4. 缓存命中与识别快路径
+   来源展开后先读取轻量文件指纹，并根据 `source fingerprint + codec catalog fingerprint +
+   decryptorId + decryptorVersion + parserVersion + toolVersion` 判断能否复用上次逐文件识别结论。
+   完整兼容的来源不再重复启动 CLI Probe；新增、变化、缓存缺失或版本失效的来源仍按
+   “导入源识别 -> 解密器识别 -> Reader 路径识别”完整执行。Bundle index 和预览缓存继续按
+   相同版本维度决定复用或重建，不能因为命中识别缓存而绕过版本失效。
 
 补充约束：
 
 - 导入源识别和解密器识别属于“解密前自动识别”
 - Reader 路径识别属于“解密后自动识别”
 - 自动模式中，只有全部 codec 未匹配、准备选择 `PassThrough` 时才应用常见非 AB 签名的负向筛选；codec 明确命中的来源不受该提示阻断
+- 逐文件识别缓存必须同时覆盖成功 codec 选择、确认可直通、明确筛除和 Reader 明确拒绝；Probe 执行失败、取消、超时或其他不确定结果不得固化为稳定负缓存，后续刷新必须重试
+- 识别缓存只保存轻量结论和诊断证据，不保存解密输出、Reader 对象或资产索引；其目录固定为 `cache/import-recognition/<workspace-key>/`
+- 新增导入和工作区重开都必须先做完整来源路径对账，但只对新增或指纹 / 版本变化的文件重新 Probe；目录枚举仍用于发现新增与删除，不能把“增量识别”误写成永不检查目录变化
+- 明确筛除或 Reader 明确拒绝的直接文件导入不得永久留在 `importedSources[]`；目录导入仍保留目录根，目录内无关文件由识别缓存承载，避免改变用户选择的目录语义
 - 预览如何展示属于后续预览策略，不属于当前自动识别主轴
 - 每个 AB 的实际 `decryptorId / decryptorVersion` 属于 bundle artifact / index 身份，不属于工作区级选择状态
 
@@ -299,6 +306,10 @@ Presentation 层保留两个协同层次：
   该缓存是可重建派生产物，不是工作区元数据，也不是用户源文件的替代来源。
 - `cache/bundle-index/...`
   负责保存每个 AB 文件的解析索引缓存，用于加速资源包列表、资产列表和基础恢复。
+- `cache/import-recognition/...`
+  负责保存导入来源的轻量指纹、逐文件 codec 选择、明确筛除 / Reader 拒绝结论和识别版本指纹。
+  该缓存用于避免工作区追加导入与重启恢复时重复启动 CLI Probe；它是可删除、可重建派生产物，
+  Probe 失败和其他不确定结论不得写入。
 - `cache/spine-groups/...`
   负责保存当前工作区内 Spine 资源组目录的派生读模型，用于避免在 `资源 / Spine 组` 视图切换、资源包标签切换和窗口宿主迁移时重复遍历全工作区资产索引。
   该目录是可删除、可重建缓存，不是工作区元数据，也不是 Spine 详情、atlas 解析结果或预览载荷的事实来源。
@@ -986,7 +997,8 @@ cache/
 - `AudioClip` 等富预览若需要额外转码，应先通过独立音频转码层把载荷转换为标准可播放格式，再交给 Presentation 渲染
 - `Mesh` 等模型富预览的几何、三角面索引、UV 与通道读取必须停留在 Infrastructure 预览生成器中；Mesh 贴图关联由运行时工作区依赖图派生为 `TextureAssociations`，Presentation 只能消费结构化 DTO、派生关联关系与缓存载荷路径，不得直接解析资源包
 - `Material / AnimationClip / Font / GameObject / MonoBehaviour / AnimatorController` 这类半可视化摘要或轻量信息浏览也必须通过 Infrastructure 生成 JSON sidecar、Application 水化 DTO、Presentation 渲染 DTO 的同一管线完成，不得在 WinUI 中直接读取字段树或资源包；Material 的属性语义提示只能从已水化 DTO 派生，并应保持“候选 / 检测到”措辞，避免暗示已经完成 Shader 仿真；GameObject / MonoBehaviour / AnimatorController 的引用跳转只能消费详情依赖图和预览 DTO，不得在 Presentation 侧重读资源包
-- 自动识别默认按“导入源识别 -> 解密器识别 -> Reader 路径识别 -> 缓存命中识别”四层推进，而不是把所有判断都塞进 Reader 或 UI
+- 自动识别默认先做“来源展开 + 轻量指纹 + 识别缓存快路径”；只有缓存未命中的来源才继续按
+  “导入源识别 -> 解密器识别 -> Reader 路径识别”推进，而不是把所有判断都塞进 Reader 或 UI
 - 拖拽导入的页面桥接应优先挂在具体工作区区域，而不是整页根节点
 - AB 真实解析结果应优先写入独立缓存层，而不是写进工作区元数据文件
 - 解密后的临时文件默认属于 `staging` 层，不应混入工作区元数据

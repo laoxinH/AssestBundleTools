@@ -104,6 +104,9 @@ public sealed class JsonWorkspaceDataRootService : IWorkspaceDataRootService
         var bundleIndexCacheStore = _workspaceDataStoreFactory.CreateBundleIndexCacheStore(normalizedRootDirectoryPath);
         bundleIndexCacheStore.DeleteWorkspace(workspaceKey);
 
+        var recognitionCacheStore = _workspaceDataStoreFactory.CreateWorkspaceImportRecognitionCacheStore(normalizedRootDirectoryPath);
+        recognitionCacheStore.DeleteWorkspace(workspaceKey);
+
         var previewCacheStore = _workspaceDataStoreFactory.CreatePreviewCacheStore(normalizedRootDirectoryPath);
         previewCacheStore.DeleteWorkspace(workspaceKey);
 

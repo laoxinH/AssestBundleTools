@@ -21,6 +21,7 @@ internal sealed class JsonWorkspaceStoragePaths
         CacheDirectoryPath = Path.Combine(RootDirectoryPath, "cache");
         BundleArtifactCacheDirectoryPath = Path.Combine(CacheDirectoryPath, "bundles");
         BundleIndexCacheDirectoryPath = Path.Combine(CacheDirectoryPath, "bundle-index");
+        ImportRecognitionCacheDirectoryPath = Path.Combine(CacheDirectoryPath, "import-recognition");
         SpineGroupCatalogCacheDirectoryPath = Path.Combine(CacheDirectoryPath, "spine-groups");
         PreviewCacheRootDirectoryPath = Path.Combine(CacheDirectoryPath, "previews");
         StagingDirectoryPath = Path.Combine(RootDirectoryPath, "staging");
@@ -39,6 +40,8 @@ internal sealed class JsonWorkspaceStoragePaths
     public string BundleArtifactCacheDirectoryPath { get; }
 
     public string BundleIndexCacheDirectoryPath { get; }
+
+    public string ImportRecognitionCacheDirectoryPath { get; }
 
     public string SpineGroupCatalogCacheDirectoryPath { get; }
 
@@ -136,6 +139,18 @@ internal sealed class JsonWorkspaceStoragePaths
     public string GetWorkspaceChangeFilePath(string workspaceKey)
     {
         return Path.Combine(WorkspaceChangesDirectoryPath, $"{NormalizeFileSegment(workspaceKey, nameof(workspaceKey))}.json");
+    }
+
+    public string GetImportRecognitionCacheDirectoryPath(string workspaceKey)
+    {
+        return Path.Combine(ImportRecognitionCacheDirectoryPath, NormalizeFileSegment(workspaceKey, nameof(workspaceKey)));
+    }
+
+    public string GetImportRecognitionCacheFilePath(string workspaceKey, string bundleCacheKey)
+    {
+        return Path.Combine(
+            GetImportRecognitionCacheDirectoryPath(workspaceKey),
+            $"{NormalizeFileSegment(bundleCacheKey, nameof(bundleCacheKey))}.json");
     }
 
     public string GetAssetEditDraftDirectoryPath(

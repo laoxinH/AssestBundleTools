@@ -208,6 +208,10 @@ internal static class InfrastructureTestSuite
             JsonSpineGroupCatalogCacheStoreTests.Save_ShouldRoundTripCatalogEntry_AndDeleteWorkspace);
         await RunTestAsync(
             failures,
+            nameof(JsonWorkspaceImportRecognitionCacheStoreTests.Save_ShouldRoundTripReplaceDeleteAndDeleteWorkspace),
+            JsonWorkspaceImportRecognitionCacheStoreTests.Save_ShouldRoundTripReplaceDeleteAndDeleteWorkspace);
+        await RunTestAsync(
+            failures,
             nameof(JsonBundleArtifactStoreTests.Save_ShouldMaterializeDerivedBundle_AndRoundTripManifest),
             JsonBundleArtifactStoreTests.Save_ShouldMaterializeDerivedBundle_AndRoundTripManifest);
         await RunTestAsync(

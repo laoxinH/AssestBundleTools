@@ -193,7 +193,7 @@ internal static partial class ProcessWorkspaceImportsHandlerTests
 
         TestAssert.True(result.IsSuccess, "Reader rejection should be reported inside the processing result.");
         var processingResult = result.Value ?? throw new InvalidOperationException("Expected processing result.");
-        TestAssert.Equal(1, processingResult.RegisteredSourceCount, "Registered source count should match metadata.");
+        TestAssert.Equal(0, processingResult.RegisteredSourceCount, "A stable reader-rejected direct file should be removed from registered sources.");
         TestAssert.Equal(1, processingResult.DiscoveredFileCount, "Discovered file count should include the rejected source.");
         TestAssert.Equal(0, processingResult.IndexedBundleCount, "Reader rejection should not produce a bundle cache entry.");
         TestAssert.Equal(0, processingResult.ReusedBundleCount, "Reader rejection should not reuse cache.");
@@ -215,7 +215,7 @@ internal static partial class ProcessWorkspaceImportsHandlerTests
         TestAssert.Empty(processingResult.IssueDiagnostics[0].Errors, "Reader rejection should not attach AppError entries.");
         TestAssert.Equal(0, bundleIndexCacheStore.DeleteOperations.Count, "Reader rejection without prior cache should not delete bundle artifacts.");
         TestAssert.Equal(0, previewCacheStore.DeleteOperations.Count, "Reader rejection without prior cache should not delete preview artifacts.");
-        TestAssert.Equal(0, metadataStore.SaveCallCount, "Reader rejection should not rewrite metadata.");
+        TestAssert.Equal(1, metadataStore.SaveCallCount, "Stable reader rejection should remove the invalid direct import from metadata.");
         TestAssert.Equal(1, fileSystemService.CreateFingerprintCallCount, "Reader rejection path should create fingerprint once.");
         TestAssert.Equal(0, decryptor.ProbeCallCount, "Explicit decryptor path should not invoke probe.");
         TestAssert.Equal(1, decryptor.DecryptCallCount, "Reader rejection path should invoke decryptor execution once.");

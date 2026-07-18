@@ -326,13 +326,15 @@ Presentation 不负责：
 
 - `builtin.auto-detect` 是持久化的工作区策略，不是一次性迁移状态；不得在识别后把工作区元数据改成某个具体 codec 或 `PassThrough`。
 - 文件扩展名和来源路径只用于解密前的候选发现，不能证明文件是有效 AB；标准化 artifact 固定命名为 `normalized.bundle`，因此 Reader 尤其不得根据该扩展名放行。
-- 自动模式下，每个非明显无效的来源文件都独立执行所有支持自动识别的 codec Probe，并按该文件上的 `isMatch + confidence + 稳定顺序` 选择实际 codec。
+- 自动模式下，每个新增、内容指纹变化或识别缓存失效的非明显无效来源文件，都独立执行所有支持自动识别的 codec Probe，并按该文件上的 `isMatch + confidence + 稳定顺序` 选择实际 codec。来源指纹、codec 目录指纹、codec id/version 与工具识别 schema 均未变化时，允许复用上次逐文件 Probe 结论，不得仅因工作区重开而重复启动 CLI。
 - 某个来源的所有 codec 都成功 Probe 且不匹配时，该文件才使用 `PassThrough`；直通后的内容仍必须通过真实 Unity Reader 解析，不能以扩展名或空索引的启发式成功作为有效资源包。
 - PNG / JPEG / ZIP / RAR / 7z / 常见音视频等明确非 AB 的内容签名只能作为“禁止直通”的负向提示，不能在 codec Probe 前筛除；若某个 codec Probe 明确命中，仍允许该 codec 继续解密和真实读取。
 - 某个 AB 存在 Probe 执行失败且没有其他匹配时，本轮仍可对该文件尝试 `PassThrough`，但诊断必须保留失败证据，后续刷新仍会重新 Probe。
+- Probe 失败、超时、取消或结果文件无效属于不确定结论，不得写入稳定识别缓存；明确不匹配、明确非 AB、Reader 明确拒绝和成功 codec 选择可以按来源指纹缓存。
 - 显式指定解密器且该解密器支持 Probe 时，必须对每个非明显无效的来源文件执行该解密器的 Probe；来源扩展名或标准 Unity header 不得绕过固定解密器识别。未命中的文件直接筛除。
 - 显式指定的兼容解密器若没有 Probe，则允许执行 `Decrypt -> 真实 Unity Reader` 作为兼容识别；解密失败或真实解析失败的文件必须排除，不能生成空 bundle index。
 - 实际 codec 的 id / version 只写入该 AB 的标准化 artifact 与 bundle index，继续参与缓存失效、预览重建和导出回写。
+- 当前 manifest schema 继续保持逐文件 `probeArguments` 兼容。批量 Probe 可作为后续可选能力加入新 schema，但不得成为本轮识别缓存优化的前置条件，也不得破坏现有第三方 CLI。
 
 缓存失效时除了原始 AB 指纹外，还应纳入：
 

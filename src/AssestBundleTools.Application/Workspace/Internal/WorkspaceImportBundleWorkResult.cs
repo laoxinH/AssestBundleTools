@@ -10,7 +10,8 @@ internal sealed record WorkspaceImportBundleWorkResult(
     WorkspaceImportBundleWorkOutcome Outcome,
     WorkspaceImportCacheDecisionDiagnosticDto CacheDiagnostic,
     BundleIndexCacheEntryDto? CacheEntryToSave,
-    WorkspaceImportIssueDiagnosticDto? IssueDiagnostic);
+    WorkspaceImportIssueDiagnosticDto? IssueDiagnostic,
+    WorkspaceImportRecognitionCacheEntryDto? RecognitionCacheEntryToSave);
 
 internal enum WorkspaceImportBundleWorkOutcome
 {

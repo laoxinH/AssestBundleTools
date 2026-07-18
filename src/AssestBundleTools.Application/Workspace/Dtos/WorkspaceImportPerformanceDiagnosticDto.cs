@@ -12,4 +12,7 @@ public sealed record WorkspaceImportPerformanceDiagnosticDto(
     long CommitDurationMs,
     int BundleWorkerCount,
     int ProbeDecryptorCount,
-    int ProbeEvaluationCount);
+    int ProbeEvaluationCount,
+    int FingerprintEvaluationCount = 0,
+    int RecognitionCacheHitCount = 0,
+    int ProbeInputFileCount = 0);

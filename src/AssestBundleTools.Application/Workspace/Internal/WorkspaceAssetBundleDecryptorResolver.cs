@@ -74,6 +74,9 @@ internal static class WorkspaceAssetBundleDecryptorResolver
                     UsedAutoDetection: false,
                     AutoDetectionDiagnostic: null,
                     ProbeTelemetry: WorkspaceImportProbeTelemetry.None,
+                    StableRecognitionSourcePaths: discoveredFiles
+                        .Select(static file => file.SourcePath)
+                        .ToHashSet(StringComparer.OrdinalIgnoreCase),
                     ResolvedDecryptorsBySourcePath: discoveredFiles.ToDictionary(
                         static file => file.SourcePath,
                         _ => explicitDecryptorResult.Value,
@@ -102,8 +105,11 @@ internal static class WorkspaceAssetBundleDecryptorResolver
                         AssetBundleDecryptorIds.BuiltInAutoDetect,
                         usedFallbackDecryptor: discoveredFiles.Count > 0,
                         probeSummaries: Array.Empty<WorkspaceImportDecryptorProbeSummary>(),
-                        selectedProbeDecryptorIds: Array.Empty<string>()),
+                    selectedProbeDecryptorIds: Array.Empty<string>()),
                     ProbeTelemetry: WorkspaceImportProbeTelemetry.None,
+                    StableRecognitionSourcePaths: discoveredFiles
+                        .Select(static file => file.SourcePath)
+                        .ToHashSet(StringComparer.OrdinalIgnoreCase),
                     ResolvedDecryptorsBySourcePath: discoveredFiles.ToDictionary(
                         static file => file.SourcePath,
                         _ => fallbackDecryptor,
@@ -130,6 +136,12 @@ internal static class WorkspaceAssetBundleDecryptorResolver
             .Select(static decryptor => decryptor.Descriptor.Id)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
+        var stableRecognitionSourcePaths = discoveredFiles
+            .Where(file => probeSummaries.All(summary => summary.FileResults.Any(result =>
+                string.Equals(result.SourcePath, file.SourcePath, StringComparison.OrdinalIgnoreCase) &&
+                result.IsSuccessful)))
+            .Select(static file => file.SourcePath)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         return Result<WorkspaceImportDecryptorResolutionResult>.Success(
             new WorkspaceImportDecryptorResolutionResult(
@@ -146,6 +158,7 @@ internal static class WorkspaceAssetBundleDecryptorResolver
                     DurationMs: probeStopwatch.ElapsedMilliseconds,
                     DecryptorCount: probeSummaries.Count,
                     FileEvaluationCount: probeSummaries.Sum(static summary => summary.FileResults.Count)),
+                StableRecognitionSourcePaths: stableRecognitionSourcePaths,
                 ResolvedDecryptorsBySourcePath: resolvedDecryptorsBySourcePath));
     }
 
@@ -348,6 +361,7 @@ internal sealed record WorkspaceImportDecryptorResolutionResult(
     bool UsedAutoDetection,
     WorkspaceImportAutoDetectionDiagnosticDto? AutoDetectionDiagnostic,
     WorkspaceImportProbeTelemetry ProbeTelemetry,
+    IReadOnlySet<string> StableRecognitionSourcePaths,
     IReadOnlyDictionary<string, IAssetBundleDecryptor> ResolvedDecryptorsBySourcePath)
 {
     public IAssetBundleDecryptor ResolveForSourcePath(string sourcePath) =>

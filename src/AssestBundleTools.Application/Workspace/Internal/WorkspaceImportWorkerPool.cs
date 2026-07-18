@@ -50,8 +50,7 @@ internal sealed class WorkspaceImportWorkerPool
         {
             results.Add(await _workspaceImportBundleWorker.ExecuteAsync(
                 plan,
-                candidate.File,
-                candidate.Decryptor,
+                candidate,
                 cancellationToken));
             ReportBundleCompleted(plan, results.Count, bundleCandidates.Count, candidate.File);
         }
@@ -103,8 +102,7 @@ internal sealed class WorkspaceImportWorkerPool
             var candidate = bundleCandidates[candidateIndex];
             results[candidateIndex] = await _workspaceImportBundleWorker.ExecuteAsync(
                 plan,
-                candidate.File,
-                candidate.Decryptor,
+                candidate,
                 cancellationToken);
             var completedCount = Interlocked.Increment(ref progressState.CompletedCount);
             ReportBundleCompleted(plan, completedCount, bundleCandidates.Count, candidate.File);

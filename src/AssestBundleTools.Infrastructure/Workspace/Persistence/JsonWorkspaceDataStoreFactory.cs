@@ -44,6 +44,13 @@ public sealed class JsonWorkspaceDataStoreFactory : IWorkspaceDataStoreFactory
             : new JsonWorkspaceChangeStore(rootDirectoryPath);
     }
 
+    public IWorkspaceImportRecognitionCacheStore CreateWorkspaceImportRecognitionCacheStore(string? rootDirectoryPath = null)
+    {
+        return string.IsNullOrWhiteSpace(rootDirectoryPath)
+            ? new JsonWorkspaceImportRecognitionCacheStore()
+            : new JsonWorkspaceImportRecognitionCacheStore(rootDirectoryPath);
+    }
+
     public IAssetEditDraftTextStore CreateAssetEditDraftTextStore(string? rootDirectoryPath = null)
     {
         return string.IsNullOrWhiteSpace(rootDirectoryPath)

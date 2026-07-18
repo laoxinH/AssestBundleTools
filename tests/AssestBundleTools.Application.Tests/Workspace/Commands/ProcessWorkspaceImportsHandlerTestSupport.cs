@@ -56,13 +56,16 @@ internal static partial class ProcessWorkspaceImportsHandlerTests
         private readonly IBundleArtifactStore _bundleArtifactStore = new TestBundleArtifactStore();
         private readonly IBundleIndexCacheStore _bundleIndexCacheStore;
         private readonly IPreviewCacheStore _previewCacheStore;
+        private readonly IWorkspaceImportRecognitionCacheStore _recognitionCacheStore;
 
         public TestWorkspaceDataStoreFactory(
             IBundleIndexCacheStore bundleIndexCacheStore,
-            IPreviewCacheStore previewCacheStore)
+            IPreviewCacheStore previewCacheStore,
+            IWorkspaceImportRecognitionCacheStore? recognitionCacheStore = null)
         {
             _bundleIndexCacheStore = bundleIndexCacheStore;
             _previewCacheStore = previewCacheStore;
+            _recognitionCacheStore = recognitionCacheStore ?? new TestWorkspaceImportRecognitionCacheStore();
         }
 
         public IBundleArtifactStore CreateBundleArtifactStore(string? rootDirectoryPath = null) => _bundleArtifactStore;
@@ -71,9 +74,43 @@ internal static partial class ProcessWorkspaceImportsHandlerTests
 
         public IPreviewCacheStore CreatePreviewCacheStore(string? rootDirectoryPath = null) => _previewCacheStore;
 
+        public IWorkspaceImportRecognitionCacheStore CreateWorkspaceImportRecognitionCacheStore(string? rootDirectoryPath = null) =>
+            _recognitionCacheStore;
+
         public IWorkspaceChangeStore CreateWorkspaceChangeStore(string? rootDirectoryPath = null) => new TestWorkspaceChangeStore();
 
         public string GetDefaultRootDirectoryPath() => @"D:\WorkspaceData";
+    }
+
+    private sealed class TestWorkspaceImportRecognitionCacheStore : IWorkspaceImportRecognitionCacheStore
+    {
+        private readonly List<WorkspaceImportRecognitionCacheEntryDto> _entries = [];
+
+        public IReadOnlyList<WorkspaceImportRecognitionCacheEntryDto> Entries => _entries;
+
+        public IReadOnlyList<WorkspaceImportRecognitionCacheEntryDto> LoadAll(string workspaceKey) =>
+            _entries
+                .Where(entry => string.Equals(entry.WorkspaceKey, workspaceKey, StringComparison.OrdinalIgnoreCase))
+                .ToArray();
+
+        public void Save(WorkspaceImportRecognitionCacheEntryDto cacheEntry)
+        {
+            Delete(cacheEntry.WorkspaceKey, cacheEntry.BundleCacheKey);
+            _entries.Add(cacheEntry);
+        }
+
+        public void Delete(string workspaceKey, string bundleCacheKey)
+        {
+            _entries.RemoveAll(entry =>
+                string.Equals(entry.WorkspaceKey, workspaceKey, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(entry.BundleCacheKey, bundleCacheKey, StringComparison.OrdinalIgnoreCase));
+        }
+
+        public void DeleteWorkspace(string workspaceKey)
+        {
+            _entries.RemoveAll(entry =>
+                string.Equals(entry.WorkspaceKey, workspaceKey, StringComparison.OrdinalIgnoreCase));
+        }
     }
 
     private sealed class TestBundleIndexCacheStore : IBundleIndexCacheStore

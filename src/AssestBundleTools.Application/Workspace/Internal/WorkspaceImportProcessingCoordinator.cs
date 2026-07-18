@@ -41,14 +41,17 @@ internal sealed class WorkspaceImportProcessingCoordinator
             workspaceMetadataStoreFactory ?? throw new ArgumentNullException(nameof(workspaceMetadataStoreFactory)),
             workspaceDataStoreFactory ?? throw new ArgumentNullException(nameof(workspaceDataStoreFactory)),
             workspaceImportSourceDiscoveryService ?? throw new ArgumentNullException(nameof(workspaceImportSourceDiscoveryService)),
+            workspaceImportFileSystemService ?? throw new ArgumentNullException(nameof(workspaceImportFileSystemService)),
             screeningCoordinator,
+            assetBundleDecryptorRegistry,
+            assetBundleReader ?? throw new ArgumentNullException(nameof(assetBundleReader)),
             workspaceImportExecutionOptionsResolver ?? throw new ArgumentNullException(nameof(workspaceImportExecutionOptionsResolver)),
             sessionInvalidator,
             prunePolicy);
         _workspaceImportWorkerPool = new WorkspaceImportWorkerPool(
             new WorkspaceImportBundleWorker(
-                workspaceImportFileSystemService ?? throw new ArgumentNullException(nameof(workspaceImportFileSystemService)),
-                assetBundleReader ?? throw new ArgumentNullException(nameof(assetBundleReader))));
+                workspaceImportFileSystemService,
+                assetBundleReader));
         _workspaceImportCommitter = new WorkspaceImportCommitter(sessionInvalidator);
     }
 
@@ -104,7 +107,9 @@ internal sealed class WorkspaceImportProcessingCoordinator
         }
 
         var workerStopwatch = Stopwatch.StartNew();
-        var workerResults = await _workspaceImportWorkerPool.ExecuteAsync(planResult.Value, cancellationToken);
+        var workerResults = planResult.Value.CachedWorkerResults
+            .Concat(await _workspaceImportWorkerPool.ExecuteAsync(planResult.Value, cancellationToken))
+            .ToArray();
         workerStopwatch.Stop();
 
         command.Progress?.Report(new WorkspaceImportProgressDto(
@@ -127,7 +132,10 @@ internal sealed class WorkspaceImportProcessingCoordinator
             CommitDurationMs: commitStopwatch.ElapsedMilliseconds,
             BundleWorkerCount: planResult.Value.ExecutionOptions.BundleWorkerCount,
             ProbeDecryptorCount: planResult.Value.DecryptorResolution.ProbeTelemetry.DecryptorCount,
-            ProbeEvaluationCount: planResult.Value.DecryptorResolution.ProbeTelemetry.FileEvaluationCount);
+            ProbeEvaluationCount: planResult.Value.DecryptorResolution.ProbeTelemetry.FileEvaluationCount,
+            FingerprintEvaluationCount: planResult.Value.DiscoveredFiles.Count,
+            RecognitionCacheHitCount: planResult.Value.RecognitionCacheHitCount,
+            ProbeInputFileCount: planResult.Value.RecognitionScreeningInputFileCount);
         return Result<WorkspaceImportProcessingResultDto>.Success(processingResult with
         {
             PerformanceDiagnostic = performanceDiagnostic

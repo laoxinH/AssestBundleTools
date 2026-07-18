@@ -23,14 +23,18 @@ internal sealed class WorkspaceImportBundleWorker
 
     public async Task<WorkspaceImportBundleWorkResult> ExecuteAsync(
         WorkspaceImportProcessingPlan plan,
-        DiscoveredWorkspaceImportFileDto discoveredFile,
-        IAssetBundleDecryptor decryptor,
+        WorkspaceImportBundleCandidate candidate,
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
+        var discoveredFile = candidate.File;
+        var decryptor = candidate.Decryptor;
+
         var bundleCacheKey = WorkspaceImportPathUtility.CreateBundleCacheKey(discoveredFile.SourcePath);
-        var sourceFingerprint = _workspaceImportFileSystemService.CreateFingerprint(discoveredFile.SourcePath);
+        var sourceFingerprint = plan.SourceFingerprintsByPath.TryGetValue(discoveredFile.SourcePath, out var plannedFingerprint)
+            ? plannedFingerprint
+            : _workspaceImportFileSystemService.CreateFingerprint(discoveredFile.SourcePath);
         plan.ExistingCacheEntriesByBundleCacheKey.TryGetValue(bundleCacheKey, out var existingCacheEntry);
 
         var cacheDecision = ResolveCacheDecision(
@@ -50,7 +54,16 @@ internal sealed class WorkspaceImportBundleWorker
                 Outcome: WorkspaceImportBundleWorkOutcome.Reused,
                 CacheDiagnostic: cacheDecision.Diagnostic,
                 CacheEntryToSave: null,
-                IssueDiagnostic: null);
+                IssueDiagnostic: null,
+                RecognitionCacheEntryToSave: candidate.CanPersistRecognition
+                    ? CreateRecognitionCacheEntry(
+                        plan,
+                        discoveredFile,
+                        bundleCacheKey,
+                        sourceFingerprint,
+                        decryptor,
+                        WorkspaceImportRecognitionDisposition.Candidate)
+                    : null);
         }
 
         var artifactResult = await WorkspaceBundleArtifactResolver.ResolveAsync(
@@ -93,7 +106,20 @@ internal sealed class WorkspaceImportBundleWorker
                 cacheDecision.Diagnostic,
                 existingCacheEntry is not null,
                 decryptorId: artifactResult.Value.Decryptor.Id,
-                resolvedBundlePath: artifactResult.Value.ResolvedBundlePath);
+                resolvedBundlePath: artifactResult.Value.ResolvedBundlePath,
+                recognitionCacheEntry: candidate.CanPersistRecognition
+                    ? CreateRecognitionCacheEntry(
+                        plan,
+                        discoveredFile,
+                        bundleCacheKey,
+                        sourceFingerprint,
+                        decryptor,
+                        WorkspaceImportRecognitionDisposition.ReaderRejected,
+                        WorkspaceImportIssueKind.ReaderRejected,
+                        new LocalizedMessageDto(
+                            WorkspaceImportMessageTokens.ReaderNoRegisteredReaderRecognizedOutput,
+                            [artifactResult.Value.ResolvedBundlePath]))
+                    : null);
         }
 
         var readResult = await _assetBundleReader.ReadAsync(
@@ -138,7 +164,16 @@ internal sealed class WorkspaceImportBundleWorker
                 sourceFingerprint,
                 artifactResult.Value,
                 readResult.Value),
-            IssueDiagnostic: null);
+            IssueDiagnostic: null,
+            RecognitionCacheEntryToSave: candidate.CanPersistRecognition
+                ? CreateRecognitionCacheEntry(
+                    plan,
+                    discoveredFile,
+                    bundleCacheKey,
+                    sourceFingerprint,
+                    decryptor,
+                    WorkspaceImportRecognitionDisposition.Candidate)
+                : null);
     }
 
     private CacheDecision ResolveCacheDecision(
@@ -201,7 +236,8 @@ internal sealed class WorkspaceImportBundleWorker
                 Kind: issueKind,
                 DecryptorId: decryptorId,
                 DetailMessage: detailMessage,
-                Errors: errors));
+                Errors: errors),
+            RecognitionCacheEntryToSave: null);
     }
 
     private static WorkspaceImportBundleWorkResult CreateSkippedResult(
@@ -210,7 +246,8 @@ internal sealed class WorkspaceImportBundleWorker
         WorkspaceImportCacheDecisionDiagnosticDto cacheDiagnostic,
         bool shouldDeleteExistingArtifacts,
         string? decryptorId,
-        string resolvedBundlePath)
+        string resolvedBundlePath,
+        WorkspaceImportRecognitionCacheEntryDto? recognitionCacheEntry)
     {
         return new WorkspaceImportBundleWorkResult(
             BundleCacheKey: bundleCacheKey,
@@ -228,8 +265,36 @@ internal sealed class WorkspaceImportBundleWorker
                 DetailMessage: new LocalizedMessageDto(
                     WorkspaceImportMessageTokens.ReaderNoRegisteredReaderRecognizedOutput,
                     [resolvedBundlePath]),
-                Errors: Array.Empty<AppError>()));
+                Errors: Array.Empty<AppError>()),
+            RecognitionCacheEntryToSave: recognitionCacheEntry);
     }
+
+    private static WorkspaceImportRecognitionCacheEntryDto CreateRecognitionCacheEntry(
+        WorkspaceImportProcessingPlan plan,
+        DiscoveredWorkspaceImportFileDto file,
+        string bundleCacheKey,
+        WorkspaceFileFingerprintDto sourceFingerprint,
+        IAssetBundleDecryptor decryptor,
+        WorkspaceImportRecognitionDisposition disposition,
+        WorkspaceImportIssueKind? issueKind = null,
+        LocalizedMessageDto? detailMessage = null) =>
+        new(
+            plan.Command.WorkspaceKey,
+            bundleCacheKey,
+            file.SourcePath,
+            file.LogicalPath,
+            sourceFingerprint,
+            plan.RecognitionVersion,
+            plan.CodecCatalogFingerprint,
+            disposition,
+            decryptor.Descriptor.Id,
+            decryptor.Descriptor.Version,
+            disposition == WorkspaceImportRecognitionDisposition.ReaderRejected
+                ? plan.ReaderParserVersion
+                : null,
+            issueKind,
+            detailMessage,
+            plan.ProcessedAtUtc);
 
     private static BundleIndexCacheEntryDto CreateCacheEntry(
         WorkspaceImportProcessingPlan plan,

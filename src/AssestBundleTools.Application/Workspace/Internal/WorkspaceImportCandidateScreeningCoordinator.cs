@@ -44,6 +44,7 @@ internal sealed class WorkspaceImportCandidateScreeningCoordinator
         var unresolvedFiles = new List<DiscoveredWorkspaceImportFileDto>();
         var inspectionsBySourcePath = new Dictionary<string, AssetBundleSourceInspectionResultDto>(StringComparer.OrdinalIgnoreCase);
         var issueDiagnostics = new List<WorkspaceImportIssueDiagnosticDto>();
+        var stableInspectionSourcePaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var discoveredFile in discoveredFiles)
         {
@@ -57,6 +58,7 @@ internal sealed class WorkspaceImportCandidateScreeningCoordinator
                     candidateFiles[discoveredFile.SourcePath] = discoveredFile;
                     break;
                 case AssetBundleSourceInspectionKind.Rejected:
+                    stableInspectionSourcePaths.Add(discoveredFile.SourcePath);
                     issueDiagnostics.Add(CreateScreenedOutDiagnostic(
                         discoveredFile,
                         decryptorId: null,
@@ -99,7 +101,10 @@ internal sealed class WorkspaceImportCandidateScreeningCoordinator
                     AutoDetectionDiagnostic: autoResolution.AutoDetectionDiagnostic,
                     BundleCandidates: BuildBundleCandidates(acceptedAutoDetectionFiles, autoResolution),
                     ScreenedOutDiagnostics: issueDiagnostics,
-                    ProbeTelemetry: autoResolution.ProbeTelemetry));
+                    ProbeTelemetry: autoResolution.ProbeTelemetry,
+                    StableRecognitionSourcePaths: MergeStableSourcePaths(
+                        stableInspectionSourcePaths,
+                        autoResolution.StableRecognitionSourcePaths)));
         }
 
         var explicitRecognitionFiles = candidateFiles.Values
@@ -118,7 +123,7 @@ internal sealed class WorkspaceImportCandidateScreeningCoordinator
 
         var decryptorResolution = decryptorResolutionResult.Value;
         candidateFiles.Clear();
-        var probeTelemetry = await AppendExplicitDecryptorCandidatesAsync(
+        var explicitProbeResult = await AppendExplicitDecryptorCandidatesAsync(
             decryptorResolution,
             explicitRecognitionFiles,
             candidateFiles,
@@ -137,7 +142,10 @@ internal sealed class WorkspaceImportCandidateScreeningCoordinator
                     .ToArray(),
                     decryptorResolution),
                 ScreenedOutDiagnostics: issueDiagnostics,
-                ProbeTelemetry: probeTelemetry));
+                ProbeTelemetry: explicitProbeResult.Telemetry,
+                StableRecognitionSourcePaths: MergeStableSourcePaths(
+                    stableInspectionSourcePaths,
+                    explicitProbeResult.StableSourcePaths)));
     }
 
     private async Task<Result<WorkspaceImportDecryptorResolutionResult>> ResolveDecryptorAsync(
@@ -163,6 +171,9 @@ internal sealed class WorkspaceImportCandidateScreeningCoordinator
                     UsedAutoDetection: false,
                     AutoDetectionDiagnostic: null,
                     ProbeTelemetry: WorkspaceImportProbeTelemetry.None,
+                    StableRecognitionSourcePaths: unresolvedFiles
+                        .Select(static file => file.SourcePath)
+                        .ToHashSet(StringComparer.OrdinalIgnoreCase),
                     ResolvedDecryptorsBySourcePath: unresolvedFiles.ToDictionary(
                         static file => file.SourcePath,
                         _ => explicitDecryptorResult.Value,
@@ -181,7 +192,7 @@ internal sealed class WorkspaceImportCandidateScreeningCoordinator
     /// 支持 Probe 时只放行匹配项；旧解密器没有 Probe 时，
     /// 交给后续 Decrypt + 真实 Reader 完成兼容校验。
     /// </summary>
-    private async Task<WorkspaceImportProbeTelemetry> AppendExplicitDecryptorCandidatesAsync(
+    private async Task<ExplicitProbeResult> AppendExplicitDecryptorCandidatesAsync(
         WorkspaceImportDecryptorResolutionResult decryptorResolution,
         IReadOnlyList<DiscoveredWorkspaceImportFileDto> recognitionFiles,
         IDictionary<string, DiscoveredWorkspaceImportFileDto> candidateFiles,
@@ -191,7 +202,9 @@ internal sealed class WorkspaceImportCandidateScreeningCoordinator
         var probeTelemetry = decryptorResolution.ProbeTelemetry;
         if (recognitionFiles.Count == 0)
         {
-            return probeTelemetry;
+            return new ExplicitProbeResult(
+                probeTelemetry,
+                new HashSet<string>(StringComparer.OrdinalIgnoreCase));
         }
 
         var decryptor = decryptorResolution.Decryptor;
@@ -202,7 +215,11 @@ internal sealed class WorkspaceImportCandidateScreeningCoordinator
                 candidateFiles[recognitionFile.SourcePath] = recognitionFile;
             }
 
-            return probeTelemetry;
+            return new ExplicitProbeResult(
+                probeTelemetry,
+                recognitionFiles
+                    .Select(static file => file.SourcePath)
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase));
         }
 
         var probeStopwatch = Stopwatch.StartNew();
@@ -240,7 +257,12 @@ internal sealed class WorkspaceImportCandidateScreeningCoordinator
                 detail));
         }
 
-        return probeTelemetry;
+        return new ExplicitProbeResult(
+            probeTelemetry,
+            probeSummary.FileResults
+                .Where(static result => result.IsSuccessful)
+                .Select(static result => result.SourcePath)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase));
     }
 
     private static WorkspaceImportIssueDiagnosticDto CreateScreenedOutDiagnostic(
@@ -282,6 +304,15 @@ internal sealed class WorkspaceImportCandidateScreeningCoordinator
             StringComparison.OrdinalIgnoreCase);
     }
 
+    private static IReadOnlySet<string> MergeStableSourcePaths(
+        IReadOnlySet<string> first,
+        IReadOnlySet<string> second)
+    {
+        var merged = new HashSet<string>(first, StringComparer.OrdinalIgnoreCase);
+        merged.UnionWith(second);
+        return merged;
+    }
+
     private static bool IsAutoDetectionMode(string? decryptorId) =>
         string.IsNullOrWhiteSpace(decryptorId) || IsBuiltInAutoDetect(decryptorId.Trim());
 
@@ -291,7 +322,8 @@ internal sealed class WorkspaceImportCandidateScreeningCoordinator
         files
             .Select(file => new WorkspaceImportBundleCandidate(
                 File: file,
-                Decryptor: resolution.ResolveForSourcePath(file.SourcePath)))
+                Decryptor: resolution.ResolveForSourcePath(file.SourcePath),
+                CanPersistRecognition: resolution.StableRecognitionSourcePaths.Contains(file.SourcePath)))
             .ToArray();
 
     private static IReadOnlyList<DiscoveredWorkspaceImportFileDto> FilterAutoDetectionPassThroughCandidates(
@@ -328,8 +360,18 @@ internal sealed record WorkspaceImportCandidateScreeningResult(
     WorkspaceImportAutoDetectionDiagnosticDto? AutoDetectionDiagnostic,
     IReadOnlyList<WorkspaceImportBundleCandidate> BundleCandidates,
     IReadOnlyList<WorkspaceImportIssueDiagnosticDto> ScreenedOutDiagnostics,
-    WorkspaceImportProbeTelemetry ProbeTelemetry);
+    WorkspaceImportProbeTelemetry ProbeTelemetry,
+    IReadOnlySet<string> StableRecognitionSourcePaths)
+{
+    public bool CanPersistRecognition(string sourcePath) =>
+        StableRecognitionSourcePaths.Contains(sourcePath);
+}
 
 internal sealed record WorkspaceImportBundleCandidate(
     DiscoveredWorkspaceImportFileDto File,
-    IAssetBundleDecryptor Decryptor);
+    IAssetBundleDecryptor Decryptor,
+    bool CanPersistRecognition = true);
+
+internal sealed record ExplicitProbeResult(
+    WorkspaceImportProbeTelemetry Telemetry,
+    IReadOnlySet<string> StableSourcePaths);
