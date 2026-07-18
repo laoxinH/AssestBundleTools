@@ -5,4 +5,5 @@ namespace AssestBundleTools.Application.Assets.Dtos;
 /// </summary>
 public sealed record AssetPreviewMessageDto(
     AssetPreviewMessageKey Key,
-    IReadOnlyList<string>? Arguments = null);
+    IReadOnlyList<string>? Arguments = null,
+    string? RequiredComponentId = null);

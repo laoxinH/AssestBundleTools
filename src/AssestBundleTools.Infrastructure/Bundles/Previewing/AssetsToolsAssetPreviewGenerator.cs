@@ -7,6 +7,7 @@ using AssestBundleTools.Application.Bundles.Services;
 using AssestBundleTools.Application.Common.Errors;
 using AssestBundleTools.Application.Common.Results;
 using AssestBundleTools.Infrastructure.Bundles.Internal;
+using AssestBundleTools.Infrastructure.Bundles.Previewing.Audio;
 using AssestBundleTools.Infrastructure.Bundles.Previewing.Internal;
 
 namespace AssestBundleTools.Infrastructure.Bundles.Previewing;
@@ -35,7 +36,7 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
         _bundleSessionCache = bundleSessionCache ?? throw new ArgumentNullException(nameof(bundleSessionCache));
     }
 
-    public string GeneratorVersion => "assetstools.preview/26";
+    public string GeneratorVersion => "assetstools.preview/27";
 
     public async Task<Result<AssetPreviewContentDto>> GenerateAsync(
         AssetPreviewBuildRequestDto request,
@@ -297,9 +298,12 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
             return AssetsToolsAudioClipPreviewBuilder.BuildTranscodedPreview(previewSource, transcodeResult);
         }
 
+        var fallbackMessage = AssetsToolsAudioClipPreviewBuilder.BuildTranscodeFallbackMessage(
+            previewSource,
+            transcodeResult);
         return AssetsToolsAudioClipPreviewBuilder.BuildSummaryPreview(
             previewSource,
-            AssetsToolsAudioClipPreviewBuilder.BuildTranscodeFallbackMessage(previewSource, transcodeResult));
+            AudioPreviewOnlineComponentMapper.AttachRequiredComponent(fallbackMessage, transcodeResult));
     }
 
     private static bool TryBuildTexturePreview(

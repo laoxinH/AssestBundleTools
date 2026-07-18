@@ -68,7 +68,8 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
         Action requestWorkspaceBrowserStatePersistence,
         IAppBackgroundTaskStatusService? backgroundTaskStatusService = null,
         IBackgroundWorkScheduler? backgroundWorkScheduler = null,
-        Func<int>? previewWorkerCountProvider = null)
+        Func<int>? previewWorkerCountProvider = null,
+        IOnlineComponentInstallPromptCoordinator? onlineComponentInstallPromptCoordinator = null)
     {
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
         ArgumentNullException.ThrowIfNull(workspaceExplorerGateway);
@@ -108,7 +109,8 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
             _localizationService,
             backgroundTaskRunner,
             previewWorkerCountProvider: previewWorkerCountProvider,
-            backgroundWorkScheduler: backgroundWorkScheduler);
+            backgroundWorkScheduler: backgroundWorkScheduler,
+            onlineComponentInstallPromptCoordinator: onlineComponentInstallPromptCoordinator);
         var modificationActionHandler = new BundleExplorerAssetModificationActionHandler(
             workspaceAssetOperationGateway,
             appLogService,

@@ -41,5 +41,6 @@ internal sealed record AppCompositionServices(
     IAppBackgroundTaskStatusService AppBackgroundTaskStatusService,
     IBackgroundTaskRunner BackgroundTaskRunner,
     IBackgroundWorkScheduler BackgroundWorkScheduler,
+    IOnlineComponentInstallPromptCoordinator OnlineComponentInstallPromptCoordinator,
     IWorkspaceImportCoordinatorService WorkspaceImportCoordinatorService,
     ISpineAnimationRuntimePlaybackService SpineAnimationRuntimePlaybackService);

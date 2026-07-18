@@ -61,7 +61,8 @@ public sealed class BundleExplorerViewModel : ObservableObject, IDisposable
         IAppBackgroundTaskStatusService? backgroundTaskStatusService = null,
         IBackgroundWorkScheduler? backgroundWorkScheduler = null,
         IWorkspaceCacheMaintenanceGateway? workspaceCacheMaintenanceGateway = null,
-        Func<int>? previewWorkerCountProvider = null)
+        Func<int>? previewWorkerCountProvider = null,
+        IOnlineComponentInstallPromptCoordinator? onlineComponentInstallPromptCoordinator = null)
     {
         ArgumentNullException.ThrowIfNull(workspaceExplorerGateway);
         ArgumentNullException.ThrowIfNull(workspaceAssetInspectionGateway);
@@ -114,7 +115,8 @@ public sealed class BundleExplorerViewModel : ObservableObject, IDisposable
             requestWorkspaceBrowserStatePersistence: RequestWorkspaceBrowserStatePersistence,
             backgroundTaskStatusService: backgroundTaskStatusService,
             backgroundWorkScheduler: backgroundWorkScheduler,
-            previewWorkerCountProvider: previewWorkerCountProvider);
+            previewWorkerCountProvider: previewWorkerCountProvider,
+            onlineComponentInstallPromptCoordinator: onlineComponentInstallPromptCoordinator);
         _bundleTabCoordinator = new BundleExplorerBundleTabCoordinator(
             _bundlePane,
             _documentWorkspace,

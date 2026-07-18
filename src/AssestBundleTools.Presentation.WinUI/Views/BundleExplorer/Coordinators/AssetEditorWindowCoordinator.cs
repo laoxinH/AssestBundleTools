@@ -407,7 +407,8 @@ public sealed partial class BundleExplorerPage
                 App.CurrentApp.AppBackgroundTaskStatusService,
                 App.CurrentApp.BackgroundWorkScheduler,
                 () => App.CurrentApp.AppPreferencesService.PreviewWorkerCount,
-                _owner.ViewModel.AssetWorkflow.OperationPendingTracker);
+                _owner.ViewModel.AssetWorkflow.OperationPendingTracker,
+                App.CurrentApp.OnlineComponentInstallPromptCoordinator);
             var window = new AssetEditorWindow(
                 viewModel,
                 OpenDocumentInNewWindowFromEditorAsync,

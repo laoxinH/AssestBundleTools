@@ -1,3 +1,5 @@
+using AssestBundleTools.Infrastructure.Extensions.Installation;
+
 namespace AssestBundleTools.Infrastructure.Bundles.Previewing.Audio;
 
 /// <summary>
@@ -8,8 +10,7 @@ internal static class AudioTranscoderDiscoveryPaths
     public static IReadOnlyList<string> GetVgmstreamExecutableCandidates()
     {
         var appBaseDirectory = AppContext.BaseDirectory;
-        var appDataRoot = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        var userToolDirectory = Path.Combine(appDataRoot, "AssestBundleTools", "tools", "vgmstream");
+        var userToolDirectory = OnlineComponentInstallationPaths.VgmstreamInstallDirectoryPath;
         var appToolDirectory = Path.Combine(appBaseDirectory, "tools", "vgmstream");
 
         return

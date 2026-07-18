@@ -54,7 +54,8 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
             App.CurrentApp.AppBackgroundTaskStatusService,
             App.CurrentApp.BackgroundWorkScheduler,
             App.CurrentApp.WorkspaceCacheMaintenanceGateway,
-            () => App.CurrentApp.AppPreferencesService.PreviewWorkerCount);
+            () => App.CurrentApp.AppPreferencesService.PreviewWorkerCount,
+            App.CurrentApp.OnlineComponentInstallPromptCoordinator);
 
         InitializeComponent();
         RegisterWorkspaceImportDropHandlers();

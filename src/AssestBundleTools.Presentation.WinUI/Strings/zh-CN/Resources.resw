@@ -1199,6 +1199,25 @@
   <data name="AudioTranscoding.Detail.ExecutionFailed" xml:space="preserve">
     <value>{0} 无法执行，请检查工具路径、权限或运行时依赖。</value>
   </data>
+  <data name="OnlineComponent.InstallPrompt.Title" xml:space="preserve"><value>需要下载可选组件</value></data>
+  <data name="OnlineComponent.InstallPrompt.Content.Format" xml:space="preserve"><value>当前预览需要“{0}”。确认后将从受信任来源下载并安装此组件。&#x0A;&#x0A;发布者：{1}&#x0A;来源：{2}&#x0A;许可证：{3}&#x0A;项目地址：{4}</value></data>
+  <data name="OnlineComponent.InstallPrompt.PrimaryButton" xml:space="preserve"><value>下载并安装</value></data>
+  <data name="OnlineComponent.InstallPrompt.CloseButton" xml:space="preserve"><value>本次会话不再提示</value></data>
+  <data name="OnlineComponent.InstallPrompt.Unavailable.Log" xml:space="preserve"><value>在线组件安装提示未显示：当前活动窗口尚未准备好 XAML 根。</value></data>
+  <data name="OnlineComponent.Install.StatusTitle.Format" xml:space="preserve"><value>正在安装 {0}</value></data>
+  <data name="OnlineComponent.Install.Stage.Resolving" xml:space="preserve"><value>正在获取可信发布信息</value></data>
+  <data name="OnlineComponent.Install.Stage.Downloading" xml:space="preserve"><value>正在下载安装包</value></data>
+  <data name="OnlineComponent.Install.Stage.Verifying" xml:space="preserve"><value>正在校验 SHA-256</value></data>
+  <data name="OnlineComponent.Install.Stage.Extracting" xml:space="preserve"><value>正在安全解压</value></data>
+  <data name="OnlineComponent.Install.Stage.Installing" xml:space="preserve"><value>正在完成安装</value></data>
+  <data name="OnlineComponent.Install.Succeeded.Title" xml:space="preserve"><value>组件安装完成</value></data>
+  <data name="OnlineComponent.Install.Succeeded.Message.Format" xml:space="preserve"><value>“{0}”已安装，正在重新加载预览。</value></data>
+  <data name="OnlineComponent.Install.Succeeded.Log.Format" xml:space="preserve"><value>在线组件“{0}”安装成功，发布版本：{1}。</value></data>
+  <data name="OnlineComponent.Install.Failed.Title" xml:space="preserve"><value>组件安装失败</value></data>
+  <data name="OnlineComponent.Install.Failed.Message" xml:space="preserve"><value>无法安装所需组件，请检查网络连接后重试。</value></data>
+  <data name="OnlineComponent.Install.Failed.Log.Format" xml:space="preserve"><value>在线组件“{0}”安装失败：{1}。诊断：{2}</value></data>
+  <data name="Error.Extensions.OnlineComponent.NotRegistered" xml:space="preserve"><value>未找到在线组件“{0}”的受信任安装定义。</value></data>
+  <data name="Error.Extensions.OnlineComponent.InstallFailed" xml:space="preserve"><value>无法安装在线组件“{0}”，请检查网络连接后重试。</value></data>
   <data name="WorkspaceImport.Log.Cache.CacheMiss.Format" xml:space="preserve">
     <value>资源包缓存未命中。来源：{0}。逻辑路径：{1}。详情：{2}</value>
   </data>

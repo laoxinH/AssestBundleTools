@@ -3,6 +3,7 @@ using AssestBundleTools.Infrastructure.Tests.Bundles.Internal;
 using AssestBundleTools.Infrastructure.Tests.Bundles.Processing;
 using AssestBundleTools.Infrastructure.Tests.Bundles.Reading;
 using AssestBundleTools.Infrastructure.Tests.Bundles.Previewing;
+using AssestBundleTools.Infrastructure.Tests.Extensions.Installation;
 using AssestBundleTools.Infrastructure.Tests.Settings.Persistence;
 using AssestBundleTools.Infrastructure.Tests.Workspace.Persistence;
 using AssestBundleTools.Infrastructure.Tests.Workspace.Diagnostics;
@@ -710,6 +711,30 @@ internal static class InfrastructureTestSuite
             failures,
             nameof(FileSystemWorkspaceBundleExporterTests.ExportAsync_ShouldForceRewriteAudioClipResource_WhenReplacementContainerMismatchesOriginal),
             FileSystemWorkspaceBundleExporterTests.ExportAsync_ShouldForceRewriteAudioClipResource_WhenReplacementContainerMismatchesOriginal);
+        await RunTestAsync(
+            failures,
+            nameof(OnlineComponentInstallationServiceTests.InstallAsync_ShouldVerifyAndInstallCompleteArchive),
+            OnlineComponentInstallationServiceTests.InstallAsync_ShouldVerifyAndInstallCompleteArchive);
+        await RunTestAsync(
+            failures,
+            nameof(OnlineComponentInstallationServiceTests.InstallAsync_ShouldRejectDigestMismatch_WithoutInstallingFiles),
+            OnlineComponentInstallationServiceTests.InstallAsync_ShouldRejectDigestMismatch_WithoutInstallingFiles);
+        await RunTestAsync(
+            failures,
+            nameof(OnlineComponentInstallationServiceTests.InstallAsync_ShouldRejectPathTraversal_WithoutInstallingFiles),
+            OnlineComponentInstallationServiceTests.InstallAsync_ShouldRejectPathTraversal_WithoutInstallingFiles);
+        await RunTestAsync(
+            failures,
+            nameof(AudioPreviewOnlineComponentMapperTests.AttachRequiredComponent_ShouldRequestVgmstream_WhenBackendIsUnavailable),
+            AudioPreviewOnlineComponentMapperTests.AttachRequiredComponent_ShouldRequestVgmstream_WhenBackendIsUnavailable);
+        await RunTestAsync(
+            failures,
+            nameof(GitHubReleaseOnlineComponentPackageSourceTests.ResolveAsync_ShouldReadTrustedAssetAndSha256Digest),
+            GitHubReleaseOnlineComponentPackageSourceTests.ResolveAsync_ShouldReadTrustedAssetAndSha256Digest);
+        await RunTestAsync(
+            failures,
+            nameof(GitHubReleaseOnlineComponentPackageSourceTests.ResolveAsync_ShouldRejectNonHexadecimalDigest),
+            GitHubReleaseOnlineComponentPackageSourceTests.ResolveAsync_ShouldRejectNonHexadecimalDigest);
 
         if (failures.Count == 0)
         {

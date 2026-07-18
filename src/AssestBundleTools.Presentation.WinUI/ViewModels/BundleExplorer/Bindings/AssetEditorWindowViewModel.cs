@@ -67,7 +67,8 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
         IAppBackgroundTaskStatusService? backgroundTaskStatusService = null,
         IBackgroundWorkScheduler? backgroundWorkScheduler = null,
         Func<int>? previewWorkerCountProvider = null,
-        WorkspaceOperationPendingTracker? operationPendingTracker = null)
+        WorkspaceOperationPendingTracker? operationPendingTracker = null,
+        IOnlineComponentInstallPromptCoordinator? onlineComponentInstallPromptCoordinator = null)
         : this(
             CreateSingleAssetGroup(initialAssetTab),
             workspaceAssetInspectionGateway,
@@ -87,7 +88,8 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
             backgroundTaskStatusService,
             backgroundWorkScheduler,
             previewWorkerCountProvider,
-            operationPendingTracker)
+            operationPendingTracker,
+            onlineComponentInstallPromptCoordinator)
     {
     }
 
@@ -112,7 +114,8 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
         IAppBackgroundTaskStatusService? backgroundTaskStatusService = null,
         IBackgroundWorkScheduler? backgroundWorkScheduler = null,
         Func<int>? previewWorkerCountProvider = null,
-        WorkspaceOperationPendingTracker? operationPendingTracker = null)
+        WorkspaceOperationPendingTracker? operationPendingTracker = null,
+        IOnlineComponentInstallPromptCoordinator? onlineComponentInstallPromptCoordinator = null)
     {
         ArgumentNullException.ThrowIfNull(initialAssetGroup);
         _workspaceAssetInspectionGateway = workspaceAssetInspectionGateway ?? throw new ArgumentNullException(nameof(workspaceAssetInspectionGateway));
@@ -168,7 +171,8 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
             _localizationService,
             _backgroundTaskRunner,
             previewWorkerCountProvider: previewWorkerCountProvider,
-            backgroundWorkScheduler: backgroundWorkScheduler);
+            backgroundWorkScheduler: backgroundWorkScheduler,
+            onlineComponentInstallPromptCoordinator: onlineComponentInstallPromptCoordinator);
         _assetPreviewLoadCoordinator = new BundleExplorerAssetPreviewLoadCoordinator(
             assetPreviewCoordinator,
             () => DocumentGroup.ActiveAssetTab,

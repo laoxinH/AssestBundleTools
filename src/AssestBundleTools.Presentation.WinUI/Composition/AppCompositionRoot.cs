@@ -22,6 +22,7 @@ using AssestBundleTools.Infrastructure.Bundles.Previewing;
 using AssestBundleTools.Infrastructure.Bundles.Previewing.Audio;
 using AssestBundleTools.Infrastructure.Bundles.Previewing.Spine;
 using AssestBundleTools.Infrastructure.Bundles.Reading;
+using AssestBundleTools.Infrastructure.Extensions.Installation;
 using AssestBundleTools.Infrastructure.Settings.Persistence;
 using AssestBundleTools.Infrastructure.Workspace.Extraction;
 using AssestBundleTools.Infrastructure.Workspace.Diagnostics;
@@ -412,6 +413,14 @@ internal static class AppCompositionRoot
             backgroundTaskRunner,
             appBackgroundTaskStatusService,
             () => appPreferencesService.PreviewWorkerCount);
+        var onlineComponentInstallPromptCoordinator = new OnlineComponentInstallPromptCoordinator(
+            new OnlineComponentInstallationService(),
+            context.ActiveWindowAccessor,
+            localizationService,
+            backgroundTaskRunner,
+            appBackgroundTaskStatusService,
+            appNotificationService,
+            appLogService);
         var workspaceImportCoordinatorService = new WorkspaceImportCoordinatorService(
             workspaceContextService,
             workspaceExplorerGateway,
@@ -455,6 +464,7 @@ internal static class AppCompositionRoot
             AppBackgroundTaskStatusService: appBackgroundTaskStatusService,
             BackgroundTaskRunner: backgroundTaskRunner,
             BackgroundWorkScheduler: backgroundWorkScheduler,
+            OnlineComponentInstallPromptCoordinator: onlineComponentInstallPromptCoordinator,
             WorkspaceImportCoordinatorService: workspaceImportCoordinatorService,
             SpineAnimationRuntimePlaybackService: spineAnimationRuntimePreviewService);
     }

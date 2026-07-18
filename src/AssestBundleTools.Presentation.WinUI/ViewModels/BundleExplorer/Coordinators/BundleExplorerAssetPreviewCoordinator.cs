@@ -28,6 +28,7 @@ internal sealed class BundleExplorerAssetPreviewCoordinator
     private readonly ILocalizationService _localizationService;
     private readonly AssetPreviewQueryExecutor _previewQueryExecutor;
     private readonly AssetPreviewResultPresenter _previewResultPresenter;
+    private readonly IOnlineComponentInstallPromptCoordinator? _onlineComponentInstallPromptCoordinator;
 
     public BundleExplorerAssetPreviewCoordinator(
         IWorkspaceAssetInspectionGateway workspaceAssetInspectionGateway,
@@ -39,13 +40,15 @@ internal sealed class BundleExplorerAssetPreviewCoordinator
         TimeSpan? previewQueryTimeout = null,
         int? previewWorkerCount = null,
         Func<int>? previewWorkerCountProvider = null,
-        IBackgroundWorkScheduler? backgroundWorkScheduler = null)
+        IBackgroundWorkScheduler? backgroundWorkScheduler = null,
+        IOnlineComponentInstallPromptCoordinator? onlineComponentInstallPromptCoordinator = null)
     {
         _workspaceAssetInspectionGateway = workspaceAssetInspectionGateway ?? throw new ArgumentNullException(nameof(workspaceAssetInspectionGateway));
         _workspaceContextService = workspaceContextService ?? throw new ArgumentNullException(nameof(workspaceContextService));
         _workspaceShell = workspaceShell ?? throw new ArgumentNullException(nameof(workspaceShell));
         _appLogService = appLogService ?? throw new ArgumentNullException(nameof(appLogService));
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
+        _onlineComponentInstallPromptCoordinator = onlineComponentInstallPromptCoordinator;
         ArgumentNullException.ThrowIfNull(backgroundTaskRunner);
         _previewQueryExecutor = new AssetPreviewQueryExecutor(
             _workspaceAssetInspectionGateway,
@@ -246,6 +249,23 @@ internal sealed class BundleExplorerAssetPreviewCoordinator
             {
                 return;
             }
+
+            if (priority == AssetPreviewLoadPriority.Foreground &&
+                _onlineComponentInstallPromptCoordinator is not null &&
+                !string.IsNullOrWhiteSpace(preview.PreviewMessage?.RequiredComponentId) &&
+                await _onlineComponentInstallPromptCoordinator.EnsureInstalledAsync(
+                    preview.PreviewMessage.RequiredComponentId) &&
+                IsPreviewRequestCurrentAndRelevant(assetTab, details, previewRequest, isPreviewRelevant))
+            {
+                assetTab.Inspector.SetPreviewLoading(GetString(ResourceKeys.InspectorPreviewLoadingText));
+                await ReloadAfterComponentInstallAsync(
+                    assetTab,
+                    details,
+                    previewRequest,
+                    formatFirstErrorMessage,
+                    priority,
+                    isPreviewRelevant);
+            }
         }
         catch (Exception exception)
         {
@@ -259,6 +279,57 @@ internal sealed class BundleExplorerAssetPreviewCoordinator
                 assetTab.Inspector,
                 ReplacePreviewDiagnosticDetail(preview.Diagnostic, CreateExceptionDiagnosticMessage(exception)));
         }
+    }
+
+    private async Task ReloadAfterComponentInstallAsync(
+        AssetDocumentTabViewModel assetTab,
+        AssetDetailsDto details,
+        AssetPreviewRequest previewRequest,
+        Func<IReadOnlyList<AppError>, string> formatFirstErrorMessage,
+        AssetPreviewLoadPriority priority,
+        Func<bool>? isPreviewRelevant)
+    {
+        if (!TryCreateAssetPreviewQuery(details, out var previewQuery))
+        {
+            return;
+        }
+
+        var previewResult = await GetPreviewResultWithTimeoutAsync(
+            previewQuery,
+            previewRequest.CancellationToken,
+            priority,
+            () => IsPreviewRequestCurrentAndRelevant(assetTab, details, previewRequest, isPreviewRelevant),
+            CreatePreviewStatusTitle(details));
+        if (previewResult is null ||
+            !IsPreviewRequestCurrentAndRelevant(assetTab, details, previewRequest, isPreviewRelevant))
+        {
+            return;
+        }
+
+        if (previewResult.IsCancelled)
+        {
+            ResetPreviewIfCurrent(assetTab, details, previewRequest);
+            return;
+        }
+
+        if (!previewResult.IsSuccess || previewResult.Value is null)
+        {
+            _appLogService.AppendWarning(_localizationService.GetFormattedString(
+                ResourceKeys.BundleExplorerLogAssetPreviewFailedFormat,
+                details.Name,
+                formatFirstErrorMessage(previewResult.Errors)));
+            assetTab.Inspector.ShowPreviewMessage(GetString(ResourceKeys.InspectorPreviewUnavailableText));
+            return;
+        }
+
+        await _previewResultPresenter.TryApplyAsync(
+            assetTab,
+            details,
+            previewQuery,
+            previewRequest,
+            previewResult.Value,
+            priority,
+            () => IsPreviewRequestCurrentAndRelevant(assetTab, details, previewRequest, isPreviewRelevant));
     }
 
     private bool TryCreateAssetPreviewQuery(

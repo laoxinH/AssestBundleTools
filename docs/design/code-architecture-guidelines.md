@@ -308,6 +308,9 @@ AssestBundleTools.Application/
   Saving/
     Commands/
     Dtos/
+  Extensions/
+    Dtos/
+    Services/
   Workspace/
     Commands/
     Queries/
@@ -319,7 +322,7 @@ AssestBundleTools.Application/
 
 补充规则：
 
-- 顶层优先按功能根组织，如 `Assets`、`Bundles`、`Editing`、`Extraction`、`Replacement`、`Saving`、`Workspace`、`Common`。
+- 顶层优先按功能根组织，如 `Assets`、`Bundles`、`Editing`、`Extraction`、`Replacement`、`Saving`、`Extensions`、`Workspace`、`Common`。`Extensions` 只承载在线组件、插件目录和外部扩展生命周期等稳定契约，不作为通用杂项目录。
 - 功能根下允许的常见子目录为 `Commands`、`Queries`、`Dtos`、`Services`、`Internal`。
 - 不要在 `Application` 根下再建横切型总目录，如全局 `Handlers/`、`Models/`、`Helpers/`。
 - `Common/` 仅放跨多个功能根复用、且不属于单一业务场景的应用层契约、结果模型或共享支持类型。
@@ -359,6 +362,8 @@ AssestBundleTools.Infrastructure/
     Internal/
   Settings/
     Persistence/
+  Extensions/
+    Installation/
   Workspace/
     Importing/
     Persistence/
@@ -367,7 +372,7 @@ AssestBundleTools.Infrastructure/
 
 补充规则：
 
-- 顶层优先按功能或外部集成边界组织，如 `Bundles`、`Settings`、`Workspace`。
+- 顶层优先按功能或外部集成边界组织，如 `Bundles`、`Extensions`、`Settings`、`Workspace`。`Extensions/Installation` 用于可信在线组件来源、下载校验与安装实现。
 - 第二层目录按能力或实现职责命名，如 `Reading`、`Previewing`、`Decryption`、`Importing`、`Persistence`、`Runtime`。
 - 适配器、持久化实现、Reader / Writer、缓存实现应放在其所属功能根下，不要集中堆到全局 `Adapters/`、`Repositories/`、`Utilities/`。
 - `Internal/` 只用于某个功能根内部不希望继续扩散的实现细节，不应用来收纳跨功能共享逻辑。

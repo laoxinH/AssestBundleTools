@@ -1199,6 +1199,25 @@
   <data name="AudioTranscoding.Detail.ExecutionFailed" xml:space="preserve">
     <value>{0} could not be executed. Check the tool path, permissions, or runtime dependencies.</value>
   </data>
+  <data name="OnlineComponent.InstallPrompt.Title" xml:space="preserve"><value>Optional component required</value></data>
+  <data name="OnlineComponent.InstallPrompt.Content.Format" xml:space="preserve"><value>This preview requires "{0}". Confirm to download and install it from a trusted source.&#x0A;&#x0A;Publisher: {1}&#x0A;Source: {2}&#x0A;License: {3}&#x0A;Project: {4}</value></data>
+  <data name="OnlineComponent.InstallPrompt.PrimaryButton" xml:space="preserve"><value>Download and install</value></data>
+  <data name="OnlineComponent.InstallPrompt.CloseButton" xml:space="preserve"><value>Not this session</value></data>
+  <data name="OnlineComponent.InstallPrompt.Unavailable.Log" xml:space="preserve"><value>The online component prompt was skipped because the active window XAML root was unavailable.</value></data>
+  <data name="OnlineComponent.Install.StatusTitle.Format" xml:space="preserve"><value>Installing {0}</value></data>
+  <data name="OnlineComponent.Install.Stage.Resolving" xml:space="preserve"><value>Resolving trusted release metadata</value></data>
+  <data name="OnlineComponent.Install.Stage.Downloading" xml:space="preserve"><value>Downloading package</value></data>
+  <data name="OnlineComponent.Install.Stage.Verifying" xml:space="preserve"><value>Verifying SHA-256</value></data>
+  <data name="OnlineComponent.Install.Stage.Extracting" xml:space="preserve"><value>Extracting safely</value></data>
+  <data name="OnlineComponent.Install.Stage.Installing" xml:space="preserve"><value>Completing installation</value></data>
+  <data name="OnlineComponent.Install.Succeeded.Title" xml:space="preserve"><value>Component installed</value></data>
+  <data name="OnlineComponent.Install.Succeeded.Message.Format" xml:space="preserve"><value>"{0}" was installed. Reloading the preview.</value></data>
+  <data name="OnlineComponent.Install.Succeeded.Log.Format" xml:space="preserve"><value>Online component "{0}" installed successfully. Release: {1}.</value></data>
+  <data name="OnlineComponent.Install.Failed.Title" xml:space="preserve"><value>Component installation failed</value></data>
+  <data name="OnlineComponent.Install.Failed.Message" xml:space="preserve"><value>The required component could not be installed. Check your network connection and try again.</value></data>
+  <data name="OnlineComponent.Install.Failed.Log.Format" xml:space="preserve"><value>Online component "{0}" installation failed: {1}. Diagnostic: {2}</value></data>
+  <data name="Error.Extensions.OnlineComponent.NotRegistered" xml:space="preserve"><value>No trusted installation definition was found for online component "{0}".</value></data>
+  <data name="Error.Extensions.OnlineComponent.InstallFailed" xml:space="preserve"><value>Online component "{0}" could not be installed. Check your network connection and try again.</value></data>
   <data name="WorkspaceImport.Log.Cache.CacheMiss.Format" xml:space="preserve">
     <value>Bundle cache was not found for this source. Source: {0}. Logical path: {1}. Detail: {2}</value>
   </data>
