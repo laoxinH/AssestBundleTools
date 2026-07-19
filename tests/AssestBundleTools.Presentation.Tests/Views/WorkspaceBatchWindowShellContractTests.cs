@@ -20,10 +20,9 @@ public sealed class WorkspaceBatchWindowShellContractTests
 
     private static void AssertUsesUnifiedShellMetrics(string xaml, string code)
     {
-        Assert.Contains("private const int InitialWidth = 1520;", code);
-        Assert.Contains("private const int InitialHeight = 920;", code);
-        Assert.Contains("private const int MinimumWidth = 1180;", code);
-        Assert.Contains("private const int MinimumHeight = 760;", code);
+        Assert.Contains("DpiAwareWindowLayoutService.Apply(", code);
+        Assert.Contains("DpiAwareWindowLayoutProfile.WorkspaceOperationWindow", code);
+        Assert.DoesNotContain("_appWindow.Resize(", code);
 
         Assert.Contains("Padding=\"48,14,48,20\"", xaml);
         Assert.Contains("RowSpacing=\"12\"", xaml);

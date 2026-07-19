@@ -1,6 +1,7 @@
 using AssestBundleTools.Presentation.WinUI.Diagnostics;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
+using AssestBundleTools.Presentation.WinUI.Services.Platform.Windowing;
 using AssestBundleTools.Application.Workspace.Services;
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
@@ -74,6 +75,10 @@ public sealed partial class MainWindow : Microsoft.UI.Xaml.Window
             var windowHandle = WindowNative.GetWindowHandle(this);
             var windowId = Win32Interop.GetWindowIdFromWindow(windowHandle);
             _appWindow = AppWindow.GetFromWindowId(windowId);
+            DpiAwareWindowLayoutService.Apply(
+                windowHandle,
+                _appWindow,
+                DpiAwareWindowLayoutProfile.MainWindow);
             TryApplyWindowIcon();
 
             ExtendsContentIntoTitleBar = true;

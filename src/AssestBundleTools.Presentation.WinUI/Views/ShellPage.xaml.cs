@@ -26,6 +26,7 @@ namespace AssestBundleTools.Presentation.WinUI.Views;
 /// </remarks>
 public sealed partial class ShellPage : Page
 {
+    private const double CompactNavigationWidthThreshold = 1360d;
     private readonly AssestBundleTools.Presentation.WinUI.MainWindow? _hostWindow;
     private readonly ShellLaunchRequest? _launchRequest;
     private readonly ShellNavigationPaneCoordinator _navigationPaneCoordinator;
@@ -69,6 +70,7 @@ public sealed partial class ShellPage : Page
         _backgroundTaskPanelCloseTimer.Tick += OnBackgroundTaskPanelCloseTimerTick;
         ApplyLocalizedText();
         ApplyWindowMode();
+        SizeChanged += OnShellPageSizeChanged;
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
     }
@@ -104,6 +106,8 @@ public sealed partial class ShellPage : Page
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
+        ApplyResponsiveNavigationLayout(ActualWidth);
+
         if (ContentFrame.CurrentSourcePageType is not null)
         {
             return;
@@ -116,6 +120,19 @@ public sealed partial class ShellPage : Page
         }
 
         NavigateTo(ShellNavigationKeys.LaunchGuide, parameter: null, updateSelection: true);
+    }
+
+    private void OnShellPageSizeChanged(object sender, SizeChangedEventArgs e) =>
+        ApplyResponsiveNavigationLayout(e.NewSize.Width);
+
+    private void ApplyResponsiveNavigationLayout(double effectiveWidth)
+    {
+        if (effectiveWidth > 0d &&
+            effectiveWidth < CompactNavigationWidthThreshold &&
+            RootNavigationView.IsPaneOpen)
+        {
+            RootNavigationView.IsPaneOpen = false;
+        }
     }
 
     private void OnNavigationSelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
@@ -439,6 +456,7 @@ public sealed partial class ShellPage : Page
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
+        SizeChanged -= OnShellPageSizeChanged;
         BackgroundTasks.PropertyChanged -= OnBackgroundTasksPropertyChanged;
         BackgroundTasks.Dispose();
         _backgroundTaskPanelCloseTimer.Stop();

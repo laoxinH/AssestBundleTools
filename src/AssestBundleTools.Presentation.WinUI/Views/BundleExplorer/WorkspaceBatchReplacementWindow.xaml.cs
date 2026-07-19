@@ -1,13 +1,13 @@
 using System.Runtime.InteropServices;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
+using AssestBundleTools.Presentation.WinUI.Services.Platform.Windowing;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Dialogs;
 using AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls;
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Windows.Graphics;
 using WinRT.Interop;
 
 namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer;
@@ -17,10 +17,6 @@ namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer;
 /// </summary>
 public sealed partial class WorkspaceBatchReplacementWindow : Window
 {
-    private const int InitialWidth = 1520;
-    private const int InitialHeight = 920;
-    private const int MinimumWidth = 1180;
-    private const int MinimumHeight = 760;
     private const int SwShow = 5;
     private const int SwRestore = 9;
     private readonly WorkspaceBatchReplacementDialogContent _content;
@@ -117,12 +113,10 @@ public sealed partial class WorkspaceBatchReplacementWindow : Window
             var windowHandle = WindowNative.GetWindowHandle(this);
             var windowId = Win32Interop.GetWindowIdFromWindow(windowHandle);
             _appWindow = AppWindow.GetFromWindowId(windowId);
-            _appWindow.Resize(new SizeInt32(InitialWidth, InitialHeight));
-            if (_appWindow.Presenter is OverlappedPresenter presenter)
-            {
-                presenter.PreferredMinimumWidth = MinimumWidth;
-                presenter.PreferredMinimumHeight = MinimumHeight;
-            }
+            DpiAwareWindowLayoutService.Apply(
+                windowHandle,
+                _appWindow,
+                DpiAwareWindowLayoutProfile.WorkspaceOperationWindow);
 
             if (AppWindowTitleBar.IsCustomizationSupported())
             {
