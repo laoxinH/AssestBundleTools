@@ -2908,7 +2908,10 @@
     <value>The replacement tab will later host file replacement, cross-workspace drag replacement, and compatibility checks.</value>
   </data>
   <data name="InspectorPanelView.DependenciesEmptyStateText.Text" xml:space="preserve">
-    <value>No direct dependencies, reverse references, dependency closure, or bundle-level external dependencies are available for this selection.</value>
+    <value>No direct, reverse, transitive, or external bundle dependencies were found for this asset in the current workspace.</value>
+  </data>
+  <data name="InspectorPanelView.DependenciesEmptyStateTitleText.Text" xml:space="preserve">
+    <value>No dependencies</value>
   </data>
   <data name="InspectorPanelView.ChangeSummaryTitleText.Text" xml:space="preserve">
     <value>Current Item Change Summary</value>

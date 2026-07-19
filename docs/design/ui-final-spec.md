@@ -120,6 +120,8 @@
 3. Bundle 外部依赖应优先展示友好名称和依赖类型；对于 `archive:/CAB-xxx/CAB-xxx` 这类引用，如当前工作区能反查到对应资源包，则标题优先显示具体 `xxx.ab` 文件名，并在副标题保留 `CAB-*` 标识，同时把原始引用路径作为补充信息保留。
 4. 友好路径解析优先采用 Unity `m_Container` 路径，缺失时再回退到 `SerializedFileName / 资产类型 / PathId` 组合摘要，避免同名资源在依赖页中难以区分。
 5. 已解析到当前工作区资产身份的依赖项应提供“打开资源”入口，并复用右侧资产文档标签链路跳转到目标详情。`PathId` 继续作为 Unity 对象定位信息展示，但实际跳转键使用 `BundleId + AssetId`，避免跨 Bundle / 外部 CAB 中同 PathId 资源误跳。
+6. 依赖页采用“轻量分区标题 + 单条依赖卡片”的扁平层级，不在分区外再叠加整组背景卡片。卡片以资源友好名称为第一视觉层级，以类型、`PathId` 和资源包归属为第二层级，原始引用路径等诊断信息使用更弱的等宽文本展示；可导航项的打开入口固定在卡片右侧，避免挤压主信息。
+7. 依赖数据为空时，应在页签可用区域中央显示带语义图标、简短标题和说明文字的独立空状态，不使用贴在内容顶部的警告式文本框。图标继续使用随应用发布的 Fluent System Icons 字体，颜色、背景和描边使用主题资源，确保 Windows 10 / 11 以及浅色 / 深色主题下表现一致。
 
 `文件导入 / 目录导入` 入口保留在工作台资源包列表区域；“设置与诊断”页的活动工作区摘要只展示上下文和状态，不再承载导入操作，避免设置页混入工作台动作。
 普通权限下的工作台拖拽导入接收范围当前应限制在左侧资源包列表区域，不扩散到整页。管理员兼容入口由窗口级通用路由统一接收，但仍按注册目标精确分发；窗口级接收不等于整页共享同一种拖放语义，后续资产列表拖拽替换应注册独立且优先级明确的目标。
@@ -385,12 +387,14 @@
 - `Views/BundleExplorerPage.xaml`
 - `Views/Controls/AssetPaneView.xaml`
 - `Views/Controls/InspectorPanelView.xaml`
+- `Views/BundleExplorer/Controls/InspectorDependenciesView.xaml`
 - `Views/BundleExplorer/Controls/InspectorPreviewSurfaceView.xaml`
 - `Views/SettingsDiagnosticsPage.xaml`
 
 补充约定：
 
 - `InspectorPanelView.xaml` 只负责检查器整体布局、分区切换、信息卡片和底部动作区。
+- 依赖页的分区标题、依赖项卡片和依赖空状态统一收敛到 `InspectorDependenciesView.xaml`，父检查器只负责页签编排、滚动状态恢复和资源导航事件转发。
 - 图片 / 音频 / Mesh / Material / AnimationClip / Font / 文本 / 摘要 / 加载 / 空态等预览表面统一收敛到 `InspectorPreviewSurfaceView.xaml` 及其子控件，后续富预览扩展不得继续把复杂预览 XAML 回灌到 `InspectorPanelView.xaml`。
 - 需要展示透明通道的图片预览，应在图片层下方使用统一的棋盘格底图；当前主图片预览和 Sprite 裁切结果卡片都复用 `Assets/PreviewCheckerboard.png`。
 

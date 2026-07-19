@@ -1475,6 +1475,7 @@ public static class ResourceKeys
     public const string InspectorReferencedByTitle = "InspectorPanelView.ReferencedByTitleText.Text";
     public const string InspectorDependencyClosureTitle = "InspectorPanelView.DependencyClosureTitleText.Text";
     public const string InspectorBundleExternalDependenciesTitle = "InspectorPanelView.BundleExternalDependenciesTitleText.Text";
+    public const string InspectorDependenciesEmptyStateTitle = "InspectorPanelView.DependenciesEmptyStateTitleText.Text";
     public const string InspectorDependenciesEmptyStateText = "InspectorPanelView.DependenciesEmptyStateText.Text";
     public const string InspectorReplacementTargetTitle = "InspectorPanelView.ReplacementTargetTitleText.Text";
     public const string InspectorReplacementSourceTitle = "InspectorPanelView.ReplacementSourceTitleText.Text";

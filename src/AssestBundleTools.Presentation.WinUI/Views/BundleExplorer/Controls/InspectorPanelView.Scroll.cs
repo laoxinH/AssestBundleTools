@@ -221,7 +221,7 @@ public sealed partial class InspectorPanelView
         {
             RestoreSectionSelectorScrollPosition(SectionSelectorScrollViewer, viewModel);
             needsRetry |= RestoreSectionScrollPosition(DetailsSectionScrollViewer, viewModel, sectionIndex: 0);
-            needsRetry |= RestoreSectionScrollPosition(DependenciesSectionScrollViewer, viewModel, sectionIndex: 1);
+            needsRetry |= RestoreSectionScrollPosition(DependenciesView.SectionScrollViewer, viewModel, sectionIndex: 1);
             needsRetry |= RestoreSectionScrollPosition(ReplacementSectionScrollViewer, viewModel, sectionIndex: 2);
             needsRetry |= RestoreSectionScrollPosition(ChangesSectionScrollViewer, viewModel, sectionIndex: 3);
         }
@@ -242,7 +242,7 @@ public sealed partial class InspectorPanelView
 
         CaptureSectionSelectorScrollPosition(viewModel, SectionSelectorScrollViewer);
         CaptureSectionScrollPosition(viewModel, DetailsSectionScrollViewer, sectionIndex: 0);
-        CaptureSectionScrollPosition(viewModel, DependenciesSectionScrollViewer, sectionIndex: 1);
+        CaptureSectionScrollPosition(viewModel, DependenciesView.SectionScrollViewer, sectionIndex: 1);
         CaptureSectionScrollPosition(viewModel, ReplacementSectionScrollViewer, sectionIndex: 2);
         CaptureSectionScrollPosition(viewModel, ChangesSectionScrollViewer, sectionIndex: 3);
     }

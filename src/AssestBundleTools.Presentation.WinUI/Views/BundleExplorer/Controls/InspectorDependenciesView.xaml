@@ -1,0 +1,356 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls.InspectorDependenciesView"
+    x:Name="Root"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:viewModels="using:AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings"
+    mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <Style
+            x:Key="DependencyOpenButtonStyle"
+            TargetType="Button">
+            <Setter Property="Width" Value="30" />
+            <Setter Property="Height" Value="30" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="HorizontalAlignment" Value="Right" />
+            <Setter Property="VerticalAlignment" Value="Top" />
+            <Setter Property="Background" Value="{ThemeResource SubtleFillColorSecondaryBrush}" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="15" />
+        </Style>
+
+        <Style
+            x:Key="DependencyCardStyle"
+            TargetType="Border">
+            <Setter Property="Margin" Value="0,0,0,8" />
+            <Setter Property="Padding" Value="12" />
+            <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+            <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+        </Style>
+
+        <Style
+            x:Key="DependencyItemIconContainerStyle"
+            TargetType="Border">
+            <Setter Property="Width" Value="36" />
+            <Setter Property="Height" Value="36" />
+            <Setter Property="VerticalAlignment" Value="Top" />
+            <Setter Property="Background" Value="{ThemeResource SubtleFillColorSecondaryBrush}" />
+            <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+        </Style>
+
+        <Style
+            x:Key="DependencyEmptyStateCardStyle"
+            TargetType="Border">
+            <Setter Property="MaxWidth" Value="390" />
+            <Setter Property="Padding" Value="24,22" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+            <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+        </Style>
+
+        <DataTemplate
+            x:Key="AssetDependencyItemTemplate"
+            x:DataType="viewModels:AssetDependencyViewModel">
+            <Border Style="{StaticResource DependencyCardStyle}">
+                <Grid ColumnSpacing="10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <Border Style="{StaticResource DependencyItemIconContainerStyle}">
+                        <FontIcon
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            FontFamily="{StaticResource AppIconFontFamily}"
+                            FontSize="17"
+                            Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                            Glyph="&#xE753;" />
+                    </Border>
+
+                    <StackPanel
+                        Grid.Column="1"
+                        Spacing="3">
+                        <TextBlock
+                            FontSize="14"
+                            FontWeight="SemiBold"
+                            Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                            Text="{x:Bind Name, Mode=OneTime}"
+                            TextWrapping="WrapWholeWords" />
+                        <TextBlock
+                            FontSize="12"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Text="{x:Bind MetadataText, Mode=OneTime}"
+                            TextWrapping="WrapWholeWords" />
+                        <TextBlock
+                            FontSize="12"
+                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                            Text="{x:Bind BundleName, Mode=OneTime}"
+                            TextWrapping="WrapWholeWords" />
+                        <TextBlock
+                            FontFamily="Cascadia Mono"
+                            FontSize="11"
+                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                            Text="{x:Bind SupplementaryText, Mode=OneTime}"
+                            TextWrapping="WrapWholeWords"
+                            Visibility="{x:Bind SupplementaryVisibility, Mode=OneTime}" />
+                    </StackPanel>
+
+                    <Button
+                        Grid.Column="2"
+                        AutomationProperties.Name="{x:Bind OpenButtonText, Mode=OneTime}"
+                        Click="OnResolvedAssetOpenButtonClick"
+                        Style="{StaticResource DependencyOpenButtonStyle}"
+                        Tag="{x:Bind Target, Mode=OneTime}"
+                        ToolTipService.ToolTip="{x:Bind OpenButtonToolTipText, Mode=OneTime}"
+                        Visibility="{x:Bind OpenButtonVisibility, Mode=OneTime}">
+                        <FontIcon
+                            FontFamily="{StaticResource AppIconFontFamily}"
+                            FontSize="14"
+                            Glyph="&#xECF4;" />
+                    </Button>
+                </Grid>
+            </Border>
+        </DataTemplate>
+
+        <DataTemplate
+            x:Key="ExternalDependencyItemTemplate"
+            x:DataType="viewModels:BundleExternalDependencyViewModel">
+            <Border Style="{StaticResource DependencyCardStyle}">
+                <Grid ColumnSpacing="10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Border Style="{StaticResource DependencyItemIconContainerStyle}">
+                        <FontIcon
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            FontFamily="{StaticResource AppIconFontFamily}"
+                            FontSize="17"
+                            Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                            Glyph="&#xE903;" />
+                    </Border>
+
+                    <StackPanel
+                        Grid.Column="1"
+                        Spacing="3">
+                        <TextBlock
+                            FontSize="14"
+                            FontWeight="SemiBold"
+                            Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                            Text="{x:Bind DisplayName, Mode=OneTime}"
+                            TextWrapping="WrapWholeWords" />
+                        <TextBlock
+                            FontSize="12"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Text="{x:Bind KindText, Mode=OneTime}"
+                            TextWrapping="WrapWholeWords" />
+                        <TextBlock
+                            FontFamily="Cascadia Mono"
+                            FontSize="11"
+                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                            Text="{x:Bind ReferencePath, Mode=OneTime}"
+                            TextWrapping="WrapWholeWords" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <Grid DataContext="{Binding ViewModel, ElementName=Root}">
+        <ScrollViewer
+            x:Name="DependenciesSectionScrollViewer"
+            MinHeight="0"
+            Tag="1"
+            ViewChanged="OnDependenciesSectionScrollViewerViewChanged"
+            Visibility="{Binding DependenciesSectionVisibility}">
+            <StackPanel
+                Padding="12,10,12,16"
+                Spacing="14">
+                <StackPanel
+                    Spacing="8"
+                    Visibility="{Binding AssetDependenciesVisibility}">
+                    <Grid Height="30" ColumnSpacing="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="28" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Border
+                            Width="28"
+                            Height="28"
+                            Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                            CornerRadius="6">
+                            <FontIcon
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                FontFamily="{StaticResource AppIconFontFamily}"
+                                FontSize="14"
+                                Glyph="&#xEB68;" />
+                        </Border>
+                        <TextBlock
+                            x:Name="AssetDependenciesTitleText"
+                            Grid.Column="1"
+                            VerticalAlignment="Center"
+                            Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                    </Grid>
+                    <ItemsControl
+                        ItemTemplate="{StaticResource AssetDependencyItemTemplate}"
+                        ItemsSource="{Binding AssetDependencies}" />
+                </StackPanel>
+
+                <StackPanel
+                    Spacing="8"
+                    Visibility="{Binding ReferencedByDependenciesVisibility}">
+                    <Grid Height="30" ColumnSpacing="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="28" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Border
+                            Width="28"
+                            Height="28"
+                            Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                            CornerRadius="6">
+                            <FontIcon
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                FontFamily="{StaticResource AppIconFontFamily}"
+                                FontSize="14"
+                                Glyph="&#xE139;" />
+                        </Border>
+                        <TextBlock
+                            x:Name="ReferencedByTitleText"
+                            Grid.Column="1"
+                            VerticalAlignment="Center"
+                            Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                    </Grid>
+                    <ItemsControl
+                        ItemTemplate="{StaticResource AssetDependencyItemTemplate}"
+                        ItemsSource="{Binding ReferencedByDependencies}" />
+                </StackPanel>
+
+                <StackPanel
+                    Spacing="8"
+                    Visibility="{Binding DependencyClosureVisibility}">
+                    <Grid Height="30" ColumnSpacing="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="28" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Border
+                            Width="28"
+                            Height="28"
+                            Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                            CornerRadius="6">
+                            <FontIcon
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                FontFamily="{StaticResource AppIconFontFamily}"
+                                FontSize="14"
+                                Glyph="&#xECFC;" />
+                        </Border>
+                        <TextBlock
+                            x:Name="DependencyClosureTitleText"
+                            Grid.Column="1"
+                            VerticalAlignment="Center"
+                            Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                    </Grid>
+                    <ItemsControl
+                        ItemTemplate="{StaticResource AssetDependencyItemTemplate}"
+                        ItemsSource="{Binding DependencyClosureItems}" />
+                </StackPanel>
+
+                <StackPanel
+                    Spacing="8"
+                    Visibility="{Binding BundleExternalDependenciesVisibility}">
+                    <Grid Height="30" ColumnSpacing="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="28" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Border
+                            Width="28"
+                            Height="28"
+                            Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                            CornerRadius="6">
+                            <FontIcon
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                FontFamily="{StaticResource AppIconFontFamily}"
+                                FontSize="14"
+                                Glyph="&#xE903;" />
+                        </Border>
+                        <TextBlock
+                            x:Name="BundleExternalDependenciesTitleText"
+                            Grid.Column="1"
+                            VerticalAlignment="Center"
+                            Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                    </Grid>
+                    <ItemsControl
+                        ItemTemplate="{StaticResource ExternalDependencyItemTemplate}"
+                        ItemsSource="{Binding BundleExternalDependencies}" />
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+
+        <Grid
+            Padding="16"
+            Visibility="{Binding DependenciesEmptyStateVisibility}">
+            <Border
+                x:Name="DependenciesEmptyStateCard"
+                Style="{StaticResource DependencyEmptyStateCardStyle}">
+                <StackPanel
+                    HorizontalAlignment="Center"
+                    Spacing="10">
+                    <Border
+                        Width="52"
+                        Height="52"
+                        HorizontalAlignment="Center"
+                        Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1"
+                        CornerRadius="8">
+                        <FontIcon
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            FontFamily="{StaticResource AppIconFontFamily}"
+                            FontSize="24"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Glyph="&#xEEA3;" />
+                    </Border>
+                    <TextBlock
+                        x:Name="DependenciesEmptyStateTitleText"
+                        HorizontalAlignment="Center"
+                        FontSize="15"
+                        FontWeight="SemiBold"
+                        Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                        TextAlignment="Center"
+                        TextWrapping="WrapWholeWords" />
+                    <TextBlock
+                        x:Name="DependenciesEmptyStateText"
+                        MaxWidth="320"
+                        HorizontalAlignment="Center"
+                        FontSize="13"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        TextAlignment="Center"
+                        TextWrapping="WrapWholeWords" />
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

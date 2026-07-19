@@ -58,7 +58,7 @@ public sealed partial class InspectorPanelView : UserControl
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
         DetailsSectionScrollViewer.LayoutUpdated += OnSectionScrollViewerLayoutUpdated;
-        DependenciesSectionScrollViewer.LayoutUpdated += OnSectionScrollViewerLayoutUpdated;
+        DependenciesView.SectionScrollViewer.LayoutUpdated += OnSectionScrollViewerLayoutUpdated;
         ReplacementSectionScrollViewer.LayoutUpdated += OnSectionScrollViewerLayoutUpdated;
         ChangesSectionScrollViewer.LayoutUpdated += OnSectionScrollViewerLayoutUpdated;
     }
@@ -223,14 +223,6 @@ public sealed partial class InspectorPanelView : UserControl
         SpineEditBatchMatchRequested?.Invoke(this, EventArgs.Empty);
     }
 
-    private void OnResolvedAssetOpenButtonClick(object sender, RoutedEventArgs e)
-    {
-        if (sender is FrameworkElement { Tag: ResolvedAssetNavigationTarget target })
-        {
-            ResolvedAssetOpenRequested?.Invoke(this, new ResolvedAssetOpenRequestedEventArgs(target));
-        }
-    }
-
     private static void OnLayoutOptionPropertyChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs args)
     {
         if (dependencyObject is InspectorPanelView view)
@@ -248,11 +240,6 @@ public sealed partial class InspectorPanelView : UserControl
 
         EmptyStateTitleText.Text = UiText.Get(ResourceKeys.InspectorEmptyStateTitle);
         InformationSectionTitleText.Text = UiText.Get(ResourceKeys.InspectorInformationSectionTitle);
-        AssetDependenciesTitleText.Text = UiText.Get(ResourceKeys.InspectorAssetDependenciesTitle);
-        ReferencedByTitleText.Text = UiText.Get(ResourceKeys.InspectorReferencedByTitle);
-        DependencyClosureTitleText.Text = UiText.Get(ResourceKeys.InspectorDependencyClosureTitle);
-        BundleExternalDependenciesTitleText.Text = UiText.Get(ResourceKeys.InspectorBundleExternalDependenciesTitle);
-        DependenciesEmptyStateText.Text = UiText.Get(ResourceKeys.InspectorDependenciesEmptyStateText);
         ReplacementTargetTitleText.Text = UiText.Get(ResourceKeys.InspectorReplacementTargetTitle);
         ReplacementSourceTitleText.Text = UiText.Get(ResourceKeys.InspectorReplacementSourceTitle);
         ReplacementCompatibilityTitleText.Text = UiText.Get(ResourceKeys.InspectorReplacementCompatibilityTitle);

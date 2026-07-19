@@ -2908,7 +2908,10 @@
     <value>替换页签将用于展示文件替换、跨工作区拖拽替换和兼容性检查结果。</value>
   </data>
   <data name="InspectorPanelView.DependenciesEmptyStateText.Text" xml:space="preserve">
-    <value>当前资源没有可显示的直接依赖、反向引用、依赖闭包或 Bundle 外部依赖。</value>
+    <value>当前工作区中未发现此资源的直接依赖、反向引用、依赖闭包或 Bundle 外部依赖。</value>
+  </data>
+  <data name="InspectorPanelView.DependenciesEmptyStateTitleText.Text" xml:space="preserve">
+    <value>暂无依赖关系</value>
   </data>
   <data name="InspectorPanelView.ChangeSummaryTitleText.Text" xml:space="preserve">
     <value>当前项变更摘要</value>
