@@ -492,12 +492,6 @@
             </Style>
 
             <SolidColorBrush
-                x:Key="SegmentedSelectedBackgroundBrush"
-                Color="#FF3B3B3D" />
-            <SolidColorBrush
-                x:Key="SegmentedSelectedBorderBrush"
-                Color="#FF3B3B3D" />
-            <SolidColorBrush
                 x:Key="SegmentedSelectedHoverOverlayBrush"
                 Color="#14FFFFFF" />
             <SolidColorBrush
@@ -544,7 +538,7 @@
                                 <Grid>
                                     <Border
                                         x:Name="CheckedBackground"
-                                        Background="{StaticResource SegmentedSelectedBackgroundBrush}"
+                                        Background="{ThemeResource AccentFillColorDefaultBrush}"
                                         CornerRadius="10"
                                         Opacity="0" />
                                     <Border
@@ -559,7 +553,7 @@
                                         Opacity="0" />
                                     <Border
                                         x:Name="SelectionStroke"
-                                        BorderBrush="{StaticResource SegmentedSelectedBorderBrush}"
+                                        BorderBrush="{ThemeResource AccentFillColorDefaultBrush}"
                                         BorderThickness="1"
                                         CornerRadius="10"
                                         Opacity="0" />
@@ -734,7 +728,7 @@
                                 <Grid>
                                     <Border
                                         x:Name="CheckedBackground"
-                                        Background="{StaticResource SegmentedSelectedBackgroundBrush}"
+                                        Background="{ThemeResource AccentFillColorDefaultBrush}"
                                         CornerRadius="{TemplateBinding CornerRadius}"
                                         Opacity="0" />
                                     <Border
@@ -759,7 +753,7 @@
                                         Opacity="0" />
                                     <Border
                                         x:Name="SelectionStroke"
-                                        BorderBrush="{StaticResource SegmentedSelectedBorderBrush}"
+                                        BorderBrush="{ThemeResource AccentFillColorDefaultBrush}"
                                         BorderThickness="1"
                                         CornerRadius="{TemplateBinding CornerRadius}"
                                         Opacity="0" />
