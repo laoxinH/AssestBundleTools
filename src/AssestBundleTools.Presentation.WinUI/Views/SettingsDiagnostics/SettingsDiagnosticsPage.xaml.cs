@@ -30,7 +30,7 @@ public sealed partial class SettingsDiagnosticsPage : Page
         InitializeComponent();
         _preferencesView = new SettingsPreferencesView(ViewModel);
         _performanceCacheView = new SettingsPerformanceCacheView(ViewModel);
-        _aboutView = new SettingsAboutView();
+        _aboutView = new SettingsAboutView(App.CurrentApp.ApplicationUpdateCoordinator);
         PreferenceSettingsPanel.Content = _preferencesView;
         PerformanceCacheSettingsPanel.Content = _performanceCacheView;
         AboutSettingsPanel.Content = _aboutView;

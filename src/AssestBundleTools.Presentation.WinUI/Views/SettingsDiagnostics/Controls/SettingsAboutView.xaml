@@ -79,6 +79,62 @@
                 <StackPanel Spacing="8">
                     <StackPanel Spacing="4">
                         <TextBlock
+                            x:Name="UpdateTitleText"
+                            Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
+                        <TextBlock
+                            x:Name="UpdateHintText"
+                            Style="{StaticResource SettingsDiagnosticsSecondaryTextStyle}" />
+                    </StackPanel>
+
+                    <Border Padding="0" Style="{StaticResource SettingsDiagnosticsGroupCardStyle}">
+                        <Grid Padding="18,14" ColumnSpacing="14" RowSpacing="10">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="32" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <FontIcon Glyph="&#xE895;" Style="{StaticResource SettingsDiagnosticsSettingIconStyle}" />
+                            <StackPanel Grid.Column="1" MinWidth="0" Spacing="3">
+                                <TextBlock
+                                    x:Name="UpdateStatusText"
+                                    Style="{StaticResource SettingsDiagnosticsSettingTitleTextStyle}"
+                                    TextWrapping="Wrap" />
+                                <TextBlock
+                                    x:Name="UpdateVersionText"
+                                    Style="{StaticResource SettingsDiagnosticsSettingDescriptionTextStyle}"
+                                    TextWrapping="Wrap" />
+                            </StackPanel>
+                            <Button
+                                x:Name="UpdateActionButton"
+                                Grid.Column="2"
+                                Click="OnUpdateActionButtonClick" />
+                            <Button
+                                x:Name="UpdateCancelButton"
+                                Grid.Column="3"
+                                Click="OnUpdateCancelButtonClick"
+                                Visibility="Collapsed" />
+
+                            <ProgressBar
+                                x:Name="UpdateProgressBar"
+                                Grid.Row="1"
+                                Grid.Column="1"
+                                Grid.ColumnSpan="3"
+                                MinWidth="180"
+                                Maximum="100"
+                                Visibility="Collapsed" />
+                        </Grid>
+                    </Border>
+                </StackPanel>
+
+                <StackPanel Spacing="8">
+                    <StackPanel Spacing="4">
+                        <TextBlock
                             x:Name="LinksTitleText"
                             Style="{StaticResource WorkspaceSectionTitleTextStyle}" />
                         <TextBlock

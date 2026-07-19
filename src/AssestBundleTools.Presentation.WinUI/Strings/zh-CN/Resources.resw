@@ -5283,4 +5283,58 @@
   <data name="ResourceProcessorEditor.Validation.ArgumentsRequired" xml:space="preserve">
     <value>请至少提供一条处理参数。</value>
   </data>
+  <data name="ApplicationUpdate.Section.Title" xml:space="preserve"><value>应用更新</value></data>
+  <data name="ApplicationUpdate.Section.Hint" xml:space="preserve"><value>通过 GitHub Releases 检查与安装适用于当前架构和发行方式的更新。</value></data>
+  <data name="ApplicationUpdate.State.Idle" xml:space="preserve"><value>可检查更新</value></data>
+  <data name="ApplicationUpdate.State.Unmanaged" xml:space="preserve"><value>当前副本不受自动更新管理</value></data>
+  <data name="ApplicationUpdate.State.Checking" xml:space="preserve"><value>正在检查更新</value></data>
+  <data name="ApplicationUpdate.State.UpToDate" xml:space="preserve"><value>当前已是最新版本</value></data>
+  <data name="ApplicationUpdate.State.Available" xml:space="preserve"><value>发现新版本</value></data>
+  <data name="ApplicationUpdate.State.Downloading" xml:space="preserve"><value>正在下载并验证更新</value></data>
+  <data name="ApplicationUpdate.State.Ready" xml:space="preserve"><value>更新已就绪，可以重启应用</value></data>
+  <data name="ApplicationUpdate.State.Failed" xml:space="preserve"><value>更新操作未完成</value></data>
+  <data name="ApplicationUpdate.CurrentVersion.Format" xml:space="preserve"><value>当前版本 {0}</value></data>
+  <data name="ApplicationUpdate.VersionTransition.Format" xml:space="preserve"><value>{0} → {1}</value></data>
+  <data name="ApplicationUpdate.CheckButton" xml:space="preserve"><value>检查更新</value></data>
+  <data name="ApplicationUpdate.InstallButton" xml:space="preserve"><value>更新并重启</value></data>
+  <data name="ApplicationUpdate.CancelButton" xml:space="preserve"><value>取消</value></data>
+  <data name="ApplicationUpdate.Cancelled.Title" xml:space="preserve"><value>已取消下载</value></data>
+  <data name="ApplicationUpdate.Cancelled.Message" xml:space="preserve"><value>更新没有应用，可以稍后重新下载。</value></data>
+  <data name="ApplicationUpdate.Unmanaged.Title" xml:space="preserve"><value>无法自动更新当前副本</value></data>
+  <data name="ApplicationUpdate.Unmanaged.Message" xml:space="preserve"><value>开发输出或普通压缩副本不含更新器元数据。请从 GitHub Releases 获取便携版或安装版。</value></data>
+  <data name="ApplicationUpdate.Downloading.Status" xml:space="preserve"><value>正在下载应用更新</value></data>
+  <data name="ApplicationUpdate.DownloadFailed" xml:space="preserve"><value>更新下载或校验失败，请检查网络后重试。</value></data>
+  <data name="ApplicationUpdate.Ready.Title" xml:space="preserve"><value>更新已下载</value></data>
+  <data name="ApplicationUpdate.Busy.Message" xml:space="preserve"><value>请先完成后台任务并关闭其他应用实例，然后在“关于”页面再次选择更新并重启。</value></data>
+  <data name="ApplicationUpdate.Applying.Log.Format" xml:space="preserve"><value>正在切换到应用版本 {0}。</value></data>
+  <data name="ApplicationUpdate.CheckFailed.Log.Format" xml:space="preserve"><value>应用更新检查失败。诊断代码：{0}</value></data>
+  <data name="ApplicationUpdate.CheckFailed.Title" xml:space="preserve"><value>检查更新失败</value></data>
+  <data name="ApplicationUpdate.CheckFailed.Message" xml:space="preserve"><value>暂时无法连接 GitHub Releases，请稍后重试。</value></data>
+  <data name="ApplicationUpdate.UpToDate.Title" xml:space="preserve"><value>无需更新</value></data>
+  <data name="ApplicationUpdate.UpToDate.Message" xml:space="preserve"><value>当前版本已是此发行通道中的最新版本。</value></data>
+  <data name="ApplicationUpdate.Available.Log.Format" xml:space="preserve"><value>发现应用更新版本 {0}。</value></data>
+  <data name="ApplicationUpdate.Prompt.Title" xml:space="preserve"><value>发现应用更新</value></data>
+  <data name="ApplicationUpdate.Prompt.Message.Format" xml:space="preserve"><value>版本 {0} 已可用。继续后将下载、校验更新并重启应用；便携版和安装版会保持当前发行方式。</value></data>
+  <data name="ApplicationUpdate.Prompt.PrimaryButton" xml:space="preserve"><value>下载并重启</value></data>
+  <data name="ApplicationUpdate.Prompt.CloseButton" xml:space="preserve"><value>稍后</value></data>
+  <data name="ApplicationUpdate.PromptFailed.Log.Format" xml:space="preserve"><value>无法显示更新确认窗口：{0}</value></data>
+  <data name="ApplicationUpdate.ApplyFailed" xml:space="preserve"><value>无法启动更新程序，请关闭其他实例后重试。</value></data>
+  <data name="ApplicationUpdate.Failed.Title" xml:space="preserve"><value>应用更新失败</value></data>
+  <data name="ApplicationUpdate.Failed.Log.Format" xml:space="preserve"><value>{0} 诊断代码：{1}</value></data>
+  <data name="ApplicationUpdate.RestartBlocked.Log.Format" xml:space="preserve"><value>更新已下载，但当前不能安全重启。诊断代码：{0}</value></data>
+  <data name="Error.Application.Update.CheckFailed" xml:space="preserve"><value>检查应用更新失败。</value></data>
+  <data name="Error.Application.Update.DownloadFailed" xml:space="preserve"><value>下载应用更新失败。</value></data>
+  <data name="Error.Application.Update.ApplyFailed" xml:space="preserve"><value>应用更新失败。</value></data>
+  <data name="Error.Application.Update.StateExpired" xml:space="preserve"><value>更新信息已过期，请重新检查。</value></data>
+  <data name="Error.Update.Check.NetworkUnavailable" xml:space="preserve"><value>网络不可用，无法检查更新。</value></data>
+  <data name="Error.Update.Check.RateLimited" xml:space="preserve"><value>更新服务请求过于频繁，请稍后重试。</value></data>
+  <data name="Error.Update.Check.SourceUnavailable" xml:space="preserve"><value>更新源暂时不可用。</value></data>
+  <data name="Error.Update.Check.InvalidFeed" xml:space="preserve"><value>更新源返回了无效数据。</value></data>
+  <data name="Error.Update.Check.ArchitectureMismatch" xml:space="preserve"><value>更新包与当前应用架构不匹配。</value></data>
+  <data name="Error.Update.Download.ChecksumMismatch" xml:space="preserve"><value>更新包完整性校验失败。</value></data>
+  <data name="Error.Update.Download.InsufficientDiskSpace" xml:space="preserve"><value>磁盘可用空间不足，无法下载更新。</value></data>
+  <data name="Error.Update.Apply.ActiveOperations" xml:space="preserve"><value>仍有后台操作正在运行。</value></data>
+  <data name="Error.Update.Apply.OtherInstancesRunning" xml:space="preserve"><value>仍有其他应用实例正在运行。</value></data>
+  <data name="Error.Update.Apply.DirectoryNotWritable" xml:space="preserve"><value>当前应用目录不可写，无法应用更新。</value></data>
+  <data name="Error.Update.Apply.UpdaterLaunchFailed" xml:space="preserve"><value>无法启动更新程序。</value></data>
 </root>

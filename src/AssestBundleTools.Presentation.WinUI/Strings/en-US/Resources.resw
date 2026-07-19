@@ -5283,4 +5283,58 @@
   <data name="ResourceProcessorEditor.Validation.ArgumentsRequired" xml:space="preserve">
     <value>Provide at least one process argument.</value>
   </data>
+  <data name="ApplicationUpdate.Section.Title" xml:space="preserve"><value>App updates</value></data>
+  <data name="ApplicationUpdate.Section.Hint" xml:space="preserve"><value>Check GitHub Releases for updates matching this architecture and distribution type.</value></data>
+  <data name="ApplicationUpdate.State.Idle" xml:space="preserve"><value>Ready to check for updates</value></data>
+  <data name="ApplicationUpdate.State.Unmanaged" xml:space="preserve"><value>This copy is not managed by automatic updates</value></data>
+  <data name="ApplicationUpdate.State.Checking" xml:space="preserve"><value>Checking for updates</value></data>
+  <data name="ApplicationUpdate.State.UpToDate" xml:space="preserve"><value>You have the latest version</value></data>
+  <data name="ApplicationUpdate.State.Available" xml:space="preserve"><value>A new version is available</value></data>
+  <data name="ApplicationUpdate.State.Downloading" xml:space="preserve"><value>Downloading and verifying the update</value></data>
+  <data name="ApplicationUpdate.State.Ready" xml:space="preserve"><value>The update is ready. Restart the app to apply it.</value></data>
+  <data name="ApplicationUpdate.State.Failed" xml:space="preserve"><value>The update operation did not complete</value></data>
+  <data name="ApplicationUpdate.CurrentVersion.Format" xml:space="preserve"><value>Current version {0}</value></data>
+  <data name="ApplicationUpdate.VersionTransition.Format" xml:space="preserve"><value>{0} → {1}</value></data>
+  <data name="ApplicationUpdate.CheckButton" xml:space="preserve"><value>Check for updates</value></data>
+  <data name="ApplicationUpdate.InstallButton" xml:space="preserve"><value>Update and restart</value></data>
+  <data name="ApplicationUpdate.CancelButton" xml:space="preserve"><value>Cancel</value></data>
+  <data name="ApplicationUpdate.Cancelled.Title" xml:space="preserve"><value>Download cancelled</value></data>
+  <data name="ApplicationUpdate.Cancelled.Message" xml:space="preserve"><value>The update was not applied. You can download it again later.</value></data>
+  <data name="ApplicationUpdate.Unmanaged.Title" xml:space="preserve"><value>This copy cannot update automatically</value></data>
+  <data name="ApplicationUpdate.Unmanaged.Message" xml:space="preserve"><value>Development output and ordinary ZIP copies do not include updater metadata. Get a portable or installed release from GitHub Releases.</value></data>
+  <data name="ApplicationUpdate.Downloading.Status" xml:space="preserve"><value>Downloading app update</value></data>
+  <data name="ApplicationUpdate.DownloadFailed" xml:space="preserve"><value>The update could not be downloaded or verified. Check your connection and try again.</value></data>
+  <data name="ApplicationUpdate.Ready.Title" xml:space="preserve"><value>Update downloaded</value></data>
+  <data name="ApplicationUpdate.Busy.Message" xml:space="preserve"><value>Finish background tasks and close other app instances, then choose update and restart again on the About page.</value></data>
+  <data name="ApplicationUpdate.Applying.Log.Format" xml:space="preserve"><value>Switching to app version {0}.</value></data>
+  <data name="ApplicationUpdate.CheckFailed.Log.Format" xml:space="preserve"><value>App update check failed. Diagnostic code: {0}</value></data>
+  <data name="ApplicationUpdate.CheckFailed.Title" xml:space="preserve"><value>Update check failed</value></data>
+  <data name="ApplicationUpdate.CheckFailed.Message" xml:space="preserve"><value>GitHub Releases is currently unavailable. Try again later.</value></data>
+  <data name="ApplicationUpdate.UpToDate.Title" xml:space="preserve"><value>No update needed</value></data>
+  <data name="ApplicationUpdate.UpToDate.Message" xml:space="preserve"><value>This is the latest version in the current release channel.</value></data>
+  <data name="ApplicationUpdate.Available.Log.Format" xml:space="preserve"><value>App update {0} is available.</value></data>
+  <data name="ApplicationUpdate.Prompt.Title" xml:space="preserve"><value>App update available</value></data>
+  <data name="ApplicationUpdate.Prompt.Message.Format" xml:space="preserve"><value>Version {0} is available. Continuing will download and verify the update, then restart the app. Portable and installed releases keep their current distribution type.</value></data>
+  <data name="ApplicationUpdate.Prompt.PrimaryButton" xml:space="preserve"><value>Download and restart</value></data>
+  <data name="ApplicationUpdate.Prompt.CloseButton" xml:space="preserve"><value>Later</value></data>
+  <data name="ApplicationUpdate.PromptFailed.Log.Format" xml:space="preserve"><value>Could not show the update confirmation dialog: {0}</value></data>
+  <data name="ApplicationUpdate.ApplyFailed" xml:space="preserve"><value>The updater could not start. Close other app instances and try again.</value></data>
+  <data name="ApplicationUpdate.Failed.Title" xml:space="preserve"><value>App update failed</value></data>
+  <data name="ApplicationUpdate.Failed.Log.Format" xml:space="preserve"><value>{0} Diagnostic code: {1}</value></data>
+  <data name="ApplicationUpdate.RestartBlocked.Log.Format" xml:space="preserve"><value>The update was downloaded, but the app cannot restart safely. Diagnostic code: {0}</value></data>
+  <data name="Error.Application.Update.CheckFailed" xml:space="preserve"><value>Failed to check for app updates.</value></data>
+  <data name="Error.Application.Update.DownloadFailed" xml:space="preserve"><value>Failed to download the app update.</value></data>
+  <data name="Error.Application.Update.ApplyFailed" xml:space="preserve"><value>Failed to apply the app update.</value></data>
+  <data name="Error.Application.Update.StateExpired" xml:space="preserve"><value>The update information expired. Check again.</value></data>
+  <data name="Error.Update.Check.NetworkUnavailable" xml:space="preserve"><value>The network is unavailable, so updates could not be checked.</value></data>
+  <data name="Error.Update.Check.RateLimited" xml:space="preserve"><value>The update service rate limit was reached. Try again later.</value></data>
+  <data name="Error.Update.Check.SourceUnavailable" xml:space="preserve"><value>The update source is temporarily unavailable.</value></data>
+  <data name="Error.Update.Check.InvalidFeed" xml:space="preserve"><value>The update source returned invalid data.</value></data>
+  <data name="Error.Update.Check.ArchitectureMismatch" xml:space="preserve"><value>The update package does not match this app architecture.</value></data>
+  <data name="Error.Update.Download.ChecksumMismatch" xml:space="preserve"><value>The update package integrity check failed.</value></data>
+  <data name="Error.Update.Download.InsufficientDiskSpace" xml:space="preserve"><value>There is not enough disk space to download the update.</value></data>
+  <data name="Error.Update.Apply.ActiveOperations" xml:space="preserve"><value>Background operations are still running.</value></data>
+  <data name="Error.Update.Apply.OtherInstancesRunning" xml:space="preserve"><value>Other app instances are still running.</value></data>
+  <data name="Error.Update.Apply.DirectoryNotWritable" xml:space="preserve"><value>The current app directory is not writable.</value></data>
+  <data name="Error.Update.Apply.UpdaterLaunchFailed" xml:space="preserve"><value>The updater could not be started.</value></data>
 </root>

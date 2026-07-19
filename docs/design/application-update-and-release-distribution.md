@@ -4,7 +4,7 @@
 
 本文定义 AssestBundleTools 的应用自更新、GitHub Release 产物矩阵和安装包策略。它覆盖启动检查、关于页手动检查、便携版 / 安装版更新、x86 / x64 / ARM64 隔离、完整性校验、进程退出与失败恢复。
 
-本文件是设计基线，不代表更新代码和 GitHub Actions 已经落地。实现应按本文分阶段推进，不在页面 code-behind 中直接拼接 GitHub API、下载文件或替换应用目录。
+本文件同时作为设计基线与实现状态记录。更新代码和 GitHub Actions 的首版链路已经落地；实现继续遵守分层边界，不在页面 code-behind 中直接拼接 GitHub API、下载文件或替换应用目录。
 
 ## 2. 结论
 
@@ -22,6 +22,20 @@
 - 下载与替换必须由用户确认。更新不得在未完成的工作区操作、编辑草稿保存或导出任务中强制结束进程。
 
 Velopack 的按用户 `Setup.exe` 安装到 `%LocalAppData%`，不需要管理员权限。这里的“无需证书”指用户不需要自行安装证书或准备开发者证书；未签名 EXE 仍可能触发 SmartScreen、杀毒软件或组织策略警告，无法承诺所有 Windows 环境零拦截。发布者代码签名属于后续强烈建议项，不应被描述为用户侧安装前提。
+
+### 2.1 当前实现状态
+
+截至 2026-07-19，以下链路已落地：
+
+- Application 更新 DTO、安装模式 / 架构模型、更新网关和稳定错误语义；
+- Infrastructure 的 Velopack 1.2.0 `GithubSource` 适配，包含检查、下载、取消、校验、应用与重启；
+- 同架构跨进程检查信号量和 `%LocalAppData%/AssestBundleTools/updates` 短期检查结果缓存；缓存命中只复用展示结果，下载前会重新水化 Velopack `UpdateInfo`；
+- WinUI 自定义 `Main` 的最前置 `VelopackApp.Run()`、Shell 首帧后的启动检查，以及关于页手动检查、进度、取消和待重启状态；
+- 应用更新前的活动后台任务与其他进程阻断，避免直接结束仍在执行工作的进程；
+- `eng/release/Publish-Architecture.ps1` 的 x86 / x64 / ARM64 publish、PE 架构校验、Velopack 打包与 SHA-256 清单；
+- `.github/workflows/release.yml` 的测试分支 / 手动构建与 `v*` tag 草稿 Release 流程。
+
+本地 x64 已完成 Setup、Portable、full nupkg、feed 和 checksum 的真实打包验证。GitHub Actions 三架构构件验证属于本次公开仓库推送门禁；installed / portable 从旧版本更新到新版本仍必须在至少形成两个正式版本后完成真实升级验收，未完成前不对外宣称该门禁已经通过。代码签名、MSI、preview 独立通道、增量包复用和官网 feed 镜像仍属于阶段 D。
 
 ## 3. 目标与非目标
 
@@ -276,20 +290,28 @@ workflow 由 `v*` tag push 触发，建议分为以下阶段：
 - 用 Velopack 生成三架构 Portable + Setup + full package + feed。
 - 建立资产矩阵、版本、架构和 hash 验证；先完成手工安装 / 更新 smoke。
 
+状态：代码与本地 x64 构件验证已完成，等待 GitHub Actions 三架构测试构件结果和正式 tag 的安装 / 更新 smoke。
+
 ### 阶段 B：更新读取链路
 
 - 建立 Application DTO / use case 和 Infrastructure Velopack adapter。
 - 接入 startup hook、启动检查、关于页手动检查和诊断。
 - 此阶段只检查并打开 Release 页面也可以作为中间可交付点，不提前伪装自动应用完成。
 
+状态：已完成检查网关、startup hook、启动检查、关于页入口、多进程合并与诊断。
+
 ### 阶段 C：下载与自动应用
 
 - 接入后台下载、进度、取消、校验、跨窗口关闭协调和 `Update.exe`。
 - 完成 installed / portable 双路径真实更新测试。
 
+状态：下载、取消、活动任务 / 其他实例阻断和 `Update.exe` 应用调用已完成；双版本 installed / portable 真实升级门禁待首个可用于升级的 Release 形成后执行。
+
 ### 阶段 D：发布加固
 
 - 增量包、官网 feed 镜像、代码签名、可选 MSI、preview channel 和失败恢复增强。
+
+状态：未开始，保持后续范围。
 
 只有阶段 C 的真实 installed / portable 更新门禁全部通过后，产品文案才可以宣称“支持自动更新”。
 

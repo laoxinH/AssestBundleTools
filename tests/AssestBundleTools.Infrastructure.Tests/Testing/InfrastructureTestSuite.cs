@@ -10,6 +10,7 @@ using AssestBundleTools.Infrastructure.Tests.Workspace.Diagnostics;
 using AssestBundleTools.Infrastructure.Tests.Workspace.Extraction;
 using AssestBundleTools.Infrastructure.Tests.Workspace.Runtime;
 using AssestBundleTools.Infrastructure.Tests.Workspace.Saving;
+using AssestBundleTools.Infrastructure.Tests.Updates;
 
 namespace AssestBundleTools.Infrastructure.Tests.Testing;
 
@@ -18,6 +19,11 @@ internal static class InfrastructureTestSuite
     public static async Task<int> RunAsync()
     {
         var failures = new List<string>();
+
+        await RunTestAsync(
+            failures,
+            nameof(VelopackApplicationUpdateGatewayTests.RuntimeInfo_ShouldReportUnmanaged_WhenRunningOutsideVelopackPackage),
+            VelopackApplicationUpdateGatewayTests.RuntimeInfo_ShouldReportUnmanaged_WhenRunningOutsideVelopackPackage);
 
         await RunTestAsync(
             failures,

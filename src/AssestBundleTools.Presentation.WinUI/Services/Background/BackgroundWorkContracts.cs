@@ -13,6 +13,8 @@ public enum BackgroundWorkProfile
     BatchReplacement,
     Export,
     SaveRebuild,
+    ApplicationUpdateCheck,
+    ApplicationUpdateDownload,
     Maintenance
 }
 

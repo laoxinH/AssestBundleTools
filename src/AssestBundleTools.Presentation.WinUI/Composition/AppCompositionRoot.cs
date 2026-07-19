@@ -24,6 +24,7 @@ using AssestBundleTools.Infrastructure.Bundles.Previewing.Spine;
 using AssestBundleTools.Infrastructure.Bundles.Reading;
 using AssestBundleTools.Infrastructure.Extensions.Installation;
 using AssestBundleTools.Infrastructure.Settings.Persistence;
+using AssestBundleTools.Infrastructure.Updates;
 using AssestBundleTools.Infrastructure.Workspace.Extraction;
 using AssestBundleTools.Infrastructure.Workspace.Diagnostics;
 using AssestBundleTools.Infrastructure.Workspace.Importing;
@@ -413,6 +414,13 @@ internal static class AppCompositionRoot
             backgroundTaskRunner,
             appBackgroundTaskStatusService,
             () => appPreferencesService.PreviewWorkerCount);
+        var applicationUpdateCoordinator = new ApplicationUpdateCoordinator(
+            new VelopackApplicationUpdateGateway(),
+            context.ActiveWindowAccessor,
+            localizationService,
+            appNotificationService,
+            appLogService,
+            backgroundWorkScheduler);
         var onlineComponentInstallPromptCoordinator = new OnlineComponentInstallPromptCoordinator(
             new OnlineComponentInstallationService(),
             context.ActiveWindowAccessor,
@@ -464,6 +472,7 @@ internal static class AppCompositionRoot
             AppBackgroundTaskStatusService: appBackgroundTaskStatusService,
             BackgroundTaskRunner: backgroundTaskRunner,
             BackgroundWorkScheduler: backgroundWorkScheduler,
+            ApplicationUpdateCoordinator: applicationUpdateCoordinator,
             OnlineComponentInstallPromptCoordinator: onlineComponentInstallPromptCoordinator,
             WorkspaceImportCoordinatorService: workspaceImportCoordinatorService,
             SpineAnimationRuntimePlaybackService: spineAnimationRuntimePreviewService);

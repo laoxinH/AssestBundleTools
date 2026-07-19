@@ -1,0 +1,133 @@
+name: Build release packages
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+    branches:
+      - release-pipeline-test
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: windows-2025
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      is_release: ${{ steps.version.outputs.is_release }}
+    steps:
+      - uses: actions/checkout@v7.0.0
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-dotnet@v6.0.0
+        with:
+          dotnet-version: 8.0.x
+
+      - id: version
+        shell: pwsh
+        run: |
+          if ('${{ github.ref_type }}' -eq 'tag') {
+            $tag = '${{ github.ref_name }}'
+            if ($tag -notmatch '^v(?<version>\d+\.\d+\.\d+)$') {
+              throw "Only stable v<SemVer> tags are enabled. Preview channels are not implemented: $tag"
+            }
+            $version = $Matches.version
+            $tagCommit = git rev-list -n 1 $tag
+            if ($tagCommit -ne '${{ github.sha }}') {
+              throw 'The release tag does not point at the workflow commit.'
+            }
+            "is_release=true" >> $env:GITHUB_OUTPUT
+          } else {
+            $version = "0.1.0-ci.${{ github.run_number }}"
+            "is_release=false" >> $env:GITHUB_OUTPUT
+          }
+          "version=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Restore tools
+        run: dotnet tool restore
+
+      - name: Domain tests
+        run: dotnet test tests/AssestBundleTools.Domain.Tests/AssestBundleTools.Domain.Tests.csproj -c Release
+
+      - name: Application tests
+        run: dotnet run --project tests/AssestBundleTools.Application.Tests/AssestBundleTools.Application.Tests.csproj -c Release
+
+      - name: Infrastructure tests
+        run: dotnet run --project tests/AssestBundleTools.Infrastructure.Tests/AssestBundleTools.Infrastructure.Tests.csproj -c Release
+
+      - name: Localization tests
+        run: dotnet test tests/AssestBundleTools.Localization.Tests/AssestBundleTools.Localization.Tests.csproj -c Release
+
+      - name: Presentation tests
+        run: dotnet test tests/AssestBundleTools.Presentation.Tests/AssestBundleTools.Presentation.Tests.csproj -c Release -p:Platform=x86
+
+  pack:
+    needs: validate
+    runs-on: windows-2025
+    strategy:
+      fail-fast: false
+      matrix:
+        rid: [win-x86, win-x64, win-arm64]
+    steps:
+      - uses: actions/checkout@v7.0.0
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-dotnet@v6.0.0
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Publish and pack ${{ matrix.rid }}
+        shell: pwsh
+        run: >-
+          ./eng/release/Publish-Architecture.ps1
+          -Version '${{ needs.validate.outputs.version }}'
+          -RuntimeIdentifier '${{ matrix.rid }}'
+
+      - uses: actions/upload-artifact@v7.0.1
+        with:
+          name: release-${{ matrix.rid }}
+          path: artifacts/release/${{ matrix.rid }}/release/*
+          if-no-files-found: error
+          retention-days: 14
+
+  release:
+    if: needs.validate.outputs.is_release == 'true'
+    needs: [validate, pack]
+    runs-on: windows-2025
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8.0.1
+        with:
+          pattern: release-*
+          path: release-assets
+          merge-multiple: true
+
+      - name: Create combined checksum file
+        shell: pwsh
+        run: |
+          $lines = Get-ChildItem release-assets -File |
+            Where-Object Name -NotLike 'SHA256SUMS-*' |
+            Sort-Object Name |
+            ForEach-Object {
+              $hash = Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256
+              "$($hash.Hash.ToLowerInvariant())  $($_.Name)"
+            }
+          Set-Content release-assets/SHA256SUMS.txt -Encoding ascii -Value $lines
+
+      - name: Create draft GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          gh release create '${{ github.ref_name }}'
+          release-assets/*
+          --repo '${{ github.repository }}'
+          --title 'AssestBundleTools ${{ needs.validate.outputs.version }}'
+          --generate-notes
+          --draft
+          --verify-tag

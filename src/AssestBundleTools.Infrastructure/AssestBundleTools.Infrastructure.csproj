@@ -10,6 +10,7 @@
     <PackageReference Include="AssetsTools.NET" Version="3.0.3" />
     <PackageReference Include="AssetsTools.NET.Texture" Version="3.0.2" />
     <PackageReference Include="StbImageSharp" Version="2.30.15" />
+    <PackageReference Include="Velopack" Version="1.2.0" />
     <ProjectReference Include="..\AssestBundleTools.Application\AssestBundleTools.Application.csproj" />
     <ProjectReference Include="..\AssestBundleTools.Domain\AssestBundleTools.Domain.csproj" />
   </ItemGroup>

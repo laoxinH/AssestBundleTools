@@ -29,6 +29,14 @@ internal static partial class ApplicationTestSuite
         await RunTestAsync(failures, nameof(GenericSuccess_ShouldExposeValue), GenericSuccess_ShouldExposeValue);
         await RunTestAsync(
             failures,
+            nameof(ApplicationUpdateProgress_ShouldCalculateBoundedPercentage),
+            ApplicationUpdateProgress_ShouldCalculateBoundedPercentage);
+        await RunTestAsync(
+            failures,
+            nameof(ApplicationUpdateErrors_ShouldExposeStableDiagnosticCodes),
+            ApplicationUpdateErrors_ShouldExposeStableDiagnosticCodes);
+        await RunTestAsync(
+            failures,
             nameof(GetResourceProcessorCatalogEntriesHandlerTests.HandleAsync_ShouldReturnDefaultExportProcessorSlots),
             GetResourceProcessorCatalogEntriesHandlerTests.HandleAsync_ShouldReturnDefaultExportProcessorSlots);
         await RunTestAsync(

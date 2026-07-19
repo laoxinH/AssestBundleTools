@@ -65,6 +65,7 @@ public partial class App : Microsoft.UI.Xaml.Application
             AppBackgroundTaskStatusService = services.AppBackgroundTaskStatusService;
             BackgroundTaskRunner = services.BackgroundTaskRunner;
             BackgroundWorkScheduler = services.BackgroundWorkScheduler;
+            ApplicationUpdateCoordinator = services.ApplicationUpdateCoordinator;
             OnlineComponentInstallPromptCoordinator = services.OnlineComponentInstallPromptCoordinator;
             WorkspaceImportCoordinatorService = services.WorkspaceImportCoordinatorService;
             SpineAnimationRuntimePlaybackService = services.SpineAnimationRuntimePlaybackService;
@@ -143,6 +144,8 @@ public partial class App : Microsoft.UI.Xaml.Application
 
     public IBackgroundWorkScheduler BackgroundWorkScheduler { get; }
 
+    internal ApplicationUpdateCoordinator ApplicationUpdateCoordinator { get; }
+
     public IOnlineComponentInstallPromptCoordinator OnlineComponentInstallPromptCoordinator { get; }
 
     public IWorkspaceImportCoordinatorService WorkspaceImportCoordinatorService { get; }
@@ -201,6 +204,7 @@ public partial class App : Microsoft.UI.Xaml.Application
             launchRequest);
         if (!restartStarted)
         {
+            await ApplicationUpdateCoordinator.CheckAtStartupAsync();
             return;
         }
 

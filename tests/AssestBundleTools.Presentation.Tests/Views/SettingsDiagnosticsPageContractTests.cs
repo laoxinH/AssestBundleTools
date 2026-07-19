@@ -139,7 +139,7 @@ public sealed class SettingsDiagnosticsPageContractTests
         Assert.Contains("SettingsDiagnosticsResources.xaml", aboutXaml);
         Assert.Contains("new SettingsPreferencesView(ViewModel)", pageCode);
         Assert.Contains("new SettingsPerformanceCacheView(ViewModel)", pageCode);
-        Assert.Contains("new SettingsAboutView()", pageCode);
+        Assert.Contains("new SettingsAboutView(App.CurrentApp.ApplicationUpdateCoordinator)", pageCode);
         Assert.Contains("ActivateSection(SettingsDiagnosticsSection.Preferences)", pageCode);
         Assert.Contains("ContentFrame.Content is SettingsDiagnosticsPage", shellCode);
         Assert.Contains("if (!sender.IsPaneOpen)", shellCode);
@@ -215,6 +215,9 @@ public sealed class SettingsDiagnosticsPageContractTests
         Assert.Contains("https://github.com/laoxinH/AssestBundleTools", aboutXaml);
         Assert.Contains("https://www.modwu.com/", aboutXaml);
         Assert.Contains("AssemblyAppVersionProvider", aboutCode);
+        Assert.Contains("x:Name=\"UpdateActionButton\"", aboutXaml);
+        Assert.Contains("CheckManuallyAsync", aboutCode);
+        Assert.Contains("DownloadAndApplyAsync", aboutCode);
         Assert.Contains("MinVerTagPrefix>v</MinVerTagPrefix>", buildProps);
         Assert.Contains("PackageReference Include=\"MinVer\" Version=\"7.0.0\"", buildProps);
     }
