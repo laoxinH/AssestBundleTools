@@ -33,7 +33,7 @@ Velopack 的按用户 `Setup.exe` 安装到 `%LocalAppData%`，不需要管理�
 - WinUI 自定义 `Main` 的最前置 `VelopackApp.Run()`、Shell 首帧后的启动检查，以及关于页手动检查、进度、取消和待重启状态；
 - 应用更新前的活动后台任务与其他进程阻断，避免直接结束仍在执行工作的进程；
 - `eng/release/Publish-Architecture.ps1` 的 x86 / x64 / ARM64 publish、PE 架构校验、Velopack 打包与 SHA-256 清单；
-- `.github/workflows/release.yml` 的测试分支 / 手动构建与 `v*` tag 草稿 Release 流程。
+- `.github/workflows/release.yml` 的测试分支 / 手动构建，以及 `v*` tag 草稿上传、资产名称 / digest 二次校验和自动公开流程。
 
 本地 x64 已完成 Setup、Portable、full nupkg、feed 和 checksum 的真实打包验证。GitHub Actions 三架构构件验证属于本次公开仓库推送门禁；installed / portable 从旧版本更新到新版本仍必须在至少形成两个正式版本后完成真实升级验收，未完成前不对外宣称该门禁已经通过。代码签名、MSI、preview 独立通道、增量包复用和官网 feed 镜像仍属于阶段 D。
 

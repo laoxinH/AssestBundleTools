@@ -123,11 +123,73 @@ jobs:
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
-        run: >-
-          gh release create '${{ github.ref_name }}'
-          release-assets/*
-          --repo '${{ github.repository }}'
-          --title 'AssestBundleTools ${{ needs.validate.outputs.version }}'
-          --generate-notes
-          --draft
-          --verify-tag
+        run: |
+          $tag = '${{ github.ref_name }}'
+          $assetPaths = Get-ChildItem release-assets -File | Select-Object -ExpandProperty FullName
+          & gh release create $tag @assetPaths `
+            --repo '${{ github.repository }}' `
+            --title 'AssestBundleTools ${{ needs.validate.outputs.version }}' `
+            --generate-notes `
+            --draft `
+            --verify-tag
+          if ($LASTEXITCODE -ne 0) { throw 'Creating the draft GitHub Release failed.' }
+
+      - name: Verify and publish GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = '${{ github.ref_name }}'
+          $version = '${{ needs.validate.outputs.version }}'
+          $localAssets = Get-ChildItem release-assets -File
+          if ($localAssets.Count -ne 22) {
+            throw "Expected 22 local release assets, found $($localAssets.Count)."
+          }
+
+          foreach ($rid in @('win-x86', 'win-x64', 'win-arm64')) {
+            $requiredNames = @(
+              "AssestBundleTools-$version-$rid-Portable.zip",
+              "AssestBundleTools-$version-$rid-Setup.exe",
+              "AssestBundleTools.$rid-$version-$rid-full.nupkg",
+              "assets.$rid.json",
+              "RELEASES-$rid",
+              "releases.$rid.json",
+              "SHA256SUMS-$rid.txt"
+            )
+            foreach ($requiredName in $requiredNames) {
+              if (-not (Test-Path -LiteralPath (Join-Path release-assets $requiredName))) {
+                throw "Required release asset is missing: $requiredName"
+              }
+            }
+          }
+
+          $release = $null
+          for ($attempt = 1; $attempt -le 6; $attempt++) {
+            $releaseJson = & gh api "repos/${{ github.repository }}/releases/tags/$tag"
+            if ($LASTEXITCODE -ne 0) { throw 'Reading the draft GitHub Release failed.' }
+            $release = $releaseJson | ConvertFrom-Json
+            if ($release.assets.Count -eq $localAssets.Count -and
+                @($release.assets | Where-Object { [string]::IsNullOrWhiteSpace($_.digest) }).Count -eq 0) {
+              break
+            }
+            Start-Sleep -Seconds 5
+          }
+
+          if (-not $release.draft) { throw 'Release verification expected a draft Release.' }
+          if ($release.assets.Count -ne $localAssets.Count) {
+            throw "GitHub contains $($release.assets.Count) assets; expected $($localAssets.Count)."
+          }
+
+          foreach ($localAsset in $localAssets) {
+            $remoteAsset = @($release.assets | Where-Object name -eq $localAsset.Name)
+            if ($remoteAsset.Count -ne 1) {
+              throw "GitHub Release asset match is not unique: $($localAsset.Name)"
+            }
+            $expectedDigest = "sha256:$((Get-FileHash -LiteralPath $localAsset.FullName -Algorithm SHA256).Hash.ToLowerInvariant())"
+            if ($remoteAsset[0].digest -ne $expectedDigest) {
+              throw "GitHub digest mismatch for $($localAsset.Name)."
+            }
+          }
+
+          & gh release edit $tag --repo '${{ github.repository }}' --draft=false
+          if ($LASTEXITCODE -ne 0) { throw 'Publishing the verified GitHub Release failed.' }
