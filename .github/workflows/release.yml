@@ -126,24 +126,37 @@ jobs:
         run: |
           $tag = '${{ github.ref_name }}'
           $assetPaths = Get-ChildItem release-assets -File | Select-Object -ExpandProperty FullName
-          & gh release create $tag @assetPaths `
-            --repo '${{ github.repository }}' `
-            --title 'AssestBundleTools ${{ needs.validate.outputs.version }}' `
-            --generate-notes `
-            --draft `
-            --verify-tag
-          if ($LASTEXITCODE -ne 0) { throw 'Creating the draft GitHub Release failed.' }
+          $existingReleaseJson = & gh release view $tag --repo '${{ github.repository }}' --json isDraft 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            $existingRelease = $existingReleaseJson | ConvertFrom-Json
+            if (-not $existingRelease.isDraft) { throw 'The target Release is already published.' }
+            & gh release upload $tag @assetPaths --repo '${{ github.repository }}' --clobber
+            if ($LASTEXITCODE -ne 0) { throw 'Updating the draft GitHub Release failed.' }
+          } else {
+            & gh release create $tag @assetPaths `
+              --repo '${{ github.repository }}' `
+              --title 'AssestBundleTools ${{ needs.validate.outputs.version }}' `
+              --generate-notes `
+              --draft `
+              --verify-tag
+            if ($LASTEXITCODE -ne 0) { throw 'Creating the draft GitHub Release failed.' }
+          }
 
       - name: Verify and publish GitHub Release
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          function Stop-ReleaseVerification([string]$message) {
+            Write-Output "::error title=Release verification::$message"
+            throw $message
+          }
+
           $tag = '${{ github.ref_name }}'
           $version = '${{ needs.validate.outputs.version }}'
           $localAssets = Get-ChildItem release-assets -File
           if ($localAssets.Count -ne 22) {
-            throw "Expected 22 local release assets, found $($localAssets.Count)."
+            Stop-ReleaseVerification "Expected 22 local release assets, found $($localAssets.Count)."
           }
 
           foreach ($rid in @('win-x86', 'win-x64', 'win-arm64')) {
@@ -158,36 +171,55 @@ jobs:
             )
             foreach ($requiredName in $requiredNames) {
               if (-not (Test-Path -LiteralPath (Join-Path release-assets $requiredName))) {
-                throw "Required release asset is missing: $requiredName"
+                Stop-ReleaseVerification "Required release asset is missing: $requiredName"
               }
             }
           }
 
-          $release = $null
-          for ($attempt = 1; $attempt -le 6; $attempt++) {
-            $releaseJson = & gh api "repos/${{ github.repository }}/releases/tags/$tag"
-            if ($LASTEXITCODE -ne 0) { throw 'Reading the draft GitHub Release failed.' }
-            $release = $releaseJson | ConvertFrom-Json
-            if ($release.assets.Count -eq $localAssets.Count -and
-                @($release.assets | Where-Object { [string]::IsNullOrWhiteSpace($_.digest) }).Count -eq 0) {
-              break
-            }
-            Start-Sleep -Seconds 5
+          $releaseJson = & gh api `
+            -H 'Accept: application/vnd.github+json' `
+            -H 'X-GitHub-Api-Version: 2022-11-28' `
+            "repos/${{ github.repository }}/releases/tags/$tag"
+          if ($LASTEXITCODE -ne 0) {
+            Stop-ReleaseVerification 'Reading the draft GitHub Release failed.'
           }
+          $release = $releaseJson | ConvertFrom-Json
 
-          if (-not $release.draft) { throw 'Release verification expected a draft Release.' }
+          if (-not $release.draft) {
+            Stop-ReleaseVerification 'Release verification expected a draft Release.'
+          }
           if ($release.assets.Count -ne $localAssets.Count) {
-            throw "GitHub contains $($release.assets.Count) assets; expected $($localAssets.Count)."
+            Stop-ReleaseVerification "GitHub contains $($release.assets.Count) assets; expected $($localAssets.Count)."
           }
 
+          $downloadVerificationRoot = Join-Path $env:RUNNER_TEMP 'release-asset-verification'
+          New-Item -ItemType Directory -Path $downloadVerificationRoot -Force | Out-Null
           foreach ($localAsset in $localAssets) {
             $remoteAsset = @($release.assets | Where-Object name -eq $localAsset.Name)
             if ($remoteAsset.Count -ne 1) {
-              throw "GitHub Release asset match is not unique: $($localAsset.Name)"
+              Stop-ReleaseVerification "GitHub Release asset match is not unique: $($localAsset.Name)"
             }
             $expectedDigest = "sha256:$((Get-FileHash -LiteralPath $localAsset.FullName -Algorithm SHA256).Hash.ToLowerInvariant())"
-            if ($remoteAsset[0].digest -ne $expectedDigest) {
-              throw "GitHub digest mismatch for $($localAsset.Name)."
+            if (-not [string]::IsNullOrWhiteSpace($remoteAsset[0].digest)) {
+              if ($remoteAsset[0].digest -ne $expectedDigest) {
+                Stop-ReleaseVerification "GitHub digest mismatch for $($localAsset.Name)."
+              }
+              continue
+            }
+
+            $assetVerificationDirectory = Join-Path $downloadVerificationRoot ([Guid]::NewGuid().ToString('N'))
+            New-Item -ItemType Directory -Path $assetVerificationDirectory | Out-Null
+            & gh release download $tag `
+              --repo '${{ github.repository }}' `
+              --pattern $localAsset.Name `
+              --dir $assetVerificationDirectory
+            if ($LASTEXITCODE -ne 0) {
+              Stop-ReleaseVerification "Downloading $($localAsset.Name) for verification failed."
+            }
+            $downloadedAsset = Join-Path $assetVerificationDirectory $localAsset.Name
+            $downloadedDigest = "sha256:$((Get-FileHash -LiteralPath $downloadedAsset -Algorithm SHA256).Hash.ToLowerInvariant())"
+            if ($downloadedDigest -ne $expectedDigest) {
+              Stop-ReleaseVerification "Downloaded asset digest mismatch for $($localAsset.Name)."
             }
           }
 
