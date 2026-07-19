@@ -3741,9 +3741,6 @@
   <data name="SettingsDiagnosticsPage.About.Version.Format" xml:space="preserve">
     <value>Version {0}</value>
   </data>
-  <data name="SettingsDiagnosticsPage.About.VersionSource" xml:space="preserve">
-    <value>The version is generated from the release Git tag and is shared by release packages and future update comparisons.</value>
-  </data>
   <data name="SettingsDiagnosticsPage.About.Links.Title" xml:space="preserve">
     <value>Project &amp; Support</value>
   </data>

@@ -465,7 +465,6 @@ public static class ResourceKeys
     public const string SettingsDiagnosticsLogCenterHint = "SettingsDiagnosticsPage.LogCenterHintText.Text";
     public const string SettingsDiagnosticsAboutProductDescription = "SettingsDiagnosticsPage.About.ProductDescription";
     public const string SettingsDiagnosticsAboutVersionFormat = "SettingsDiagnosticsPage.About.Version.Format";
-    public const string SettingsDiagnosticsAboutVersionSource = "SettingsDiagnosticsPage.About.VersionSource";
     public const string SettingsDiagnosticsAboutLinksTitle = "SettingsDiagnosticsPage.About.Links.Title";
     public const string SettingsDiagnosticsAboutLinksHint = "SettingsDiagnosticsPage.About.Links.Hint";
     public const string SettingsDiagnosticsAboutGitHubTitle = "SettingsDiagnosticsPage.About.GitHub.Title";

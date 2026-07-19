@@ -3741,9 +3741,6 @@
   <data name="SettingsDiagnosticsPage.About.Version.Format" xml:space="preserve">
     <value>版本 {0}</value>
   </data>
-  <data name="SettingsDiagnosticsPage.About.VersionSource" xml:space="preserve">
-    <value>版本由发布 Git tag 生成，并作为发布包与后续更新比较的统一依据。</value>
-  </data>
   <data name="SettingsDiagnosticsPage.About.Links.Title" xml:space="preserve">
     <value>项目与支持</value>
   </data>

@@ -30,7 +30,6 @@ public sealed partial class SettingsAboutView : UserControl
         VersionText.Text = UiText.GetFormatted(
             ResourceKeys.SettingsDiagnosticsAboutVersionFormat,
             _versionProvider.GetCurrentVersion());
-        VersionSourceText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsAboutVersionSource);
 
         LinksTitleText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsAboutLinksTitle);
         LinksHintText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsAboutLinksHint);

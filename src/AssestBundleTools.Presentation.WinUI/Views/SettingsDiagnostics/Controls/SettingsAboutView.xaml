@@ -72,9 +72,6 @@
                                         FontWeight="SemiBold" />
                                 </StackPanel>
                             </Border>
-                            <TextBlock
-                                x:Name="VersionSourceText"
-                                Style="{StaticResource SettingsDiagnosticsMutedTextStyle}" />
                         </StackPanel>
                     </Grid>
                 </Border>
