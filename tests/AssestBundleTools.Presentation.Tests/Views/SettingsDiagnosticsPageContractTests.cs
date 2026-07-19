@@ -220,6 +220,13 @@ public sealed class SettingsDiagnosticsPageContractTests
         Assert.Contains("DownloadAndApplyAsync", aboutCode);
         Assert.Contains("MinVerTagPrefix>v</MinVerTagPrefix>", buildProps);
         Assert.Contains("PackageReference Include=\"MinVer\" Version=\"7.0.0\"", buildProps);
+        Assert.Contains(
+            "Condition=\"!Exists('..\\AssestBundleTools.Audio.FmodProcessor\\obj\\project.assets.json')\"",
+            File.ReadAllText(Path.Combine(
+                repositoryRoot,
+                "src",
+                "AssestBundleTools.Presentation.WinUI",
+                "AssestBundleTools.Presentation.WinUI.csproj")));
     }
 
     private static string FindRepositoryRoot()

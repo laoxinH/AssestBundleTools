@@ -120,6 +120,12 @@
   <Target Name="CopyBuiltInAudioResourceProcessors" AfterTargets="Build">
     <MSBuild
       Projects="..\AssestBundleTools.Audio.FmodProcessor\AssestBundleTools.Audio.FmodProcessor.csproj"
+      Targets="Restore"
+      Condition="!Exists('..\AssestBundleTools.Audio.FmodProcessor\obj\project.assets.json')"
+      RemoveProperties="RuntimeIdentifier;SelfContained;PublishSingleFile;PublishTrimmed;PublishReadyToRun"
+      Properties="Configuration=$(Configuration);Platform=$(Platform)" />
+    <MSBuild
+      Projects="..\AssestBundleTools.Audio.FmodProcessor\AssestBundleTools.Audio.FmodProcessor.csproj"
       Targets="Build"
       RemoveProperties="RuntimeIdentifier;SelfContained;PublishSingleFile;PublishTrimmed;PublishReadyToRun"
       Properties="Configuration=$(Configuration);Platform=$(Platform)" />
