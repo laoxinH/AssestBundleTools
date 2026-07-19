@@ -5,6 +5,7 @@ using AssestBundleTools.Application.Bundles;
 using AssestBundleTools.Application.Bundles.Dtos;
 using AssestBundleTools.Application.Bundles.Queries;
 using AssestBundleTools.Application.Bundles.Services;
+using AssestBundleTools.Application.Common.Diagnostics;
 using AssestBundleTools.Application.Common.Results;
 using AssestBundleTools.Application.Editing.Dtos;
 using AssestBundleTools.Application.Editing.Queries;
@@ -59,19 +60,19 @@ internal sealed class TestAppLogService : IAppLogService
     public void AppendInfo(string message)
     {
         InfoMessages.Add(message);
-        LogPanel.Append(message);
+        LogPanel.Append(message, WorkspaceDiagnosticLogLevel.Information);
     }
 
     public void AppendWarning(string message)
     {
         WarningMessages.Add(message);
-        LogPanel.Append(message);
+        LogPanel.Append(message, WorkspaceDiagnosticLogLevel.Warning);
     }
 
     public void AppendError(string message)
     {
         ErrorMessages.Add(message);
-        LogPanel.Append(message);
+        LogPanel.Append(message, WorkspaceDiagnosticLogLevel.Error);
     }
 }
 

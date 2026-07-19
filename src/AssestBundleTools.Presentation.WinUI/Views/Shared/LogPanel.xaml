@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <UserControl
     x:Class="AssestBundleTools.Presentation.WinUI.Views.Shared.LogPanel"
+    x:Name="Root"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -8,60 +9,251 @@
     xmlns:viewModels="using:AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings"
     mc:Ignorable="d">
 
-    <Grid RowSpacing="12">
+    <UserControl.Resources>
+        <Style
+            x:Key="LogPanelToolbarButtonStyle"
+            BasedOn="{StaticResource WorkspaceOperationButtonStyle}"
+            TargetType="Button">
+            <Setter Property="MinHeight" Value="32" />
+            <Setter Property="Padding" Value="10,0" />
+        </Style>
+
+        <Style
+            x:Key="LogPanelEntryCopyButtonStyle"
+            TargetType="Button">
+            <Setter Property="Width" Value="30" />
+            <Setter Property="Height" Value="30" />
+            <Setter Property="MinWidth" Value="30" />
+            <Setter Property="MinHeight" Value="30" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="HorizontalAlignment" Value="Right" />
+            <Setter Property="VerticalAlignment" Value="Top" />
+            <Setter Property="Background" Value="{ThemeResource SubtleFillColorSecondaryBrush}" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="8" />
+        </Style>
+
+        <Style
+            x:Key="LogPanelListViewItemStyle"
+            TargetType="ListViewItem">
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        </Style>
+    </UserControl.Resources>
+
+    <Grid RowSpacing="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <Grid ColumnSpacing="8">
+        <Grid ColumnSpacing="12">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
-            <TextBlock
-                Style="{ThemeResource BodyStrongTextBlockStyle}"
-                Text="{x:Bind ViewModel.SummaryText, Mode=OneWay}" />
-            <Button x:Name="AllFilterButton" x:Uid="LogPanel.AllFilterButton" Grid.Column="1" IsEnabled="False" />
-            <Button x:Name="InfoFilterButton" x:Uid="LogPanel.InfoFilterButton" Grid.Column="2" IsEnabled="False" />
-            <Button x:Name="WarningFilterButton" x:Uid="LogPanel.WarningFilterButton" Grid.Column="3" IsEnabled="False" />
-            <Button x:Name="ErrorFilterButton" x:Uid="LogPanel.ErrorFilterButton" Grid.Column="4" IsEnabled="False" />
-            <Button x:Name="ClearButton" x:Uid="LogPanel.ClearButton" Grid.Column="5" Click="OnClearButtonClick" />
+            <ScrollViewer
+                HorizontalScrollBarVisibility="Hidden"
+                HorizontalScrollMode="Enabled"
+                VerticalScrollBarVisibility="Disabled"
+                VerticalScrollMode="Disabled"
+                ZoomMode="Disabled">
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <RadioButton
+                        x:Name="AllFilterButton"
+                        Checked="OnAllFilterButtonChecked"
+                        GroupName="LogLevelFilterGroup"
+                        IsChecked="{x:Bind ViewModel.IsAllFilterSelected, Mode=OneWay}"
+                        Style="{StaticResource CompactSegmentRadioButtonStyle}" />
+                    <RadioButton
+                        x:Name="InfoFilterButton"
+                        Checked="OnInfoFilterButtonChecked"
+                        GroupName="LogLevelFilterGroup"
+                        IsChecked="{x:Bind ViewModel.IsInformationFilterSelected, Mode=OneWay}"
+                        Style="{StaticResource CompactSegmentRadioButtonStyle}" />
+                    <RadioButton
+                        x:Name="WarningFilterButton"
+                        Checked="OnWarningFilterButtonChecked"
+                        GroupName="LogLevelFilterGroup"
+                        IsChecked="{x:Bind ViewModel.IsWarningFilterSelected, Mode=OneWay}"
+                        Style="{StaticResource CompactSegmentRadioButtonStyle}" />
+                    <RadioButton
+                        x:Name="ErrorFilterButton"
+                        Checked="OnErrorFilterButtonChecked"
+                        GroupName="LogLevelFilterGroup"
+                        IsChecked="{x:Bind ViewModel.IsErrorFilterSelected, Mode=OneWay}"
+                        Style="{StaticResource CompactSegmentRadioButtonStyle}" />
+                </StackPanel>
+            </ScrollViewer>
+
+            <StackPanel
+                Grid.Column="1"
+                Orientation="Horizontal"
+                Spacing="6">
+                <Button
+                    x:Name="CopyAllButton"
+                    Click="OnCopyAllButtonClick"
+                    IsEnabled="{x:Bind ViewModel.CanCopyAll, Mode=OneWay}"
+                    Style="{StaticResource LogPanelToolbarButtonStyle}">
+                    <StackPanel Orientation="Horizontal" Spacing="5">
+                        <FontIcon
+                            FontFamily="{StaticResource AppIconFontFamily}"
+                            FontSize="13"
+                            Glyph="&#xE711;" />
+                        <TextBlock x:Name="CopyAllButtonText" />
+                    </StackPanel>
+                </Button>
+                <Button
+                    x:Name="ClearButton"
+                    Click="OnClearButtonClick"
+                    IsEnabled="{x:Bind ViewModel.CanClear, Mode=OneWay}"
+                    Style="{StaticResource LogPanelToolbarButtonStyle}">
+                    <StackPanel Orientation="Horizontal" Spacing="5">
+                        <FontIcon
+                            FontFamily="{StaticResource AppIconFontFamily}"
+                            FontSize="13"
+                            Glyph="&#xE66D;" />
+                        <TextBlock x:Name="ClearButtonText" />
+                    </StackPanel>
+                </Button>
+            </StackPanel>
         </Grid>
 
         <Grid Grid.Row="1">
             <ListView
-                ItemsSource="{x:Bind ViewModel.Entries, Mode=OneWay}"
+                ItemContainerStyle="{StaticResource LogPanelListViewItemStyle}"
+                ItemsSource="{x:Bind ViewModel.FilteredEntries, Mode=OneWay}"
+                SelectionMode="None"
                 Visibility="{x:Bind ViewModel.EntriesVisibility, Mode=OneWay}">
                 <ListView.ItemTemplate>
                     <DataTemplate x:DataType="viewModels:LogEntryViewModel">
-                        <Grid ColumnSpacing="12" Padding="4">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="1" />
+                            </Grid.RowDefinitions>
 
-                            <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind TimestampText}" />
-                            <TextBlock Grid.Column="1" Text="{x:Bind Message}" TextWrapping="WrapWholeWords" />
+                            <Grid
+                                Padding="8,10"
+                                ColumnSpacing="10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="36" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <Border
+                                    Width="36"
+                                    Height="36"
+                                    VerticalAlignment="Top"
+                                    Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                                    CornerRadius="8">
+                                    <Grid>
+                                        <FontIcon
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            FontFamily="{StaticResource AppIconFontFamily}"
+                                            FontSize="16"
+                                            Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                            Glyph="&#xEA88;"
+                                            ToolTipService.ToolTip="{Binding InformationLevelText, ElementName=Root}"
+                                            Visibility="{x:Bind InformationVisibility, Mode=OneTime}" />
+                                        <FontIcon
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            FontFamily="{StaticResource AppIconFontFamily}"
+                                            FontSize="16"
+                                            Foreground="{ThemeResource SystemFillColorCautionBrush}"
+                                            Glyph="&#xF561;"
+                                            ToolTipService.ToolTip="{Binding WarningLevelText, ElementName=Root}"
+                                            Visibility="{x:Bind WarningVisibility, Mode=OneTime}" />
+                                        <FontIcon
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            FontFamily="{StaticResource AppIconFontFamily}"
+                                            FontSize="16"
+                                            Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                                            Glyph="&#xE877;"
+                                            ToolTipService.ToolTip="{Binding ErrorLevelText, ElementName=Root}"
+                                            Visibility="{x:Bind ErrorVisibility, Mode=OneTime}" />
+                                    </Grid>
+                                </Border>
+
+                                <StackPanel
+                                    Grid.Column="1"
+                                    Spacing="4">
+                                    <TextBlock
+                                        FontSize="11"
+                                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                        Text="{x:Bind TimestampText, Mode=OneTime}" />
+                                    <TextBlock
+                                        FontSize="13"
+                                        Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                                        IsTextSelectionEnabled="True"
+                                        Text="{x:Bind Message, Mode=OneTime}"
+                                        TextWrapping="WrapWholeWords" />
+                                </StackPanel>
+
+                                <Button
+                                    Grid.Column="2"
+                                    AutomationProperties.Name="{Binding CopyEntryToolTipText, ElementName=Root}"
+                                    Click="OnCopyEntryButtonClick"
+                                    Style="{StaticResource LogPanelEntryCopyButtonStyle}"
+                                    Tag="{x:Bind CopyText, Mode=OneTime}"
+                                    ToolTipService.ToolTip="{Binding CopyEntryToolTipText, ElementName=Root}">
+                                    <FontIcon
+                                        FontFamily="{StaticResource AppIconFontFamily}"
+                                        FontSize="13"
+                                        Glyph="&#xE5D7;" />
+                                </Button>
+                            </Grid>
+
+                            <Border
+                                Grid.Row="1"
+                                Margin="54,0,8,0"
+                                Background="{ThemeResource CardStrokeColorDefaultBrush}" />
                         </Grid>
                     </DataTemplate>
                 </ListView.ItemTemplate>
             </ListView>
 
-            <Border
-                Padding="12"
+            <StackPanel
+                MaxWidth="360"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Spacing="10"
                 Visibility="{x:Bind ViewModel.EmptyStateVisibility, Mode=OneWay}">
+                <Border
+                    Width="52"
+                    Height="52"
+                    HorizontalAlignment="Center"
+                    Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                    CornerRadius="8">
+                    <FontIcon
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        FontFamily="{StaticResource AppIconFontFamily}"
+                        FontSize="23"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Glyph="&#xEA2E;" />
+                </Border>
                 <TextBlock
-                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                    Text="{x:Bind ViewModel.EmptyStateText, Mode=OneWay}"
+                    FontSize="15"
+                    FontWeight="SemiBold"
+                    Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                    Text="{x:Bind ViewModel.DisplayedEmptyStateTitleText, Mode=OneWay}"
+                    TextAlignment="Center"
                     TextWrapping="WrapWholeWords" />
-            </Border>
+                <TextBlock
+                    FontSize="13"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="{x:Bind ViewModel.DisplayedEmptyStateText, Mode=OneWay}"
+                    TextAlignment="Center"
+                    TextWrapping="WrapWholeWords" />
+            </StackPanel>
         </Grid>
     </Grid>
 </UserControl>
-

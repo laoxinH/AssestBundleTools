@@ -18,6 +18,7 @@ public sealed class AppLogServiceTests
         service.AppendWarning("drag diagnostic");
 
         Assert.Equal("drag diagnostic", service.LogPanel.Entries[0].Message);
+        Assert.Equal(WorkspaceDiagnosticLogLevel.Warning, service.LogPanel.Entries[0].Level);
         var write = Assert.Single(store.Writes);
         Assert.Equal(@"D:\WorkspaceData", write.WorkspaceDataRootPath);
         Assert.Equal(WorkspaceDiagnosticLogLevel.Warning, write.Entry.Level);
@@ -36,6 +37,7 @@ public sealed class AppLogServiceTests
         service.AppendInfo("startup diagnostic");
 
         Assert.Equal("startup diagnostic", service.LogPanel.Entries[0].Message);
+        Assert.Equal(WorkspaceDiagnosticLogLevel.Information, service.LogPanel.Entries[0].Level);
         Assert.Empty(store.Writes);
     }
 

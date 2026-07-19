@@ -3423,6 +3423,12 @@
   <data name="LogPanel.ClearButton.Content" xml:space="preserve">
     <value>清空</value>
   </data>
+  <data name="LogPanel.CopyAllButton.Content" xml:space="preserve">
+    <value>复制全部</value>
+  </data>
+  <data name="LogPanel.CopyEntryButton.ToolTip" xml:space="preserve">
+    <value>复制此条日志</value>
+  </data>
   <data name="SettingsDiagnosticsPage.PageTitleText.Text" xml:space="preserve">
     <value>设置与诊断</value>
   </data>
@@ -3728,6 +3734,15 @@
   </data>
   <data name="Diagnostics.Log.EmptyState" xml:space="preserve">
     <value>这里会显示应用级运行日志、错误记录以及后续导出的诊断信息。</value>
+  </data>
+  <data name="Diagnostics.Log.EmptyStateTitle" xml:space="preserve">
+    <value>暂无日志</value>
+  </data>
+  <data name="Diagnostics.Log.FilterEmptyState" xml:space="preserve">
+    <value>当前级别筛选下没有匹配的日志条目。</value>
+  </data>
+  <data name="Diagnostics.Log.FilterEmptyStateTitle" xml:space="preserve">
+    <value>暂无匹配日志</value>
   </data>
   <data name="BundleExplorer.EmptyState.BundleSearchNoMatch.Title" xml:space="preserve">
     <value>未找到匹配资源包</value>

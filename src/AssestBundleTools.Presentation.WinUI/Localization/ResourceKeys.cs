@@ -231,11 +231,16 @@ public static class ResourceKeys
     public const string WorkspaceImportBusyOverlayProgressCurrentBundleFormat = "WorkspaceImport.BusyOverlay.Progress.CurrentBundle.Format";
     public const string WorkspaceImportBusyOverlayProgressPercentFormat = "WorkspaceImport.BusyOverlay.Progress.Percent.Format";
     public const string DiagnosticsLogEmptyState = "Diagnostics.Log.EmptyState";
+    public const string DiagnosticsLogEmptyStateTitle = "Diagnostics.Log.EmptyStateTitle";
+    public const string DiagnosticsLogFilterEmptyState = "Diagnostics.Log.FilterEmptyState";
+    public const string DiagnosticsLogFilterEmptyStateTitle = "Diagnostics.Log.FilterEmptyStateTitle";
     public const string LogPanelAllFilterButtonContent = "LogPanel.AllFilterButton.Content";
     public const string LogPanelInfoFilterButtonContent = "LogPanel.InfoFilterButton.Content";
     public const string LogPanelWarningFilterButtonContent = "LogPanel.WarningFilterButton.Content";
     public const string LogPanelErrorFilterButtonContent = "LogPanel.ErrorFilterButton.Content";
     public const string LogPanelClearButtonContent = "LogPanel.ClearButton.Content";
+    public const string LogPanelCopyAllButtonContent = "LogPanel.CopyAllButton.Content";
+    public const string LogPanelCopyEntryButtonToolTip = "LogPanel.CopyEntryButton.ToolTip";
 
     public const string PluginManagementPageTitle = "PluginManagementPage.PageTitleText.Text";
     public const string PluginManagementSearchPlaceholder = "PluginManagementPage.SearchTextBox.PlaceholderText";
