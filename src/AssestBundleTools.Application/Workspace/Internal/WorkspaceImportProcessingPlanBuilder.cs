@@ -123,6 +123,7 @@ internal sealed class WorkspaceImportProcessingPlanBuilder
                 CachedWorkerResults: recognitionPlan.CachedWorkerResults,
                 RecognitionCacheHitCount: recognitionPlan.CacheHitCount,
                 RecognitionScreeningInputFileCount: recognitionPlan.FilesRequiringScreening.Count,
+                NewlyScreenedOutFileCount: screeningResult.Value.ScreenedOutDiagnostics.Count,
                 CachedStableInvalidSourcePaths: recognitionPlan.CachedStableInvalidSourcePaths,
                 ScreeningDurationMs: screeningStopwatch.ElapsedMilliseconds,
                 CurrentToolVersion: currentToolVersion,

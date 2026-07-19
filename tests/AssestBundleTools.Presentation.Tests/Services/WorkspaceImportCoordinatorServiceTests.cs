@@ -73,13 +73,76 @@ public sealed class WorkspaceImportCoordinatorServiceTests
                           StringComparison.Ordinal));
     }
 
+    [Theory]
+    [InlineData(5, 0, 3, 0, AppNotificationSeverity.Success)]
+    [InlineData(5, 1, 3, 0, AppNotificationSeverity.Warning)]
+    [InlineData(5, 0, 3, 1, AppNotificationSeverity.Warning)]
+    public async Task RequestDragDropImportAsync_ShouldUseOnlyCurrentIssues_ForToastSeverity(
+        int screenedOutFileCount,
+        int newlyScreenedOutFileCount,
+        int skippedFileCount,
+        int newlySkippedFileCount,
+        AppNotificationSeverity expectedSeverity)
+    {
+        var localizationService = new TestLocalizationService();
+        var appLogService = new TestAppLogService();
+        var notificationService = new TestAppNotificationService();
+        var workspaceContextService = new TestWorkspaceContextService();
+        var navigationRequest = PresentationTestDataFactory.CreateNavigationRequest("ImportScreeningDelta");
+        var workspaceSummary = PresentationTestDataFactory.CreateWorkspaceSummary(navigationRequest);
+        workspaceContextService.RegisterOrActivateWorkspace(
+            workspaceSummary,
+            navigationRequest.WorkspaceDataRootPath,
+            navigationRequest.AssetBundleDecryptorId);
+        var service = new WorkspaceImportCoordinatorService(
+            workspaceContextService,
+            new SuccessfulImportWorkspaceExplorerGateway(
+                workspaceSummary.DisplayName,
+                screenedOutFileCount,
+                newlyScreenedOutFileCount,
+                skippedFileCount,
+                newlySkippedFileCount),
+            new StubFilePickerService(),
+            appLogService,
+            notificationService,
+            localizationService,
+            new TestBackgroundTaskRunner());
+
+        var result = await service.RequestDragDropImportAsync([@"C:\Bundles\hero.ab"]);
+
+        Assert.True(result);
+        Assert.Equal(expectedSeverity, notificationService.Severity);
+        Assert.Equal(
+            $"{ResourceKeys.WorkspaceImportNotificationProcessedFormat}:{workspaceSummary.DisplayName}|{newlyScreenedOutFileCount}|1|0|{newlySkippedFileCount}|0",
+            notificationService.Message);
+        Assert.Contains(
+            appLogService.InfoMessages,
+            message => string.Equals(
+                message,
+                $"{ResourceKeys.WorkspaceImportLogProcessedFormat}:{workspaceSummary.DisplayName}|1|1|{screenedOutFileCount}|1|0|{skippedFileCount}|0",
+                StringComparison.Ordinal));
+    }
+
     private sealed class SuccessfulImportWorkspaceExplorerGateway : IWorkspaceExplorerGateway
     {
         private readonly string _workspaceDisplayName;
+        private readonly int _screenedOutFileCount;
+        private readonly int _newlyScreenedOutFileCount;
+        private readonly int _skippedFileCount;
+        private readonly int _newlySkippedFileCount;
 
-        public SuccessfulImportWorkspaceExplorerGateway(string workspaceDisplayName)
+        public SuccessfulImportWorkspaceExplorerGateway(
+            string workspaceDisplayName,
+            int screenedOutFileCount = 0,
+            int newlyScreenedOutFileCount = 0,
+            int skippedFileCount = 0,
+            int newlySkippedFileCount = 0)
         {
             _workspaceDisplayName = workspaceDisplayName;
+            _screenedOutFileCount = screenedOutFileCount;
+            _newlyScreenedOutFileCount = newlyScreenedOutFileCount;
+            _skippedFileCount = skippedFileCount;
+            _newlySkippedFileCount = newlySkippedFileCount;
         }
 
         public Task<Result<WorkspaceSummaryDto>> OpenWorkspaceAsync(
@@ -124,10 +187,12 @@ public sealed class WorkspaceImportCoordinatorServiceTests
                     AutoDetectionDiagnostic: null,
                     RegisteredSourceCount: 1,
                     DiscoveredFileCount: 1,
-                    ScreenedOutFileCount: 0,
+                    ScreenedOutFileCount: _screenedOutFileCount,
+                    NewlyScreenedOutFileCount: _newlyScreenedOutFileCount,
                     IndexedBundleCount: 1,
                     ReusedBundleCount: 0,
-                    SkippedFileCount: 0,
+                    SkippedFileCount: _skippedFileCount,
+                    NewlySkippedFileCount: _newlySkippedFileCount,
                     FailedFileCount: 0,
                     CacheDiagnostics: Array.Empty<WorkspaceImportCacheDecisionDiagnosticDto>(),
                     IssueDiagnostics: Array.Empty<WorkspaceImportIssueDiagnosticDto>(),

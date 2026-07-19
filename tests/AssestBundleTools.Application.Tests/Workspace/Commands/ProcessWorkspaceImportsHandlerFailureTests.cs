@@ -198,6 +198,7 @@ internal static partial class ProcessWorkspaceImportsHandlerTests
         TestAssert.Equal(0, processingResult.IndexedBundleCount, "Reader rejection should not produce a bundle cache entry.");
         TestAssert.Equal(0, processingResult.ReusedBundleCount, "Reader rejection should not reuse cache.");
         TestAssert.Equal(1, processingResult.SkippedFileCount, "Reader rejection should increment skipped file count.");
+        TestAssert.Equal(1, processingResult.NewlySkippedFileCount, "The first reader rejection should be reported as a new skip.");
         TestAssert.Equal(0, processingResult.FailedFileCount, "Reader rejection should not count as a failed file.");
         TestAssert.Equal(1, processingResult.CacheDiagnostics.Count, "Cache miss should still be diagnosed before reader probing.");
         TestAssert.Equal(WorkspaceImportCacheDecisionKind.CacheMiss, processingResult.CacheDiagnostics[0].Kind, "Reader rejection scenario should start from cache miss.");
@@ -222,6 +223,14 @@ internal static partial class ProcessWorkspaceImportsHandlerTests
         TestAssert.Equal(0, reader.SupportsCacheParserVersionCallCount, "Cache miss should not evaluate parser compatibility.");
         TestAssert.Equal(1, reader.CanReadCallCount, "Reader rejection path should invoke reader probing once.");
         TestAssert.Equal(0, reader.ReadCallCount, "Reader rejection should stop before reader parsing.");
+
+        var secondResult = await handler.HandleAsync(new ProcessWorkspaceImportsCommand(
+            WorkspaceKey: workspaceKey,
+            WorkspaceDataRootPath: workspaceDataRootPath));
+
+        TestAssert.True(secondResult.IsSuccess, "Cached reader rejection should remain a successful refresh result.");
+        TestAssert.Equal(1, secondResult.Value?.SkippedFileCount ?? -1, "The refresh should retain the cached reader-rejected total for diagnostics.");
+        TestAssert.Equal(0, secondResult.Value?.NewlySkippedFileCount ?? -1, "A cached reader rejection must not be reported as a new skip.");
     }
 
     public static async Task HandleAsync_ShouldReportReadFailure_WhenReaderReturnsFailure()

@@ -225,13 +225,13 @@ public sealed class WorkspaceImportCoordinatorService : IWorkspaceImportCoordina
         var notificationMessage = _localizationService.GetFormattedString(
             ResourceKeys.WorkspaceImportNotificationProcessedFormat,
             result.WorkspaceDisplayName,
-            processingResult.ScreenedOutFileCount,
+            processingResult.NewlyScreenedOutFileCount,
             processingResult.IndexedBundleCount,
             processingResult.ReusedBundleCount,
-            processingResult.SkippedFileCount,
+            processingResult.NewlySkippedFileCount,
             processingResult.FailedFileCount);
-        var hasIssues = processingResult.ScreenedOutFileCount > 0 ||
-                        processingResult.SkippedFileCount > 0 ||
+        var hasIssues = processingResult.NewlyScreenedOutFileCount > 0 ||
+                        processingResult.NewlySkippedFileCount > 0 ||
                         processingResult.FailedFileCount > 0;
 
         _appLogService.AppendInfo(logMessage);

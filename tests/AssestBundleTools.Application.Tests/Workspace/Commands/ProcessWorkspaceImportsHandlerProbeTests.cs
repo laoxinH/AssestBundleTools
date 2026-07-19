@@ -126,6 +126,7 @@ internal static partial class ProcessWorkspaceImportsHandlerTests
         TestAssert.Equal(1, fallbackDecryptor.DecryptCallCount, "Only the standard bundle with no codec match should use pass-through.");
         TestAssert.Equal(2, processingResult.IndexedBundleCount, "Both matched and pass-through sources should be indexed.");
         TestAssert.Equal(1, processingResult.ScreenedOutFileCount, "A known non-bundle source should be screened out only after no codec matches.");
+        TestAssert.Equal(1, processingResult.NewlyScreenedOutFileCount, "The first recognition pass should report one newly screened-out source.");
         TestAssert.Equal(1, metadataStore.SaveCallCount, "A stable invalid direct file should be removed from registered import sources.");
         TestAssert.Equal(2, metadataStore.Metadata?.ImportedSources?.Count ?? -1, "Only recognized bundle sources should remain directly registered.");
         TestAssert.Equal(AssetBundleDecryptorIds.BuiltInAutoDetect, metadataStore.Metadata?.AssetBundleDecryptorId, "Workspace metadata should retain auto detection.");
@@ -159,6 +160,8 @@ internal static partial class ProcessWorkspaceImportsHandlerTests
         TestAssert.Equal(3, secondResult.Value?.PerformanceDiagnostic?.RecognitionCacheHitCount ?? -1, "All unchanged sources should hit the recognition cache.");
         TestAssert.Equal(0, secondResult.Value?.PerformanceDiagnostic?.ProbeInputFileCount ?? -1, "No unchanged source should enter recognition again.");
         TestAssert.Equal(0, secondResult.Value?.PerformanceDiagnostic?.ProbeEvaluationCount ?? -1, "The second pass should perform zero probe evaluations.");
+        TestAssert.Equal(1, secondResult.Value?.ScreenedOutFileCount ?? -1, "The refresh summary should retain the cached screened-out total for diagnostics.");
+        TestAssert.Equal(0, secondResult.Value?.NewlyScreenedOutFileCount ?? -1, "A cached screened-out result must not be reported as a new issue.");
     }
 
     public static async Task HandleAsync_ShouldKeepAutoDetection_WhenProbeExecutionFails()

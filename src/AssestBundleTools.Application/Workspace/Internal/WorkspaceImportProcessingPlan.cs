@@ -22,6 +22,7 @@ internal sealed record WorkspaceImportProcessingPlan(
     IReadOnlyList<WorkspaceImportBundleWorkResult> CachedWorkerResults,
     int RecognitionCacheHitCount,
     int RecognitionScreeningInputFileCount,
+    int NewlyScreenedOutFileCount,
     IReadOnlySet<string> CachedStableInvalidSourcePaths,
     long ScreeningDurationMs,
     string CurrentToolVersion,

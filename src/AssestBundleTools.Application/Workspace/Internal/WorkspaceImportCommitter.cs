@@ -33,11 +33,15 @@ internal sealed class WorkspaceImportCommitter
         var stableInvalidSourcePaths = new HashSet<string>(
             plan.CachedStableInvalidSourcePaths.Select(WorkspaceImportPathUtility.NormalizePath),
             StringComparer.OrdinalIgnoreCase);
+        var cachedWorkerBundleCacheKeys = plan.CachedWorkerResults
+            .Select(static result => result.BundleCacheKey)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
         var cacheDiagnostics = new List<WorkspaceImportCacheDecisionDiagnosticDto>(workerResults.Count);
         var issueDiagnostics = new List<WorkspaceImportIssueDiagnosticDto>(plan.DecryptorResolution.ScreenedOutDiagnostics);
         var indexedBundleCount = 0;
         var reusedBundleCount = 0;
         var skippedFileCount = 0;
+        var newlySkippedFileCount = 0;
         var failedFileCount = 0;
 
         foreach (var recognitionEntry in plan.RecognitionCacheEntriesToSave)
@@ -86,6 +90,11 @@ internal sealed class WorkspaceImportCommitter
                     break;
                 case WorkspaceImportBundleWorkOutcome.Skipped:
                     skippedFileCount++;
+                    if (!cachedWorkerBundleCacheKeys.Contains(workerResult.BundleCacheKey))
+                    {
+                        newlySkippedFileCount++;
+                    }
+
                     if (workerResult.IssueDiagnostic is not null)
                     {
                         issueDiagnostics.Add(workerResult.IssueDiagnostic);
@@ -147,9 +156,11 @@ internal sealed class WorkspaceImportCommitter
             RegisteredSourceCount: remainingImportedSources.Count,
             DiscoveredFileCount: plan.DiscoveredFiles.Count,
             ScreenedOutFileCount: plan.DecryptorResolution.ScreenedOutDiagnostics.Count,
+            NewlyScreenedOutFileCount: plan.NewlyScreenedOutFileCount,
             IndexedBundleCount: indexedBundleCount,
             ReusedBundleCount: reusedBundleCount,
             SkippedFileCount: skippedFileCount,
+            NewlySkippedFileCount: newlySkippedFileCount,
             FailedFileCount: failedFileCount,
             CacheDiagnostics: cacheDiagnostics,
             IssueDiagnostics: issueDiagnostics,

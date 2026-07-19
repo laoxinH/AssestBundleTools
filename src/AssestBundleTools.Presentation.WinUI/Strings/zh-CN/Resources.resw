@@ -1047,7 +1047,7 @@
     <value>管理员拖放路由发生异常：{0}，HResult={1}，消息={2}。</value>
   </data>
   <data name="WorkspaceImport.Log.Processed.Format" xml:space="preserve">
-    <value>工作区“{0}”已刷新导入索引：{1} 条来源、发现 {2} 个文件、初筛排除 {3} 个、新建索引 {4} 个资源包，复用缓存 {5} 个，读取跳过 {6} 个，失败 {7} 个。</value>
+    <value>工作区“{0}”已刷新导入索引：{1} 条来源、发现 {2} 个文件、当前初筛排除共 {3} 个、新建索引 {4} 个资源包，复用缓存 {5} 个，当前读取跳过共 {6} 个，失败 {7} 个。</value>
   </data>
   <data name="WorkspaceImport.Log.Performance.Format" xml:space="preserve">
     <value>导入阶段耗时：worker {0} 个，总计 {1} ms，计划 {2} ms，筛选 {3} ms，并行处理 {4} ms，提交 {5} ms；指纹检查 {6} 个，识别缓存命中 {7} 个，实际进入识别 {8} 个。</value>
@@ -1249,7 +1249,7 @@
     <value>已登记拖拽导入到工作区“{0}”：{1} 个文件、{2} 个目录。</value>
   </data>
   <data name="WorkspaceImport.Notification.Processed.Format" xml:space="preserve">
-    <value>已刷新工作区“{0}”：初筛排除 {1} 个，新建索引 {2} 个资源包，复用缓存 {3} 个，读取跳过 {4} 个，失败 {5} 个。</value>
+    <value>已刷新工作区“{0}”：本次初筛排除 {1} 个，新建索引 {2} 个资源包，复用缓存 {3} 个，本次读取跳过 {4} 个，失败 {5} 个。</value>
   </data>
   <data name="WorkspaceImport.DropOverlay.Title" xml:space="preserve">
     <value>拖拽资源包到这里</value>
