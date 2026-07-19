@@ -5315,6 +5315,8 @@
   <data name="ApplicationUpdate.Available.Log.Format" xml:space="preserve"><value>App update {0} is available.</value></data>
   <data name="ApplicationUpdate.Prompt.Title" xml:space="preserve"><value>App update available</value></data>
   <data name="ApplicationUpdate.Prompt.Message.Format" xml:space="preserve"><value>Version {0} is available. Continuing will download and verify the update, then restart the app. Portable and installed releases keep their current distribution type.</value></data>
+  <data name="ApplicationUpdate.Prompt.ReleaseNotes.Title" xml:space="preserve"><value>What's new</value></data>
+  <data name="ApplicationUpdate.Prompt.ReleaseNotes.Empty" xml:space="preserve"><value>No release notes are available for this version.</value></data>
   <data name="ApplicationUpdate.Prompt.PrimaryButton" xml:space="preserve"><value>Download and restart</value></data>
   <data name="ApplicationUpdate.Prompt.CloseButton" xml:space="preserve"><value>Later</value></data>
   <data name="ApplicationUpdate.PromptFailed.Log.Format" xml:space="preserve"><value>Could not show the update confirmation dialog: {0}</value></data>

@@ -19,6 +19,7 @@ $architectureOutput = Join-Path $outputRootPath $RuntimeIdentifier
 $publishDirectory = Join-Path $architectureOutput 'publish'
 $releaseDirectory = Join-Path $architectureOutput 'release'
 $releaseNotesPath = Join-Path $architectureOutput 'release-notes.md'
+$versionedReleaseNotesPath = Join-Path $repoRoot "docs\releases\v$Version.md"
 $installerWelcomePath = Join-Path $repoRoot 'eng\installer\welcome.txt'
 $installerReadmePath = Join-Path $repoRoot 'eng\installer\readme.md'
 $installerLicensePath = Join-Path $repoRoot 'LICENSE.md'
@@ -36,7 +37,12 @@ if (Test-Path -LiteralPath $architectureOutput) {
 }
 
 New-Item -ItemType Directory -Path $publishDirectory, $releaseDirectory -Force | Out-Null
-Set-Content -LiteralPath $releaseNotesPath -Encoding utf8 -Value "AssestBundleTools $Version"
+if (Test-Path -LiteralPath $versionedReleaseNotesPath) {
+    Copy-Item -LiteralPath $versionedReleaseNotesPath -Destination $releaseNotesPath
+}
+else {
+    Set-Content -LiteralPath $releaseNotesPath -Encoding utf8 -Value "AssestBundleTools $Version"
+}
 
 Push-Location $repoRoot
 try {

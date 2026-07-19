@@ -39,6 +39,13 @@ jobs:
             if ($tagCommit -ne '${{ github.sha }}') {
               throw 'The release tag does not point at the workflow commit.'
             }
+            $releaseNotesPath = "docs/releases/$tag.md"
+            if (-not (Test-Path -LiteralPath $releaseNotesPath)) {
+              throw "Release notes are missing: $releaseNotesPath"
+            }
+            if ([string]::IsNullOrWhiteSpace((Get-Content -LiteralPath $releaseNotesPath -Raw))) {
+              throw "Release notes are empty: $releaseNotesPath"
+            }
             "is_release=true" >> $env:GITHUB_OUTPUT
           } else {
             $version = "0.1.0-ci.${{ github.run_number }}"
@@ -101,6 +108,10 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v7.0.0
+        with:
+          fetch-depth: 0
+
       - uses: actions/download-artifact@v8.0.1
         with:
           pattern: release-*
@@ -125,18 +136,24 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           $tag = '${{ github.ref_name }}'
+          $releaseNotesPath = "docs/releases/$tag.md"
           $assetPaths = Get-ChildItem release-assets -File | Select-Object -ExpandProperty FullName
           $existingReleaseJson = & gh release view $tag --repo '${{ github.repository }}' --json isDraft 2>$null
           if ($LASTEXITCODE -eq 0) {
             $existingRelease = $existingReleaseJson | ConvertFrom-Json
             if (-not $existingRelease.isDraft) { throw 'The target Release is already published.' }
+            & gh release edit $tag `
+              --repo '${{ github.repository }}' `
+              --title 'AssestBundleTools ${{ needs.validate.outputs.version }}' `
+              --notes-file $releaseNotesPath
+            if ($LASTEXITCODE -ne 0) { throw 'Updating the draft GitHub Release notes failed.' }
             & gh release upload $tag @assetPaths --repo '${{ github.repository }}' --clobber
             if ($LASTEXITCODE -ne 0) { throw 'Updating the draft GitHub Release failed.' }
           } else {
             & gh release create $tag @assetPaths `
               --repo '${{ github.repository }}' `
               --title 'AssestBundleTools ${{ needs.validate.outputs.version }}' `
-              --generate-notes `
+              --notes-file $releaseNotesPath `
               --draft `
               --verify-tag
             if ($LASTEXITCODE -ne 0) { throw 'Creating the draft GitHub Release failed.' }

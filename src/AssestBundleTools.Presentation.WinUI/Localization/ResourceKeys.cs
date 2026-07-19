@@ -512,6 +512,8 @@ public static class ResourceKeys
     public const string ApplicationUpdateAvailableLogFormat = "ApplicationUpdate.Available.Log.Format";
     public const string ApplicationUpdatePromptTitle = "ApplicationUpdate.Prompt.Title";
     public const string ApplicationUpdatePromptMessageFormat = "ApplicationUpdate.Prompt.Message.Format";
+    public const string ApplicationUpdatePromptReleaseNotesTitle = "ApplicationUpdate.Prompt.ReleaseNotes.Title";
+    public const string ApplicationUpdatePromptReleaseNotesEmpty = "ApplicationUpdate.Prompt.ReleaseNotes.Empty";
     public const string ApplicationUpdatePromptPrimaryButton = "ApplicationUpdate.Prompt.PrimaryButton";
     public const string ApplicationUpdatePromptCloseButton = "ApplicationUpdate.Prompt.CloseButton";
     public const string ApplicationUpdatePromptFailedLogFormat = "ApplicationUpdate.PromptFailed.Log.Format";

@@ -31,11 +31,12 @@ MSI 的当前用户模式默认安装到 `%LocalAppData%`，不需要管理员�
 - Infrastructure 的 Velopack 1.2.0 `GithubSource` 适配，包含检查、下载、取消、校验、应用与重启；
 - 同架构跨进程检查信号量和 `%LocalAppData%/AssestBundleTools/updates` 短期检查结果缓存；缓存命中只复用展示结果，下载前会重新水化 Velopack `UpdateInfo`；
 - WinUI 自定义 `Main` 的最前置 `VelopackApp.Run()`、Shell 首帧后的启动检查，以及关于页手动检查、进度、取消和待重启状态；
+- 版本化 `docs/releases/v<version>.md` 单一说明来源、更新确认窗口的受限可选择文本展示，以及 GitHub Release 正文同步；
 - 应用更新前的活动后台任务与其他进程阻断，避免直接结束仍在执行工作的进程；
 - `eng/release/Publish-Architecture.ps1` 的 x86 / x64 / ARM64 publish、PE 架构校验、Velopack 打包与 SHA-256 清单；
 - `.github/workflows/release.yml` 的测试分支 / 手动构建，以及 `v*` tag 草稿上传、资产名称 / API digest（缺失时下载回读 SHA-256）二次校验和自动公开流程。
 
-本地 x64 已完成旧版 Setup、Portable、full nupkg、feed 和 checksum 的真实打包验证。2026-07-19 发布的首个稳定版本 `v0.1.0` 已通过 GitHub Actions x86 / x64 / ARM64 矩阵、22 项 Release 资产名称与 GitHub SHA-256 digest 校验并公开；该版本仍使用旧的一键 Setup。MSI 向导从后续版本开始成为正式安装入口，其本地和 CI 验收状态必须在完成后追加记录。installed / portable 从旧版本更新到新版本仍必须在形成下一正式版本后完成真实升级验收，未完成前不对外宣称该门禁已经通过。代码签名、preview 独立通道、增量包复用和官网 feed 镜像仍属于阶段 D。
+本地 x64 已完成旧版 Setup、Portable、full nupkg、feed 和 checksum 的真实打包验证。2026-07-19 发布的首个稳定版本 `v0.1.0` 已通过 GitHub Actions x86 / x64 / ARM64 矩阵、22 项 Release 资产名称与 GitHub SHA-256 digest 校验并公开；该版本仍使用旧的一键 Setup。`v0.1.1` 已在本地通过 x64 MSI / Portable / full nupkg / feed 打包、MSI 合约、版本号、启动 smoke 和中文 Release Notes 注入验证，正式三架构 Release 仍以 tag workflow 结果为准。installed / portable 从旧版本更新到新版本仍必须在形成下一正式版本后完成真实升级验收，未完成前不对外宣称该门禁已经通过。代码签名、preview 独立通道、增量包复用和官网 feed 镜像仍属于阶段 D。
 
 ## 3. 目标与非目标
 
@@ -107,6 +108,8 @@ Installer 使用 `Either` 语义。向导依次提供项目说明、MIT 许可�
 
 同一 Release 的 Release Notes 面向用户；更新服务只显示经过长度限制和基础清理的纯文本 / Markdown 摘要，不渲染任意 HTML 或执行链接。
 
+正式版本的更新说明以仓库内 `docs/releases/v<version>.md` 为唯一来源，默认使用简体中文编写；如需英文，可在同一文件追加独立的 `English` 分节，但不要求每个版本必须提供英文。发布脚本把该文件原样交给 Velopack `--releaseNotes`，GitHub Actions 同时用它作为 GitHub Release 正文，禁止分别维护包内说明、弹窗说明和 Release 页面说明。正式 tag 缺少对应文件时发布必须失败；非 tag 的本地 / CI 测试包可以回退为只含版本号的占位说明。
+
 ## 6. 应用内更新流程
 
 ### 6.1 启动检查
@@ -114,7 +117,7 @@ Installer 使用 `Either` 语义。向导依次提供项目说明、MIT 许可�
 1. Velopack startup hook 必须在 WinUI 正常初始化前最先执行，遇到安装 / 更新 hook 时按框架契约快速退出。
 2. 正常启动完成 Shell 首帧后，通过统一后台任务 `ApplicationUpdateCheck` 发起检查，不阻塞窗口显示和工作区恢复。
 3. 每个进程启动都会请求检查；同一台电脑上的多窗口 / 多工作区进程通过全局互斥和 `%LocalAppData%/AssestBundleTools/updates/state.json` 合并并发请求，其他进程复用本轮结果。
-4. 启动检查无更新时不弹 toast；有更新时显示可操作通知，包含版本、摘要、下载大小和“下载并更新 / 稍后”。
+4. 启动检查无更新时不弹 toast；有更新时显示可操作确认窗口，包含版本、更新内容摘要和“下载并更新 / 稍后”。更新内容来自当前目标版本的包内 Release Notes，使用可选择、可滚动的受限纯文本展示；空说明显示本地化占位，不允许远端 HTML、图片或脚本进入可执行 UI。
 5. 网络不可用、GitHub 限流或源不可用时只写结构化日志，不用黄色警告打扰正常启动。
 
 每次启动“检测”指每个正常会话都会进入更新检查协调器；并发启动允许合并为一次网络请求。客户端不得通过嵌入 GitHub Token 提升限额。实现阶段应优先使用 Velopack `GithubSource`，并为响应缓存、超时和跨进程合并补适配；如果公开 GitHub API 限额在真实用户规模下不足，再把同一 Velopack feed 镜像到官网静态地址，不改变客户端更新协议。
@@ -209,6 +212,7 @@ workflow 由 `v*` tag push 触发，建议分为以下阶段：
 1. **Validate**
    - `actions/checkout` 使用完整历史和 tags。
    - 校验 tag 为合法 SemVer、当前提交精确匹配 tag、工作树输入固定。
+   - 校验正式 tag 存在对应的 `docs/releases/<tag>.md`，且文件不是空说明。
    - 运行全套测试和架构无关静态检查。
 2. **Publish matrix**
    - 在 Windows runner 上按 `win-x86 / win-x64 / win-arm64` 矩阵执行 Release publish。
@@ -224,6 +228,7 @@ workflow 由 `v*` tag push 触发，建议分为以下阶段：
    - 从上一版本的 portable 与 installed 样本各执行一次自动更新 smoke，验证模式保持、重启和用户数据保留。
 5. **Release**
    - 所有矩阵成功后创建 draft Release，上传全部资产和校验表。
+   - GitHub Release 正文必须读取 `docs/releases/<tag>.md`；更新已有 draft 时也同步覆盖正文，不使用与包内说明分叉的自动生成说明。
    - 二次验证 Release 资产数量、名称和 digest 后再发布；失败保持 draft，不暴露半套更新源。
    - stable Release 不标记 prerelease；预发布版本进入独立 preview 设计后才允许发布。
 
@@ -268,6 +273,7 @@ workflow 由 `v*` tag push 触发，建议分为以下阶段：
 - 多进程检查 single-flight 和缓存状态损坏恢复。
 - 下载取消、校验失败、磁盘不足和不可写目录。
 - 关于页状态与命令绑定。
+- 更新说明的控制字符清理、行数 / 字符数上限、空说明占位和确认窗口绑定。
 - 发布脚本资产矩阵、feed 引用、版本、架构和 hash 合约。
 
 ### 12.2 真实发布门禁

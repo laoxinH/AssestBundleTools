@@ -40,6 +40,7 @@ public sealed class ApplicationUpdateCoordinator
     private readonly IBackgroundWorkScheduler _backgroundWorkScheduler;
     private readonly SemaphoreSlim _operationGate = new(1, 1);
     private CancellationTokenSource? _downloadCancellationSource;
+    private ApplicationUpdateInfo? _availableUpdate;
     private ApplicationUpdateViewState _state;
 
     public ApplicationUpdateCoordinator(
@@ -80,7 +81,7 @@ public sealed class ApplicationUpdateCoordinator
             return;
         }
 
-        if (await ConfirmUpdateAsync(update.TargetVersion))
+        if (await ConfirmUpdateAsync(update))
         {
             await DownloadAndApplyAsync(requireConfirmation: false);
         }
@@ -112,7 +113,7 @@ public sealed class ApplicationUpdateCoordinator
 
         if (requireConfirmation &&
             State.Kind != ApplicationUpdateStateKind.ReadyToRestart &&
-            !await ConfirmUpdateAsync(targetVersion))
+            !await ConfirmUpdateAsync(ResolveUpdateForPrompt(targetVersion)))
         {
             return;
         }
@@ -257,6 +258,7 @@ public sealed class ApplicationUpdateCoordinator
             }
             if (!result.IsSuccess)
             {
+                _availableUpdate = null;
                 SetState(ApplicationUpdateStateKind.Failed);
                 _appLogService.AppendWarning(_localizationService.GetFormattedString(
                     ResourceKeys.ApplicationUpdateCheckFailedLogFormat,
@@ -274,6 +276,7 @@ public sealed class ApplicationUpdateCoordinator
 
             if (result.Value is null)
             {
+                _availableUpdate = null;
                 SetState(ApplicationUpdateStateKind.UpToDate);
                 if (showFailureFeedback)
                 {
@@ -286,6 +289,7 @@ public sealed class ApplicationUpdateCoordinator
                 return null;
             }
 
+            _availableUpdate = result.Value;
             SetState(ApplicationUpdateStateKind.Available, result.Value.TargetVersion);
             _appLogService.AppendInfo(_localizationService.GetFormattedString(
                 ResourceKeys.ApplicationUpdateAvailableLogFormat,
@@ -298,7 +302,7 @@ public sealed class ApplicationUpdateCoordinator
         }
     }
 
-    private async Task<bool> ConfirmUpdateAsync(string targetVersion)
+    private async Task<bool> ConfirmUpdateAsync(ApplicationUpdateInfo update)
     {
         if (_activeWindowAccessor()?.Content is not FrameworkElement { XamlRoot: { } xamlRoot })
         {
@@ -309,14 +313,7 @@ public sealed class ApplicationUpdateCoordinator
         {
             XamlRoot = xamlRoot,
             Title = GetString(ResourceKeys.ApplicationUpdatePromptTitle),
-            Content = new TextBlock
-            {
-                Text = _localizationService.GetFormattedString(
-                    ResourceKeys.ApplicationUpdatePromptMessageFormat,
-                    targetVersion),
-                TextWrapping = TextWrapping.Wrap,
-                MaxWidth = 520
-            },
+            Content = CreateUpdatePromptContent(update),
             PrimaryButtonText = GetString(ResourceKeys.ApplicationUpdatePromptPrimaryButton),
             CloseButtonText = GetString(ResourceKeys.ApplicationUpdatePromptCloseButton),
             DefaultButton = ContentDialogButton.Primary
@@ -334,6 +331,50 @@ public sealed class ApplicationUpdateCoordinator
             return false;
         }
     }
+
+    private FrameworkElement CreateUpdatePromptContent(ApplicationUpdateInfo update)
+    {
+        var releaseNotes = ApplicationUpdateReleaseNotesFormatter.Format(
+            update.ReleaseNotes,
+            GetString(ResourceKeys.ApplicationUpdatePromptReleaseNotesEmpty));
+        return new StackPanel
+        {
+            MaxWidth = 560,
+            Spacing = 12,
+            Children =
+            {
+                new TextBlock
+                {
+                    Text = _localizationService.GetFormattedString(
+                        ResourceKeys.ApplicationUpdatePromptMessageFormat,
+                        update.TargetVersion),
+                    TextWrapping = TextWrapping.Wrap
+                },
+                new TextBlock
+                {
+                    Text = GetString(ResourceKeys.ApplicationUpdatePromptReleaseNotesTitle),
+                    FontWeight = Microsoft.UI.Text.FontWeights.SemiBold
+                },
+                new ScrollViewer
+                {
+                    MaxHeight = 280,
+                    VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                    Content = new TextBlock
+                    {
+                        Text = releaseNotes,
+                        IsTextSelectionEnabled = true,
+                        TextWrapping = TextWrapping.Wrap
+                    }
+                }
+            }
+        };
+    }
+
+    private ApplicationUpdateInfo ResolveUpdateForPrompt(string targetVersion) =>
+        _availableUpdate is { } update &&
+        string.Equals(update.TargetVersion, targetVersion, StringComparison.OrdinalIgnoreCase)
+            ? update
+            : new ApplicationUpdateInfo(targetVersion, null, null, IsDeltaUpdate: false);
 
     private string? ResolveRestartBlockerCode()
     {
