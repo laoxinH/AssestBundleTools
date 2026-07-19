@@ -35,7 +35,7 @@ Velopack 的按用户 `Setup.exe` 安装到 `%LocalAppData%`，不需要管理�
 - `eng/release/Publish-Architecture.ps1` 的 x86 / x64 / ARM64 publish、PE 架构校验、Velopack 打包与 SHA-256 清单；
 - `.github/workflows/release.yml` 的测试分支 / 手动构建，以及 `v*` tag 草稿上传、资产名称 / API digest（缺失时下载回读 SHA-256）二次校验和自动公开流程。
 
-本地 x64 已完成 Setup、Portable、full nupkg、feed 和 checksum 的真实打包验证。GitHub Actions 三架构构件验证属于本次公开仓库推送门禁；installed / portable 从旧版本更新到新版本仍必须在至少形成两个正式版本后完成真实升级验收，未完成前不对外宣称该门禁已经通过。代码签名、MSI、preview 独立通道、增量包复用和官网 feed 镜像仍属于阶段 D。
+本地 x64 已完成 Setup、Portable、full nupkg、feed 和 checksum 的真实打包验证。2026-07-19 发布的首个稳定版本 `v0.1.0` 已通过 GitHub Actions x86 / x64 / ARM64 矩阵、22 项 Release 资产名称与 GitHub SHA-256 digest 校验并公开；installed / portable 从旧版本更新到新版本仍必须在形成下一正式版本后完成真实升级验收，未完成前不对外宣称该门禁已经通过。代码签名、MSI、preview 独立通道、增量包复用和官网 feed 镜像仍属于阶段 D。
 
 ## 3. 目标与非目标
 
@@ -290,7 +290,7 @@ workflow 由 `v*` tag push 触发，建议分为以下阶段：
 - 用 Velopack 生成三架构 Portable + Setup + full package + feed。
 - 建立资产矩阵、版本、架构和 hash 验证；先完成手工安装 / 更新 smoke。
 
-状态：代码与本地 x64 构件验证已完成，等待 GitHub Actions 三架构测试构件结果和正式 tag 的安装 / 更新 smoke。
+状态：`v0.1.0` 的 GitHub Actions 三架构构建、PE / 版本校验、Setup / Portable / feed 发布和 Release digest 校验已完成。全新安装、启动和卸载仍需按真实设备验收记录持续补充；跨版本更新 smoke 等待下一稳定版本。
 
 ### 阶段 B：更新读取链路
 
@@ -305,7 +305,7 @@ workflow 由 `v*` tag push 触发，建议分为以下阶段：
 - 接入后台下载、进度、取消、校验、跨窗口关闭协调和 `Update.exe`。
 - 完成 installed / portable 双路径真实更新测试。
 
-状态：下载、取消、活动任务 / 其他实例阻断和 `Update.exe` 应用调用已完成；双版本 installed / portable 真实升级门禁待首个可用于升级的 Release 形成后执行。
+状态：下载、取消、活动任务 / 其他实例阻断和 `Update.exe` 应用调用已完成；`v0.1.0` 已作为升级基线，双版本 installed / portable 真实升级门禁在下一稳定版本发布前后执行。
 
 ### 阶段 D：发布加固
 
