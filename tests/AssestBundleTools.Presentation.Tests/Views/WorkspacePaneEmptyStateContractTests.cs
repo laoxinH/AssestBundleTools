@@ -3,7 +3,7 @@ namespace AssestBundleTools.Presentation.Tests.Views;
 public sealed class WorkspacePaneEmptyStateContractTests
 {
     [Fact]
-    public void WorkspacePanes_ShouldUseCardedEmptyAndLoadingStates()
+    public void WorkspacePanes_ShouldUseBorderlessEmptyAndLoadingStates()
     {
         var repositoryRoot = FindRepositoryRoot();
         var pageXaml = File.ReadAllText(Path.Combine(
@@ -46,19 +46,22 @@ public sealed class WorkspacePaneEmptyStateContractTests
             "Bindings",
             "AssetPaneViewModel.Lists.cs"));
 
-        Assert.Contains("x:Name=\"BundlePaneEmptyStateCard\"", pageXaml);
+        Assert.Contains("x:Name=\"BundlePaneEmptyState\"", pageXaml);
         Assert.Contains("x:Name=\"BundlePaneEmptyStateTitleText\"", pageXaml);
         Assert.Contains("Text=\"{x:Bind ViewModel.BundlePane.BundlePaneEmptyStateTitleText, Mode=OneWay}\"", pageXaml);
-        Assert.Contains("x:Name=\"BundleSearchEmptyStateCard\"", pageXaml);
+        Assert.Contains("x:Name=\"BundleSearchEmptyState\"", pageXaml);
         Assert.Contains("x:Name=\"BundleSearchEmptyStateTitleText\"", pageXaml);
-        Assert.Contains("Style=\"{StaticResource WorkbenchEmptyStateCardStyle}\"", pageXaml);
-        Assert.Contains("x:Name=\"AssetPaneEmptyStateCard\"", assetPaneXaml);
-        Assert.Contains("Style=\"{StaticResource AssetPaneEmptyStateCardStyle}\"", assetPaneXaml);
+        Assert.Contains("Style=\"{StaticResource WorkbenchEmptyStateLayoutStyle}\"", pageXaml);
+        Assert.DoesNotContain("WorkbenchEmptyStateCardStyle", pageXaml);
+        Assert.Contains("x:Name=\"AssetPaneEmptyState\"", assetPaneXaml);
+        Assert.Contains("Style=\"{StaticResource AssetPaneEmptyStateLayoutStyle}\"", assetPaneXaml);
+        Assert.DoesNotContain("AssetPaneEmptyStateCardStyle", assetPaneXaml);
         Assert.Contains("Text=\"{x:Bind ViewModel.EmptyStateTitleText, Mode=OneWay}\"", assetPaneXaml);
         Assert.Contains("Visibility=\"{x:Bind ViewModel.EmptyStateLoadingVisibility, Mode=OneWay}\"", assetPaneXaml);
         Assert.Contains("Glyph=\"{x:Bind ViewModel.EmptyStateIconGlyph, Mode=OneWay}\"", assetPaneXaml);
-        Assert.Contains("x:Name=\"InspectorEmptyStateCard\"", inspectorXaml);
-        Assert.Contains("Style=\"{StaticResource InspectorEmptyStateCardStyle}\"", inspectorXaml);
+        Assert.Contains("x:Name=\"InspectorEmptyState\"", inspectorXaml);
+        Assert.Contains("Style=\"{StaticResource InspectorEmptyStateLayoutStyle}\"", inspectorXaml);
+        Assert.DoesNotContain("InspectorEmptyStateCardStyle", inspectorXaml);
         Assert.Contains("public bool IsListLoading", assetPaneViewModel);
         Assert.Contains("public string EmptyStateTitleText", assetPaneViewModel);
         Assert.Contains("IsListLoading = true;", assetPaneListViewModel);

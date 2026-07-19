@@ -12,8 +12,8 @@
 
     <UserControl.Resources>
         <Style
-            x:Key="InspectorEmptyStateCardStyle"
-            TargetType="Border">
+            x:Key="InspectorEmptyStateLayoutStyle"
+            TargetType="StackPanel">
             <Setter
                 Property="MaxWidth"
                 Value="390" />
@@ -27,17 +27,8 @@
                 Property="VerticalAlignment"
                 Value="Center" />
             <Setter
-                Property="Background"
-                Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
-            <Setter
-                Property="BorderBrush"
-                Value="{ThemeResource CardStrokeColorDefaultBrush}" />
-            <Setter
-                Property="BorderThickness"
-                Value="1" />
-            <Setter
-                Property="CornerRadius"
-                Value="8" />
+                Property="Spacing"
+                Value="12" />
         </Style>
 
         <Style
@@ -89,37 +80,31 @@
     </UserControl.Resources>
 
     <Grid>
-        <Border
-            x:Name="InspectorEmptyStateCard"
-            Style="{StaticResource InspectorEmptyStateCardStyle}"
+        <StackPanel
+            x:Name="InspectorEmptyState"
+            Style="{StaticResource InspectorEmptyStateLayoutStyle}"
             Visibility="{x:Bind ViewModel.EmptyStateVisibility, Mode=OneWay}">
-            <StackPanel
+            <Border
+                Width="52"
+                Height="52"
                 HorizontalAlignment="Center"
-                Spacing="12">
-                <Border
-                    Width="52"
-                    Height="52"
+                Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                CornerRadius="8">
+                <FontIcon
                     HorizontalAlignment="Center"
-                    Background="{ThemeResource SubtleFillColorSecondaryBrush}"
-                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                    BorderThickness="1"
-                    CornerRadius="8">
-                    <FontIcon
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center"
-                        FontFamily="{StaticResource AppIconFontFamily}"
-                        FontSize="23"
-                        Foreground="{ThemeResource AccentFillColorDefaultBrush}"
-                        Glyph="&#xE6E9;" />
-                </Border>
-                <TextBlock
-                    x:Name="EmptyStateTitleText"
-                    Style="{StaticResource InspectorEmptyStateTitleTextStyle}" />
-                <TextBlock
-                    Style="{StaticResource InspectorEmptyStateBodyTextStyle}"
-                    Text="{x:Bind ViewModel.EmptyStateText, Mode=OneWay}" />
-            </StackPanel>
-        </Border>
+                    VerticalAlignment="Center"
+                    FontFamily="{StaticResource AppIconFontFamily}"
+                    FontSize="23"
+                    Foreground="{ThemeResource AccentFillColorDefaultBrush}"
+                    Glyph="&#xE6E9;" />
+            </Border>
+            <TextBlock
+                x:Name="EmptyStateTitleText"
+                Style="{StaticResource InspectorEmptyStateTitleTextStyle}" />
+            <TextBlock
+                Style="{StaticResource InspectorEmptyStateBodyTextStyle}"
+                Text="{x:Bind ViewModel.EmptyStateText, Mode=OneWay}" />
+        </StackPanel>
 
         <Grid
             MinHeight="0"

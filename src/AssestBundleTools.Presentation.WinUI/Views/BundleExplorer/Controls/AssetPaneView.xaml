@@ -128,24 +128,19 @@
         </Style>
 
         <Style
-            x:Key="AssetPaneEmptyStateCardStyle"
-            TargetType="Border">
+            x:Key="AssetPaneEmptyStateLayoutStyle"
+            TargetType="StackPanel">
             <Setter Property="MaxWidth" Value="430" />
             <Setter Property="Padding" Value="24,22" />
             <Setter Property="HorizontalAlignment" Value="Center" />
             <Setter Property="VerticalAlignment" Value="Center" />
-            <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
-            <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Spacing" Value="12" />
         </Style>
 
         <Style
             x:Key="AssetPaneEmptyStateIconBadgeStyle"
             TargetType="Border">
             <Setter Property="Background" Value="{ThemeResource SubtleFillColorSecondaryBrush}" />
-            <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="8" />
         </Style>
 
@@ -764,48 +759,44 @@
                 </ListView.ItemTemplate>
             </ListView>
 
-            <Border
-                x:Name="AssetPaneEmptyStateCard"
-                Style="{StaticResource AssetPaneEmptyStateCardStyle}"
+            <StackPanel
+                x:Name="AssetPaneEmptyState"
+                Style="{StaticResource AssetPaneEmptyStateLayoutStyle}"
                 Visibility="{x:Bind ViewModel.EmptyStateVisibility, Mode=OneWay}">
-                <StackPanel
-                    HorizontalAlignment="Center"
-                    Spacing="12">
-                    <Grid
-                        Width="52"
-                        Height="52"
-                        HorizontalAlignment="Center">
-                        <ProgressRing
-                            Width="42"
-                            Height="42"
+                <Grid
+                    Width="52"
+                    Height="52"
+                    HorizontalAlignment="Center">
+                    <ProgressRing
+                        Width="42"
+                        Height="42"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        IsActive="{x:Bind ViewModel.IsListLoading, Mode=OneWay}"
+                        Visibility="{x:Bind ViewModel.EmptyStateLoadingVisibility, Mode=OneWay}" />
+                    <Border
+                        Style="{StaticResource AssetPaneEmptyStateIconBadgeStyle}"
+                        Visibility="{x:Bind ViewModel.EmptyStateIconVisibility, Mode=OneWay}">
+                        <FontIcon
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center"
-                            IsActive="{x:Bind ViewModel.IsListLoading, Mode=OneWay}"
-                            Visibility="{x:Bind ViewModel.EmptyStateLoadingVisibility, Mode=OneWay}" />
-                        <Border
-                            Style="{StaticResource AssetPaneEmptyStateIconBadgeStyle}"
-                            Visibility="{x:Bind ViewModel.EmptyStateIconVisibility, Mode=OneWay}">
-                            <FontIcon
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Center"
-                                FontFamily="{StaticResource AppIconFontFamily}"
-                                FontSize="23"
-                                Foreground="{ThemeResource AccentFillColorDefaultBrush}"
-                                Glyph="{x:Bind ViewModel.EmptyStateIconGlyph, Mode=OneWay}" />
-                        </Border>
-                    </Grid>
+                            FontFamily="{StaticResource AppIconFontFamily}"
+                            FontSize="23"
+                            Foreground="{ThemeResource AccentFillColorDefaultBrush}"
+                            Glyph="{x:Bind ViewModel.EmptyStateIconGlyph, Mode=OneWay}" />
+                    </Border>
+                </Grid>
 
-                    <TextBlock
-                        Style="{StaticResource AssetPaneEmptyStateTitleTextStyle}"
-                        Text="{x:Bind ViewModel.EmptyStateTitleText, Mode=OneWay}" />
-                    <TextBlock
-                        Style="{StaticResource AssetPaneEmptyStateBodyTextStyle}"
-                        Text="{x:Bind ViewModel.EmptyStateText, Mode=OneWay}" />
-                    <TextBlock
-                        x:Name="EmptyStateHintText"
-                        Style="{StaticResource AssetPaneEmptyStateHintTextStyle}" />
-                </StackPanel>
-            </Border>
+                <TextBlock
+                    Style="{StaticResource AssetPaneEmptyStateTitleTextStyle}"
+                    Text="{x:Bind ViewModel.EmptyStateTitleText, Mode=OneWay}" />
+                <TextBlock
+                    Style="{StaticResource AssetPaneEmptyStateBodyTextStyle}"
+                    Text="{x:Bind ViewModel.EmptyStateText, Mode=OneWay}" />
+                <TextBlock
+                    x:Name="EmptyStateHintText"
+                    Style="{StaticResource AssetPaneEmptyStateHintTextStyle}" />
+            </StackPanel>
         </Grid>
     </Grid>
 </UserControl>

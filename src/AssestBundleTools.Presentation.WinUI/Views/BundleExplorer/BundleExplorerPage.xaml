@@ -56,16 +56,13 @@
         </Style>
 
         <Style
-            x:Key="WorkbenchEmptyStateCardStyle"
-            TargetType="Border">
+            x:Key="WorkbenchEmptyStateLayoutStyle"
+            TargetType="StackPanel">
             <Setter Property="MaxWidth" Value="292" />
             <Setter Property="Padding" Value="20" />
             <Setter Property="HorizontalAlignment" Value="Center" />
             <Setter Property="VerticalAlignment" Value="Center" />
-            <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
-            <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Spacing" Value="12" />
         </Style>
 
         <Style
@@ -75,8 +72,6 @@
             <Setter Property="Height" Value="48" />
             <Setter Property="HorizontalAlignment" Value="Center" />
             <Setter Property="Background" Value="{ThemeResource SubtleFillColorSecondaryBrush}" />
-            <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="8" />
         </Style>
 
@@ -870,53 +865,43 @@
                     <Grid
                         Grid.Row="2"
                         MinHeight="0">
-                        <Border
-                            x:Name="BundlePaneEmptyStateCard"
-                            Style="{StaticResource WorkbenchEmptyStateCardStyle}"
+                        <StackPanel
+                            x:Name="BundlePaneEmptyState"
+                            Style="{StaticResource WorkbenchEmptyStateLayoutStyle}"
                             Visibility="{x:Bind ViewModel.BundlePane.BundlePaneEmptyStateVisibility, Mode=OneWay}">
-                            <StackPanel
-                                HorizontalAlignment="Center"
-                                Spacing="12">
-                                <Border
-                                    Style="{StaticResource WorkbenchEmptyStateIconBadgeStyle}">
-                                    <FontIcon
-                                        Style="{StaticResource WorkbenchEmptyStateIconStyle}"
-                                        Glyph="&#xE8EB;" />
-                                </Border>
-                                <TextBlock
-                                    x:Name="BundlePaneEmptyStateTitleText"
-                                    Style="{StaticResource WorkbenchEmptyStateTitleTextStyle}"
-                                    Text="{x:Bind ViewModel.BundlePane.BundlePaneEmptyStateTitleText, Mode=OneWay}" />
-                                <TextBlock
-                                    x:Name="NoWorkspaceText"
-                                    Style="{StaticResource WorkbenchEmptyStateBodyTextStyle}"
-                                    Text="{x:Bind ViewModel.BundlePane.BundlePaneEmptyStateText, Mode=OneWay}" />
-                            </StackPanel>
-                        </Border>
+                            <Border Style="{StaticResource WorkbenchEmptyStateIconBadgeStyle}">
+                                <FontIcon
+                                    Style="{StaticResource WorkbenchEmptyStateIconStyle}"
+                                    Glyph="&#xE8EB;" />
+                            </Border>
+                            <TextBlock
+                                x:Name="BundlePaneEmptyStateTitleText"
+                                Style="{StaticResource WorkbenchEmptyStateTitleTextStyle}"
+                                Text="{x:Bind ViewModel.BundlePane.BundlePaneEmptyStateTitleText, Mode=OneWay}" />
+                            <TextBlock
+                                x:Name="NoWorkspaceText"
+                                Style="{StaticResource WorkbenchEmptyStateBodyTextStyle}"
+                                Text="{x:Bind ViewModel.BundlePane.BundlePaneEmptyStateText, Mode=OneWay}" />
+                        </StackPanel>
 
-                        <Border
-                            x:Name="BundleSearchEmptyStateCard"
-                            Style="{StaticResource WorkbenchEmptyStateCardStyle}"
+                        <StackPanel
+                            x:Name="BundleSearchEmptyState"
+                            Style="{StaticResource WorkbenchEmptyStateLayoutStyle}"
                             Visibility="{x:Bind ViewModel.BundlePane.BundleSearchEmptyStateVisibility, Mode=OneWay}">
-                            <StackPanel
-                                HorizontalAlignment="Center"
-                                Spacing="12">
-                                <Border
-                                    Style="{StaticResource WorkbenchEmptyStateIconBadgeStyle}">
-                                    <FontIcon
-                                        Style="{StaticResource WorkbenchEmptyStateIconStyle}"
-                                        Glyph="&#xEFD7;" />
-                                </Border>
-                                <TextBlock
-                                    x:Name="BundleSearchEmptyStateTitleText"
-                                    Style="{StaticResource WorkbenchEmptyStateTitleTextStyle}"
-                                    Text="{x:Bind ViewModel.BundlePane.BundleSearchEmptyStateTitleText, Mode=OneWay}" />
-                                <TextBlock
-                                    x:Name="BundleSearchEmptyStateText"
-                                    Style="{StaticResource WorkbenchEmptyStateBodyTextStyle}"
-                                    Text="{x:Bind ViewModel.BundlePane.BundleSearchEmptyStateText, Mode=OneWay}" />
-                            </StackPanel>
-                        </Border>
+                            <Border Style="{StaticResource WorkbenchEmptyStateIconBadgeStyle}">
+                                <FontIcon
+                                    Style="{StaticResource WorkbenchEmptyStateIconStyle}"
+                                    Glyph="&#xEFD7;" />
+                            </Border>
+                            <TextBlock
+                                x:Name="BundleSearchEmptyStateTitleText"
+                                Style="{StaticResource WorkbenchEmptyStateTitleTextStyle}"
+                                Text="{x:Bind ViewModel.BundlePane.BundleSearchEmptyStateTitleText, Mode=OneWay}" />
+                            <TextBlock
+                                x:Name="BundleSearchEmptyStateText"
+                                Style="{StaticResource WorkbenchEmptyStateBodyTextStyle}"
+                                Text="{x:Bind ViewModel.BundlePane.BundleSearchEmptyStateText, Mode=OneWay}" />
+                        </StackPanel>
 
                         <ScrollViewer
                             MinHeight="0"
