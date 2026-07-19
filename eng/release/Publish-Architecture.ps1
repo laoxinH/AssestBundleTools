@@ -35,7 +35,10 @@ Set-Content -LiteralPath $releaseNotesPath -Encoding utf8 -Value "AssestBundleTo
 
 Push-Location $repoRoot
 try {
-    dotnet restore $projectPath -p:Platform=$($configuration.Platform) -r $RuntimeIdentifier
+    dotnet restore $projectPath `
+        -p:Platform=$($configuration.Platform) `
+        -p:PublishReadyToRun=true `
+        -r $RuntimeIdentifier
     if ($LASTEXITCODE -ne 0) { throw 'dotnet restore failed.' }
 
     dotnet publish $projectPath `
