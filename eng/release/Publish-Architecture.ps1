@@ -19,6 +19,11 @@ $architectureOutput = Join-Path $outputRootPath $RuntimeIdentifier
 $publishDirectory = Join-Path $architectureOutput 'publish'
 $releaseDirectory = Join-Path $architectureOutput 'release'
 $releaseNotesPath = Join-Path $architectureOutput 'release-notes.md'
+$installerWelcomePath = Join-Path $repoRoot 'eng\installer\welcome.txt'
+$installerReadmePath = Join-Path $repoRoot 'eng\installer\readme.md'
+$installerLicensePath = Join-Path $repoRoot 'LICENSE.md'
+$setMsiInstallerOptionsPath = Join-Path $repoRoot 'eng\release\Set-MsiInstallerOptions.ps1'
+$testMsiInstallerContractPath = Join-Path $repoRoot 'eng\release\Test-MsiInstallerContract.ps1'
 
 $configuration = switch ($RuntimeIdentifier) {
     'win-x86' { @{ Platform = 'x86'; PackId = 'AssestBundleTools.win-x86'; Machine = 0x014c } }
@@ -65,8 +70,12 @@ try {
         --packAuthors 'laoxinH' `
         --releaseNotes $releaseNotesPath `
         --icon (Join-Path $publishDirectory 'Assets\AppIcon.ico') `
-        --shortcuts 'StartMenuRoot' `
-        --instLocation 'PerUser' `
+        --shortcuts 'Desktop,StartMenuRoot' `
+        --msi true `
+        --instWelcome $installerWelcomePath `
+        --instLicense $installerLicensePath `
+        --instReadme $installerReadmePath `
+        --instLocation 'Either' `
         --outputDir $releaseDirectory
     if ($LASTEXITCODE -ne 0) { throw 'Velopack packaging failed.' }
 }
@@ -102,16 +111,43 @@ if ($productVersion -ne $Version) {
 }
 
 $setup = Get-ChildItem -LiteralPath $releaseDirectory -Filter '*Setup.exe' | Select-Object -First 1
+$installerMsi = Get-ChildItem -LiteralPath $releaseDirectory -Filter '*.msi' | Select-Object -First 1
 $portable = Get-ChildItem -LiteralPath $releaseDirectory -Filter '*Portable.zip' | Select-Object -First 1
 $feed = Join-Path $releaseDirectory "releases.$RuntimeIdentifier.json"
-if ($null -eq $setup -or $null -eq $portable -or -not (Test-Path -LiteralPath $feed)) {
-    throw 'Velopack output is incomplete: Setup, Portable, or release feed is missing.'
+if ($null -eq $setup -or $null -eq $installerMsi -or $null -eq $portable -or -not (Test-Path -LiteralPath $feed)) {
+    throw 'Velopack output is incomplete: Setup, MSI, Portable, or release feed is missing.'
 }
 
-$setupName = "AssestBundleTools-$Version-$RuntimeIdentifier-Setup.exe"
+$installerName = "AssestBundleTools-$Version-$RuntimeIdentifier-Installer.msi"
 $portableName = "AssestBundleTools-$Version-$RuntimeIdentifier-Portable.zip"
-Move-Item -LiteralPath $setup.FullName -Destination (Join-Path $releaseDirectory $setupName) -Force
+& $setMsiInstallerOptionsPath -MsiPath $installerMsi.FullName -RuntimeIdentifier $RuntimeIdentifier
+& $testMsiInstallerContractPath -MsiPath $installerMsi.FullName -RuntimeIdentifier $RuntimeIdentifier
+Remove-Item -LiteralPath $setup.FullName -Force
+Move-Item -LiteralPath $installerMsi.FullName -Destination (Join-Path $releaseDirectory $installerName) -Force
 Move-Item -LiteralPath $portable.FullName -Destination (Join-Path $releaseDirectory $portableName) -Force
+
+$assetIndexPath = Join-Path $releaseDirectory "assets.$RuntimeIdentifier.json"
+$assetIndex = @(Get-Content -LiteralPath $assetIndexPath -Raw | ConvertFrom-Json)
+$publishedAssets = foreach ($asset in $assetIndex) {
+    if ($asset.Type -eq 'Installer') {
+        continue
+    }
+    switch ($asset.Type) {
+        'Msi' { $asset.RelativeFileName = $installerName }
+        'Portable' { $asset.RelativeFileName = $portableName }
+    }
+    $asset
+}
+$publishedAssets | ConvertTo-Json -Compress | Set-Content -LiteralPath $assetIndexPath -Encoding utf8
+if (@($publishedAssets).Count -ne 3) {
+    throw "Release asset index should contain MSI, Portable, and Full entries; found $(@($publishedAssets).Count)."
+}
+foreach ($asset in $publishedAssets) {
+    $assetPath = Join-Path $releaseDirectory $asset.RelativeFileName
+    if (-not (Test-Path -LiteralPath $assetPath)) {
+        throw "Release asset index references a missing file: $($asset.RelativeFileName)"
+    }
+}
 
 $hashLines = Get-ChildItem -LiteralPath $releaseDirectory -File |
     Sort-Object Name |

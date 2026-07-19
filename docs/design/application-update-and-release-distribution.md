@@ -14,14 +14,14 @@
 - GitHub Release 是公开发布与更新源；仓库及 Release 必须允许未登录用户读取。
 - 更新框架采用 Velopack，不自研文件替换协议。
 - Velopack 自带的独立 `Update.exe` 负责退出后的目录替换与重启，不新增维护成本更高的自制 updater。
-- 每个架构发布一个便携 ZIP 和一个按用户安装的 `Setup.exe`：x86、x64、ARM64 共 6 个用户入口文件。
-- 首版不把 MSI 作为必发产物。Velopack 可在后续通过 `--msi` 生成 MSI；只有出现组策略、静默部署或 `Program Files` 按机器安装需求时再启用。
+- 每个架构发布一个便携 ZIP 和一个标准 `Installer.msi`：x86、x64、ARM64 共 6 个用户入口文件。
+- MSI 使用 Velopack 标准目录和更新布局，同时提供欢迎、MIT 许可确认、当前用户 / 所有用户安装范围、安装目录和桌面快捷方式选项；不再把无交互的一键 `Setup.exe` 作为公开安装入口。
 - 便携版与安装版使用同一更新服务；运行时由 Velopack locator 判断安装模式，不根据路径或注册表做猜测。
 - 应用每次正常启动都调度一次后台更新检查；关于页提供显式“检查更新”入口。
 - 启动检查失败保持静默并写诊断；手动检查失败给出明确反馈。
 - 下载与替换必须由用户确认。更新不得在未完成的工作区操作、编辑草稿保存或导出任务中强制结束进程。
 
-Velopack 的按用户 `Setup.exe` 安装到 `%LocalAppData%`，不需要管理员权限。这里的“无需证书”指用户不需要自行安装证书或准备开发者证书；未签名 EXE 仍可能触发 SmartScreen、杀毒软件或组织策略警告，无法承诺所有 Windows 环境零拦截。发布者代码签名属于后续强烈建议项，不应被描述为用户侧安装前提。
+MSI 的当前用户模式默认安装到 `%LocalAppData%`，不需要管理员权限；所有用户模式默认安装到 `Program Files` 并由 Windows 请求提升权限。这里的“无需证书”指用户不需要自行安装证书或准备开发者证书；未签名 MSI 和 EXE 仍可能触发 SmartScreen、杀毒软件或组织策略警告，无法承诺所有 Windows 环境零拦截。发布者代码签名属于后续强烈建议项，不应被描述为用户侧安装前提。
 
 ### 2.1 当前实现状态
 
@@ -35,7 +35,7 @@ Velopack 的按用户 `Setup.exe` 安装到 `%LocalAppData%`，不需要管理�
 - `eng/release/Publish-Architecture.ps1` 的 x86 / x64 / ARM64 publish、PE 架构校验、Velopack 打包与 SHA-256 清单；
 - `.github/workflows/release.yml` 的测试分支 / 手动构建，以及 `v*` tag 草稿上传、资产名称 / API digest（缺失时下载回读 SHA-256）二次校验和自动公开流程。
 
-本地 x64 已完成 Setup、Portable、full nupkg、feed 和 checksum 的真实打包验证。2026-07-19 发布的首个稳定版本 `v0.1.0` 已通过 GitHub Actions x86 / x64 / ARM64 矩阵、22 项 Release 资产名称与 GitHub SHA-256 digest 校验并公开；installed / portable 从旧版本更新到新版本仍必须在形成下一正式版本后完成真实升级验收，未完成前不对外宣称该门禁已经通过。代码签名、MSI、preview 独立通道、增量包复用和官网 feed 镜像仍属于阶段 D。
+本地 x64 已完成旧版 Setup、Portable、full nupkg、feed 和 checksum 的真实打包验证。2026-07-19 发布的首个稳定版本 `v0.1.0` 已通过 GitHub Actions x86 / x64 / ARM64 矩阵、22 项 Release 资产名称与 GitHub SHA-256 digest 校验并公开；该版本仍使用旧的一键 Setup。MSI 向导从后续版本开始成为正式安装入口，其本地和 CI 验收状态必须在完成后追加记录。installed / portable 从旧版本更新到新版本仍必须在形成下一正式版本后完成真实升级验收，未完成前不对外宣称该门禁已经通过。代码签名、preview 独立通道、增量包复用和官网 feed 镜像仍属于阶段 D。
 
 ## 3. 目标与非目标
 
@@ -87,11 +87,11 @@ stable 客户端只读取非 draft、非 prerelease Release。预发布通道后
 
 | 架构 | 便携版 | 安装版 |
 | --- | --- | --- |
-| x86 | `AssestBundleTools-<version>-win-x86-Portable.zip` | `AssestBundleTools-<version>-win-x86-Setup.exe` |
-| x64 | `AssestBundleTools-<version>-win-x64-Portable.zip` | `AssestBundleTools-<version>-win-x64-Setup.exe` |
-| ARM64 | `AssestBundleTools-<version>-win-arm64-Portable.zip` | `AssestBundleTools-<version>-win-arm64-Setup.exe` |
+| x86 | `AssestBundleTools-<version>-win-x86-Portable.zip` | `AssestBundleTools-<version>-win-x86-Installer.msi` |
+| x64 | `AssestBundleTools-<version>-win-x64-Portable.zip` | `AssestBundleTools-<version>-win-x64-Installer.msi` |
+| ARM64 | `AssestBundleTools-<version>-win-arm64-Portable.zip` | `AssestBundleTools-<version>-win-arm64-Installer.msi` |
 
-Setup 使用 `PerUser` 语义，默认安装到 `%LocalAppData%`，创建稳定启动 stub、开始菜单项和卸载入口，不要求提升权限。用户需要自定义目录时使用 Setup 支持的安装目录参数；首版不提供复杂安装向导。
+Installer 使用 `Either` 语义。向导依次提供项目说明、MIT 许可确认、当前用户 / 所有用户范围、桌面快捷方式选项和独立安装目录页；当前用户模式不要求提升，所有用户模式在执行前显示 UAC 盾牌并请求提升。开始菜单快捷方式始终创建，桌面快捷方式默认勾选并允许取消。安装包继续创建稳定启动 stub、`Update.exe`、更新包目录和卸载入口，安装模式不会削弱应用内更新能力。
 
 ### 5.2 更新协议文件
 
@@ -147,7 +147,7 @@ Velopack updater 的等待超时不得作为常规“杀进程”手段。应用
 
 ### 7.1 安装版
 
-- 由 `Setup.exe` 安装并维护稳定入口、`Update.exe` 和当前版本目录。
+- 由 `Installer.msi` 安装并维护稳定入口、`Update.exe` 和当前版本目录。
 - 更新只替换框架管理的 current 内容。
 - 卸载由 Velopack / Windows 应用列表承载。
 - 用户设置、日志、缓存和工作区数据继续放在现有应用数据目录或工作区目录，不放入 current。
@@ -217,7 +217,7 @@ workflow 由 `v*` tag push 触发，建议分为以下阶段：
 3. **Pack matrix**
    - 每个架构用独立 pack id、runtime、channel 执行 `vpk pack`。
    - 拉取上一正式 Release 的同架构 feed / full package后再生成可选 delta；拉取失败时仍允许生成 full package，但必须记录原因。
-   - 生成 Portable ZIP、Setup.exe、full / delta 包和 feed。
+   - 生成 Portable ZIP、Installer.msi、full / delta 包和 feed；Velopack 同时产生的一键 Setup 不作为公开资产上传，资产索引在重命名后必须只引用实际上传文件。
 4. **Verify**
    - 校验用户入口文件、feed 引用、SHA-256、PE 架构和版本完全一致。
    - x86 / x64 运行启动 smoke；ARM64 在可用的原生 Windows ARM runner 或真实设备上 smoke。没有 ARM64 运行验证时不得把结构验证描述为已实机验证。
@@ -236,7 +236,7 @@ workflow 由 `v*` tag push 触发，建议分为以下阶段：
 - feed 只能选择当前架构、当前 channel 和高于当前版本的包。
 - 下载设置合理超时、大小上限、磁盘空间预检和取消。
 - 未签名版本允许作为早期公开包，但 UI / 文档必须如实说明可能出现 SmartScreen 警告。
-- 代码签名一旦启用，主 EXE、Setup、Update.exe 和 MSI 必须在发布前统一签名，并在 CI 验证签名链；不能只签安装器。
+- 代码签名一旦启用，主 EXE、Update.exe 和 MSI 必须在发布前统一签名，并在 CI 验证签名链；不能只签安装器。
 - 客户端不信任 Release Notes 中的可执行地址，也不从远端 JSON 接受任意命令行。
 
 ## 11. 错误与诊断
@@ -274,7 +274,8 @@ workflow 由 `v*` tag push 触发，建议分为以下阶段：
 
 每个架构至少验证：
 
-- 全新 Setup 安装、启动、卸载；
+- 全新 MSI 当前用户安装、启动、卸载，并检查桌面快捷方式默认值；
+- MSI 所有用户选项、UAC 提升提示和自定义安装目录；
 - Portable 解压启动；
 - 旧版到新版的安装版更新；
 - 旧版到新版的便携版更新；
@@ -287,10 +288,10 @@ workflow 由 `v*` tag push 触发，建议分为以下阶段：
 ### 阶段 A：发布基线
 
 - 添加 GitHub Actions tag workflow。
-- 用 Velopack 生成三架构 Portable + Setup + full package + feed。
+- 用 Velopack 生成三架构 Portable + Installer.msi + full package + feed。
 - 建立资产矩阵、版本、架构和 hash 验证；先完成手工安装 / 更新 smoke。
 
-状态：`v0.1.0` 的 GitHub Actions 三架构构建、PE / 版本校验、Setup / Portable / feed 发布和 Release digest 校验已完成。全新安装、启动和卸载仍需按真实设备验收记录持续补充；跨版本更新 smoke 等待下一稳定版本。
+状态：`v0.1.0` 的 GitHub Actions 三架构构建、PE / 版本校验、旧版 Setup / Portable / feed 发布和 Release digest 校验已完成。后续版本已将公开安装入口设计切换为 MSI。2026-07-19 已在本地 x64 完成欢迎 / 自述 / MIT 许可确认、当前用户 / 所有用户选项、默认当前用户、自定义安装目录、桌面快捷方式默认勾选与取消两条路径、开始菜单、稳定入口、`Update.exe`、应用启动和卸载清理的真实验证；所有用户模式的实际提升安装以及 x86 / ARM64 实机安装仍属于发布门禁。跨版本更新 smoke 等待下一稳定版本。
 
 ### 阶段 B：更新读取链路
 
@@ -309,7 +310,7 @@ workflow 由 `v*` tag push 触发，建议分为以下阶段：
 
 ### 阶段 D：发布加固
 
-- 增量包、官网 feed 镜像、代码签名、可选 MSI、preview channel 和失败恢复增强。
+- 增量包、官网 feed 镜像、代码签名、preview channel 和失败恢复增强。
 
 状态：未开始，保持后续范围。
 
