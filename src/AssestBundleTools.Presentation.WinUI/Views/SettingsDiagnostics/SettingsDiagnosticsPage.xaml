@@ -316,6 +316,13 @@
                         VerticalContentAlignment="Stretch"
                         Visibility="Collapsed" />
 
+                    <ContentControl
+                        x:Name="AboutSettingsPanel"
+                        MinHeight="0"
+                        HorizontalContentAlignment="Stretch"
+                        VerticalContentAlignment="Stretch"
+                        Visibility="Collapsed" />
+
                     <Grid
                         x:Name="LogCenterPanel"
                         MinHeight="0"

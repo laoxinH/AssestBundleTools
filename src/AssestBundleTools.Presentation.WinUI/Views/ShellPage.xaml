@@ -103,6 +103,15 @@
                                     Glyph="&#xE4FE;" />
                             </NavigationViewItem.Icon>
                         </NavigationViewItem>
+                        <NavigationViewItem
+                            x:Name="SettingsAboutNavItem"
+                            Tag="settings-diagnostics-about">
+                            <NavigationViewItem.Icon>
+                                <FontIcon
+                                    FontFamily="{StaticResource AppIconFontFamily}"
+                                    Glyph="&#xEA88;" />
+                            </NavigationViewItem.Icon>
+                        </NavigationViewItem>
                     </NavigationViewItem.MenuItems>
                 </NavigationViewItem>
             </NavigationView.MenuItems>

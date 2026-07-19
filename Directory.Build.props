@@ -1,4 +1,16 @@
 <Project>
+  <PropertyGroup>
+    <!-- 发布版本由 v<SemVer> Git tag 驱动；开发提交保留可识别的预览版本。 -->
+    <MinVerTagPrefix>v</MinVerTagPrefix>
+    <MinVerMinimumMajorMinor>0.1</MinVerMinimumMajorMinor>
+    <MinVerDefaultPreReleaseIdentifiers>preview.0</MinVerDefaultPreReleaseIdentifiers>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MinVer" Version="7.0.0" PrivateAssets="All" />
+  </ItemGroup>
+
   <!--
     统一 Debug 构建行为，保证跨项目断点、调用栈和符号加载更稳定，
     便于当前阶段先做 WinUI UI 链路的初步调试。

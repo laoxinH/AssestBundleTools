@@ -16,4 +16,5 @@ public static class ShellNavigationKeys
     public const string SettingsDiagnosticsPreferences = "settings-diagnostics-preferences";
     public const string SettingsDiagnosticsPerformanceCache = "settings-diagnostics-performance-cache";
     public const string SettingsDiagnosticsLogs = "settings-diagnostics-logs";
+    public const string SettingsDiagnosticsAbout = "settings-diagnostics-about";
 }

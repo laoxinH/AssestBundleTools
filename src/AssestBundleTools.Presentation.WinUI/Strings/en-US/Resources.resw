@@ -3444,6 +3444,9 @@
   <data name="SettingsDiagnosticsPage.Navigation.Logs" xml:space="preserve">
     <value>Log Center</value>
   </data>
+  <data name="SettingsDiagnosticsPage.Navigation.About" xml:space="preserve">
+    <value>About</value>
+  </data>
   <data name="SettingsDiagnosticsPage.WorkspaceStatusTitleText.Text" xml:space="preserve">
     <value>Active Workspace</value>
   </data>
@@ -3731,6 +3734,60 @@
   </data>
   <data name="SettingsDiagnosticsPage.LogCenterHintText.Text" xml:space="preserve">
     <value>This area continuously records workspace loading, asset focus changes, tab switches, and exception details for troubleshooting and export.</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.About.ProductDescription" xml:space="preserve">
+    <value>A workspace tool for browsing, previewing, extracting, replacing, and rebuilding Unity AssetBundle content.</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.About.Version.Format" xml:space="preserve">
+    <value>Version {0}</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.About.VersionSource" xml:space="preserve">
+    <value>The version is generated from the release Git tag and is shared by release packages and future update comparisons.</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.About.Links.Title" xml:space="preserve">
+    <value>Project &amp; Support</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.About.Links.Hint" xml:space="preserve">
+    <value>View the source, release history, and related MOD Lab content.</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.About.GitHub.Title" xml:space="preserve">
+    <value>GitHub Repository</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.About.GitHub.Address" xml:space="preserve">
+    <value>laoxinH/AssestBundleTools</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.About.Website.Title" xml:space="preserve">
+    <value>Official Website</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.About.Website.Address" xml:space="preserve">
+    <value>www.modwu.com</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.About.OpenLinkButton" xml:space="preserve">
+    <value>Open</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.About.Credits.Title" xml:space="preserve">
+    <value>Credits</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.About.Credits.Hint" xml:space="preserve">
+    <value>Project stewardship, visual credit, and supported platforms.</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.About.Maintainer.Label" xml:space="preserve">
+    <value>Maintainer</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.About.Maintainer.Value" xml:space="preserve">
+    <value>laoxinH</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.About.IconArtist.Label" xml:space="preserve">
+    <value>Icon Artist</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.About.IconArtist.Value" xml:space="preserve">
+    <value>青雷</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.About.Platform.Label" xml:space="preserve">
+    <value>Platforms</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.About.Platform.Value" xml:space="preserve">
+    <value>Windows 10 / 11 · x86 / x64 / ARM64</value>
   </data>
   <data name="Diagnostics.Log.EmptyState" xml:space="preserve">
     <value>Application-level runtime logs, error records, and later diagnostic exports will appear here.</value>

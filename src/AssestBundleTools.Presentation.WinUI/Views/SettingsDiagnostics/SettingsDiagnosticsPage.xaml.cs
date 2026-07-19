@@ -14,6 +14,7 @@ public sealed partial class SettingsDiagnosticsPage : Page
     private const double DefaultContentColumnMaxWidth = 980;
     private readonly SettingsPreferencesView _preferencesView;
     private readonly SettingsPerformanceCacheView _performanceCacheView;
+    private readonly SettingsAboutView _aboutView;
 
     public SettingsDiagnosticsPage()
     {
@@ -29,8 +30,10 @@ public sealed partial class SettingsDiagnosticsPage : Page
         InitializeComponent();
         _preferencesView = new SettingsPreferencesView(ViewModel);
         _performanceCacheView = new SettingsPerformanceCacheView(ViewModel);
+        _aboutView = new SettingsAboutView();
         PreferenceSettingsPanel.Content = _preferencesView;
         PerformanceCacheSettingsPanel.Content = _performanceCacheView;
+        AboutSettingsPanel.Content = _aboutView;
         ApplyLocalizedText();
         ActivateSection(SettingsDiagnosticsSection.Preferences);
         Loaded += OnLoaded;
@@ -58,6 +61,7 @@ public sealed partial class SettingsDiagnosticsPage : Page
         PreferenceSettingsPanel.Visibility = ToVisibility(section == SettingsDiagnosticsSection.Preferences);
         PerformanceCacheSettingsPanel.Visibility = ToVisibility(section == SettingsDiagnosticsSection.PerformanceCache);
         LogCenterPanel.Visibility = ToVisibility(section == SettingsDiagnosticsSection.Logs);
+        AboutSettingsPanel.Visibility = ToVisibility(section == SettingsDiagnosticsSection.About);
     }
 
     internal void ApplyNavigationPaneLayout(bool isPaneOpen, double paneWidthDifference)
@@ -69,6 +73,7 @@ public sealed partial class SettingsDiagnosticsPage : Page
         LogCenterContentColumn.MaxWidth = contentColumnMaxWidth;
         _preferencesView.SetContentColumnMaxWidth(contentColumnMaxWidth);
         _performanceCacheView.SetContentColumnMaxWidth(contentColumnMaxWidth);
+        _aboutView.SetContentColumnMaxWidth(contentColumnMaxWidth);
     }
 
     private static Visibility ToVisibility(bool isVisible) =>

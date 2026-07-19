@@ -3444,6 +3444,9 @@
   <data name="SettingsDiagnosticsPage.Navigation.Logs" xml:space="preserve">
     <value>日志中心</value>
   </data>
+  <data name="SettingsDiagnosticsPage.Navigation.About" xml:space="preserve">
+    <value>关于</value>
+  </data>
   <data name="SettingsDiagnosticsPage.WorkspaceStatusTitleText.Text" xml:space="preserve">
     <value>活动工作区</value>
   </data>
@@ -3731,6 +3734,60 @@
   </data>
   <data name="SettingsDiagnosticsPage.LogCenterHintText.Text" xml:space="preserve">
     <value>这里会持续记录工作区加载、资源定位、标签页切换与异常信息，方便后续定位问题和导出诊断结果。</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.About.ProductDescription" xml:space="preserve">
+    <value>面向 Unity AssetBundle 的工作区工具，用于浏览、预览、提取、替换与重新构建游戏资源。</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.About.Version.Format" xml:space="preserve">
+    <value>版本 {0}</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.About.VersionSource" xml:space="preserve">
+    <value>版本由发布 Git tag 生成，并作为发布包与后续更新比较的统一依据。</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.About.Links.Title" xml:space="preserve">
+    <value>项目与支持</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.About.Links.Hint" xml:space="preserve">
+    <value>查看源代码、发布记录与 MOD 实验室相关内容。</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.About.GitHub.Title" xml:space="preserve">
+    <value>GitHub 仓库</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.About.GitHub.Address" xml:space="preserve">
+    <value>laoxinH/AssestBundleTools</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.About.Website.Title" xml:space="preserve">
+    <value>官方网站</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.About.Website.Address" xml:space="preserve">
+    <value>www.modwu.com</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.About.OpenLinkButton" xml:space="preserve">
+    <value>打开</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.About.Credits.Title" xml:space="preserve">
+    <value>制作信息</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.About.Credits.Hint" xml:space="preserve">
+    <value>项目维护、视觉署名与当前支持平台。</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.About.Maintainer.Label" xml:space="preserve">
+    <value>项目维护</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.About.Maintainer.Value" xml:space="preserve">
+    <value>laoxinH</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.About.IconArtist.Label" xml:space="preserve">
+    <value>图标绘制</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.About.IconArtist.Value" xml:space="preserve">
+    <value>青雷</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.About.Platform.Label" xml:space="preserve">
+    <value>支持平台</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.About.Platform.Value" xml:space="preserve">
+    <value>Windows 10 / 11 · x86 / x64 / ARM64</value>
   </data>
   <data name="Diagnostics.Log.EmptyState" xml:space="preserve">
     <value>这里会显示应用级运行日志、错误记录以及后续导出的诊断信息。</value>

@@ -193,3 +193,9 @@ $env:ABT_SPINE_D3D11_DIAGNOSTICS = '1'
 该诊断只写入调试输出，记录 native `SwapChainPanel` 绑定 readiness / strategy、device / resize、batch renderer 预热、Texture2D decode、GPU texture upload、runtime frame generation、节流后的 frame batch / vertex / index / elapsed 数据、`uploadMs / projectMs / clipMs / drawMs / presentMs` 分段耗时、播放 / 暂停 / animation / skin / setup pose / step 等交互事件，以及 fallback 或 device lost 恢复异常类型；不在 UI 中显示原始 D3D 异常。当前 D3D 后端会在 GPU 上传成功后释放 CPU 侧 BGRA 解码页，并在渲染上传动态 buffer 时用池化数组直接做 clip-space 投影，因此 `clipMs` 不再对应一份长期常驻的 clip-space batch 缓存。实时播放主线不再默认预热整段 sampled frame batch，旧 batch 预热只保留在兼容或诊断语境中。
 
 真实样本基线建议至少记录以下操作的连续日志：首帧贴图 decode / upload，正常播放 10 秒，窗口缩放，切 animation，切 skin，暂停 / 恢复，逐帧，进度拖动，重开同一 Spine 组。当前样本记录保存在 [`spine-d3d11-performance-baseline.md`](spine-d3d11-performance-baseline.md)：`char_2026_yu_nian#12.ab` 已验证当前 runtime playback session + D3D 当前帧路径达到 `60 FPS` 交互观感；默认启用后仍需要补齐更多设备、内存占用、高刷新目标和设备恢复路径验证。
+
+## 10. Git tag 与应用版本
+
+应用版本以 Git tag 为唯一发布依据，发布 tag 使用 `v<SemVer>` 格式，例如 `v1.2.3` 或 `v1.2.3-beta.1`。构建通过 MinVer 从当前提交及其 tag 历史生成 `Version / FileVersion / InformationalVersion`；“关于”页面读取入口程序集的 `AssemblyInformationalVersion`，因此发布包展示值与后续 GitHub Release / 更新比较使用同一 SemVer 来源。
+
+没有版本 tag 的本地开发提交会生成带预发布标识和提交高度的版本，不应冒充正式发布。GitHub Actions 打包时必须检出完整 tag 历史，例如为 `actions/checkout` 设置 `fetch-depth: 0`；从浅克隆或源码压缩包构建时，也可通过 `MinVerVersionOverride` 显式传入发布版本。正式发布不得再单独手改 UI 文案或程序集版本。

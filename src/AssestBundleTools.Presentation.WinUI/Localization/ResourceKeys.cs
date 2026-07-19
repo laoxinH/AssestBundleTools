@@ -366,6 +366,7 @@ public static class ResourceKeys
     public const string SettingsDiagnosticsNavPreferences = "SettingsDiagnosticsPage.Navigation.Preferences";
     public const string SettingsDiagnosticsNavPerformanceCache = "SettingsDiagnosticsPage.Navigation.PerformanceCache";
     public const string SettingsDiagnosticsNavLogs = "SettingsDiagnosticsPage.Navigation.Logs";
+    public const string SettingsDiagnosticsNavAbout = "SettingsDiagnosticsPage.Navigation.About";
     public const string SettingsDiagnosticsWorkspaceStatusTitle = "SettingsDiagnosticsPage.WorkspaceStatusTitleText.Text";
     public const string SettingsDiagnosticsWorkspaceStatusHint = "SettingsDiagnosticsPage.WorkspaceStatusHintText.Text";
     public const string SettingsDiagnosticsActiveWorkspaceEmpty = "SettingsDiagnosticsPage.ActiveWorkspaceEmptyText.Text";
@@ -462,6 +463,24 @@ public static class ResourceKeys
     public const string SettingsDiagnosticsBundleArtifactCacheClearSucceededFormat = "SettingsDiagnosticsPage.BundleArtifactCache.ClearSucceeded.Format";
     public const string SettingsDiagnosticsLogCenterTitle = "SettingsDiagnosticsPage.LogCenterTitleText.Text";
     public const string SettingsDiagnosticsLogCenterHint = "SettingsDiagnosticsPage.LogCenterHintText.Text";
+    public const string SettingsDiagnosticsAboutProductDescription = "SettingsDiagnosticsPage.About.ProductDescription";
+    public const string SettingsDiagnosticsAboutVersionFormat = "SettingsDiagnosticsPage.About.Version.Format";
+    public const string SettingsDiagnosticsAboutVersionSource = "SettingsDiagnosticsPage.About.VersionSource";
+    public const string SettingsDiagnosticsAboutLinksTitle = "SettingsDiagnosticsPage.About.Links.Title";
+    public const string SettingsDiagnosticsAboutLinksHint = "SettingsDiagnosticsPage.About.Links.Hint";
+    public const string SettingsDiagnosticsAboutGitHubTitle = "SettingsDiagnosticsPage.About.GitHub.Title";
+    public const string SettingsDiagnosticsAboutGitHubAddress = "SettingsDiagnosticsPage.About.GitHub.Address";
+    public const string SettingsDiagnosticsAboutWebsiteTitle = "SettingsDiagnosticsPage.About.Website.Title";
+    public const string SettingsDiagnosticsAboutWebsiteAddress = "SettingsDiagnosticsPage.About.Website.Address";
+    public const string SettingsDiagnosticsAboutOpenLinkButton = "SettingsDiagnosticsPage.About.OpenLinkButton";
+    public const string SettingsDiagnosticsAboutCreditsTitle = "SettingsDiagnosticsPage.About.Credits.Title";
+    public const string SettingsDiagnosticsAboutCreditsHint = "SettingsDiagnosticsPage.About.Credits.Hint";
+    public const string SettingsDiagnosticsAboutMaintainerLabel = "SettingsDiagnosticsPage.About.Maintainer.Label";
+    public const string SettingsDiagnosticsAboutMaintainerValue = "SettingsDiagnosticsPage.About.Maintainer.Value";
+    public const string SettingsDiagnosticsAboutIconArtistLabel = "SettingsDiagnosticsPage.About.IconArtist.Label";
+    public const string SettingsDiagnosticsAboutIconArtistValue = "SettingsDiagnosticsPage.About.IconArtist.Value";
+    public const string SettingsDiagnosticsAboutPlatformLabel = "SettingsDiagnosticsPage.About.Platform.Label";
+    public const string SettingsDiagnosticsAboutPlatformValue = "SettingsDiagnosticsPage.About.Platform.Value";
 
     public const string BundleExplorerBundleSearchEmptyStateTitle = "BundleExplorer.EmptyState.BundleSearchNoMatch.Title";
     public const string BundleExplorerBundleSearchEmptyStateFormat = "BundleExplorer.EmptyState.BundleSearchNoMatch.Format";

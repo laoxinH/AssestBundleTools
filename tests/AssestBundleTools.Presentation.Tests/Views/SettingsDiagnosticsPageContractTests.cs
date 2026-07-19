@@ -80,6 +80,23 @@ public sealed class SettingsDiagnosticsPageContractTests
             "SettingsDiagnostics",
             "Controls",
             "SettingsPerformanceCacheView.xaml.cs"));
+        var aboutXaml = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "Views",
+            "SettingsDiagnostics",
+            "Controls",
+            "SettingsAboutView.xaml"));
+        var aboutCode = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "Views",
+            "SettingsDiagnostics",
+            "Controls",
+            "SettingsAboutView.xaml.cs"));
+        var buildProps = File.ReadAllText(Path.Combine(repositoryRoot, "Directory.Build.props"));
         var pageResources = File.ReadAllText(Path.Combine(
             repositoryRoot,
             "src",
@@ -106,6 +123,7 @@ public sealed class SettingsDiagnosticsPageContractTests
         Assert.Contains("x:Name=\"SettingsPreferencesNavItem\"", shellXaml);
         Assert.Contains("x:Name=\"SettingsPerformanceCacheNavItem\"", shellXaml);
         Assert.Contains("x:Name=\"SettingsLogsNavItem\"", shellXaml);
+        Assert.Contains("x:Name=\"SettingsAboutNavItem\"", shellXaml);
         Assert.DoesNotContain("x:Name=\"SettingsSubPageNavigationView\"", pageXaml);
         Assert.DoesNotContain("<NavigationView", pageXaml);
         Assert.DoesNotContain("x:Name=\"SettingsDiagnosticsNavItem\"", pageXaml);
@@ -113,12 +131,15 @@ public sealed class SettingsDiagnosticsPageContractTests
         Assert.Contains("x:Name=\"PreferenceSettingsPanel\"", pageXaml);
         Assert.Contains("x:Name=\"PerformanceCacheSettingsPanel\"", pageXaml);
         Assert.Contains("x:Name=\"LogCenterPanel\"", pageXaml);
+        Assert.Contains("x:Name=\"AboutSettingsPanel\"", pageXaml);
         Assert.DoesNotContain("x:Name=\"DiagnosticsSettingsPanel\"", pageXaml);
         Assert.Contains("SettingsDiagnosticsResources.xaml", pageXaml);
         Assert.Contains("SettingsDiagnosticsResources.xaml", preferencesXaml);
         Assert.Contains("SettingsDiagnosticsResources.xaml", performanceCacheXaml);
+        Assert.Contains("SettingsDiagnosticsResources.xaml", aboutXaml);
         Assert.Contains("new SettingsPreferencesView(ViewModel)", pageCode);
         Assert.Contains("new SettingsPerformanceCacheView(ViewModel)", pageCode);
+        Assert.Contains("new SettingsAboutView()", pageCode);
         Assert.Contains("ActivateSection(SettingsDiagnosticsSection.Preferences)", pageCode);
         Assert.Contains("ContentFrame.Content is SettingsDiagnosticsPage", shellCode);
         Assert.Contains("if (!sender.IsPaneOpen)", shellCode);
@@ -132,15 +153,18 @@ public sealed class SettingsDiagnosticsPageContractTests
         Assert.Contains("SettingsDiagnosticsNavPreferences", shellCode);
         Assert.Contains("SettingsDiagnosticsNavPerformanceCache", shellCode);
         Assert.Contains("SettingsDiagnosticsNavLogs", shellCode);
+        Assert.Contains("SettingsDiagnosticsNavAbout", shellCode);
         Assert.Contains("SettingsDiagnosticsWorkspace", shellNavigationKeys);
         Assert.Contains("SettingsDiagnosticsPreferences", shellNavigationKeys);
         Assert.Contains("SettingsDiagnosticsPerformanceCache", shellNavigationKeys);
         Assert.Contains("SettingsDiagnosticsLogs", shellNavigationKeys);
+        Assert.Contains("SettingsDiagnosticsAbout", shellNavigationKeys);
         Assert.Contains("x:Key=\"SettingsDiagnosticsContentColumnStyle\"", pageResources);
         Assert.Contains("x:Name=\"WorkspaceSettingsContentColumn\"", pageXaml);
         Assert.Contains("x:Name=\"LogCenterContentColumn\"", pageXaml);
         Assert.Contains("x:Name=\"PreferenceSettingsContentColumn\"", preferencesXaml);
         Assert.Contains("x:Name=\"PerformanceCacheSettingsContentColumn\"", performanceCacheXaml);
+        Assert.Contains("x:Name=\"AboutSettingsContentColumn\"", aboutXaml);
         Assert.Contains("DefaultContentColumnMaxWidth + reclaimedWidth", pageCode);
         Assert.Contains("SetContentColumnMaxWidth(contentColumnMaxWidth)", pageCode);
         Assert.Contains("x:Key=\"SettingsDiagnosticsSurfaceStyle\"", pageResources);
@@ -149,7 +173,8 @@ public sealed class SettingsDiagnosticsPageContractTests
         Assert.Contains("Width=\"{Binding ViewportWidth, ElementName=WorkspaceSettingsPanel}\"", pageXaml);
         Assert.Contains("Width=\"{Binding ViewportWidth, ElementName=PreferenceSettingsScrollViewer}\"", preferencesXaml);
         Assert.Contains("Width=\"{Binding ViewportWidth, ElementName=PerformanceCacheSettingsScrollViewer}\"", performanceCacheXaml);
-        Assert.DoesNotContain("MaxWidth=\"900\"", string.Concat(pageXaml, preferencesXaml, performanceCacheXaml));
+        Assert.Contains("Width=\"{Binding ViewportWidth, ElementName=AboutSettingsScrollViewer}\"", aboutXaml);
+        Assert.DoesNotContain("MaxWidth=\"900\"", string.Concat(pageXaml, preferencesXaml, performanceCacheXaml, aboutXaml));
         Assert.Contains("x:Key=\"SettingsDiagnosticsSettingRowStyle\"", pageResources);
         Assert.Contains("x:Key=\"SettingsDiagnosticsSettingIconStyle\"", pageResources);
         Assert.Contains("x:Key=\"SettingsDiagnosticsSettingDescriptionTextStyle\"", pageResources);
@@ -183,8 +208,15 @@ public sealed class SettingsDiagnosticsPageContractTests
         Assert.Contains("SettingsDiagnosticsDisplayLanguageSaveFailedMessage", resourceKeys);
         Assert.Contains("SettingsDiagnosticsBundleArtifactCacheMaximumSizeRowDescription", performanceCacheCode);
         Assert.Contains("SettingsDiagnosticsNavLogs", resourceKeys);
+        Assert.Contains("SettingsDiagnosticsNavAbout", resourceKeys);
         Assert.Contains("SettingsDiagnosticsRestoreLastWorkspaceRowDescription", resourceKeys);
         Assert.Contains("SettingsDiagnosticsBundleArtifactCacheMaximumSizeRowDescription", resourceKeys);
+        Assert.Contains("ms-appx:///Assets/AppLogo.png", aboutXaml);
+        Assert.Contains("https://github.com/laoxinH/AssestBundleTools", aboutXaml);
+        Assert.Contains("https://www.modwu.com/", aboutXaml);
+        Assert.Contains("AssemblyAppVersionProvider", aboutCode);
+        Assert.Contains("MinVerTagPrefix>v</MinVerTagPrefix>", buildProps);
+        Assert.Contains("PackageReference Include=\"MinVer\" Version=\"7.0.0\"", buildProps);
     }
 
     private static string FindRepositoryRoot()

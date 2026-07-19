@@ -8,5 +8,6 @@ internal enum SettingsDiagnosticsSection
     Workspace,
     Preferences,
     PerformanceCache,
-    Logs
+    Logs,
+    About
 }

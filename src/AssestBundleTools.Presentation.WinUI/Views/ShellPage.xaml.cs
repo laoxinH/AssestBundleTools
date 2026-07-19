@@ -348,6 +348,8 @@ public sealed partial class ShellPage : Page
                 SettingsDiagnosticsSection.PerformanceCache),
             ShellNavigationKeys.SettingsDiagnosticsLogs => CreateSettingsNavigationTarget(
                 SettingsDiagnosticsSection.Logs),
+            ShellNavigationKeys.SettingsDiagnosticsAbout => CreateSettingsNavigationTarget(
+                SettingsDiagnosticsSection.About),
             _ => CreateNavigationTarget(
                 _windowMode == ShellWindowMode.Workspace
                     ? ShellNavigationKeys.Workbench
@@ -360,7 +362,8 @@ public sealed partial class ShellPage : Page
             or ShellNavigationKeys.SettingsDiagnosticsWorkspace
             or ShellNavigationKeys.SettingsDiagnosticsPreferences
             or ShellNavigationKeys.SettingsDiagnosticsPerformanceCache
-            or ShellNavigationKeys.SettingsDiagnosticsLogs;
+            or ShellNavigationKeys.SettingsDiagnosticsLogs
+            or ShellNavigationKeys.SettingsDiagnosticsAbout;
 
     private static string GetSettingsNavigationKey(SettingsDiagnosticsSection section) => section switch
     {
@@ -368,6 +371,7 @@ public sealed partial class ShellPage : Page
         SettingsDiagnosticsSection.Preferences => ShellNavigationKeys.SettingsDiagnosticsPreferences,
         SettingsDiagnosticsSection.PerformanceCache => ShellNavigationKeys.SettingsDiagnosticsPerformanceCache,
         SettingsDiagnosticsSection.Logs => ShellNavigationKeys.SettingsDiagnosticsLogs,
+        SettingsDiagnosticsSection.About => ShellNavigationKeys.SettingsDiagnosticsAbout,
         _ => ShellNavigationKeys.SettingsDiagnosticsPreferences
     };
 
@@ -379,6 +383,7 @@ public sealed partial class ShellPage : Page
             SettingsDiagnosticsSection.Preferences => SettingsPreferencesNavItem,
             SettingsDiagnosticsSection.PerformanceCache => SettingsPerformanceCacheNavItem,
             SettingsDiagnosticsSection.Logs => SettingsLogsNavItem,
+            SettingsDiagnosticsSection.About => SettingsAboutNavItem,
             _ => SettingsPreferencesNavItem
         };
 
@@ -400,6 +405,7 @@ public sealed partial class ShellPage : Page
         SettingsPreferencesNavItem.Content = UiText.Get(ResourceKeys.SettingsDiagnosticsNavPreferences);
         SettingsPerformanceCacheNavItem.Content = UiText.Get(ResourceKeys.SettingsDiagnosticsNavPerformanceCache);
         SettingsLogsNavItem.Content = UiText.Get(ResourceKeys.SettingsDiagnosticsNavLogs);
+        SettingsAboutNavItem.Content = UiText.Get(ResourceKeys.SettingsDiagnosticsNavAbout);
     }
 
     private void OnBackgroundTasksPropertyChanged(object? sender, PropertyChangedEventArgs e)
