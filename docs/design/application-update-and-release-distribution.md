@@ -36,7 +36,7 @@ MSI 的当前用户模式默认安装到 `%LocalAppData%`，不需要管理员�
 - `eng/release/Publish-Architecture.ps1` 的 x86 / x64 / ARM64 publish、PE 架构校验、Velopack 打包与 SHA-256 清单；
 - `.github/workflows/release.yml` 的测试分支 / 手动构建，以及 `v*` tag 草稿上传、资产名称 / API digest（缺失时下载回读 SHA-256）二次校验和自动公开流程。
 
-本地 x64 已完成旧版 Setup、Portable、full nupkg、feed 和 checksum 的真实打包验证。2026-07-19 发布的首个稳定版本 `v0.1.0` 已通过 GitHub Actions x86 / x64 / ARM64 矩阵、22 项 Release 资产名称与 GitHub SHA-256 digest 校验并公开；该版本仍使用旧的一键 Setup。`v0.1.1` 已在本地通过 x64 MSI / Portable / full nupkg / feed 打包、MSI 合约、版本号、启动 smoke 和中文 Release Notes 注入验证，正式三架构 Release 仍以 tag workflow 结果为准。installed / portable 从旧版本更新到新版本仍必须在形成下一正式版本后完成真实升级验收，未完成前不对外宣称该门禁已经通过。代码签名、preview 独立通道、增量包复用和官网 feed 镜像仍属于阶段 D。
+本地 x64 已完成旧版 Setup、Portable、full nupkg、feed 和 checksum 的真实打包验证。2026-07-19 发布的首个稳定版本 `v0.1.0` 已通过 GitHub Actions x86 / x64 / ARM64 矩阵、22 项 Release 资产名称与 GitHub SHA-256 digest 校验并公开；该版本仍使用旧的一键 Setup。`v0.1.1` 已在本地通过 x64 MSI / Portable / full nupkg / feed 打包、MSI 合约、版本号、启动 smoke 和中文 Release Notes 注入验证；同日 tag workflow 已成功完成三架构构建、22 项 Release 资产与 digest 校验并公开，线上三个架构 feed 均已核对版本、pack id 和中文更新说明。installed / portable 从 `v0.1.0` 到 `v0.1.1` 的真实自动更新仍需在对应旧版安装 / 便携环境中继续验收，未完成前不对外宣称该门禁已经通过。代码签名、preview 独立通道、增量包复用和官网 feed 镜像仍属于阶段 D。
 
 ## 3. 目标与非目标
 
