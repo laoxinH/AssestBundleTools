@@ -95,13 +95,13 @@ public sealed class InspectorPreviewSurfaceActivationContractTests
                 "Views",
                 "BundleExplorer",
                 "Controls",
-                "InspectorPanelView.xaml"));
+                "InspectorChangesView.xaml"));
 
-        Assert.Contains("ItemsSource=\"{x:Bind ViewModel.ChangeRecords, Mode=OneWay}\"", xaml);
-        Assert.Contains("OnChangeRecordUndoReplacementButtonClick", xaml);
-        Assert.Contains("OnChangeRecordRedoReplacementButtonClick", xaml);
-        Assert.Contains("OnChangeRecordDeleteButtonClick", xaml);
-        Assert.Contains("ViewModel.ChangeRecordsEmptyStateVisibility", xaml);
+        Assert.Contains("ItemsSource=\"{Binding ChangeRecords}\"", xaml);
+        Assert.Contains("OnUndoReplacementButtonClick", xaml);
+        Assert.Contains("OnRedoReplacementButtonClick", xaml);
+        Assert.Contains("OnDeleteRecordButtonClick", xaml);
+        Assert.Contains("ChangeRecordsEmptyStateVisibility", xaml);
     }
 
     [Fact]

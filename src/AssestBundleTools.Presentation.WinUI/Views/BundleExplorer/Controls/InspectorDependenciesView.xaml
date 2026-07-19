@@ -47,19 +47,6 @@
             <Setter Property="CornerRadius" Value="8" />
         </Style>
 
-        <Style
-            x:Key="DependencyEmptyStateCardStyle"
-            TargetType="Border">
-            <Setter Property="MaxWidth" Value="390" />
-            <Setter Property="Padding" Value="24,22" />
-            <Setter Property="HorizontalAlignment" Value="Center" />
-            <Setter Property="VerticalAlignment" Value="Center" />
-            <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
-            <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="8" />
-        </Style>
-
         <DataTemplate
             x:Key="AssetDependencyItemTemplate"
             x:DataType="viewModels:AssetDependencyViewModel">
@@ -309,48 +296,44 @@
         </ScrollViewer>
 
         <Grid
+            x:Name="DependenciesEmptyState"
             Padding="16"
             Visibility="{Binding DependenciesEmptyStateVisibility}">
-            <Border
-                x:Name="DependenciesEmptyStateCard"
-                Style="{StaticResource DependencyEmptyStateCardStyle}">
-                <StackPanel
+            <StackPanel
+                MaxWidth="320"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Spacing="10">
+                <Border
+                    Width="52"
+                    Height="52"
                     HorizontalAlignment="Center"
-                    Spacing="10">
-                    <Border
-                        Width="52"
-                        Height="52"
+                    Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                    CornerRadius="8">
+                    <FontIcon
                         HorizontalAlignment="Center"
-                        Background="{ThemeResource SubtleFillColorSecondaryBrush}"
-                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                        BorderThickness="1"
-                        CornerRadius="8">
-                        <FontIcon
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center"
-                            FontFamily="{StaticResource AppIconFontFamily}"
-                            FontSize="24"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                            Glyph="&#xEEA3;" />
-                    </Border>
-                    <TextBlock
-                        x:Name="DependenciesEmptyStateTitleText"
-                        HorizontalAlignment="Center"
-                        FontSize="15"
-                        FontWeight="SemiBold"
-                        Foreground="{ThemeResource TextFillColorPrimaryBrush}"
-                        TextAlignment="Center"
-                        TextWrapping="WrapWholeWords" />
-                    <TextBlock
-                        x:Name="DependenciesEmptyStateText"
-                        MaxWidth="320"
-                        HorizontalAlignment="Center"
-                        FontSize="13"
+                        VerticalAlignment="Center"
+                        FontFamily="{StaticResource AppIconFontFamily}"
+                        FontSize="24"
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        TextAlignment="Center"
-                        TextWrapping="WrapWholeWords" />
-                </StackPanel>
-            </Border>
+                        Glyph="&#xEEA3;" />
+                </Border>
+                <TextBlock
+                    x:Name="DependenciesEmptyStateTitleText"
+                    HorizontalAlignment="Center"
+                    FontSize="15"
+                    FontWeight="SemiBold"
+                    Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                    TextAlignment="Center"
+                    TextWrapping="WrapWholeWords" />
+                <TextBlock
+                    x:Name="DependenciesEmptyStateText"
+                    HorizontalAlignment="Center"
+                    FontSize="13"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    TextAlignment="Center"
+                    TextWrapping="WrapWholeWords" />
+            </StackPanel>
         </Grid>
     </Grid>
 </UserControl>

@@ -2913,8 +2913,8 @@
   <data name="InspectorPanelView.DependenciesEmptyStateTitleText.Text" xml:space="preserve">
     <value>No dependencies</value>
   </data>
-  <data name="InspectorPanelView.ChangeSummaryTitleText.Text" xml:space="preserve">
-    <value>Current Item Change Summary</value>
+  <data name="InspectorPanelView.ChangesEmptyStateTitleText.Text" xml:space="preserve">
+    <value>No change records</value>
   </data>
   <data name="InspectorPanelView.ChangesPlaceholderText.Text" xml:space="preserve">
     <value>The changes tab will later summarize pending replacements, confirmed edits, and pre-save outputs.</value>

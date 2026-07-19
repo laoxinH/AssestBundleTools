@@ -60,7 +60,7 @@ public sealed partial class InspectorPanelView : UserControl
         DetailsSectionScrollViewer.LayoutUpdated += OnSectionScrollViewerLayoutUpdated;
         DependenciesView.SectionScrollViewer.LayoutUpdated += OnSectionScrollViewerLayoutUpdated;
         ReplacementSectionScrollViewer.LayoutUpdated += OnSectionScrollViewerLayoutUpdated;
-        ChangesSectionScrollViewer.LayoutUpdated += OnSectionScrollViewerLayoutUpdated;
+        ChangesView.SectionScrollViewer.LayoutUpdated += OnSectionScrollViewerLayoutUpdated;
     }
 
     public InspectorPanelViewModel? ViewModel
@@ -160,19 +160,25 @@ public sealed partial class InspectorPanelView : UserControl
         }
     }
 
-    private void OnChangeRecordUndoReplacementButtonClick(object sender, RoutedEventArgs e)
+    private void OnChangesUndoReplacementRequested(
+        object? sender,
+        InspectorChangeRecordActionRequestedEventArgs e)
     {
-        UndoReplacementRequested?.Invoke(this, new InspectorChangeRecordActionRequestedEventArgs(GetOperationId(sender)));
+        UndoReplacementRequested?.Invoke(this, e);
     }
 
-    private void OnChangeRecordRedoReplacementButtonClick(object sender, RoutedEventArgs e)
+    private void OnChangesRedoReplacementRequested(
+        object? sender,
+        InspectorChangeRecordActionRequestedEventArgs e)
     {
-        RedoReplacementRequested?.Invoke(this, new InspectorChangeRecordActionRequestedEventArgs(GetOperationId(sender)));
+        RedoReplacementRequested?.Invoke(this, e);
     }
 
-    private void OnChangeRecordDeleteButtonClick(object sender, RoutedEventArgs e)
+    private void OnChangesDeleteRecordRequested(
+        object? sender,
+        InspectorChangeRecordActionRequestedEventArgs e)
     {
-        DeleteChangeRecordRequested?.Invoke(this, new InspectorChangeRecordActionRequestedEventArgs(GetOperationId(sender)));
+        DeleteChangeRecordRequested?.Invoke(this, e);
     }
 
     private void OnPreviewSurfaceOpenPreviewLocationRequested(object? sender, EventArgs e)
@@ -246,7 +252,6 @@ public sealed partial class InspectorPanelView : UserControl
         ExtractCapabilityLabelText.Text = UiText.Get(ResourceKeys.InspectorExtractCapabilityLabel);
         FileReplacementCapabilityLabelText.Text = UiText.Get(ResourceKeys.InspectorFileReplacementCapabilityLabel);
         WorkspaceReplacementCapabilityLabelText.Text = UiText.Get(ResourceKeys.InspectorWorkspaceReplacementCapabilityLabel);
-        ChangeSummaryTitleText.Text = UiText.Get(ResourceKeys.InspectorChangeSummaryTitle);
         SelectFileReplacementButton.Content = UiText.Get(ResourceKeys.InspectorSelectFileReplacementButton);
         ApplySelectedReplacementButton.Content = UiText.Get(ResourceKeys.InspectorApplyReplacementButton);
 
@@ -261,20 +266,4 @@ public sealed partial class InspectorPanelView : UserControl
         ToolTipService.SetToolTip(button, text);
     }
 
-    private static string? GetOperationId(object sender) =>
-        sender is FrameworkElement { Tag: string operationId } &&
-        !string.IsNullOrWhiteSpace(operationId)
-            ? operationId.Trim()
-            : null;
-
-}
-
-public sealed class InspectorChangeRecordActionRequestedEventArgs : EventArgs
-{
-    public InspectorChangeRecordActionRequestedEventArgs(string? operationId)
-    {
-        OperationId = string.IsNullOrWhiteSpace(operationId) ? null : operationId.Trim();
-    }
-
-    public string? OperationId { get; }
 }

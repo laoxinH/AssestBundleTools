@@ -1483,7 +1483,7 @@ public static class ResourceKeys
     public const string InspectorExtractCapabilityLabel = "InspectorPanelView.ExtractCapabilityLabelText.Text";
     public const string InspectorFileReplacementCapabilityLabel = "InspectorPanelView.FileReplacementCapabilityLabelText.Text";
     public const string InspectorWorkspaceReplacementCapabilityLabel = "InspectorPanelView.WorkspaceReplacementCapabilityLabelText.Text";
-    public const string InspectorChangeSummaryTitle = "InspectorPanelView.ChangeSummaryTitleText.Text";
+    public const string InspectorChangesEmptyStateTitle = "InspectorPanelView.ChangesEmptyStateTitleText.Text";
     public const string InspectorExtractButton = "InspectorPanelView.ExtractButton.Content";
     public const string InspectorModifyButton = "InspectorPanelView.ModifyButton.Content";
     public const string InspectorReplaceFileButton = "InspectorPanelView.ReplaceFileButton.Content";

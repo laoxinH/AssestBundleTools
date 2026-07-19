@@ -19,156 +19,221 @@
         </Style>
 
         <Style
-            x:Key="SpineEditSmallTagButtonStyle"
+            x:Key="SpineEditCommandButtonStyle"
             BasedOn="{StaticResource WorkspaceOperationButtonStyle}"
             TargetType="Button">
-            <Setter Property="MinHeight" Value="28" />
+            <Setter Property="MinHeight" Value="30" />
             <Setter Property="Padding" Value="10,0" />
+        </Style>
+
+        <Style
+            x:Key="SpineEditPartCardStyle"
+            TargetType="Border">
+            <Setter Property="Margin" Value="0,0,0,8" />
+            <Setter Property="Padding" Value="12" />
+            <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+            <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+        </Style>
+
+        <Style
+            x:Key="SpineEditPartIconContainerStyle"
+            TargetType="Border">
+            <Setter Property="Width" Value="36" />
+            <Setter Property="Height" Value="36" />
+            <Setter Property="VerticalAlignment" Value="Top" />
+            <Setter Property="Background" Value="{ThemeResource SubtleFillColorSecondaryBrush}" />
+            <Setter Property="CornerRadius" Value="8" />
         </Style>
     </UserControl.Resources>
 
-    <Grid
-        RowSpacing="10"
+    <StackPanel
+        Spacing="14"
         Visibility="{x:Bind ViewModel.Visibility, Mode=OneWay}">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
-
-        <Grid ColumnSpacing="8">
+        <Grid ColumnSpacing="10">
             <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
-            <TextBlock
-                FontSize="16"
-                FontWeight="SemiBold"
-                Text="{x:Bind ViewModel.TitleText, Mode=OneWay}"
-                TextWrapping="WrapWholeWords"
-                VerticalAlignment="Center" />
+            <Border Style="{StaticResource SpineEditPartIconContainerStyle}">
+                <FontIcon
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    FontFamily="{StaticResource AppIconFontFamily}"
+                    FontSize="17"
+                    Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                    Glyph="&#xE75D;" />
+            </Border>
+
+            <StackPanel
+                Grid.Column="1"
+                Spacing="3">
+                <TextBlock
+                    FontSize="15"
+                    FontWeight="SemiBold"
+                    Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                    Text="{x:Bind ViewModel.TitleText, Mode=OneWay}"
+                    TextWrapping="WrapWholeWords" />
+                <TextBlock
+                    FontSize="12"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="{x:Bind ViewModel.DescriptionText, Mode=OneWay}"
+                    TextWrapping="WrapWholeWords" />
+            </StackPanel>
 
             <Button
                 x:Name="BatchMatchButton"
-                Grid.Column="1"
+                Grid.Column="2"
                 Click="OnBatchMatchButtonClick"
-                Style="{StaticResource SpineEditSmallTagButtonStyle}">
+                Style="{StaticResource SpineEditCommandButtonStyle}"
+                VerticalAlignment="Top">
                 <StackPanel Orientation="Horizontal" Spacing="5">
                     <FontIcon
                         FontFamily="{StaticResource AppIconFontFamily}"
-                        FontSize="12"
-                        Glyph="&#xE8EB;" />
+                        FontSize="13"
+                        Glyph="&#xE8F1;" />
                     <TextBlock Text="{x:Bind ViewModel.BatchMatchButtonText, Mode=OneWay}" />
                 </StackPanel>
             </Button>
         </Grid>
 
-        <TextBlock
-            Grid.Row="1"
-            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-            Text="{x:Bind ViewModel.DescriptionText, Mode=OneWay}"
-            TextWrapping="WrapWholeWords" />
-
-        <TextBlock
-            Grid.Row="2"
-            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-            Text="{x:Bind ViewModel.EmptyText, Mode=OneWay}"
-            TextWrapping="WrapWholeWords"
-            Visibility="{x:Bind ViewModel.EmptyVisibility, Mode=OneWay}" />
+        <StackPanel
+            HorizontalAlignment="Center"
+            Spacing="8"
+            Visibility="{x:Bind ViewModel.EmptyVisibility, Mode=OneWay}">
+            <Border
+                Width="44"
+                Height="44"
+                HorizontalAlignment="Center"
+                Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                CornerRadius="8">
+                <FontIcon
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    FontFamily="{StaticResource AppIconFontFamily}"
+                    FontSize="20"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Glyph="&#xE75D;" />
+            </Border>
+            <TextBlock
+                MaxWidth="300"
+                FontSize="13"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                Text="{x:Bind ViewModel.EmptyText, Mode=OneWay}"
+                TextAlignment="Center"
+                TextWrapping="WrapWholeWords" />
+        </StackPanel>
 
         <ItemsControl
-            Grid.Row="3"
             ItemsSource="{x:Bind ViewModel.Parts, Mode=OneWay}"
             Visibility="{x:Bind ViewModel.PartsVisibility, Mode=OneWay}">
             <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="viewModels:SpineAssetGroupEditPartViewModel">
-                    <Border
-                        Margin="0,0,0,8"
-                        Padding="12"
-                        Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
-                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                        BorderThickness="1"
-                        CornerRadius="8">
-                        <Grid RowSpacing="8">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                            </Grid.RowDefinitions>
+                    <Border Style="{StaticResource SpineEditPartCardStyle}">
+                        <Grid ColumnSpacing="10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
 
-                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                <TextBlock
-                                    Style="{StaticResource SpineEditPartRoleTextStyle}"
-                                    Text="{x:Bind RoleText, Mode=OneWay}" />
-                                <Border
-                                    Padding="7,2"
-                                    Background="{ThemeResource SubtleFillColorSecondaryBrush}"
-                                    CornerRadius="9"
-                                    Visibility="{x:Bind ChangedBadgeVisibility, Mode=OneWay}">
-                                    <TextBlock
-                                        FontSize="11"
-                                        FontWeight="SemiBold"
-                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                        Text="{Binding ViewModel.ChangedBadgeText, ElementName=Root}" />
-                                </Border>
-                            </StackPanel>
-
-                            <TextBlock
-                                Grid.Row="1"
-                                FontSize="14"
-                                FontWeight="SemiBold"
-                                MaxLines="2"
-                                Text="{x:Bind DisplayName, Mode=OneWay}"
-                                TextWrapping="WrapWholeWords" />
-
-                            <TextBlock
-                                Grid.Row="2"
-                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                MaxLines="2"
-                                Text="{x:Bind MetadataText, Mode=OneWay}"
-                                TextTrimming="CharacterEllipsis"
-                                TextWrapping="WrapWholeWords"
-                                ToolTipService.ToolTip="{x:Bind MetadataText, Mode=OneWay}" />
-
-                            <Grid
-                                Grid.Row="3"
-                                ColumnSpacing="8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-
-                                <TextBlock
+                            <Border Style="{StaticResource SpineEditPartIconContainerStyle}">
+                                <FontIcon
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    FontFamily="{StaticResource AppIconFontFamily}"
+                                    FontSize="16"
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Glyph="&#xE753;" />
+                            </Border>
+
+                            <StackPanel
+                                Grid.Column="1"
+                                Spacing="6">
+                                <Grid ColumnSpacing="8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock
+                                        VerticalAlignment="Center"
+                                        Style="{StaticResource SpineEditPartRoleTextStyle}"
+                                        Text="{x:Bind RoleText, Mode=OneWay}" />
+                                    <Border
+                                        Grid.Column="1"
+                                        Padding="7,2"
+                                        Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                                        CornerRadius="8"
+                                        Visibility="{x:Bind ChangedBadgeVisibility, Mode=OneWay}">
+                                        <TextBlock
+                                            FontSize="11"
+                                            FontWeight="SemiBold"
+                                            Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                            Text="{Binding ViewModel.ChangedBadgeText, ElementName=Root}" />
+                                    </Border>
+                                </Grid>
+
+                                <TextBlock
+                                    FontSize="14"
+                                    FontWeight="SemiBold"
+                                    Foreground="{ThemeResource TextFillColorPrimaryBrush}"
                                     MaxLines="2"
-                                    Text="{x:Bind SourceText, Mode=OneWay}"
+                                    Text="{x:Bind DisplayName, Mode=OneWay}"
+                                    TextWrapping="WrapWholeWords" />
+
+                                <TextBlock
+                                    FontFamily="Cascadia Mono"
+                                    FontSize="11"
+                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                    MaxLines="2"
+                                    Text="{x:Bind MetadataText, Mode=OneWay}"
                                     TextTrimming="CharacterEllipsis"
                                     TextWrapping="WrapWholeWords"
-                                    ToolTipService.ToolTip="{x:Bind SourceText, Mode=OneWay}"
-                                    VerticalAlignment="Center" />
+                                    ToolTipService.ToolTip="{x:Bind MetadataText, Mode=OneWay}" />
 
-                                <Button
-                                    Grid.Column="1"
-                                    Click="OnSelectPartFileButtonClick"
-                                    Style="{StaticResource SpineEditSmallTagButtonStyle}"
-                                    VerticalAlignment="Center"
-                                    Tag="{Binding}">
-                                    <StackPanel Orientation="Horizontal" Spacing="5">
-                                        <FontIcon
-                                            FontFamily="{StaticResource AppIconFontFamily}"
-                                            FontSize="12"
-                                            Glyph="&#xE6F3;" />
-                                        <TextBlock Text="{x:Bind SelectButtonText, Mode=OneWay}" />
-                                    </StackPanel>
-                                </Button>
-                            </Grid>
+                                <Border
+                                    Height="1"
+                                    Margin="0,2,0,0"
+                                    Background="{ThemeResource CardStrokeColorDefaultBrush}" />
+
+                                <Grid ColumnSpacing="8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock
+                                        VerticalAlignment="Center"
+                                        FontSize="12"
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        MaxLines="2"
+                                        Text="{x:Bind SourceText, Mode=OneWay}"
+                                        TextTrimming="CharacterEllipsis"
+                                        TextWrapping="WrapWholeWords"
+                                        ToolTipService.ToolTip="{x:Bind SourceText, Mode=OneWay}" />
+
+                                    <Button
+                                        Grid.Column="1"
+                                        Click="OnSelectPartFileButtonClick"
+                                        Style="{StaticResource SpineEditCommandButtonStyle}"
+                                        Tag="{Binding}"
+                                        VerticalAlignment="Center">
+                                        <StackPanel Orientation="Horizontal" Spacing="5">
+                                            <FontIcon
+                                                FontFamily="{StaticResource AppIconFontFamily}"
+                                                FontSize="12"
+                                                Glyph="&#xE6F3;" />
+                                            <TextBlock Text="{x:Bind SelectButtonText, Mode=OneWay}" />
+                                        </StackPanel>
+                                    </Button>
+                                </Grid>
+                            </StackPanel>
                         </Grid>
                     </Border>
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
         </ItemsControl>
-    </Grid>
+    </StackPanel>
 </UserControl>

@@ -2913,8 +2913,8 @@
   <data name="InspectorPanelView.DependenciesEmptyStateTitleText.Text" xml:space="preserve">
     <value>暂无依赖关系</value>
   </data>
-  <data name="InspectorPanelView.ChangeSummaryTitleText.Text" xml:space="preserve">
-    <value>当前项变更摘要</value>
+  <data name="InspectorPanelView.ChangesEmptyStateTitleText.Text" xml:space="preserve">
+    <value>暂无变更记录</value>
   </data>
   <data name="InspectorPanelView.ChangesPlaceholderText.Text" xml:space="preserve">
     <value>变更页签后续会展示候选替换、已确认修改和保存前摘要。</value>

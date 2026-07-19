@@ -40,9 +40,9 @@ public sealed class InspectorDependencyPresentationContractTests
             CountOccurrences(
                 xaml,
                 "ItemTemplate=\"{StaticResource AssetDependencyItemTemplate}\""));
-        Assert.Contains("x:Name=\"DependenciesEmptyStateCard\"", xaml);
+        Assert.Contains("x:Name=\"DependenciesEmptyState\"", xaml);
         Assert.Contains("x:Name=\"DependenciesEmptyStateTitleText\"", xaml);
-        Assert.Contains("Style=\"{StaticResource DependencyEmptyStateCardStyle}\"", xaml);
+        Assert.DoesNotContain("DependencyEmptyStateCardStyle", xaml);
         Assert.Contains("FontFamily=\"{StaticResource AppIconFontFamily}\"", xaml);
         Assert.Contains(
             "DependenciesEmptyStateTitleText.Text = UiText.Get(ResourceKeys.InspectorDependenciesEmptyStateTitle);",
