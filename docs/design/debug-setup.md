@@ -199,3 +199,5 @@ $env:ABT_SPINE_D3D11_DIAGNOSTICS = '1'
 应用版本以 Git tag 为唯一发布依据，发布 tag 使用 `v<SemVer>` 格式，例如 `v1.2.3` 或 `v1.2.3-beta.1`。构建通过 MinVer 从当前提交及其 tag 历史生成 `Version / FileVersion / InformationalVersion`；“关于”页面读取入口程序集的 `AssemblyInformationalVersion`，因此发布包展示值与后续 GitHub Release / 更新比较使用同一 SemVer 来源。
 
 没有版本 tag 的本地开发提交会生成带预发布标识和提交高度的版本，不应冒充正式发布。GitHub Actions 打包时必须检出完整 tag 历史，例如为 `actions/checkout` 设置 `fetch-depth: 0`；从浅克隆或源码压缩包构建时，也可通过 `MinVerVersionOverride` 显式传入发布版本。正式发布不得再单独手改 UI 文案或程序集版本。
+
+三架构 Release 产物、Setup / Portable 分发、启动检查与应用更新规则见 [application-update-and-release-distribution.md](application-update-and-release-distribution.md)。
