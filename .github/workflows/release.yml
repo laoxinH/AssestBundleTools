@@ -176,16 +176,15 @@ jobs:
             }
           }
 
-          $releaseJson = & gh api `
-            -H 'Accept: application/vnd.github+json' `
-            -H 'X-GitHub-Api-Version: 2022-11-28' `
-            "repos/${{ github.repository }}/releases/tags/$tag"
+          $releaseJson = & gh release view $tag `
+            --repo '${{ github.repository }}' `
+            --json isDraft,assets
           if ($LASTEXITCODE -ne 0) {
             Stop-ReleaseVerification 'Reading the draft GitHub Release failed.'
           }
           $release = $releaseJson | ConvertFrom-Json
 
-          if (-not $release.draft) {
+          if (-not $release.isDraft) {
             Stop-ReleaseVerification 'Release verification expected a draft Release.'
           }
           if ($release.assets.Count -ne $localAssets.Count) {
