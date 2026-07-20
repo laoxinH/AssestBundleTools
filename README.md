@@ -10,7 +10,7 @@ AssestBundleTools 是一款面向 Unity AssetBundle 的 Windows 工作区工具�
 
 > 项目仍处于预览阶段。请保留原始资源备份，并在游戏内实际验证重新构建的资源包。
 
-> [查看完整图文使用指南](docs/user-guide.md)：包含新建工作区、拖拽导入、自动识别、Texture2D / AudioClip / Spine 替换、变更管理和原格式导出的完整流程。
+> [查看完整图文使用指南](docs/user-guide.md)：包含新建工作区、拖拽导入、窗口模式、关联资源、Texture2D / AudioClip / Spine 动画与替换、变更管理和原格式导出的完整流程。
 
 <p align="center">
   <img src="docs/assets/user-guide-v1/02-auto-recognition.png" width="1080" alt="AssestBundleTools 自动识别工作台">
@@ -24,6 +24,8 @@ AssestBundleTools 是一款面向 Unity AssetBundle 的 Windows 工作区工具�
 - AB 自动识别：依次匹配可用解密器，最后回退到有效 Unity 资源识别，排除普通图片、压缩包等无关文件。
 - 内置解密器：包含 Arknights LZ4AK 与 CrossCore duplicated-header 加解密 CLI，并保留来源加密元数据用于导出回写。
 - 资源浏览与预览：支持常见 Unity 资产信息、依赖关系、图片、音频、Mesh、文本、Spine 等预览链路。
+- 独立资源窗口：资源详情标签可移出主窗口，保持预览/编辑画布常驻，并与主窗口共享缓存和变更状态。
+- 关联资源追踪：展示直接依赖、反向引用、依赖闭包和 Bundle 外部依赖，关联资源修改后同步刷新已打开预览。
 - 提取与替换：支持单资源、批量资源和 Spine 组的提取、文件替换及拖放工作流。
 - 保存与导出：按工作区修改重新构建 AB，可选择压缩策略并按来源 codec 重新加密。
 - 扩展能力：支持 AssetBundle codec、导出资源处理器和导出后处理三类 CLI 插件；开发和安装方式见 [插件开发与安装指南](docs/plugin-guide.md)。
@@ -63,6 +65,14 @@ MSI 安装向导允许选择当前用户或所有用户、安装位置和桌面�
 
 ![Texture2D 预览](docs/assets/user-guide-v1/03-texture-preview.png)
 
+### 独立窗口与关联资源
+
+资源详情标签可以拖出主窗口，也可以通过右键菜单在独立窗口中打开。窗口模式保留预览/编辑画布和详情、依赖、替换、变更分段，并与主窗口共享同一工作区状态。
+
+![在独立窗口中打开资源详情](docs/assets/user-guide-v1/04-resource-window-mode.gif)
+
+依赖页会区分直接依赖、反向引用、依赖闭包和 Bundle 外部依赖。Sprite 与关联 Texture2D、Spine 与 skeleton/atlas/texture page 等关系还会参与预览刷新，但替换记录始终归属到真实被修改资产。
+
 ### 普通资产与音频替换
 
 普通资产可从检查器选择替换文件，操作会先记录到工作区，不会覆盖原始 AB。
@@ -73,9 +83,13 @@ AudioClip 会识别 FSB5、WAV 等容器；缺少预览或编码组件时，应�
 
 ![AudioClip 文件替换](docs/assets/user-guide-v1/06-audio-replace.gif)
 
-### Spine 组拖拽替换
+### Spine 动画预览与组替换
 
-Spine 视图会聚合 skeleton、atlas 与关联贴图。先整组提取作为模板，编辑后把目录拖回对应组；匹配完成后仍需用户确认才会应用。
+Spine 视图会聚合 skeleton、atlas 与关联贴图，并提供 animation、skin、播放速度、逐帧控制和时间轴。独立窗口模式可以为动画提供更大的固定预览区域。
+
+![Spine 动画实时预览](docs/assets/user-guide-v1/07-spine-animation-preview.gif)
+
+先整组提取作为模板，编辑后把目录拖回对应组；匹配完成后仍需用户确认才会应用。
 
 ![Spine 组拖拽替换](docs/assets/user-guide-v1/08-spine-drag-replace.gif)
 
