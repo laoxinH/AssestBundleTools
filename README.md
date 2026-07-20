@@ -10,7 +10,13 @@ AssestBundleTools 是一款面向 Unity AssetBundle 的 Windows 工作区工具�
 
 > 项目仍处于预览阶段。请保留原始资源备份，并在游戏内实际验证重新构建的资源包。
 
-完整的新建工作区、拖拽导入、Texture2D / AudioClip / Spine 替换与导出演示见 [图文使用指南](docs/user-guide.md)。
+> [查看完整图文使用指南](docs/user-guide.md)：包含新建工作区、拖拽导入、自动识别、Texture2D / AudioClip / Spine 替换、变更管理和原格式导出的完整流程。
+
+<p align="center">
+  <img src="docs/assets/user-guide-v1/02-auto-recognition.png" width="1080" alt="AssestBundleTools 自动识别工作台">
+</p>
+
+<p align="center"><sub>同一工作区可同时浏览 CrossCore、LZ4AK 与标准 UnityFS 资源包。</sub></p>
 
 ## 主要功能
 
@@ -37,15 +43,49 @@ MSI 安装向导允许选择当前用户或所有用户、安装位置和桌面�
 
 便携版解压后直接运行。不要把工作区数据保存在应用解压目录内，以免后续更新或重新解压时混淆应用文件和用户数据。
 
-## 基本流程
+## 快速上手
 
-1. 新建工作区并选择数据目录。
-2. 选择自动识别或指定 AssetBundle 解密器。
-3. 拖入 AB 文件或包含 AB 的目录，等待识别和索引完成。
-4. 浏览资源、依赖与预览，执行提取、替换或编辑操作。
-5. 使用“保存为新包”导出修改后的 AB，并在目标游戏环境中验证。
+完整教程和注意事项见 [图文使用指南](docs/user-guide.md)，下面展示最常用的一条工作流。
 
-工作区默认保留原始输入，修改通过可恢复操作记录管理。涉及替换和导出时仍建议自行保存独立备份。
+1. [新建独立工作区](docs/user-guide.md#2-新建工作区)，解密器通常选择“自动识别”。
+2. [拖入 AB 文件或目录](docs/user-guide.md#3-拖拽导入资源包)，等待识别、解密和索引完成。
+3. [浏览资源与依赖](docs/user-guide.md#4-浏览筛选与预览)，确认目标资源及其关联关系。
+4. 选择文件或拖拽完成 [普通资产](docs/user-guide.md#5-替换普通资产)、[AudioClip](docs/user-guide.md#6-替换-audioclip) 或 [Spine 组](docs/user-guide.md#7-预览提取与替换-spine-组)替换。
+5. 检查变更记录，使用 [“保存为新包”](docs/user-guide.md#8-导出修改后的-ab)按来源压缩和来源 codec 导出。
+
+### 拖拽导入与预览
+
+可以直接拖入单个 AB、多个文件或整个目录；自动模式会逐包识别 codec，而不是为整个工作区固化一个解密器。
+
+![拖拽导入 AssetBundle 目录](docs/assets/user-guide-v1/02-drag-import.gif)
+
+资源列表支持搜索、类型筛选、名称/大小排序和多标签浏览，右侧显示预览、基础信息、依赖及变更记录。
+
+![Texture2D 预览](docs/assets/user-guide-v1/03-texture-preview.png)
+
+### 普通资产与音频替换
+
+普通资产可从检查器选择替换文件，操作会先记录到工作区，不会覆盖原始 AB。
+
+![Texture2D 文件替换](docs/assets/user-guide-v1/05-texture-replace.gif)
+
+AudioClip 会识别 FSB5、WAV 等容器；缺少预览或编码组件时，应用会先显示来源和许可确认。
+
+![AudioClip 文件替换](docs/assets/user-guide-v1/06-audio-replace.gif)
+
+### Spine 组拖拽替换
+
+Spine 视图会聚合 skeleton、atlas 与关联贴图。先整组提取作为模板，编辑后把目录拖回对应组；匹配完成后仍需用户确认才会应用。
+
+![Spine 组拖拽替换](docs/assets/user-guide-v1/08-spine-drag-replace.gif)
+
+### 按来源格式导出
+
+导出窗口只列出存在修改的资源包。通常保留“按照原加密导出”和“保持原压缩”，应用会使用每个 AB 导入时保存的来源 codec 元数据重新构建。
+
+![按来源格式导出修改后的 AB](docs/assets/user-guide-v1/09-export-workspace.gif)
+
+成功导出后会同时生成 `_abt-bundle-export-manifest.json`，记录输出 codec、压缩方式、处理器结果和文件哈希。工作区默认保留原始输入，但仍建议为游戏原文件和导出结果保存独立备份。
 
 ## 更新
 
