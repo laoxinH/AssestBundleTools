@@ -10,6 +10,8 @@ AssestBundleTools 是一款面向 Unity AssetBundle 的 Windows 工作区工具�
 
 > 项目仍处于预览阶段。请保留原始资源备份，并在游戏内实际验证重新构建的资源包。
 
+完整的新建工作区、拖拽导入、Texture2D / AudioClip / Spine 替换与导出演示见 [图文使用指南](docs/user-guide.md)。
+
 ## 主要功能
 
 - 工作区管理：导入文件或目录、缓存索引、恢复浏览状态和增量刷新。
