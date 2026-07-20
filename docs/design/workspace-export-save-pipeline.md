@@ -25,7 +25,7 @@
 - Infrastructure 已把单 bundle writer 从 artifact 文件级复制推进到对象级 AssetsTools 写包：从标准化 artifact 通过统一 `AssetsToolsBundleLoadService` 创建独占写入 session，按 `serializedFileName + pathId` 定位对象，消费文件替换、同 bundle 工作区内替换、Sprite 几何编辑和资源处理器输出载荷，先写入带 replacer 的未压缩 bundle，再按导出压缩策略重新打包、提升输出文件并以单次读取记录 MD5 / SHA-256。导出窗口默认使用“保持原压缩”，原始压缩格式来自导入 / 预览重载共用的 loadAB Reader 链路并写入 bundle index 缓存；用户也可以显式选择 `LZMA / LZ4 / LZ4Fast / Uncompressed`。
 - 对象级 writer 已覆盖 `AudioClip` 外部流写回：写包端优先消费资源处理器输出，默认从原始 `m_AudioData` 或 `m_Resource` 头部识别音频容器，并要求替换载荷容器与原容器一致，再将数据追加到原 bundle 内 `.resS / .resource` 条目末尾，更新 `m_Resource.m_Source / m_Offset / m_Size` 并清空内联音频数据。原容器未知或容器不一致会稳定失败；导出窗口提供“强制写入音频载荷”风险选项，启用后可跳过原容器匹配写入已知替换容器，同时提示输出 AB 可能无法被 Unity 正确播放。
 - Infrastructure catalog 已提供内置 `resource.processor.audio.fmod-fsb5` 资源处理器：运行目录中存在内置 wrapper 且能发现 `fsbankcl.exe` 时标记为可用，按既有 CLI 协议把音频替换源编码为 FSB5；缺失 FMOD CLI 时该处理器保持不可用，用户仍可通过插件管理页配置自定义音频处理器。该处理器适用于原始容器为 FSB5 的目标或用户明确需要转码的场景，不再是 WAV 等原容器可直接匹配写入时的强制前置条件。
-- AB 导出 manifest 已记录每个 bundle 的资源处理器结果摘要，包括资源类型、处理器 id、状态、输入 / 成功 / 失败计数、result JSON 路径和诊断。
+- AB 导出 manifest schema v2 已记录每个 bundle 的资源处理器结果摘要，以及成功写入输出 AB 的逐资产明细；后处理插件可通过 `assetId` 或 `serializedFileName + pathId` 稳定关联写入资产与处理器结果。
 - bundle artifact 已保留实际 `decryptorId / decryptorVersion`；本轮在 writer 生成标准 AB 后，若同版本来源解密器实现可选 `IAssetBundleEncryptor`，会先回写游戏格式再校验、提升和计算输出 hash，并在 manifest 记录 output codec 身份。
 - 工作区导出窗口会在资源处理器槽启用状态或选择、是否导出到工作区输出目录、是否覆盖同名文件、压缩策略、音频写入模式发生变化时，立即保存到当前工作区 metadata 中，不依赖用户点击“开始导出”；下次打开同一工作区时恢复。首次默认只勾选“最近修改”资源包，且“导出到工作区输出目录”和“覆盖已有同名文件”均不默认勾选。
 - 工作区导出窗口摘要区会显示同一 `SaveRebuild` 后台任务的进度文本和进度条；执行中窗口内取消按钮必须调用后台任务取消句柄，而不是只关闭导出窗口。
@@ -499,11 +499,11 @@ Writer 诊断 detail 应包含失败阶段，例如 `load-bundle / apply-changes
 
 ### 10.2 Schema
 
-第一版 schema 建议：
+当前 schema v2：
 
 ```json
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "manifestKind": "workspaceBundleExport",
   "tool": "AssestBundleTools",
   "exportId": "20260703T120000Z-...",
@@ -547,6 +547,28 @@ Writer 诊断 detail 应包含失败阶段，例如 `load-bundle / apply-changes
         "sha256": "sha256-hex",
         "lastWriteTimeUtc": "2026-07-03T12:00:05Z"
       },
+      "writtenAssets": [
+        {
+          "assetId": "asset-id",
+          "assetName": "hero_portrait",
+          "assetType": "Texture2D",
+          "assetTypeDisplayName": "Texture2D",
+          "serializedFileName": "CAB-0123456789abcdef",
+          "pathId": 12345,
+          "sourceKind": "file",
+          "sourceFileName": "hero_portrait.png",
+          "sourceBundleId": null,
+          "sourceAssetId": null,
+          "sourceSerializedFileName": null,
+          "sourcePathId": null,
+          "operationId": "operation-id",
+          "sequence": 42,
+          "resourceKind": "Texture2D",
+          "processorId": "resource.processor.texture2d.png",
+          "processorStatus": "Succeeded",
+          "processorResultPath": "D:/Workspace/staging/exports/.../result.json"
+        }
+      ],
       "processorResults": [
         {
           "resourceKind": "Texture2D",
@@ -574,6 +596,11 @@ Writer 诊断 detail 应包含失败阶段，例如 `load-bundle / apply-changes
 - `outputPath` 是本机绝对路径，方便同机后处理插件直接执行。
 - `sourceArtifactPath` 可以帮助诊断，但外部工具不得把它当作可修改源。
 - `outputCodecId / outputCodecVersion` 仅在最终文件确实经过来源 codec 回写后存在；为空表示最终文件是标准 AB。
+- `writtenAssets[]` 只来自最终交给 writer 且成功写入输出 AB 的有效资产计划；已撤销、仅提取、被更高优先级操作覆盖或写包失败的资产不得记入。
+- `assetId` 是应用内稳定身份，`serializedFileName + pathId` 是面向 Unity serialized file 的稳定定位组合；第三方插件应优先保存两组身份以兼容后续工作区迁移与重新索引。
+- `sourceKind` 当前可为 `file / workspace / sprite-edit / text-draft`；文件来源只公开 `sourceFileName`，不得把用户导入文件的本机绝对路径写入 manifest。
+- `processorId / resourceKind / processorStatus / processorResultPath` 仅在该资产实际经过资源处理器时存在，用于逐资产关联 bundle 级 `processorResults[]`；未经过处理器时保持为空。
+- 采用“忽略未知字段”策略的 schema v1 消费方仍可读取 bundle 级字段；需要逐资产后处理的插件必须声明支持 schema v2。失败 bundle 的 `writtenAssets[]` 必须为空。
 - `checkpointId` 只对成功 bundle 存在；失败 bundle 不应伪造检查点。
 - `diagnostics[]` 使用稳定 `code / severity / parameters`，可选保留外部工具 fallback message。
 

@@ -96,7 +96,8 @@ public sealed record WorkspaceBundleExportManifestItemDto(
     string? OriginalCompression = null,
     string? WrittenCompression = null,
     string? OutputCodecId = null,
-    string? OutputCodecVersion = null);
+    string? OutputCodecVersion = null,
+    IReadOnlyList<WorkspaceBundleExportManifestWrittenAssetDto>? WrittenAssets = null);
 
 public sealed record WorkspaceBundleExportManifestProcessorSelectionDto(
     string ResourceKind,

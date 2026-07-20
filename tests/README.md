@@ -28,7 +28,7 @@
 - 主窗口 chrome 契约：使用标准 `32px` 单行标题栏，仅显示产品名；不再启用 `TitleBarHeightOption.Tall`，并移除主窗口副标题与 Shell pane 页眉；Shell 导航采用可折叠的 `Left` / compact inline 模式，收缩后保留 `48px` 图标栏，展开后恢复占位布局而不覆盖内容
 - 资源编辑窗口模式中的打开冲突解析：主窗口和独立资源编辑窗口已存在同一资源文档标签时，优先解析到可激活的已有宿主和目标标签，避免重复创建窗口或标签；独立窗口单标签拖出策略会阻止创建等价新窗口
 - 替换链路中的候选类型解析、来源路径校验、缺失资源失败、类型不匹配、工作区候选空集失败、单资源文件/工作区替换、右键 / 检查器 `替换文件` 立即选择文件并应用、撤销替换、目标资源级重做替换、Texture2D 有效替换预览，以及批量替换 manifest/启发式计划、真实文件替换执行、支持/跳过混合结果摘要
-- 保存链路中的保存前预览空态/资源包分组聚合、现有标准化 artifact 输入图与来源 codec 身份解析、目标输出路径 preflight blockers、保存执行的缺失工作区 / 无候选失败 / 执行摘要、选中资源包真实导出、processor selection 透传、文件替换载荷的资源处理器 work item 构建、AudioClip 处理器输出投影、音频写入模式透传、处理器结果透传、失败处理器阻断所属 bundle 写包、对象级写包项构建、TextAsset / Texture2D / Sprite / AudioClip 写后读回、Texture2D 原格式不可编码时的 RGBA32 回退、AudioClip 按原容器匹配写入 `.resS / .resource`、容器不匹配拒绝和强制写入分支、来源 codec 在标准写包后的可选 Encrypt、AB 导出 manifest 写出、输出 codec 身份、处理器结果摘要和 MD5 / SHA-256 记录
+- 保存链路中的保存前预览空态/资源包分组聚合、现有标准化 artifact 输入图与来源 codec 身份解析、目标输出路径 preflight blockers、保存执行的缺失工作区 / 无候选失败 / 执行摘要、选中资源包真实导出、processor selection 透传、文件替换载荷的资源处理器 work item 构建、AudioClip 处理器输出投影、音频写入模式透传、处理器结果透传、失败处理器阻断所属 bundle 写包、对象级写包项构建、TextAsset / Texture2D / Sprite / AudioClip 写后读回、Texture2D 原格式不可编码时的 RGBA32 回退、AudioClip 按原容器匹配写入 `.resS / .resource`、容器不匹配拒绝和强制写入分支、来源 codec 在标准写包后的可选 Encrypt、AB 导出 manifest schema v2 写出、成功 bundle 的逐资产写入身份与处理器结果映射、失败 bundle 空写入明细、输出 codec 身份、处理器结果摘要和 MD5 / SHA-256 记录
 - 工作区目录相关 `Infrastructure` 持久化关键路径（当前也通过零依赖控制台 runner 执行）
 - 缓存型工作区运行时依赖图中的反向引用、依赖闭包、Mesh 贴图关联，以及外部 `PPtr` 占位到当前工作区已导入资产的跨 Bundle 解析
 - 缓存型工作区运行时资产列表中的动态类型 Facet、隐藏图节点排除、以及 `Unknown + Unity 类型名` 的资产级筛选

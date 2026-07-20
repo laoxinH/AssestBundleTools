@@ -102,6 +102,12 @@ internal sealed class WorkspaceSaveBundleExportRunner
                     SucceededBundleCount: Volatile.Read(ref succeededCount),
                     FailedBundleCount: Volatile.Read(ref failedCount)));
 
+                var bundleProcessorResults = processorBatchResult.ResolveResults(selectedPlan.BundleId);
+                var assetWriteItems = assetWritePlanBuilder.Build(
+                    selectedPlan,
+                    command.WorkspaceKey,
+                    command.WorkspaceDataRootPath,
+                    bundleProcessorResults);
                 var exportResult = await _bundleExporter.ExportAsync(
                     new WorkspaceBundleExportRequestDto(
                         WorkspaceId: plan.WorkspaceId,
@@ -112,13 +118,9 @@ internal sealed class WorkspaceSaveBundleExportRunner
                         SourceArtifactPath: selectedPlan.ArtifactInput.ArtifactBundlePath!,
                         BundleCacheKey: selectedPlan.ArtifactInput.BundleCacheKey,
                         ChangeItems: selectedPlan.ChangeItems,
-                        AssetWriteItems: assetWritePlanBuilder.Build(
-                            selectedPlan,
-                            command.WorkspaceKey,
-                            command.WorkspaceDataRootPath,
-                            processorBatchResult.ResolveResults(selectedPlan.BundleId)),
+                        AssetWriteItems: assetWriteItems,
                         ProcessorSelections: processorSelections,
-                        ProcessorResults: processorBatchResult.ResolveResults(selectedPlan.BundleId),
+                        ProcessorResults: bundleProcessorResults,
                         OperationId: operationId,
                         CompressionMode: command.CompressionMode,
                         OutputConflictPolicy: command.OutputConflictPolicy,
@@ -144,7 +146,10 @@ internal sealed class WorkspaceSaveBundleExportRunner
                 }
 
                 var bundleResult = exportResult.IsSuccess && exportResult.Value is not null
-                    ? CreateSuccessfulBundleResult(selectedPlan, exportResult.Value)
+                    ? CreateSuccessfulBundleResult(
+                        selectedPlan,
+                        exportResult.Value,
+                        CreateWrittenAssets(assetWriteItems, bundleProcessorResults))
                     : CreateFailedBundleResult(selectedPlan, exportResult.Errors.FirstOrDefault());
 
                 if (bundleResult.Status == WorkspaceSaveBundleExecutionStatusDto.Succeeded)
@@ -211,7 +216,8 @@ internal sealed class WorkspaceSaveBundleExportRunner
 
     private static WorkspaceSaveBundleExecutionResultDto CreateSuccessfulBundleResult(
         PlannedWorkspaceBundleSave selectedPlan,
-        WorkspaceBundleExportResultDto exportResult) =>
+        WorkspaceBundleExportResultDto exportResult,
+        IReadOnlyList<WorkspaceBundleWrittenAssetDto> writtenAssets) =>
         new(
             BundleId: selectedPlan.BundleId,
             BundleDisplayName: selectedPlan.BundleDisplayName,
@@ -234,7 +240,49 @@ internal sealed class WorkspaceSaveBundleExportRunner
             OriginalCompression: exportResult.OriginalCompression,
             WrittenCompression: exportResult.WrittenCompression,
             OutputCodecId: exportResult.OutputCodecId,
-            OutputCodecVersion: exportResult.OutputCodecVersion);
+            OutputCodecVersion: exportResult.OutputCodecVersion,
+            WrittenAssets: writtenAssets);
+
+    private static IReadOnlyList<WorkspaceBundleWrittenAssetDto> CreateWrittenAssets(
+        IReadOnlyList<WorkspaceBundleAssetWriteItemDto> assetWriteItems,
+        IReadOnlyList<WorkspaceResourceProcessorExecutionResultDto> processorResults)
+    {
+        return assetWriteItems
+            .Select(item =>
+            {
+                var processorResult = string.IsNullOrWhiteSpace(item.ProcessorId)
+                    ? null
+                    : processorResults.FirstOrDefault(result =>
+                        result.BundleId == item.BundleId &&
+                        result.AssetId == item.AssetId &&
+                        string.Equals(result.ProcessorId, item.ProcessorId, StringComparison.Ordinal));
+                return new WorkspaceBundleWrittenAssetDto(
+                    AssetId: item.AssetId,
+                    AssetName: item.AssetName,
+                    AssetType: item.AssetType,
+                    AssetTypeDisplayName: item.AssetTypeDisplayName,
+                    SerializedFileName: item.SerializedFileName,
+                    PathId: item.PathId,
+                    SourceKind: item.SourceKind,
+                    SourceFileName: GetSourceFileName(item.SourceFilePath),
+                    SourceBundleId: item.SourceBundleId,
+                    SourceAssetId: item.SourceAssetId,
+                    SourceSerializedFileName: item.SourceSerializedFileName,
+                    SourcePathId: item.SourcePathId,
+                    OperationId: item.OperationId,
+                    Sequence: item.Sequence,
+                    ResourceKind: processorResult?.ResourceKind,
+                    ProcessorId: processorResult?.ProcessorId,
+                    ProcessorStatus: processorResult?.Status,
+                    ProcessorResultPath: processorResult?.ResultPath);
+            })
+            .ToArray();
+    }
+
+    private static string? GetSourceFileName(string? sourceFilePath) =>
+        string.IsNullOrWhiteSpace(sourceFilePath)
+            ? null
+            : Path.GetFileName(sourceFilePath.Trim());
 
     private static WorkspaceSaveBundleExecutionResultDto CreateFailedBundleResult(
         PlannedWorkspaceBundleSave selectedPlan,

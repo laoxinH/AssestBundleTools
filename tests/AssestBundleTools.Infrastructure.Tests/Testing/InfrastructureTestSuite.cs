@@ -319,6 +319,10 @@ internal static class InfrastructureTestSuite
             FileSystemWorkspaceBundleExportManifestStoreTests.SaveAsync_ShouldWriteReadableBundleExportManifest_WithHashesAndProcessors);
         await RunTestAsync(
             failures,
+            nameof(FileSystemWorkspaceBundleExportManifestStoreTests.SaveAsync_ShouldOmitWrittenAssets_ForFailedBundle),
+            FileSystemWorkspaceBundleExportManifestStoreTests.SaveAsync_ShouldOmitWrittenAssets_ForFailedBundle);
+        await RunTestAsync(
+            failures,
             nameof(FileSystemWorkspaceSaveOutputProbeTests.Probe_ShouldReportReady_WhenTargetDoesNotExist),
             FileSystemWorkspaceSaveOutputProbeTests.Probe_ShouldReportReady_WhenTargetDoesNotExist);
         await RunTestAsync(

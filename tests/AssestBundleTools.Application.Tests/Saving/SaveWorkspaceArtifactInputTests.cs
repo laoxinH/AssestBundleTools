@@ -188,6 +188,14 @@ internal static partial class SaveWorkspaceHandlersTests
                         isModified: true)
                 ])
         };
+        registry.AddAssetDetails(CreateAssetDetails(
+            workspaceId,
+            alphaBundleId,
+            new AssetId("asset-1"),
+            "HeroTexture",
+            AssetType.Texture2D,
+            "CAB-main",
+            42));
         var exporter = new RecordingBundleExporter();
         var manifestStore = new RecordingBundleExportManifestStore();
         var processorExecutor = new RecordingResourceProcessorExecutor();
@@ -244,6 +252,14 @@ internal static partial class SaveWorkspaceHandlersTests
         var bundleResult = TestAssert.Single(execution.BundleResults);
         TestAssert.Equal("abc123-md5", bundleResult.WrittenFileMd5, "Execution should preserve exported AB MD5.");
         TestAssert.Equal("abc123-sha256", bundleResult.WrittenFileSha256, "Execution should preserve exported AB SHA-256.");
+        var writtenAsset = TestAssert.Single(bundleResult.WrittenAssets!);
+        TestAssert.Equal(new AssetId("asset-1"), writtenAsset.AssetId, "Execution should identify the asset written to the exported AB.");
+        TestAssert.Equal("CAB-main", writtenAsset.SerializedFileName, "Written asset details should preserve serialized file identity.");
+        TestAssert.Equal(42L, writtenAsset.PathId, "Written asset details should preserve path id.");
+        TestAssert.Equal("hero.png", writtenAsset.SourceFileName, "Written asset details should expose only the source file name.");
+        TestAssert.Equal("resource.processor.texture.png", writtenAsset.ProcessorId, "Written asset details should link the processor result.");
+        TestAssert.Equal(WorkspaceResourceProcessorStatusDto.Succeeded, writtenAsset.ProcessorStatus, "Written asset details should preserve processor status.");
+        TestAssert.True(!string.IsNullOrWhiteSpace(writtenAsset.ProcessorResultPath), "Written asset details should link the processor result file.");
 
         var standardBundleResult = await handler.HandleAsync(new SaveWorkspaceAsNewBundleCommand(
             workspaceId,
@@ -473,6 +489,7 @@ internal static partial class SaveWorkspaceHandlersTests
         var bundleResult = TestAssert.Single(result.Value!.BundleResults);
         TestAssert.Equal(WorkspaceSaveBundleExecutionStatusDto.Failed, bundleResult.Status, "Processor failure should fail the owning bundle.");
         TestAssert.Equal("Bundle.Save.ResourceProcessor.ExecutionFailed", bundleResult.DiagnosticCode, "Bundle diagnostic should point at the processor failure.");
+        TestAssert.True(bundleResult.WrittenAssets is null || bundleResult.WrittenAssets.Count == 0, "Failed bundle should not report assets as written.");
         var summary = TestAssert.Single(bundleResult.ProcessorResults!);
         TestAssert.Equal(WorkspaceResourceProcessorStatusDto.Failed, summary.Status, "Processor summary should preserve failed status.");
         TestAssert.Equal(1, summary.FailedCount, "Failed processor item should be counted.");

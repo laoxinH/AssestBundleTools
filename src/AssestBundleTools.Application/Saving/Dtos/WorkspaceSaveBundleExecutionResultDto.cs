@@ -29,4 +29,5 @@ public sealed record WorkspaceSaveBundleExecutionResultDto(
     string? OriginalCompression = null,
     string? WrittenCompression = null,
     string? OutputCodecId = null,
-    string? OutputCodecVersion = null);
+    string? OutputCodecVersion = null,
+    IReadOnlyList<WorkspaceBundleWrittenAssetDto>? WrittenAssets = null);

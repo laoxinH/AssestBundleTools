@@ -12,7 +12,7 @@ namespace AssestBundleTools.Infrastructure.Workspace.Saving;
 public sealed class FileSystemWorkspaceBundleExportManifestStore : IWorkspaceBundleExportManifestStore
 {
     public const string ManifestFileName = "_abt-bundle-export-manifest.json";
-    private const int CurrentSchemaVersion = 1;
+    private const int CurrentSchemaVersion = 2;
 
     private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web)
     {
@@ -120,7 +120,39 @@ public sealed class FileSystemWorkspaceBundleExportManifestStore : IWorkspaceBun
             OriginalCompression: result.OriginalCompression,
             WrittenCompression: result.WrittenCompression,
             OutputCodecId: result.OutputCodecId,
-            OutputCodecVersion: result.OutputCodecVersion);
+            OutputCodecVersion: result.OutputCodecVersion,
+            WrittenAssets: CreateManifestWrittenAssets(result));
+    }
+
+    private static IReadOnlyList<WorkspaceBundleExportManifestWrittenAssetDto> CreateManifestWrittenAssets(
+        WorkspaceSaveBundleExecutionResultDto result)
+    {
+        if (result.Status != WorkspaceSaveBundleExecutionStatusDto.Succeeded)
+        {
+            return Array.Empty<WorkspaceBundleExportManifestWrittenAssetDto>();
+        }
+
+        return (result.WrittenAssets ?? Array.Empty<WorkspaceBundleWrittenAssetDto>())
+            .Select(static asset => new WorkspaceBundleExportManifestWrittenAssetDto(
+                AssetId: asset.AssetId.Value,
+                AssetName: asset.AssetName,
+                AssetType: asset.AssetType.ToString(),
+                AssetTypeDisplayName: asset.AssetTypeDisplayName,
+                SerializedFileName: asset.SerializedFileName,
+                PathId: asset.PathId,
+                SourceKind: asset.SourceKind,
+                SourceFileName: asset.SourceFileName,
+                SourceBundleId: asset.SourceBundleId?.Value,
+                SourceAssetId: asset.SourceAssetId?.Value,
+                SourceSerializedFileName: asset.SourceSerializedFileName,
+                SourcePathId: asset.SourcePathId,
+                OperationId: asset.OperationId,
+                Sequence: asset.Sequence,
+                ResourceKind: asset.ResourceKind,
+                ProcessorId: asset.ProcessorId,
+                ProcessorStatus: asset.ProcessorStatus?.ToString(),
+                ProcessorResultPath: asset.ProcessorResultPath))
+            .ToArray();
     }
 
     private static async Task WriteJsonAtomicallyAsync<T>(

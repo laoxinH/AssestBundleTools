@@ -317,7 +317,7 @@ internal static partial class SaveWorkspaceHandlersTests
                 new WorkspaceBundleExportManifestSaveResultDto(
                     manifestPath,
                     new WorkspaceBundleExportManifestDto(
-                        SchemaVersion: 1,
+                        SchemaVersion: 2,
                         WorkspaceId: request.WorkspaceId.Value,
                         WorkspaceKey: request.WorkspaceKey,
                         WorkspaceDisplayName: request.WorkspaceDisplayName,
