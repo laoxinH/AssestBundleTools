@@ -144,6 +144,46 @@ public sealed class PluginManagementPageContractTests
         Assert.Contains("PluginManagementFilterKeys.Skel", presenter);
     }
 
+    [Fact]
+    public void PostExportPluginEditor_ShouldUseTheSharedThreeStepEditorInteraction()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var editorDirectory = Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "Views",
+            "PluginManagement",
+            "Controls");
+        var editorXaml = File.ReadAllText(Path.Combine(
+            editorDirectory,
+            "PostExportPluginEditorDialogContent.xaml"));
+        var editorCode = File.ReadAllText(Path.Combine(
+            editorDirectory,
+            "PostExportPluginEditorDialogContent.xaml.cs"));
+        var pluginPageCode = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "Views",
+            "PluginManagement",
+            "PluginManagementPage.xaml.cs"));
+
+        Assert.Contains("x:Name=\"BasicStepIndicatorBorder\"", editorXaml);
+        Assert.Contains("x:Name=\"ExecutionStepIndicatorBorder\"", editorXaml);
+        Assert.Contains("x:Name=\"ArgumentsStepIndicatorBorder\"", editorXaml);
+        Assert.Contains("x:Name=\"BasicStepPanel\"", editorXaml);
+        Assert.Contains("x:Name=\"ExecutionStepPanel\"", editorXaml);
+        Assert.Contains("x:Name=\"ArgumentsStepPanel\"", editorXaml);
+        Assert.Contains("PluginEditorCardStyle", editorXaml);
+        Assert.Contains("public event EventHandler? StepChanged", editorCode);
+        Assert.Contains("public bool TryMoveNext()", editorCode);
+        Assert.Contains("public void MovePrevious()", editorCode);
+        Assert.Contains("PostExportPluginEditorValidationManifestPathRequired", editorCode);
+        Assert.Contains("editor.StepChanged +=", pluginPageCode);
+        Assert.Contains("editor.MovePrevious();", pluginPageCode);
+    }
+
     private static string FindRepositoryRoot()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);

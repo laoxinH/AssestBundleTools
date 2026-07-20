@@ -5229,23 +5229,80 @@
   <data name="PostExportPluginEditor.PrimaryButton" xml:space="preserve">
     <value>保存</value>
   </data>
+  <data name="PostExportPluginEditor.Id.Label" xml:space="preserve">
+    <value>Id</value>
+  </data>
+  <data name="PostExportPluginEditor.Id.Description" xml:space="preserve">
+    <value>用于唯一识别这个导出后插件。</value>
+  </data>
+  <data name="PostExportPluginEditor.Id.Placeholder" xml:space="preserve">
+    <value>例如 post-export.zip</value>
+  </data>
+  <data name="PostExportPluginEditor.DisplayName.Label" xml:space="preserve">
+    <value>显示名称</value>
+  </data>
+  <data name="PostExportPluginEditor.DisplayName.Description" xml:space="preserve">
+    <value>显示在插件列表与导出选项中。</value>
+  </data>
+  <data name="PostExportPluginEditor.DisplayName.Placeholder" xml:space="preserve">
+    <value>例如 ZIP 打包</value>
+  </data>
+  <data name="PostExportPluginEditor.Version.Label" xml:space="preserve">
+    <value>版本</value>
+  </data>
+  <data name="PostExportPluginEditor.Version.Description" xml:space="preserve">
+    <value>记录插件清单版本。</value>
+  </data>
+  <data name="PostExportPluginEditor.Version.Placeholder" xml:space="preserve">
+    <value>例如 1.0.0</value>
+  </data>
+  <data name="PostExportPluginEditor.Description.Label" xml:space="preserve">
+    <value>描述</value>
+  </data>
+  <data name="PostExportPluginEditor.Description.Description" xml:space="preserve">
+    <value>说明插件在导出完成后的用途。</value>
+  </data>
+  <data name="PostExportPluginEditor.Description.Placeholder" xml:space="preserve">
+    <value>例如根据导出清单生成 ZIP 包</value>
+  </data>
+  <data name="PostExportPluginEditor.ExecutablePath.Label" xml:space="preserve">
+    <value>可执行入口</value>
+  </data>
+  <data name="PostExportPluginEditor.ExecutablePath.Description" xml:space="preserve">
+    <value>导出完成后由应用启动的程序。</value>
+  </data>
+  <data name="PostExportPluginEditor.ExecutablePath.Placeholder" xml:space="preserve">
+    <value>相对 manifest 的路径或绝对路径</value>
+  </data>
+  <data name="PostExportPluginEditor.WorkingDirectoryPath.Label" xml:space="preserve">
+    <value>工作目录</value>
+  </data>
+  <data name="PostExportPluginEditor.WorkingDirectoryPath.Description" xml:space="preserve">
+    <value>可选；留空时使用插件目录。</value>
+  </data>
+  <data name="PostExportPluginEditor.WorkingDirectoryPath.Placeholder" xml:space="preserve">
+    <value>可选，相对 manifest 的路径或绝对路径</value>
+  </data>
   <data name="PostExportPluginEditor.Arguments.Label" xml:space="preserve">
     <value>启动参数</value>
   </data>
   <data name="PostExportPluginEditor.Arguments.Description" xml:space="preserve">
     <value>每行一个参数，必须包含 {manifestPath}。还可使用 {outputDirectory}、{workspaceId}、{workspaceKey} 和 {manifestDirectory}。</value>
   </data>
-  <data name="PostExportPluginEditor.Id.Placeholder" xml:space="preserve">
-    <value>例如 post-export.zip</value>
+  <data name="PostExportPluginEditor.Arguments.Placeholder" xml:space="preserve">
+    <value>每行填写一个参数</value>
   </data>
-  <data name="PostExportPluginEditor.DisplayName.Placeholder" xml:space="preserve">
-    <value>例如 ZIP 打包</value>
+  <data name="PostExportPluginEditor.Validation.IdRequired" xml:space="preserve">
+    <value>请填写插件 ID。</value>
   </data>
-  <data name="PostExportPluginEditor.ExecutablePath.Placeholder" xml:space="preserve">
-    <value>相对 manifest 的路径或绝对路径</value>
+  <data name="PostExportPluginEditor.Validation.DisplayNameRequired" xml:space="preserve">
+    <value>请填写显示名称。</value>
   </data>
-  <data name="PostExportPluginEditor.Validation.Required" xml:space="preserve">
-    <value>请填写插件 ID、显示名称和可执行文件路径。</value>
+  <data name="PostExportPluginEditor.Validation.ExecutablePathRequired" xml:space="preserve">
+    <value>请填写可执行文件路径。</value>
+  </data>
+  <data name="PostExportPluginEditor.Validation.ArgumentsRequired" xml:space="preserve">
+    <value>请至少填写一个启动参数。</value>
   </data>
   <data name="PostExportPluginEditor.Validation.ManifestPathRequired" xml:space="preserve">
     <value>启动参数必须包含 {manifestPath}。</value>

@@ -427,19 +427,47 @@ public sealed partial class PluginManagementPage : Page
             Title = string.IsNullOrWhiteSpace(entryId)
                 ? UiText.Get(ResourceKeys.PostExportPluginEditorNewTitle)
                 : UiText.GetFormatted(ResourceKeys.PostExportPluginEditorEditTitleFormat, displayName ?? entryId),
-            PrimaryButtonText = UiText.Get(ResourceKeys.PostExportPluginEditorPrimaryButton),
+            SecondaryButtonText = UiText.Get(ResourceKeys.PluginEditorPreviousButton),
             CloseButtonText = UiText.Get(ResourceKeys.ResourceProcessorEditorCloseButton),
             DefaultButton = ContentDialogButton.Primary,
             Content = editor
         };
 
+        editor.StepChanged += (_, _) => UpdateEditorDialogButtons(
+            dialog,
+            editor.IsLastStep,
+            editor.CanMovePrevious,
+            UiText.Get(ResourceKeys.PostExportPluginEditorPrimaryButton));
+        UpdateEditorDialogButtons(
+            dialog,
+            editor.IsLastStep,
+            editor.CanMovePrevious,
+            UiText.Get(ResourceKeys.PostExportPluginEditorPrimaryButton));
+
         UpsertPostExportPluginCommand? submittedCommand = null;
         dialog.PrimaryButtonClick += (_, args) =>
         {
-            if (!editor.TryCreateCommand(out submittedCommand) || submittedCommand is null)
+            if (!editor.IsLastStep)
             {
                 args.Cancel = true;
+                editor.TryMoveNext();
+                return;
             }
+
+            if (!editor.TryCreateCommand(out var command) || command is null)
+            {
+                args.Cancel = true;
+                submittedCommand = null;
+                return;
+            }
+
+            submittedCommand = command;
+        };
+
+        dialog.SecondaryButtonClick += (_, args) =>
+        {
+            args.Cancel = true;
+            editor.MovePrevious();
         };
 
         var result = await dialog.ShowAsync();
