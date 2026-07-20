@@ -16,6 +16,14 @@ public sealed class MainWindowChromeContractTests
             "src",
             "AssestBundleTools.Presentation.WinUI",
             "MainWindow.xaml.cs"));
+        var windowAppearanceCode = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "Services",
+            "Platform",
+            "Windowing",
+            "ModernWindowAppearanceService.cs"));
         var presentationProject = File.ReadAllText(Path.Combine(
             repositoryRoot,
             "src",
@@ -57,8 +65,9 @@ public sealed class MainWindowChromeContractTests
 
         Assert.Contains("<RowDefinition Height=\"32\" />", mainWindowXaml);
         Assert.DoesNotContain("Height=\"48\"", mainWindowXaml);
-        Assert.Contains("TitleBarHeightOption.Standard", mainWindowCode);
-        Assert.DoesNotContain("TitleBarHeightOption.Tall", mainWindowCode);
+        Assert.Contains("ModernWindowAppearanceService.ConfigureTitleBar(titleBar)", mainWindowCode);
+        Assert.Contains("TitleBarHeightOption.Standard", windowAppearanceCode);
+        Assert.DoesNotContain("TitleBarHeightOption.Tall", windowAppearanceCode);
         Assert.DoesNotContain("WindowSubtitleText", string.Concat(mainWindowXaml, mainWindowCode));
         Assert.Contains("x:Name=\"WindowTitleIcon\"", mainWindowXaml);
         Assert.Contains("Source=\"ms-appx:///Assets/AppLogo.png\"", mainWindowXaml);

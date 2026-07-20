@@ -29,6 +29,7 @@ public sealed partial class WorkspaceBatchReplacementWindow : Window
         ViewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
         NotificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
         InitializeComponent();
+        ModernWindowAppearanceService.TryApplySystemBackdrop(this);
         ContentRoot.DataContext = ViewModel;
 
         _content = new WorkspaceBatchReplacementDialogContent(ViewModel);
@@ -122,7 +123,7 @@ public sealed partial class WorkspaceBatchReplacementWindow : Window
             {
                 ExtendsContentIntoTitleBar = true;
                 SetTitleBar(AppTitleBar);
-                ConfigureTitleBar(_appWindow.TitleBar);
+                ModernWindowAppearanceService.ConfigureTitleBar(_appWindow.TitleBar);
                 UpdateTitleBarInsetColumns(_appWindow.TitleBar);
             }
 
@@ -134,19 +135,12 @@ public sealed partial class WorkspaceBatchReplacementWindow : Window
         }
     }
 
-    private static void ConfigureTitleBar(AppWindowTitleBar titleBar)
-    {
-        titleBar.ButtonBackgroundColor = Colors.Transparent;
-        titleBar.ButtonInactiveBackgroundColor = Colors.Transparent;
-        titleBar.ButtonHoverBackgroundColor = ColorHelper.FromArgb(24, 128, 128, 128);
-        titleBar.ButtonPressedBackgroundColor = ColorHelper.FromArgb(38, 128, 128, 128);
-    }
-
     private void OnAppWindowChanged(AppWindow sender, AppWindowChangedEventArgs args)
     {
         if (args.DidPresenterChange && AppWindowTitleBar.IsCustomizationSupported())
         {
-            ConfigureTitleBar(sender.TitleBar);
+            ModernWindowAppearanceService.ConfigureTitleBar(sender.TitleBar);
+            UpdateTitleBarInsetColumns(sender.TitleBar);
         }
     }
 

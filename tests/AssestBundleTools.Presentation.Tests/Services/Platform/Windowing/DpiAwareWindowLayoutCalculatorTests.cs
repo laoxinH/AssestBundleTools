@@ -15,12 +15,23 @@ public sealed class DpiAwareWindowLayoutCalculatorTests
             dpi: 96,
             new PhysicalWorkArea(0, 0, 1920, 1040));
 
-        Assert.Equal(new DpiAwareWindowLayout(200, 60, 1520, 920, 1040, 680), layout);
+        Assert.Equal(new DpiAwareWindowLayout(352, 152, 1216, 736, 1040, 680), layout);
+    }
+
+    [Fact]
+    public void Calculate_MainWindowAt100Percent_ShouldUseCompactInitialSize()
+    {
+        var layout = DpiAwareWindowLayoutCalculator.Calculate(
+            DpiAwareWindowLayoutProfile.MainWindow,
+            dpi: 96,
+            new PhysicalWorkArea(0, 0, 1920, 1040));
+
+        Assert.Equal(new DpiAwareWindowLayout(320, 136, 1280, 768, 900, 640), layout);
     }
 
     [Theory]
-    [InlineData(120, 20, 20, 1880, 1000, 1300, 850)]
-    [InlineData(144, 24, 24, 1872, 992, 1560, 992)]
+    [InlineData(120, 200, 60, 1520, 920, 1300, 850)]
+    [InlineData(144, 48, 24, 1824, 992, 1560, 992)]
     public void Calculate_AtScaledDpi_ShouldScaleThenConstrainToPhysicalWorkArea(
         uint dpi,
         int expectedX,
@@ -55,5 +66,34 @@ public sealed class DpiAwareWindowLayoutCalculatorTests
             new PhysicalWorkArea(1920, -120, 1366, 728));
 
         Assert.Equal(new DpiAwareWindowLayout(1944, -96, 1318, 680, 1318, 680), layout);
+    }
+
+    [Theory]
+    [InlineData(96, 432, 192, 1056, 656, 760, 520)]
+    [InlineData(120, 300, 110, 1320, 820, 950, 650)]
+    [InlineData(144, 168, 28, 1584, 984, 1140, 780)]
+    public void Calculate_AssetEditorAtSupportedScale_ShouldPreserveEffectiveLayout(
+        uint dpi,
+        int expectedX,
+        int expectedY,
+        int expectedWidth,
+        int expectedHeight,
+        int expectedMinimumWidth,
+        int expectedMinimumHeight)
+    {
+        var layout = DpiAwareWindowLayoutCalculator.Calculate(
+            DpiAwareWindowLayoutProfile.AssetEditorWindow,
+            dpi,
+            new PhysicalWorkArea(0, 0, 1920, 1040));
+
+        Assert.Equal(
+            new DpiAwareWindowLayout(
+                expectedX,
+                expectedY,
+                expectedWidth,
+                expectedHeight,
+                expectedMinimumWidth,
+                expectedMinimumHeight),
+            layout);
     }
 }

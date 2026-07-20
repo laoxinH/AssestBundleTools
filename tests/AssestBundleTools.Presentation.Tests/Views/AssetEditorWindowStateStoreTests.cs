@@ -28,6 +28,17 @@ public sealed class AssetEditorWindowStateStoreTests
     }
 
     [Fact]
+    public void CreateNextWindowLayout_ShouldUseDpiAwareDefaultForFirstWindow()
+    {
+        var store = new AssetEditorWindowStateStore();
+        var dpiAwareDefault = new AssetEditorWindowLayoutSnapshot(300, 110, 1320, 820);
+
+        var layout = store.CreateNextWindowLayout(dpiAwareDefault);
+
+        Assert.Equal(dpiAwareDefault, layout);
+    }
+
+    [Fact]
     public void RememberWindowLayout_ShouldCascadeFromRememberedLayout()
     {
         var store = new AssetEditorWindowStateStore();

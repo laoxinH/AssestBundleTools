@@ -1,7 +1,9 @@
 using System.Runtime.InteropServices;
 using AssestBundleTools.Presentation.WinUI.Services;
+using AssestBundleTools.Presentation.WinUI.Services.Platform.Windowing;
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
+using Microsoft.UI.Xaml;
 using Windows.Graphics;
 using WinRT.Interop;
 
@@ -99,6 +101,19 @@ public sealed partial class AssetEditorWindow
             _appWindow = AppWindow.GetFromWindowId(windowId);
             if (_appWindow is not null)
             {
+                DpiAwareWindowLayoutService.Apply(
+                    windowHandle,
+                    _appWindow,
+                    DpiAwareWindowLayoutProfile.AssetEditorWindow);
+
+                if (AppWindowTitleBar.IsCustomizationSupported())
+                {
+                    ExtendsContentIntoTitleBar = true;
+                    SetTitleBar(AppTitleBar);
+                    ModernWindowAppearanceService.ConfigureTitleBar(_appWindow.TitleBar);
+                    UpdateTitleBarInsetColumns(_appWindow.TitleBar);
+                }
+
                 _appWindow.Closing += OnAppWindowClosing;
                 _appWindow.Changed += OnAppWindowChanged;
             }
@@ -111,6 +126,12 @@ public sealed partial class AssetEditorWindow
 
     private void OnAppWindowChanged(AppWindow sender, AppWindowChangedEventArgs args)
     {
+        if (args.DidPresenterChange && AppWindowTitleBar.IsCustomizationSupported())
+        {
+            ModernWindowAppearanceService.ConfigureTitleBar(sender.TitleBar);
+            UpdateTitleBarInsetColumns(sender.TitleBar);
+        }
+
         if (_isApplyingInitialLayout ||
             (!args.DidPositionChange && !args.DidSizeChange))
         {
@@ -118,6 +139,12 @@ public sealed partial class AssetEditorWindow
         }
 
         PublishCurrentLayout();
+    }
+
+    private void UpdateTitleBarInsetColumns(AppWindowTitleBar titleBar)
+    {
+        LeftInsetColumn.Width = new GridLength(titleBar.LeftInset);
+        RightInsetColumn.Width = new GridLength(titleBar.RightInset);
     }
 
     private void OnAppWindowClosing(AppWindow sender, AppWindowClosingEventArgs args)

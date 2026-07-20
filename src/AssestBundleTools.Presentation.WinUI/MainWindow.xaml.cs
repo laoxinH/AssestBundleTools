@@ -91,11 +91,7 @@ public sealed partial class MainWindow : Microsoft.UI.Xaml.Window
             }
 
             var titleBar = _appWindow.TitleBar;
-            titleBar.PreferredHeightOption = TitleBarHeightOption.Standard;
-            titleBar.ButtonBackgroundColor = Colors.Transparent;
-            titleBar.ButtonInactiveBackgroundColor = Colors.Transparent;
-            titleBar.ButtonHoverBackgroundColor = ColorHelper.FromArgb(20, 255, 255, 255);
-            titleBar.ButtonPressedBackgroundColor = ColorHelper.FromArgb(40, 255, 255, 255);
+            ModernWindowAppearanceService.ConfigureTitleBar(titleBar);
             UpdateTitleBarInsetColumns(titleBar);
         }
         catch (Exception ex)
@@ -132,30 +128,7 @@ public sealed partial class MainWindow : Microsoft.UI.Xaml.Window
     /// </summary>
     private void TryInitializeSystemBackdrop()
     {
-        if (string.Equals(
-                Environment.GetEnvironmentVariable("ABT_DISABLE_SYSTEM_BACKDROP"),
-                "1",
-                StringComparison.Ordinal))
-        {
-            StartupDiagnostics.Log("System backdrop initialization skipped by environment variable.");
-            Debug.WriteLine("System backdrop initialization skipped by environment variable.");
-            return;
-        }
-
-        try
-        {
-            SystemBackdrop = new MicaBackdrop();
-        }
-        catch (COMException ex)
-        {
-            StartupDiagnostics.Log($"System backdrop initialization failed with COM exception: {ex}");
-            Debug.WriteLine($"System backdrop initialization failed with COM exception: {ex}");
-        }
-        catch (Exception ex)
-        {
-            StartupDiagnostics.Log($"System backdrop initialization failed with unexpected exception: {ex}");
-            Debug.WriteLine($"System backdrop initialization failed with unexpected exception: {ex}");
-        }
+        ModernWindowAppearanceService.TryApplySystemBackdrop(this, StartupDiagnostics.Log);
     }
 
     private void InitializeLocalizedText()

@@ -415,9 +415,16 @@ public sealed partial class BundleExplorerPage
                 OpenAssetDocumentGroupInNewWindowFromEditorAsync,
                 _openConflictActivator.TryActivateFromEditorAsync);
             App.CurrentApp.RegisterAuxiliaryWindow(window);
+            var dpiAwareDefaultLayout = window.TryCaptureLayoutSnapshot(out var capturedLayout)
+                ? capturedLayout
+                : new AssetEditorWindowLayoutSnapshot(
+                    AssetEditorWindowStateStore.DefaultX,
+                    AssetEditorWindowStateStore.DefaultY,
+                    AssetEditorWindowStateStore.DefaultWidth,
+                    AssetEditorWindowStateStore.DefaultHeight);
             var initialLayout = preferredLayout is { } layout && AssetEditorWindowLayoutSafety.CanRestoreSize(layout)
                 ? layout
-                : _windowStateStore.CreateNextWindowLayout();
+                : _windowStateStore.CreateNextWindowLayout(dpiAwareDefaultLayout);
             var windowStateId = _windowStateStore.RegisterWindow(
                 initialLayout,
                 window.CaptureGroupSnapshot());

@@ -10,64 +10,101 @@
     xmlns:viewModels="using:AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings"
     mc:Ignorable="d">
 
-    <Grid
-        x:Name="ContentRoot"
-        AllowDrop="True"
-        Padding="14"
-        Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
-        DragEnter="OnAssetDocumentGroupDragEnter"
-        DragLeave="OnAssetDocumentGroupDragLeave"
-        DragOver="OnAssetDocumentGroupDragOver"
-        Drop="OnAssetDocumentGroupDrop"
-        Loaded="OnContentRootLoaded"
-        RowSpacing="8">
+    <Grid Background="Transparent">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
+            <RowDefinition Height="40" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <Grid ColumnSpacing="8">
+        <Grid
+            x:Name="AppTitleBar"
+            Background="Transparent"
+            ColumnSpacing="8">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition x:Name="LeftInsetColumn" Width="0" />
                 <ColumnDefinition Width="*" />
+                <ColumnDefinition x:Name="RightInsetColumn" Width="0" />
             </Grid.ColumnDefinitions>
-
-            <Border
-                x:Name="AssetEditorGroupDragHandle"
-                Width="30"
-                Height="30"
-                CanDrag="{x:Bind ViewModel.DocumentGroup.HasDocumentTabs, Mode=OneWay}"
-                Background="Transparent"
-                CornerRadius="6"
-                DragStarting="OnAssetDocumentGroupDragStarting"
-                DropCompleted="OnAssetDocumentGroupDropCompleted"
-                Visibility="{x:Bind ViewModel.DocumentGroup.TabStripVisibility, Mode=OneWay}">
+            <Grid Grid.Column="1" Padding="14,0" ColumnSpacing="8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
                 <FontIcon
-                    HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     FontFamily="{StaticResource AppIconFontFamily}"
                     FontSize="12"
-                    Glyph="&#xEC9A;" />
-            </Border>
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Glyph="&#xE6E9;" />
+                <TextBlock
+                    x:Name="TitleBarText"
+                    Grid.Column="1"
+                    VerticalAlignment="Center"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    FontSize="12"
+                    TextTrimming="CharacterEllipsis" />
+            </Grid>
+        </Grid>
 
-            <TabView
-                x:Name="AssetEditorTabView"
-                Grid.Column="1"
-                Margin="-2,-2,-2,0"
-                AllowDropTabs="True"
-                CanDragTabs="True"
-                CanReorderTabs="True"
-                IsAddTabButtonVisible="False"
-                SelectedItem="{x:Bind ViewModel.DocumentGroup.ActiveDocumentTab, Mode=OneWay}"
-                TabCloseRequested="OnAssetEditorTabViewTabCloseRequested"
-                TabDragCompleted="OnAssetEditorTabViewTabDragCompleted"
-                TabDragStarting="OnAssetEditorTabViewTabDragStarting"
-                TabDroppedOutside="OnAssetEditorTabViewTabDroppedOutside"
-                TabItemsSource="{x:Bind ViewModel.DocumentGroup.DocumentTabs, Mode=OneWay}"
-                TabStripDragOver="OnAssetEditorTabViewTabStripDragOver"
-                TabStripDrop="OnAssetEditorTabViewTabStripDrop"
-                SelectionChanged="OnAssetEditorTabViewSelectionChanged"
-                Visibility="{x:Bind ViewModel.DocumentGroup.TabStripVisibility, Mode=OneWay}">
+        <Grid
+            x:Name="ContentRoot"
+            Grid.Row="1"
+            AllowDrop="True"
+            Padding="14"
+            Background="Transparent"
+            DragEnter="OnAssetDocumentGroupDragEnter"
+            DragLeave="OnAssetDocumentGroupDragLeave"
+            DragOver="OnAssetDocumentGroupDragOver"
+            Drop="OnAssetDocumentGroupDrop"
+            Loaded="OnContentRootLoaded"
+            RowSpacing="8">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <Grid ColumnSpacing="8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Border
+                    x:Name="AssetEditorGroupDragHandle"
+                    Width="30"
+                    Height="30"
+                    CanDrag="{x:Bind ViewModel.DocumentGroup.HasDocumentTabs, Mode=OneWay}"
+                    Background="Transparent"
+                    CornerRadius="6"
+                    DragStarting="OnAssetDocumentGroupDragStarting"
+                    DropCompleted="OnAssetDocumentGroupDropCompleted"
+                    Visibility="{x:Bind ViewModel.DocumentGroup.TabStripVisibility, Mode=OneWay}">
+                    <FontIcon
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        FontFamily="{StaticResource AppIconFontFamily}"
+                        FontSize="12"
+                        Glyph="&#xEC9A;" />
+                </Border>
+
+                <TabView
+                    x:Name="AssetEditorTabView"
+                    Grid.Column="1"
+                    Margin="-2,-2,-2,0"
+                    AllowDropTabs="True"
+                    CanDragTabs="True"
+                    CanReorderTabs="True"
+                    IsAddTabButtonVisible="False"
+                    SelectedItem="{x:Bind ViewModel.DocumentGroup.ActiveDocumentTab, Mode=OneWay}"
+                    TabCloseRequested="OnAssetEditorTabViewTabCloseRequested"
+                    TabDragCompleted="OnAssetEditorTabViewTabDragCompleted"
+                    TabDragStarting="OnAssetEditorTabViewTabDragStarting"
+                    TabDroppedOutside="OnAssetEditorTabViewTabDroppedOutside"
+                    TabItemsSource="{x:Bind ViewModel.DocumentGroup.DocumentTabs, Mode=OneWay}"
+                    TabStripDragOver="OnAssetEditorTabViewTabStripDragOver"
+                    TabStripDrop="OnAssetEditorTabViewTabStripDrop"
+                    SelectionChanged="OnAssetEditorTabViewSelectionChanged"
+                    Visibility="{x:Bind ViewModel.DocumentGroup.TabStripVisibility, Mode=OneWay}">
                 <TabView.TabItemTemplate>
                     <DataTemplate x:DataType="viewModels:AssetDocumentTabItemViewModel">
                         <TabViewItem
@@ -107,8 +144,8 @@
                         </TabViewItem>
                     </DataTemplate>
                 </TabView.TabItemTemplate>
-            </TabView>
-        </Grid>
+                </TabView>
+            </Grid>
 
         <Grid
             Grid.Row="1"
@@ -493,5 +530,6 @@
         <shared:AppNotificationPresenter
             Grid.RowSpan="2"
             NotificationService="{x:Bind ViewModel.NotificationService, Mode=OneWay}" />
+        </Grid>
     </Grid>
 </Window>

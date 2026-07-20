@@ -10,7 +10,7 @@
 
     <Grid
         x:Name="ContentRoot"
-        Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+        Background="Transparent">
         <Grid.Resources>
             <ThemeShadow x:Key="BatchExtractionCardShadow" />
         </Grid.Resources>
@@ -22,7 +22,7 @@
 
         <Grid
             x:Name="AppTitleBar"
-            Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
+            Background="Transparent"
             ColumnSpacing="8">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition

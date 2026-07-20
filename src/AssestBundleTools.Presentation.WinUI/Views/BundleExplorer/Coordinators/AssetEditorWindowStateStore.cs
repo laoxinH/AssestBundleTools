@@ -22,8 +22,8 @@ internal sealed class AssetEditorWindowStateStore
 {
     internal const int DefaultX = 120;
     internal const int DefaultY = 90;
-    internal const int DefaultWidth = 1320;
-    internal const int DefaultHeight = 820;
+    internal const int DefaultWidth = 1056;
+    internal const int DefaultHeight = 656;
     internal const int MinimumRememberedWidth = 760;
     internal const int MinimumRememberedHeight = 520;
     internal const int CascadeOffset = 32;
@@ -34,9 +34,13 @@ internal sealed class AssetEditorWindowStateStore
     private int _nextCascadeStep;
     private int _nextWindowStateId = 1;
 
-    public AssetEditorWindowLayoutSnapshot CreateNextWindowLayout()
+    public AssetEditorWindowLayoutSnapshot CreateNextWindowLayout() =>
+        CreateNextWindowLayout(CreateDefaultLayout());
+
+    public AssetEditorWindowLayoutSnapshot CreateNextWindowLayout(
+        AssetEditorWindowLayoutSnapshot dpiAwareDefaultLayout)
     {
-        var baseLayout = _lastKnownLayout ?? CreateDefaultLayout();
+        var baseLayout = _lastKnownLayout ?? dpiAwareDefaultLayout;
         var cascadeStep = _nextCascadeStep;
         _nextCascadeStep = (_nextCascadeStep + 1) % MaxCascadeSteps;
 

@@ -18,6 +18,45 @@ public sealed class WorkspaceBatchWindowShellContractTests
             ReadView(repositoryRoot, "WorkspaceExportWindow.xaml.cs"));
     }
 
+    [Fact]
+    public void WorkspaceOperationAndAssetEditorWindows_ShouldUseModernTransparentChrome()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var appearanceService = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "Services",
+            "Platform",
+            "Windowing",
+            "ModernWindowAppearanceService.cs"));
+
+        Assert.Contains("window.SystemBackdrop = new MicaBackdrop()", appearanceService);
+        Assert.Contains("ABT_DISABLE_SYSTEM_BACKDROP", appearanceService);
+        Assert.Contains("catch (COMException ex)", appearanceService);
+
+        AssertUsesModernTransparentChrome(
+            ReadView(repositoryRoot, "WorkspaceBatchReplacementWindow.xaml"),
+            ReadView(repositoryRoot, "WorkspaceBatchReplacementWindow.xaml.cs"));
+        AssertUsesModernTransparentChrome(
+            ReadView(repositoryRoot, "WorkspaceBatchExtractionWindow.xaml"),
+            ReadView(repositoryRoot, "WorkspaceBatchExtractionWindow.xaml.cs"));
+        AssertUsesModernTransparentChrome(
+            ReadView(repositoryRoot, "WorkspaceExportWindow.xaml"),
+            ReadView(repositoryRoot, "WorkspaceExportWindow.xaml.cs"));
+
+        var assetEditorXaml = ReadView(repositoryRoot, "AssetEditorWindow.xaml");
+        var assetEditorCode = string.Concat(
+            ReadView(repositoryRoot, "AssetEditorWindow.xaml.cs"),
+            ReadView(repositoryRoot, "AssetEditorWindow.Layout.cs"),
+            ReadView(repositoryRoot, "AssetEditorWindow.Localization.cs"));
+        AssertUsesModernTransparentChrome(assetEditorXaml, assetEditorCode);
+        Assert.Contains("<RowDefinition Height=\"40\" />", assetEditorXaml);
+        Assert.Contains("x:Name=\"TitleBarText\"", assetEditorXaml);
+        Assert.Contains("TitleBarText.Text = Title", assetEditorCode);
+        Assert.Contains("DpiAwareWindowLayoutProfile.AssetEditorWindow", assetEditorCode);
+    }
+
     private static void AssertUsesUnifiedShellMetrics(string xaml, string code)
     {
         Assert.Contains("DpiAwareWindowLayoutService.Apply(", code);
@@ -39,6 +78,16 @@ public sealed class WorkspaceBatchWindowShellContractTests
         Assert.DoesNotContain("FontSize=\"30\"", xaml);
         Assert.DoesNotContain("Width=\"56\"", xaml);
         Assert.DoesNotContain("Height=\"56\"", xaml);
+    }
+
+    private static void AssertUsesModernTransparentChrome(string xaml, string code)
+    {
+        Assert.Contains("x:Name=\"AppTitleBar\"", xaml);
+        Assert.Contains("Background=\"Transparent\"", xaml);
+        Assert.Contains("ModernWindowAppearanceService.TryApplySystemBackdrop(this)", code);
+        Assert.Contains("ExtendsContentIntoTitleBar = true", code);
+        Assert.Contains("SetTitleBar(AppTitleBar)", code);
+        Assert.Contains("ModernWindowAppearanceService.ConfigureTitleBar", code);
     }
 
     private static string ReadView(string repositoryRoot, string fileName) =>

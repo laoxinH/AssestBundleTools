@@ -8,14 +8,20 @@ internal readonly record struct DpiAwareWindowLayoutProfile(
     double WorkAreaMargin = 16d)
 {
     public static DpiAwareWindowLayoutProfile MainWindow { get; } = new(
-        InitialWidth: 1600d,
-        InitialHeight: 960d,
+        InitialWidth: 1280d,
+        InitialHeight: 768d,
         MinimumWidth: 900d,
         MinimumHeight: 640d);
 
     public static DpiAwareWindowLayoutProfile WorkspaceOperationWindow { get; } = new(
-        InitialWidth: 1520d,
-        InitialHeight: 920d,
+        InitialWidth: 1216d,
+        InitialHeight: 736d,
         MinimumWidth: 1040d,
         MinimumHeight: 680d);
+
+    public static DpiAwareWindowLayoutProfile AssetEditorWindow { get; } = new(
+        InitialWidth: 1056d,
+        InitialHeight: 656d,
+        MinimumWidth: 760d,
+        MinimumHeight: 520d);
 }
