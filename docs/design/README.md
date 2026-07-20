@@ -25,6 +25,8 @@
 
 测试范围与命令注意事项见 [../../tests/README.md](../../tests/README.md)。
 
+面向第三方开发者和普通用户的三类插件 manifest、CLI 协议与安装步骤见 [../plugin-guide.md](../plugin-guide.md)。
+
 ## 3. 专题文档
 
 这些文档仍然有效，但只在触达对应专题时阅读：

@@ -26,7 +26,7 @@ AssestBundleTools 是一款面向 Unity AssetBundle 的 Windows 工作区工具�
 - 资源浏览与预览：支持常见 Unity 资产信息、依赖关系、图片、音频、Mesh、文本、Spine 等预览链路。
 - 提取与替换：支持单资源、批量资源和 Spine 组的提取、文件替换及拖放工作流。
 - 保存与导出：按工作区修改重新构建 AB，可选择压缩策略并按来源 codec 重新加密。
-- 扩展能力：支持外部 AssetBundle codec CLI 和资源处理器 CLI，并提供在线组件安装基础设施。
+- 扩展能力：支持 AssetBundle codec、导出资源处理器和导出后处理三类 CLI 插件；开发和安装方式见 [插件开发与安装指南](docs/plugin-guide.md)。
 - 现代 Windows UI：支持浅色 / 深色主题、Windows 10 / 11 图标兼容以及 125% / 150% 高 DPI 布局。
 
 ## 下载与安装
@@ -109,6 +109,8 @@ Infrastructure     -> Application + Domain
 ```
 
 推荐使用 Visual Studio 的 MSBuild 构建 WinUI 项目。环境准备、平台选择和测试命令见 [调试与构建说明](docs/design/debug-setup.md)，架构约束见 [代码架构规范](docs/design/code-architecture-guidelines.md)，设计文档入口见 [设计文档索引](docs/design/README.md)。
+
+需要开发或分发外部扩展时，请先阅读 [插件开发与安装指南](docs/plugin-guide.md)。其中包含三类 manifest、命令行占位符、result JSON、用户安装目录和交付测试清单。
 
 ## 贡献
 
