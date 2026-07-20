@@ -72,7 +72,27 @@ public sealed class MonacoEditorAssetsContractTests
 
         Assert.Contains("<MonacoEditorAsset Include=\"Assets\\Monaco\\vs\\editor\\editor.main.js\" />", projectFile);
         Assert.Contains("SourceFiles=\"@(MonacoEditorAsset)\"", projectFile);
+        Assert.Contains("Name=\"CopyMonacoEditorAssetsToPublish\" AfterTargets=\"Publish\"", projectFile);
+        Assert.Contains("DestinationFiles=\"@(MonacoEditorAsset->'$(PublishDir)\\%(Identity)')\"", projectFile);
+        Assert.Contains("Published Monaco editor assets are missing.", projectFile);
         Assert.DoesNotContain("<_MonacoEditorAsset Include=\"Assets\\Monaco\\**\\*.*\" />", projectFile);
+    }
+
+    [Fact]
+    public void ReleasePipeline_ShouldRejectPackagesWithoutMonacoAssets()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var releaseScript = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "eng",
+            "release",
+            "Publish-Architecture.ps1"));
+
+        Assert.Contains("function Assert-MonacoAssetDirectory", releaseScript);
+        Assert.Contains("function Assert-MonacoAssetsInArchive", releaseScript);
+        Assert.Contains("-AssetRoot (Join-Path $publishDirectory 'Assets\\Monaco')", releaseScript);
+        Assert.Contains("-ArchivePath $portable.FullName", releaseScript);
+        Assert.Contains("-ArchivePath $fullPackage.FullName", releaseScript);
     }
 
     [Fact]

@@ -117,6 +117,17 @@
       SkipUnchangedFiles="true" />
   </Target>
 
+  <Target Name="CopyMonacoEditorAssetsToPublish" AfterTargets="Publish" Condition="'$(PublishDir)' != ''">
+    <RemoveDir Directories="$(PublishDir)\Assets\Monaco" Condition="Exists('$(PublishDir)\Assets\Monaco')" />
+    <Copy
+      SourceFiles="@(MonacoEditorAsset)"
+      DestinationFiles="@(MonacoEditorAsset->'$(PublishDir)\%(Identity)')"
+      SkipUnchangedFiles="true" />
+    <Error
+      Condition="!Exists('$(PublishDir)\Assets\Monaco\abt-editor-host.html')"
+      Text="Published Monaco editor assets are missing." />
+  </Target>
+
   <Target Name="CopyBuiltInAudioResourceProcessors" AfterTargets="Build">
     <MSBuild
       Projects="..\AssestBundleTools.Audio.FmodProcessor\AssestBundleTools.Audio.FmodProcessor.csproj"

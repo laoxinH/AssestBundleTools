@@ -25,6 +25,68 @@ $installerReadmePath = Join-Path $repoRoot 'eng\installer\readme.md'
 $installerLicensePath = Join-Path $repoRoot 'LICENSE.md'
 $setMsiInstallerOptionsPath = Join-Path $repoRoot 'eng\release\Set-MsiInstallerOptions.ps1'
 $testMsiInstallerContractPath = Join-Path $repoRoot 'eng\release\Test-MsiInstallerContract.ps1'
+$monacoSourceDirectory = Join-Path $repoRoot 'src\AssestBundleTools.Presentation.WinUI\Assets\Monaco'
+
+if (-not (Test-Path -LiteralPath $monacoSourceDirectory -PathType Container)) {
+    throw "Monaco source directory is missing: $monacoSourceDirectory"
+}
+
+$requiredMonacoAssetRelativePaths = @(
+    Get-ChildItem -LiteralPath $monacoSourceDirectory -File -Recurse |
+        ForEach-Object {
+            [System.IO.Path]::GetRelativePath($monacoSourceDirectory, $_.FullName).Replace('\', '/')
+        } |
+        Sort-Object
+)
+if ($requiredMonacoAssetRelativePaths.Count -eq 0) {
+    throw 'The Monaco source directory does not contain any files.'
+}
+
+function Assert-MonacoAssetDirectory {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$AssetRoot,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Context
+    )
+
+    foreach ($relativePath in $requiredMonacoAssetRelativePaths) {
+        $assetPath = Join-Path $AssetRoot ($relativePath.Replace('/', [System.IO.Path]::DirectorySeparatorChar))
+        if (-not (Test-Path -LiteralPath $assetPath -PathType Leaf)) {
+            throw "$Context is missing the Monaco asset: Assets/Monaco/$relativePath"
+        }
+    }
+}
+
+function Assert-MonacoAssetsInArchive {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ArchivePath,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Context
+    )
+
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    $archive = [System.IO.Compression.ZipFile]::OpenRead($ArchivePath)
+    try {
+        $entryNames = @($archive.Entries | ForEach-Object { $_.FullName.Replace('\', '/') })
+        foreach ($relativePath in $requiredMonacoAssetRelativePaths) {
+            $expectedPath = "Assets/Monaco/$relativePath"
+            $hasEntry = $entryNames.Where({
+                $_.Equals($expectedPath, [System.StringComparison]::OrdinalIgnoreCase) -or
+                $_.EndsWith("/$expectedPath", [System.StringComparison]::OrdinalIgnoreCase)
+            }, 'First').Count -gt 0
+            if (-not $hasEntry) {
+                throw "$Context is missing the Monaco asset: $expectedPath"
+            }
+        }
+    }
+    finally {
+        $archive.Dispose()
+    }
+}
 
 $configuration = switch ($RuntimeIdentifier) {
     'win-x86' { @{ Platform = 'x86'; PackId = 'AssestBundleTools.win-x86'; Machine = 0x014c } }
@@ -61,6 +123,10 @@ try {
         -p:PublishDir=$publishDirectory `
         -p:MinVerVersionOverride=$Version
     if ($LASTEXITCODE -ne 0) { throw 'dotnet publish failed.' }
+
+    Assert-MonacoAssetDirectory `
+        -AssetRoot (Join-Path $publishDirectory 'Assets\Monaco') `
+        -Context "$RuntimeIdentifier publish output"
 
     dotnet tool restore
     if ($LASTEXITCODE -ne 0) { throw 'dotnet tool restore failed.' }
@@ -119,10 +185,18 @@ if ($productVersion -ne $Version) {
 $setup = Get-ChildItem -LiteralPath $releaseDirectory -Filter '*Setup.exe' | Select-Object -First 1
 $installerMsi = Get-ChildItem -LiteralPath $releaseDirectory -Filter '*.msi' | Select-Object -First 1
 $portable = Get-ChildItem -LiteralPath $releaseDirectory -Filter '*Portable.zip' | Select-Object -First 1
+$fullPackage = Get-ChildItem -LiteralPath $releaseDirectory -Filter '*full.nupkg' | Select-Object -First 1
 $feed = Join-Path $releaseDirectory "releases.$RuntimeIdentifier.json"
-if ($null -eq $setup -or $null -eq $installerMsi -or $null -eq $portable -or -not (Test-Path -LiteralPath $feed)) {
-    throw 'Velopack output is incomplete: Setup, MSI, Portable, or release feed is missing.'
+if ($null -eq $setup -or
+    $null -eq $installerMsi -or
+    $null -eq $portable -or
+    $null -eq $fullPackage -or
+    -not (Test-Path -LiteralPath $feed)) {
+    throw 'Velopack output is incomplete: Setup, MSI, Portable, full package, or release feed is missing.'
 }
+
+Assert-MonacoAssetsInArchive -ArchivePath $portable.FullName -Context "$RuntimeIdentifier portable package"
+Assert-MonacoAssetsInArchive -ArchivePath $fullPackage.FullName -Context "$RuntimeIdentifier full update package"
 
 $installerName = "AssestBundleTools-$Version-$RuntimeIdentifier-Installer.msi"
 $portableName = "AssestBundleTools-$Version-$RuntimeIdentifier-Portable.zip"

@@ -34,6 +34,7 @@ MSI 的当前用户模式默认安装到 `%LocalAppData%`，不需要管理员�
 - 版本化 `docs/releases/v<version>.md` 单一说明来源、更新确认窗口的受限可选择文本展示，以及 GitHub Release 正文同步；
 - 应用更新前的活动后台任务与其他进程阻断，避免直接结束仍在执行工作的进程；
 - `eng/release/Publish-Architecture.ps1` 的 x86 / x64 / ARM64 publish、PE 架构校验、Velopack 打包与 SHA-256 清单；
+- 发布阶段的离线 Monaco 资源门禁：项目同时复制到 Build 与 Publish 目录，打包脚本逐项校验 publish、Portable ZIP 和 full nupkg，缺失时阻止 GitHub Release；
 - `.github/workflows/release.yml` 的测试分支 / 手动构建，以及 `v*` tag 草稿上传、资产名称 / API digest（缺失时下载回读 SHA-256）二次校验和自动公开流程。
 
 本地 x64 已完成旧版 Setup、Portable、full nupkg、feed 和 checksum 的真实打包验证。2026-07-19 发布的首个稳定版本 `v0.1.0` 已通过 GitHub Actions x86 / x64 / ARM64 矩阵、22 项 Release 资产名称与 GitHub SHA-256 digest 校验并公开；该版本仍使用旧的一键 Setup。`v0.1.1` 已在本地通过 x64 MSI / Portable / full nupkg / feed 打包、MSI 合约、版本号、启动 smoke 和中文 Release Notes 注入验证；同日 tag workflow 已成功完成三架构构建、22 项 Release 资产与 digest 校验并公开，线上三个架构 feed 均已核对版本、pack id 和中文更新说明。installed / portable 从 `v0.1.0` 到 `v0.1.1` 的真实自动更新仍需在对应旧版安装 / 便携环境中继续验收，未完成前不对外宣称该门禁已经通过。代码签名、preview 独立通道、增量包复用和官网 feed 镜像仍属于阶段 D。
@@ -224,6 +225,7 @@ workflow 由 `v*` tag push 触发，建议分为以下阶段：
    - 生成 Portable ZIP、Installer.msi、full / delta 包和 feed；Velopack 同时产生的一键 Setup 不作为公开资产上传，资产索引在重命名后必须只引用实际上传文件。
 4. **Verify**
    - 校验用户入口文件、feed 引用、SHA-256、PE 架构和版本完全一致。
+   - 校验 publish 目录、Portable ZIP 和 full nupkg 都包含完整的 `Assets/Monaco` 离线编辑器白名单；该检查必须在 Velopack 产物上传前完成。
    - x86 / x64 运行启动 smoke；ARM64 在可用的原生 Windows ARM runner 或真实设备上 smoke。没有 ARM64 运行验证时不得把结构验证描述为已实机验证。
    - 从上一版本的 portable 与 installed 样本各执行一次自动更新 smoke，验证模式保持、重启和用户数据保留。
 5. **Release**
