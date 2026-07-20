@@ -59,9 +59,8 @@ internal sealed class BundleExplorerWorkspaceExportCoordinator
 
     public async Task ShowAsync()
     {
-        if (_owner.XamlRoot is null || _activeWindow is not null)
+        if (_owner.XamlRoot is null || TryActivateExistingWindow())
         {
-            _activeWindow?.BringToFront();
             return;
         }
 
@@ -104,6 +103,11 @@ internal sealed class BundleExplorerWorkspaceExportCoordinator
 
         var postExportPluginCatalogResult = await _postExportPluginCatalogService.GetEntriesAsync();
         if (!TryGetValue(postExportPluginCatalogResult, out var postExportPluginCatalogEntries))
+        {
+            return;
+        }
+
+        if (TryActivateExistingWindow())
         {
             return;
         }
@@ -154,6 +158,24 @@ internal sealed class BundleExplorerWorkspaceExportCoordinator
                 _activeWindow = null;
             }
         }
+    }
+
+    private bool TryActivateExistingWindow()
+    {
+        if (_activeWindow is not null)
+        {
+            _activeWindow.BringToFront();
+            return true;
+        }
+
+        if (_owner.TryGetHostWindow(out var ownerWindow) &&
+            App.CurrentApp.TryGetOwnedAuxiliaryWindow<WorkspaceExportWindow>(ownerWindow, out var existingWindow))
+        {
+            existingWindow.BringToFront();
+            return true;
+        }
+
+        return false;
     }
 
     private async Task ExecuteExportAsync(

@@ -68,6 +68,32 @@ public sealed class BundleExplorerToolbarContractTests
         Assert.DoesNotContain("<ColumnDefinition Width=\"*\" />", actionsXaml);
     }
 
+    [Fact]
+    public void WorkspacePageReentry_ShouldBindExistingSessionWithoutRepeatedSuccessFeedback()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var viewModel = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "ViewModels",
+            "BundleExplorer",
+            "Bindings",
+            "BundleExplorerViewModel.cs"));
+
+        var sessionRebindStart = viewModel.IndexOf(
+            "if (_workspaceShell.TryGetCurrentWorkspaceSessionContext",
+            StringComparison.Ordinal);
+        var sessionRebindEnd = viewModel.IndexOf(
+            "_workspaceBindingCoordinator.ResetWorkspaceToEmptyState();",
+            sessionRebindStart,
+            StringComparison.Ordinal);
+        var sessionRebind = viewModel[sessionRebindStart..sessionRebindEnd];
+
+        Assert.Contains("clearExistingLogs: false", sessionRebind);
+        Assert.Contains("showLoadedNotification: false", sessionRebind);
+    }
+
     private static string FindRepositoryRoot()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);

@@ -497,9 +497,28 @@
                             ItemTemplate="{StaticResource WorkspaceExportComboBoxItemTemplate}"
                             SelectedItem="{Binding SelectedCompressionOption, Mode=TwoWay}" />
                         <Border Height="1" Background="{ThemeResource CardStrokeColorDefaultBrush}" />
-                        <TextBlock
-                            x:Name="PostExportPluginLabelText"
-                            Style="{StaticResource WorkspaceExportSectionTitleTextStyle}" />
+                        <Grid ColumnSpacing="10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Border
+                                x:Name="PostExportPluginTitleIcon"
+                                Style="{StaticResource WorkspaceExportCardTitleIconStyle}">
+                                <FontIcon
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    FontFamily="{StaticResource AppIconFontFamily}"
+                                    FontSize="12"
+                                    Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                                    Glyph="&#xE74C;" />
+                            </Border>
+                            <TextBlock
+                                x:Name="PostExportPluginLabelText"
+                                Grid.Column="1"
+                                VerticalAlignment="Center"
+                                Style="{StaticResource WorkspaceExportSectionTitleTextStyle}" />
+                        </Grid>
                         <ComboBox
                             MinHeight="50"
                             HorizontalAlignment="Stretch"

@@ -111,6 +111,8 @@ public sealed class WorkspaceExportWindowContractTests
         Assert.Contains("var windowNotificationService = new AppNotificationService();", coordinator);
         Assert.Contains("new WorkspaceExportWindow(viewModel, windowNotificationService)", coordinator);
         Assert.Contains("App.CurrentApp.RegisterAuxiliaryWindow(", coordinator);
+        Assert.Contains("TryGetOwnedAuxiliaryWindow<WorkspaceExportWindow>", coordinator);
+        Assert.Contains("TryActivateExistingWindow()", coordinator);
         Assert.Contains("_owner.TryGetHostWindow(out var hostWindow) ? hostWindow : null", coordinator);
         Assert.Contains("GetWorkspaceSavePreviewAsync", coordinator);
         Assert.Contains("GetWorkspaceChangeSummaryAsync", coordinator);
@@ -161,6 +163,8 @@ public sealed class WorkspaceExportWindowContractTests
         Assert.Contains("WorkspaceExportDialog.UseSourceCodec", enResources);
         Assert.Contains("ItemsSource=\"{Binding Processors}\"", contentXaml);
         Assert.Contains("SelectedItem=\"{Binding SelectedProcessor, Mode=TwoWay}\"", contentXaml);
+        Assert.Contains("x:Name=\"PostExportPluginTitleIcon\"", contentXaml);
+        Assert.Contains("Glyph=\"&#xE74C;\"", contentXaml);
         Assert.DoesNotContain("OutputDirectoryText", contentXaml);
         Assert.DoesNotContain("OutputDirectoryLabelText", contentXaml);
         Assert.Contains("ResourceProcessorSectionTitleText", contentXaml);

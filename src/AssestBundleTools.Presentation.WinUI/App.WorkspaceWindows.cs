@@ -30,6 +30,21 @@ public partial class App
         string.IsNullOrWhiteSpace(window.RegisteredWorkspaceKey) &&
         string.IsNullOrWhiteSpace(window.PendingWorkspaceKey);
 
+    internal bool TryGetOwnedAuxiliaryWindow<TWindow>(
+        MainWindow ownerWindow,
+        [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out TWindow? auxiliaryWindow)
+        where TWindow : Microsoft.UI.Xaml.Window
+    {
+        ArgumentNullException.ThrowIfNull(ownerWindow);
+
+        auxiliaryWindow = _auxiliaryWindowOwners
+            .Where(pair => ReferenceEquals(pair.Value, ownerWindow))
+            .Select(static pair => pair.Key)
+            .OfType<TWindow>()
+            .LastOrDefault();
+        return auxiliaryWindow is not null;
+    }
+
     public bool DoesWindowHostWorkspace(
         MainWindow? window,
         WorkspaceNavigationRequest navigationRequest)

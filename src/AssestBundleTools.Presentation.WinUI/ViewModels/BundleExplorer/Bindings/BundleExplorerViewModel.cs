@@ -252,9 +252,10 @@ public sealed class BundleExplorerViewModel : ObservableObject, IDisposable
         if (_workspaceShell.TryGetCurrentWorkspaceSessionContext(out var currentWorkspaceSummary, out var currentNavigationRequest))
         {
             await _workspaceBindingCoordinator.BindWorkspaceAsync(
-                clearExistingLogs: true,
+                clearExistingLogs: false,
                 workspaceSummary: currentWorkspaceSummary,
-                workspaceNavigationRequest: currentNavigationRequest);
+                workspaceNavigationRequest: currentNavigationRequest,
+                showLoadedNotification: false);
             return;
         }
 

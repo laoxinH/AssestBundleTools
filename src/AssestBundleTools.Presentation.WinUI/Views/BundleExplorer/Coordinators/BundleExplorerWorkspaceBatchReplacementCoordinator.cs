@@ -47,14 +47,10 @@ public sealed partial class BundleExplorerPage
 
         public async Task ShowAsync()
         {
-            if (_owner.XamlRoot is null || !TryResolveWorkspaceScope(out var workspaceSummary, out var workspaceKey, out var workspaceDataRootPath))
+            if (_owner.XamlRoot is null ||
+                TryActivateExistingWindow() ||
+                !TryResolveWorkspaceScope(out var workspaceSummary, out var workspaceKey, out var workspaceDataRootPath))
             {
-                return;
-            }
-
-            if (_activeWindow is not null)
-            {
-                _activeWindow.BringToFront();
                 return;
             }
 
@@ -109,6 +105,24 @@ public sealed partial class BundleExplorerPage
 
                 CancelPendingPlan();
             }
+        }
+
+        private bool TryActivateExistingWindow()
+        {
+            if (_activeWindow is not null)
+            {
+                _activeWindow.BringToFront();
+                return true;
+            }
+
+            if (_owner.TryGetHostWindow(out var ownerWindow) &&
+                App.CurrentApp.TryGetOwnedAuxiliaryWindow<WorkspaceBatchReplacementWindow>(ownerWindow, out var existingWindow))
+            {
+                existingWindow.BringToFront();
+                return true;
+            }
+
+            return false;
         }
 
         private async Task ExecuteReplacementAsync(

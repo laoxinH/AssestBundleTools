@@ -58,6 +58,7 @@ public sealed partial class BundleExplorerPage
         public async Task ShowAsync()
         {
             if (_owner.XamlRoot is null ||
+                TryActivateExistingWindow() ||
                 !TryResolveWorkspaceScope(out var workspaceSummary, out var workspaceKey, out var workspaceDataRootPath))
             {
                 return;
@@ -79,12 +80,6 @@ public sealed partial class BundleExplorerPage
                 _localizationService,
                 bundleNodes,
                 _owner.ViewModel.DocumentWorkspace.ActiveBundleTab?.BundleId);
-
-            if (_activeBatchExtractionWindow is not null)
-            {
-                _activeBatchExtractionWindow.BringToFront();
-                return;
-            }
 
             var windowNotificationService = new AppNotificationService();
             var window = new WorkspaceBatchExtractionWindow(viewModel, windowNotificationService);
@@ -131,6 +126,24 @@ public sealed partial class BundleExplorerPage
 
                 CancelPendingPreviewRefresh();
             }
+        }
+
+        private bool TryActivateExistingWindow()
+        {
+            if (_activeBatchExtractionWindow is not null)
+            {
+                _activeBatchExtractionWindow.BringToFront();
+                return true;
+            }
+
+            if (_owner.TryGetHostWindow(out var ownerWindow) &&
+                App.CurrentApp.TryGetOwnedAuxiliaryWindow<WorkspaceBatchExtractionWindow>(ownerWindow, out var existingWindow))
+            {
+                existingWindow.BringToFront();
+                return true;
+            }
+
+            return false;
         }
 
         private void SchedulePreviewRefreshAfterWindowShown(
