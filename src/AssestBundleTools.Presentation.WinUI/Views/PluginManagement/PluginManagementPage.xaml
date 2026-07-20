@@ -531,6 +531,15 @@
                                                     Glyph="&#xE00D;" />
                                             </MenuFlyoutItem.Icon>
                                         </MenuFlyoutItem>
+                                        <MenuFlyoutItem
+                                            x:Name="AddPostExportPluginMenuFlyoutItem"
+                                            Click="OnAddPostExportPluginMenuFlyoutItemClick">
+                                            <MenuFlyoutItem.Icon>
+                                                <FontIcon
+                                                    FontFamily="{StaticResource AppIconFontFamily}"
+                                                    Glyph="&#xE00D;" />
+                                            </MenuFlyoutItem.Icon>
+                                        </MenuFlyoutItem>
                                     </MenuFlyout>
                                 </Button.Flyout>
                                 <FontIcon
@@ -645,6 +654,23 @@
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                                 <ListView
                                     ItemsSource="{x:Bind ViewModel.VisibleResourceProcessorPlugins, Mode=OneWay}"
+                                    SelectedItem="{x:Bind ViewModel.SelectedPlugin, Mode=OneWay}"
+                                    SelectionChanged="OnPluginListSelectionChanged"
+                                    ItemContainerStyle="{StaticResource PluginManagementListViewItemStyle}"
+                                    ItemTemplate="{StaticResource PluginManagementPluginItemTemplate}"
+                                    SelectionMode="Single" />
+                            </StackPanel>
+
+                            <StackPanel
+                                Spacing="8"
+                                Visibility="{x:Bind ViewModel.PostExportGroupVisibility, Mode=OneWay}">
+                                <TextBlock
+                                    x:Name="PostExportGroupTitleText"
+                                    FontSize="13"
+                                    FontWeight="SemiBold"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                <ListView
+                                    ItemsSource="{x:Bind ViewModel.VisiblePostExportPlugins, Mode=OneWay}"
                                     SelectedItem="{x:Bind ViewModel.SelectedPlugin, Mode=OneWay}"
                                     SelectionChanged="OnPluginListSelectionChanged"
                                     ItemContainerStyle="{StaticResource PluginManagementListViewItemStyle}"

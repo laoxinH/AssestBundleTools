@@ -4731,6 +4731,21 @@
   <data name="WorkspaceExportDialog.CompressionMode.Label" xml:space="preserve">
     <value>Compression</value>
   </data>
+  <data name="WorkspaceExportDialog.PostPlugin.Label" xml:space="preserve">
+    <value>Post-export</value>
+  </data>
+  <data name="WorkspaceExportDialog.PostPlugin.None" xml:space="preserve">
+    <value>No post-export plugin</value>
+  </data>
+  <data name="WorkspaceExportDialog.PostPlugin.NoneDescription" xml:space="preserve">
+    <value>Only write bundles and the export manifest; do not launch a third-party plugin.</value>
+  </data>
+  <data name="WorkspaceExportDialog.Status.PostPluginLaunching" xml:space="preserve">
+    <value>Sending the manifest to the post-export plugin.</value>
+  </data>
+  <data name="WorkspaceExportDialog.PostPlugin.LaunchFailed.Format" xml:space="preserve">
+    <value>Export files were written, but the post-export plugin could not be launched: {0}</value>
+  </data>
   <data name="WorkspaceExportDialog.Compression.FastLz4" xml:space="preserve">
     <value>Fast LZ4</value>
   </data>
@@ -5174,6 +5189,87 @@
   </data>
   <data name="PluginEditor.PreviousButton" xml:space="preserve">
     <value>Back</value>
+  </data>
+  <data name="PluginManagementPage.AddPostExportPluginButton.Content" xml:space="preserve">
+    <value>Add post-export plugin</value>
+  </data>
+  <data name="PluginManagementPage.Type.PostExport" xml:space="preserve">
+    <value>Post-export</value>
+  </data>
+  <data name="PluginManagementPage.Scope.PostExport" xml:space="preserve">
+    <value>Entire export manifest</value>
+  </data>
+  <data name="PluginManagementPage.PostExportDelete.Title" xml:space="preserve">
+    <value>Delete post-export plugin</value>
+  </data>
+  <data name="PluginManagementPage.PostExportDelete.Description.Format" xml:space="preserve">
+    <value>Delete “{0}” ({1})?</value>
+  </data>
+  <data name="PluginManagementPage.PostExportLoadFailedMessage" xml:space="preserve">
+    <value>Could not load the post-export plugin catalog.</value>
+  </data>
+  <data name="PluginManagementPage.PostExportSaveSucceededMessage.Format" xml:space="preserve">
+    <value>Post-export plugin saved: {0}</value>
+  </data>
+  <data name="PluginManagementPage.PostExportSaveFailedMessage" xml:space="preserve">
+    <value>Could not save the post-export plugin.</value>
+  </data>
+  <data name="PluginManagementPage.PostExportDeleteSucceededMessage.Format" xml:space="preserve">
+    <value>Post-export plugin deleted: {0}</value>
+  </data>
+  <data name="PluginManagementPage.PostExportDeleteFailedMessage" xml:space="preserve">
+    <value>Could not delete the post-export plugin.</value>
+  </data>
+  <data name="PostExportPluginEditor.NewTitle" xml:space="preserve">
+    <value>Add post-export plugin</value>
+  </data>
+  <data name="PostExportPluginEditor.EditTitle.Format" xml:space="preserve">
+    <value>Edit post-export plugin: {0}</value>
+  </data>
+  <data name="PostExportPluginEditor.PrimaryButton" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="PostExportPluginEditor.Arguments.Label" xml:space="preserve">
+    <value>Launch arguments</value>
+  </data>
+  <data name="PostExportPluginEditor.Arguments.Description" xml:space="preserve">
+    <value>One argument per line. {manifestPath} is required. {outputDirectory}, {workspaceId}, {workspaceKey}, and {manifestDirectory} are also available.</value>
+  </data>
+  <data name="PostExportPluginEditor.Id.Placeholder" xml:space="preserve">
+    <value>For example, post-export.zip</value>
+  </data>
+  <data name="PostExportPluginEditor.DisplayName.Placeholder" xml:space="preserve">
+    <value>For example, ZIP package</value>
+  </data>
+  <data name="PostExportPluginEditor.ExecutablePath.Placeholder" xml:space="preserve">
+    <value>Path relative to the manifest, or an absolute path</value>
+  </data>
+  <data name="PostExportPluginEditor.Validation.Required" xml:space="preserve">
+    <value>Enter the plugin ID, display name, and executable path.</value>
+  </data>
+  <data name="PostExportPluginEditor.Validation.ManifestPathRequired" xml:space="preserve">
+    <value>Launch arguments must contain {manifestPath}.</value>
+  </data>
+  <data name="Error.Bundle.PostExportPlugin.Catalog.Invalid" xml:space="preserve">
+    <value>The post-export plugin configuration is invalid.</value>
+  </data>
+  <data name="Error.Bundle.PostExportPlugin.Catalog.NotFound" xml:space="preserve">
+    <value>The selected post-export plugin was not found.</value>
+  </data>
+  <data name="Error.Bundle.PostExportPlugin.Catalog.ReadOnly" xml:space="preserve">
+    <value>This post-export plugin is read-only.</value>
+  </data>
+  <data name="Error.Bundle.PostExportPlugin.Catalog.AlreadyExists" xml:space="preserve">
+    <value>A post-export plugin with this ID already exists.</value>
+  </data>
+  <data name="Error.Bundle.PostExportPlugin.Catalog.SaveFailed" xml:space="preserve">
+    <value>Could not save the post-export plugin.</value>
+  </data>
+  <data name="Error.Bundle.PostExportPlugin.Catalog.DeleteFailed" xml:space="preserve">
+    <value>Could not delete the post-export plugin.</value>
+  </data>
+  <data name="Error.Bundle.Save.PostExportPlugin.LaunchFailed" xml:space="preserve">
+    <value>Export files were written, but the post-export plugin could not be launched.</value>
   </data>
   <data name="ResourceProcessorEditor.NewTitle" xml:space="preserve">
     <value>Add Resource Processor Plugin</value>

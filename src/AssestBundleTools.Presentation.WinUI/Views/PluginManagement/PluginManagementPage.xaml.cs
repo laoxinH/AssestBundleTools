@@ -24,6 +24,7 @@ public sealed partial class PluginManagementPage : Page
         ViewModel = new PluginManagementViewModel(
             App.CurrentApp.AssetBundleDecryptorCatalogService,
             App.CurrentApp.ResourceProcessorCatalogService,
+            App.CurrentApp.PostExportPluginCatalogService,
             App.CurrentApp.AssetBundleDecryptorRegistry,
             App.CurrentApp.AppNotificationService,
             App.CurrentApp.AppLogService,
@@ -59,8 +60,10 @@ public sealed partial class PluginManagementPage : Page
         AutomationProperties.SetName(AddPluginMenuButton, addPluginMenuButtonToolTip);
         AddDecryptorMenuFlyoutItem.Text = UiText.Get(ResourceKeys.PluginManagementAddDecryptorButton);
         AddResourceProcessorMenuFlyoutItem.Text = UiText.Get(ResourceKeys.PluginManagementAddResourceProcessorButton);
+        AddPostExportPluginMenuFlyoutItem.Text = UiText.Get(ResourceKeys.PluginManagementAddPostExportPluginButton);
         DecryptorGroupTitleText.Text = UiText.Get(ResourceKeys.PluginManagementTypeImportDecryptor);
         ResourceProcessorGroupTitleText.Text = UiText.Get(ResourceKeys.PluginManagementTypeExportProcessor);
+        PostExportGroupTitleText.Text = UiText.Get(ResourceKeys.PluginManagementTypePostExport);
         PluginDirectoryEmptyTitleText.Text = UiText.Get(ResourceKeys.PluginManagementDirectoryEmptyTitle);
         PluginDirectoryEmptyText.Text = UiText.Get(ResourceKeys.PluginManagementDirectoryEmptyText);
         PluginDetailsEmptyTitleText.Text = UiText.Get(ResourceKeys.PluginManagementDetailsEmptyTitle);
@@ -136,6 +139,11 @@ public sealed partial class PluginManagementPage : Page
         await ShowResourceProcessorEditorDialogAsync(entryId: null);
     }
 
+    private async void OnAddPostExportPluginMenuFlyoutItemClick(object sender, RoutedEventArgs e)
+    {
+        await ShowPostExportPluginEditorDialogAsync(entryId: null);
+    }
+
     private async void OnEditSelectedPluginButtonClick(object sender, RoutedEventArgs e)
     {
         if (ViewModel.SelectedPlugin?.DecryptorEntry is not null)
@@ -147,6 +155,12 @@ public sealed partial class PluginManagementPage : Page
         if (ViewModel.SelectedPlugin?.ResourceProcessorEntry is not null)
         {
             await ShowResourceProcessorEditorDialogAsync(ViewModel.SelectedPlugin.Id);
+            return;
+        }
+
+        if (ViewModel.SelectedPlugin?.PostExportPluginEntry is not null)
+        {
+            await ShowPostExportPluginEditorDialogAsync(ViewModel.SelectedPlugin.Id);
         }
     }
 
@@ -160,12 +174,15 @@ public sealed partial class PluginManagementPage : Page
 
         var selectedPlugin = ViewModel.SelectedPlugin;
         var isDecryptor = selectedPlugin.DecryptorEntry is not null;
+        var isPostExport = selectedPlugin.PostExportPluginEntry is not null;
         var dialog = new ContentDialog
         {
             XamlRoot = XamlRoot,
             Title = UiText.Get(isDecryptor
                 ? ResourceKeys.PluginManagementDecryptorDeleteTitle
-                : ResourceKeys.PluginManagementProcessorDeleteTitle),
+                : isPostExport
+                    ? ResourceKeys.PluginManagementPostExportDeleteTitle
+                    : ResourceKeys.PluginManagementProcessorDeleteTitle),
             PrimaryButtonText = UiText.Get(ResourceKeys.PluginManagementDeletePrimaryButton),
             CloseButtonText = UiText.Get(ResourceKeys.PluginManagementDeleteCloseButton),
             DefaultButton = ContentDialogButton.Close,
@@ -174,7 +191,9 @@ public sealed partial class PluginManagementPage : Page
                 Text = UiText.GetFormatted(
                     isDecryptor
                         ? ResourceKeys.PluginManagementDecryptorDeleteDescriptionFormat
-                        : ResourceKeys.PluginManagementProcessorDeleteDescriptionFormat,
+                        : isPostExport
+                            ? ResourceKeys.PluginManagementPostExportDeleteDescriptionFormat
+                            : ResourceKeys.PluginManagementProcessorDeleteDescriptionFormat,
                     selectedPlugin.DisplayName,
                     selectedPlugin.Id),
                 TextWrapping = TextWrapping.WrapWholeWords
@@ -190,6 +209,12 @@ public sealed partial class PluginManagementPage : Page
         if (isDecryptor)
         {
             await ViewModel.DeleteDecryptorAsync(selectedPlugin.Id);
+            return;
+        }
+
+        if (isPostExport)
+        {
+            await ViewModel.DeletePostExportPluginAsync(selectedPlugin.Id);
             return;
         }
 
@@ -377,6 +402,51 @@ public sealed partial class PluginManagementPage : Page
         }
 
         await ViewModel.SaveResourceProcessorAsync(submittedCommand);
+    }
+
+    private async Task ShowPostExportPluginEditorDialogAsync(string? entryId)
+    {
+        if (XamlRoot is null)
+        {
+            return;
+        }
+
+        var editor = new PostExportPluginEditorDialogContent();
+        string? displayName = entryId;
+        if (!string.IsNullOrWhiteSpace(entryId) &&
+            ViewModel.TryGetPostExportPluginEntry(entryId, out var entry) &&
+            entry is not null)
+        {
+            editor.ApplyEntry(entry);
+            displayName = entry.DisplayName;
+        }
+
+        var dialog = new ContentDialog
+        {
+            XamlRoot = XamlRoot,
+            Title = string.IsNullOrWhiteSpace(entryId)
+                ? UiText.Get(ResourceKeys.PostExportPluginEditorNewTitle)
+                : UiText.GetFormatted(ResourceKeys.PostExportPluginEditorEditTitleFormat, displayName ?? entryId),
+            PrimaryButtonText = UiText.Get(ResourceKeys.PostExportPluginEditorPrimaryButton),
+            CloseButtonText = UiText.Get(ResourceKeys.ResourceProcessorEditorCloseButton),
+            DefaultButton = ContentDialogButton.Primary,
+            Content = editor
+        };
+
+        UpsertPostExportPluginCommand? submittedCommand = null;
+        dialog.PrimaryButtonClick += (_, args) =>
+        {
+            if (!editor.TryCreateCommand(out submittedCommand) || submittedCommand is null)
+            {
+                args.Cancel = true;
+            }
+        };
+
+        var result = await dialog.ShowAsync();
+        if (result == ContentDialogResult.Primary && submittedCommand is not null)
+        {
+            await ViewModel.SavePostExportPluginAsync(submittedCommand);
+        }
     }
 
     private static void UpdateEditorDialogButtons(

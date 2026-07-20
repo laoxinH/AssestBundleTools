@@ -1,0 +1,44 @@
+<UserControl
+    x:Class="AssestBundleTools.Presentation.WinUI.Views.PluginManagement.Controls.PostExportPluginEditorDialogContent"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ScrollViewer
+        MaxHeight="580"
+        HorizontalScrollMode="Disabled"
+        HorizontalScrollBarVisibility="Disabled"
+        VerticalScrollBarVisibility="Auto">
+        <StackPanel Width="520" Spacing="12">
+            <TextBlock x:Name="IdLabelText" FontWeight="SemiBold" />
+            <TextBox x:Name="IdTextBox" />
+            <TextBlock x:Name="DisplayNameLabelText" FontWeight="SemiBold" />
+            <TextBox x:Name="DisplayNameTextBox" />
+            <TextBlock x:Name="VersionLabelText" FontWeight="SemiBold" />
+            <TextBox x:Name="VersionTextBox" Text="1.0.0" />
+            <TextBlock x:Name="DescriptionLabelText" FontWeight="SemiBold" />
+            <TextBox
+                x:Name="DescriptionTextBox"
+                AcceptsReturn="True"
+                MinHeight="72"
+                TextWrapping="Wrap" />
+            <TextBlock x:Name="ExecutablePathLabelText" FontWeight="SemiBold" />
+            <TextBox x:Name="ExecutablePathTextBox" />
+            <TextBlock x:Name="WorkingDirectoryLabelText" FontWeight="SemiBold" />
+            <TextBox x:Name="WorkingDirectoryTextBox" />
+            <TextBlock x:Name="ArgumentsLabelText" FontWeight="SemiBold" />
+            <TextBlock
+                x:Name="ArgumentsDescriptionText"
+                FontSize="12"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                TextWrapping="WrapWholeWords" />
+            <TextBox
+                x:Name="ArgumentsTextBox"
+                AcceptsReturn="True"
+                MinHeight="150"
+                TextWrapping="NoWrap" />
+            <TextBlock
+                x:Name="ValidationText"
+                Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                TextWrapping="WrapWholeWords" />
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

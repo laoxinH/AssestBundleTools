@@ -1,0 +1,3 @@
+namespace AssestBundleTools.Application.Bundles.Queries;
+
+public sealed record GetPostExportPluginCatalogEntriesQuery;

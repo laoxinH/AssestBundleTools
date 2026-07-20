@@ -23,7 +23,8 @@ public sealed record WorkspaceSaveExecutionResultDto(
     int FailedBundleCount = 0,
     int WrittenBundleCount = 0,
     string? ExportManifestPath = null,
-    IReadOnlyList<WorkspaceSaveBundleExecutionResultDto>? BundleResults = null)
+    IReadOnlyList<WorkspaceSaveBundleExecutionResultDto>? BundleResults = null,
+    WorkspacePostExportPluginLaunchResultDto? PostExportPluginLaunchResult = null)
 {
     public IReadOnlyList<WorkspaceSaveBundleExecutionResultDto> BundleResults { get; init; } =
         BundleResults ?? Array.Empty<WorkspaceSaveBundleExecutionResultDto>();

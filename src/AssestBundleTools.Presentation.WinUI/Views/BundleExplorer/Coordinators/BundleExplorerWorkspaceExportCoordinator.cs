@@ -22,6 +22,7 @@ internal sealed class BundleExplorerWorkspaceExportCoordinator
     private readonly IWorkspaceBatchOperationsGateway _workspaceBatchOperationsGateway;
     private readonly IWorkspaceContextService _workspaceContextService;
     private readonly IResourceProcessorCatalogService _resourceProcessorCatalogService;
+    private readonly IPostExportPluginCatalogService _postExportPluginCatalogService;
     private readonly IFilePickerService _filePickerService;
     private readonly IBackgroundWorkScheduler _backgroundWorkScheduler;
     private readonly IAppLogService _appLogService;
@@ -36,6 +37,7 @@ internal sealed class BundleExplorerWorkspaceExportCoordinator
         IWorkspaceBatchOperationsGateway workspaceBatchOperationsGateway,
         IWorkspaceContextService workspaceContextService,
         IResourceProcessorCatalogService resourceProcessorCatalogService,
+        IPostExportPluginCatalogService postExportPluginCatalogService,
         IFilePickerService filePickerService,
         IBackgroundWorkScheduler backgroundWorkScheduler,
         IAppLogService appLogService,
@@ -46,6 +48,7 @@ internal sealed class BundleExplorerWorkspaceExportCoordinator
         _workspaceBatchOperationsGateway = workspaceBatchOperationsGateway ?? throw new ArgumentNullException(nameof(workspaceBatchOperationsGateway));
         _workspaceContextService = workspaceContextService ?? throw new ArgumentNullException(nameof(workspaceContextService));
         _resourceProcessorCatalogService = resourceProcessorCatalogService ?? throw new ArgumentNullException(nameof(resourceProcessorCatalogService));
+        _postExportPluginCatalogService = postExportPluginCatalogService ?? throw new ArgumentNullException(nameof(postExportPluginCatalogService));
         _filePickerService = filePickerService ?? throw new ArgumentNullException(nameof(filePickerService));
         _backgroundWorkScheduler = backgroundWorkScheduler ?? throw new ArgumentNullException(nameof(backgroundWorkScheduler));
         _appLogService = appLogService ?? throw new ArgumentNullException(nameof(appLogService));
@@ -99,12 +102,19 @@ internal sealed class BundleExplorerWorkspaceExportCoordinator
             return;
         }
 
+        var postExportPluginCatalogResult = await _postExportPluginCatalogService.GetEntriesAsync();
+        if (!TryGetValue(postExportPluginCatalogResult, out var postExportPluginCatalogEntries))
+        {
+            return;
+        }
+
         var viewModel = new WorkspaceExportDialogViewModel(
             _localizationService,
             changeSummary,
             savePreview,
             processorCatalogEntries,
-            exportSettings);
+            exportSettings,
+            postExportPluginCatalogEntries);
         var windowNotificationService = new AppNotificationService();
         var window = new WorkspaceExportWindow(viewModel, windowNotificationService);
         App.CurrentApp.RegisterAuxiliaryWindow(window, _owner.TryGetHostWindow(out var hostWindow) ? hostWindow : null);
@@ -179,7 +189,8 @@ internal sealed class BundleExplorerWorkspaceExportCoordinator
             CompressionMode: submission.CompressionMode,
             OutputConflictPolicy: submission.OutputConflictPolicy,
             AudioWriteMode: submission.AudioWriteMode,
-            UseSourceCodec: submission.UseSourceCodec);
+            UseSourceCodec: submission.UseSourceCodec,
+            PostExportPluginId: submission.PostExportPluginId);
 
         Result<WorkspaceSaveExecutionResultDto> result;
         BackgroundWorkHandle<Result<WorkspaceSaveExecutionResultDto>>? exportHandle = null;
@@ -254,10 +265,12 @@ internal sealed class BundleExplorerWorkspaceExportCoordinator
 
         viewModel.ApplyExecutionResult(executionResult);
         var message = BuildExecutionNotificationMessage(executionResult);
-        var severity = executionResult.FailedBundleCount > 0
+        var hasPostExportLaunchFailure = executionResult.PostExportPluginLaunchResult?.Status ==
+                                         WorkspacePostExportPluginLaunchStatusDto.LaunchFailed;
+        var severity = executionResult.FailedBundleCount > 0 || hasPostExportLaunchFailure
             ? AppNotificationSeverity.Warning
             : AppNotificationSeverity.Success;
-        var title = executionResult.FailedBundleCount > 0
+        var title = executionResult.FailedBundleCount > 0 || hasPostExportLaunchFailure
             ? GetString(ResourceKeys.AppNotificationWarningTitle)
             : GetString(ResourceKeys.AppNotificationSuccessTitle);
         ShowNotification(
@@ -400,12 +413,17 @@ internal sealed class BundleExplorerWorkspaceExportCoordinator
     {
         var failedBundle = executionResult.BundleResults.FirstOrDefault(static bundle =>
             bundle.Status == WorkspaceSaveBundleExecutionStatusDto.Failed);
-        if (failedBundle is null)
+        if (failedBundle is not null)
         {
-            return null;
+            return _failureDisplayFormatter.Format(failedBundle);
         }
 
-        return _failureDisplayFormatter.Format(failedBundle);
+        var postExportResult = executionResult.PostExportPluginLaunchResult;
+        return postExportResult?.Status == WorkspacePostExportPluginLaunchStatusDto.LaunchFailed
+            ? _localizationService.GetFormattedString(
+                ResourceKeys.WorkspaceExportDialogPostPluginLaunchFailedFormat,
+                postExportResult.PluginDisplayName)
+            : null;
     }
 
     private string GetString(string resourceKey) => _localizationService.GetRequiredString(resourceKey);
@@ -435,8 +453,10 @@ internal sealed class BundleExplorerWorkspaceExportCoordinator
 
             var totalCount = Math.Max(1, value.TotalBundleCount);
             var completedCount = Math.Clamp(value.CompletedBundleCount, 0, totalCount);
-            var detail = string.IsNullOrWhiteSpace(value.CurrentBundleDisplayName)
-                ? _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogStatusPreparing)
+            var detail = value.Stage == WorkspaceSaveExecutionStageDto.PostExportPluginLaunching
+                ? _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogStatusPostPluginLaunching)
+                : string.IsNullOrWhiteSpace(value.CurrentBundleDisplayName)
+                    ? _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogStatusPreparing)
                 : _localizationService.GetFormattedString(
                     ResourceKeys.WorkspaceExportDialogStatusBundleFormat,
                     value.CurrentBundleDisplayName,

@@ -496,6 +496,16 @@
                             ItemsSource="{Binding CompressionOptions}"
                             ItemTemplate="{StaticResource WorkspaceExportComboBoxItemTemplate}"
                             SelectedItem="{Binding SelectedCompressionOption, Mode=TwoWay}" />
+                        <Border Height="1" Background="{ThemeResource CardStrokeColorDefaultBrush}" />
+                        <TextBlock
+                            x:Name="PostExportPluginLabelText"
+                            Style="{StaticResource WorkspaceExportSectionTitleTextStyle}" />
+                        <ComboBox
+                            MinHeight="50"
+                            HorizontalAlignment="Stretch"
+                            ItemsSource="{Binding PostExportPluginOptions}"
+                            ItemTemplate="{StaticResource WorkspaceExportComboBoxItemTemplate}"
+                            SelectedItem="{Binding SelectedPostExportPlugin, Mode=TwoWay}" />
                     </StackPanel>
                 </Border>
             </Grid>

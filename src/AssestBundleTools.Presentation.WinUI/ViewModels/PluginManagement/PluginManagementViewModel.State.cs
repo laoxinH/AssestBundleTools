@@ -16,6 +16,9 @@ public sealed partial class PluginManagementViewModel
             PluginManagementFilterKeys.ExportProcessor,
             GetString(ResourceKeys.PluginManagementTypeExportProcessor));
         yield return new PluginManagementFilterOptionViewModel(
+            PluginManagementFilterKeys.PostExport,
+            GetString(ResourceKeys.PluginManagementTypePostExport));
+        yield return new PluginManagementFilterOptionViewModel(
             PluginManagementFilterKeys.Texture2D,
             GetString(ResourceKeys.WorkspaceExportDialogResourceProcessorTexture2D));
         yield return new PluginManagementFilterOptionViewModel(
@@ -56,12 +59,15 @@ public sealed partial class PluginManagementViewModel
         OnPropertyChanged(nameof(HasVisiblePlugins));
         OnPropertyChanged(nameof(HasVisibleDecryptorPlugins));
         OnPropertyChanged(nameof(HasVisibleResourceProcessorPlugins));
+        OnPropertyChanged(nameof(HasVisiblePostExportPlugins));
         OnPropertyChanged(nameof(VisiblePluginCountText));
         OnPropertyChanged(nameof(VisibleDecryptorPluginCountText));
         OnPropertyChanged(nameof(VisibleResourceProcessorPluginCountText));
+        OnPropertyChanged(nameof(VisiblePostExportPluginCountText));
         OnPropertyChanged(nameof(EmptyStateVisibility));
         OnPropertyChanged(nameof(DecryptorGroupVisibility));
         OnPropertyChanged(nameof(ResourceProcessorGroupVisibility));
+        OnPropertyChanged(nameof(PostExportGroupVisibility));
         NotifySelectionState();
     }
 

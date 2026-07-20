@@ -6,6 +6,7 @@ public enum WorkspaceSaveExecutionStageDto
     ResourceProcessing,
     BundleWriting,
     ManifestWriting,
+    PostExportPluginLaunching,
     Completed
 }
 

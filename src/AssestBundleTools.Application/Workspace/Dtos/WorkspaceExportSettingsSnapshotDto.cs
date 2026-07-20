@@ -11,7 +11,8 @@ public sealed record WorkspaceExportSettingsSnapshotDto(
     WorkspaceBundleExportCompressionModeDto CompressionMode = WorkspaceBundleExportCompressionModeDto.PreserveOriginal,
     WorkspaceBundleExportAudioWriteModeDto AudioWriteMode = WorkspaceBundleExportAudioWriteModeDto.MatchOriginalContainer,
     IReadOnlyList<WorkspaceExportProcessorSettingSnapshotDto>? ProcessorSettings = null,
-    bool UseSourceCodec = true);
+    bool UseSourceCodec = true,
+    string? PostExportPluginId = null);
 
 /// <summary>
 /// 表示单个资源类型槽的导出处理器恢复设置。

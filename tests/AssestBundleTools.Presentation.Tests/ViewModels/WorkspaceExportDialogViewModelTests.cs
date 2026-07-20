@@ -237,6 +237,52 @@ public sealed class WorkspaceExportDialogViewModelTests
     }
 
     [Fact]
+    public void PostExportPluginSelection_ShouldRestoreAndFlowIntoSubmission()
+    {
+        const string pluginId = "post-export.zip";
+        var viewModel = new WorkspaceExportDialogViewModel(
+            new TestLocalizationService(),
+            changeSummary: null,
+            savePreview: null,
+            exportSettings: new WorkspaceExportSettingsSnapshotDto(PostExportPluginId: pluginId),
+            postExportPluginCatalogEntries:
+            [
+                new PostExportPluginCatalogEntryDto(
+                    pluginId,
+                    "ZIP Packager",
+                    "1.0.0",
+                    "Packages exported bundles.",
+                    ResourceProcessorStatus.Available,
+                    IsReadOnly: false,
+                    ManifestFilePath: @"C:\Plugins\post-export.json",
+                    ExecutablePath: @"C:\Plugins\post-export.exe",
+                    WorkingDirectoryPath: null,
+                    ProcessArguments: ["--manifest", "{manifestPath}"])
+            ]);
+
+        Assert.Equal(pluginId, viewModel.SelectedPostExportPlugin?.Id);
+
+        var submission = viewModel.CreateSubmission();
+
+        Assert.Equal(pluginId, submission.PostExportPluginId);
+        Assert.Equal(pluginId, submission.ExportSettings.PostExportPluginId);
+    }
+
+    [Fact]
+    public void PostExportPluginSelection_ShouldFallbackToNone_WhenPersistedPluginIsUnavailable()
+    {
+        var viewModel = new WorkspaceExportDialogViewModel(
+            new TestLocalizationService(),
+            changeSummary: null,
+            savePreview: null,
+            exportSettings: new WorkspaceExportSettingsSnapshotDto(PostExportPluginId: "missing-plugin"),
+            postExportPluginCatalogEntries: []);
+
+        Assert.True(viewModel.SelectedPostExportPlugin?.IsNone);
+        Assert.Null(viewModel.CreateSubmission().PostExportPluginId);
+    }
+
+    [Fact]
     public void PersistedSettings_ShouldNotifyImmediatelyWhenChanged()
     {
         var viewModel = new WorkspaceExportDialogViewModel(

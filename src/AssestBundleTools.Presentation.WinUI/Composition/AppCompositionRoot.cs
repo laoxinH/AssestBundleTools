@@ -18,6 +18,7 @@ using AssestBundleTools.Application.Workspace.Queries;
 using AssestBundleTools.Application.Workspace.Services;
 using AssestBundleTools.Infrastructure.Bundles.Decryption;
 using AssestBundleTools.Infrastructure.Bundles.Processing;
+using AssestBundleTools.Infrastructure.Bundles.PostExport;
 using AssestBundleTools.Infrastructure.Bundles.Previewing;
 using AssestBundleTools.Infrastructure.Bundles.Previewing.Audio;
 using AssestBundleTools.Infrastructure.Bundles.Previewing.Spine;
@@ -79,6 +80,7 @@ internal static class AppCompositionRoot
         Action reloadAssetBundleDecryptorRegistry = () => assetBundleDecryptorRegistry.Reload();
         var assetBundleDecryptorCatalogStore = new FileSystemAssetBundleDecryptorCatalogStore();
         var resourceProcessorCatalogStore = new FileSystemResourceProcessorCatalogStore();
+        var postExportPluginCatalogStore = new FileSystemPostExportPluginCatalogStore();
 
         var workspaceImportSourceDiscoveryService = new FileSystemWorkspaceImportSourceDiscoveryService();
         var workspaceImportFileSystemService = new FileSystemWorkspaceImportFileSystemService();
@@ -101,6 +103,7 @@ internal static class AppCompositionRoot
         var workspaceBundleExporter = new FileSystemWorkspaceBundleExporter(assetBundleDecryptorRegistry);
         var workspaceBundleExportManifestStore = new FileSystemWorkspaceBundleExportManifestStore();
         var workspaceResourceProcessorExecutor = new FileSystemResourceProcessorExecutor();
+        var workspacePostExportPluginLauncher = new FileSystemWorkspacePostExportPluginLauncher();
 
         var openWorkspaceHandler = new OpenWorkspaceHandler(
             workspaceSessionRegistry: workspaceSessionRegistry,
@@ -178,7 +181,9 @@ internal static class AppCompositionRoot
             workspaceBundleExporter,
             workspaceBundleExportManifestStore,
             resourceProcessorCatalogStore,
-            workspaceResourceProcessorExecutor);
+            workspaceResourceProcessorExecutor,
+            postExportPluginCatalogStore,
+            workspacePostExportPluginLauncher);
         var assetExtractionFileStore = new FileSystemAssetExtractionFileStore();
         var workspaceExportManifestStore = new FileSystemWorkspaceExportManifestStore();
         var workspaceBatchReplacementSourceFileProbe = new FileSystemWorkspaceBatchReplacementSourceFileProbe();
@@ -294,6 +299,9 @@ internal static class AppCompositionRoot
         var getResourceProcessorCatalogEntriesHandler = new GetResourceProcessorCatalogEntriesHandler(resourceProcessorCatalogStore);
         var upsertResourceProcessorHandler = new UpsertResourceProcessorHandler(resourceProcessorCatalogStore);
         var deleteResourceProcessorHandler = new DeleteResourceProcessorHandler(resourceProcessorCatalogStore);
+        var getPostExportPluginCatalogEntriesHandler = new GetPostExportPluginCatalogEntriesHandler(postExportPluginCatalogStore);
+        var upsertPostExportPluginHandler = new UpsertPostExportPluginHandler(postExportPluginCatalogStore);
+        var deletePostExportPluginHandler = new DeletePostExportPluginHandler(postExportPluginCatalogStore);
         var assetEditDraftStore = new WorkspaceChangeSetAssetEditDraftStore(
             workspaceCatalogStore,
             workspaceDataStoreFactory);
@@ -376,6 +384,10 @@ internal static class AppCompositionRoot
             getResourceProcessorCatalogEntriesHandler,
             upsertResourceProcessorHandler,
             deleteResourceProcessorHandler);
+        var postExportPluginCatalogService = new PostExportPluginCatalogService(
+            getPostExportPluginCatalogEntriesHandler,
+            upsertPostExportPluginHandler,
+            deletePostExportPluginHandler);
         var appInteractionFeedbackService = new AppInteractionFeedbackService();
         var workspaceDialogService = new WorkspaceDialogService(
             localizationService,
@@ -464,6 +476,7 @@ internal static class AppCompositionRoot
             WorkspaceCacheMaintenanceGateway: workspaceCacheMaintenanceGateway,
             AssetBundleDecryptorCatalogService: assetBundleDecryptorCatalogService,
             ResourceProcessorCatalogService: resourceProcessorCatalogService,
+            PostExportPluginCatalogService: postExportPluginCatalogService,
             WorkspaceDialogService: workspaceDialogService,
             AppInteractionFeedbackService: appInteractionFeedbackService,
             WorkspaceWindowService: workspaceWindowService,

@@ -113,6 +113,26 @@ internal sealed class WorkspaceExportDialogOptionFactory
             _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogCompressionUncompressedDescription));
     }
 
+    public IEnumerable<WorkspaceExportPostPluginOptionViewModel> CreatePostExportPluginOptions(
+        IReadOnlyList<PostExportPluginCatalogEntryDto> catalogEntries)
+    {
+        yield return new WorkspaceExportPostPluginOptionViewModel(
+            "post-export:none",
+            _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogPostPluginNone),
+            _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogPostPluginNoneDescription),
+            IsNone: true);
+
+        foreach (var entry in catalogEntries
+                     .Where(static entry => entry.Status == ResourceProcessorStatus.Available)
+                     .OrderBy(static entry => entry.DisplayName, StringComparer.OrdinalIgnoreCase))
+        {
+            yield return new WorkspaceExportPostPluginOptionViewModel(
+                entry.Id,
+                string.IsNullOrWhiteSpace(entry.DisplayName) ? entry.Id : entry.DisplayName,
+                entry.Description);
+        }
+    }
+
     public WorkspaceExportProcessorSelectionDto CreateProcessorSelection(
         WorkspaceExportResourceProcessorOptionViewModel processor)
     {

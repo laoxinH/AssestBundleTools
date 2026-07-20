@@ -4731,6 +4731,21 @@
   <data name="WorkspaceExportDialog.CompressionMode.Label" xml:space="preserve">
     <value>压缩策略</value>
   </data>
+  <data name="WorkspaceExportDialog.PostPlugin.Label" xml:space="preserve">
+    <value>导出后处理</value>
+  </data>
+  <data name="WorkspaceExportDialog.PostPlugin.None" xml:space="preserve">
+    <value>无导出后插件</value>
+  </data>
+  <data name="WorkspaceExportDialog.PostPlugin.NoneDescription" xml:space="preserve">
+    <value>仅生成 AB 和导出清单，不拉起第三方插件。</value>
+  </data>
+  <data name="WorkspaceExportDialog.Status.PostPluginLaunching" xml:space="preserve">
+    <value>正在向导出后插件发送清单。</value>
+  </data>
+  <data name="WorkspaceExportDialog.PostPlugin.LaunchFailed.Format" xml:space="preserve">
+    <value>导出文件已生成，但未能拉起导出后插件：{0}</value>
+  </data>
   <data name="WorkspaceExportDialog.Compression.FastLz4" xml:space="preserve">
     <value>快速 LZ4</value>
   </data>
@@ -5174,6 +5189,87 @@
   </data>
   <data name="PluginEditor.PreviousButton" xml:space="preserve">
     <value>上一步</value>
+  </data>
+  <data name="PluginManagementPage.AddPostExportPluginButton.Content" xml:space="preserve">
+    <value>新增导出后插件</value>
+  </data>
+  <data name="PluginManagementPage.Type.PostExport" xml:space="preserve">
+    <value>导出后处理</value>
+  </data>
+  <data name="PluginManagementPage.Scope.PostExport" xml:space="preserve">
+    <value>整个导出清单</value>
+  </data>
+  <data name="PluginManagementPage.PostExportDelete.Title" xml:space="preserve">
+    <value>删除导出后插件</value>
+  </data>
+  <data name="PluginManagementPage.PostExportDelete.Description.Format" xml:space="preserve">
+    <value>确定删除“{0}”（{1}）吗？</value>
+  </data>
+  <data name="PluginManagementPage.PostExportLoadFailedMessage" xml:space="preserve">
+    <value>无法加载导出后插件目录。</value>
+  </data>
+  <data name="PluginManagementPage.PostExportSaveSucceededMessage.Format" xml:space="preserve">
+    <value>已保存导出后插件：{0}</value>
+  </data>
+  <data name="PluginManagementPage.PostExportSaveFailedMessage" xml:space="preserve">
+    <value>保存导出后插件失败。</value>
+  </data>
+  <data name="PluginManagementPage.PostExportDeleteSucceededMessage.Format" xml:space="preserve">
+    <value>已删除导出后插件：{0}</value>
+  </data>
+  <data name="PluginManagementPage.PostExportDeleteFailedMessage" xml:space="preserve">
+    <value>删除导出后插件失败。</value>
+  </data>
+  <data name="PostExportPluginEditor.NewTitle" xml:space="preserve">
+    <value>新增导出后插件</value>
+  </data>
+  <data name="PostExportPluginEditor.EditTitle.Format" xml:space="preserve">
+    <value>编辑导出后插件：{0}</value>
+  </data>
+  <data name="PostExportPluginEditor.PrimaryButton" xml:space="preserve">
+    <value>保存</value>
+  </data>
+  <data name="PostExportPluginEditor.Arguments.Label" xml:space="preserve">
+    <value>启动参数</value>
+  </data>
+  <data name="PostExportPluginEditor.Arguments.Description" xml:space="preserve">
+    <value>每行一个参数，必须包含 {manifestPath}。还可使用 {outputDirectory}、{workspaceId}、{workspaceKey} 和 {manifestDirectory}。</value>
+  </data>
+  <data name="PostExportPluginEditor.Id.Placeholder" xml:space="preserve">
+    <value>例如 post-export.zip</value>
+  </data>
+  <data name="PostExportPluginEditor.DisplayName.Placeholder" xml:space="preserve">
+    <value>例如 ZIP 打包</value>
+  </data>
+  <data name="PostExportPluginEditor.ExecutablePath.Placeholder" xml:space="preserve">
+    <value>相对 manifest 的路径或绝对路径</value>
+  </data>
+  <data name="PostExportPluginEditor.Validation.Required" xml:space="preserve">
+    <value>请填写插件 ID、显示名称和可执行文件路径。</value>
+  </data>
+  <data name="PostExportPluginEditor.Validation.ManifestPathRequired" xml:space="preserve">
+    <value>启动参数必须包含 {manifestPath}。</value>
+  </data>
+  <data name="Error.Bundle.PostExportPlugin.Catalog.Invalid" xml:space="preserve">
+    <value>导出后插件配置无效。</value>
+  </data>
+  <data name="Error.Bundle.PostExportPlugin.Catalog.NotFound" xml:space="preserve">
+    <value>找不到所选导出后插件。</value>
+  </data>
+  <data name="Error.Bundle.PostExportPlugin.Catalog.ReadOnly" xml:space="preserve">
+    <value>该导出后插件为只读项目。</value>
+  </data>
+  <data name="Error.Bundle.PostExportPlugin.Catalog.AlreadyExists" xml:space="preserve">
+    <value>相同 ID 的导出后插件已存在。</value>
+  </data>
+  <data name="Error.Bundle.PostExportPlugin.Catalog.SaveFailed" xml:space="preserve">
+    <value>无法保存导出后插件。</value>
+  </data>
+  <data name="Error.Bundle.PostExportPlugin.Catalog.DeleteFailed" xml:space="preserve">
+    <value>无法删除导出后插件。</value>
+  </data>
+  <data name="Error.Bundle.Save.PostExportPlugin.LaunchFailed" xml:space="preserve">
+    <value>导出文件已生成，但无法拉起导出后插件。</value>
   </data>
   <data name="ResourceProcessorEditor.NewTitle" xml:space="preserve">
     <value>新增资源处理插件</value>

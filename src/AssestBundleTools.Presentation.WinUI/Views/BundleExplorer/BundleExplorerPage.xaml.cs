@@ -106,6 +106,7 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
             App.CurrentApp.WorkspaceBatchOperationsGateway,
             App.CurrentApp.WorkspaceContextService,
             App.CurrentApp.ResourceProcessorCatalogService,
+            App.CurrentApp.PostExportPluginCatalogService,
             App.CurrentApp.FilePickerService,
             App.CurrentApp.BackgroundWorkScheduler,
             App.CurrentApp.AppLogService,

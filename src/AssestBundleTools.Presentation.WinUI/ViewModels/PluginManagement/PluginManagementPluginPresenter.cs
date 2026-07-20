@@ -49,13 +49,15 @@ internal sealed class PluginManagementPluginPresenter
             ResourceTypeFilterKeys: [PluginManagementFilterKeys.ImportDecryptor],
             SearchText: BuildSearchText(id, displayName, description),
             IsDecryptor: true,
+            IsPostExportPlugin: false,
             IsReadOnly: true,
             CanEdit: false,
             CanDelete: false,
             DetailItems: details,
             DiagnosticText: GetString(ResourceKeys.PluginManagementDiagnosticNotRun),
             DecryptorEntry: null,
-            ResourceProcessorEntry: null);
+            ResourceProcessorEntry: null,
+            PostExportPluginEntry: null);
     }
 
     public PluginManagementPluginItemViewModel BuildDecryptor(AssetBundleDecryptorCatalogEntryDto entry)
@@ -116,13 +118,15 @@ internal sealed class PluginManagementPluginPresenter
                 entry.ManifestFilePath,
                 entry.Definition.ExecutablePath),
             IsDecryptor: true,
+            IsPostExportPlugin: false,
             IsReadOnly: entry.IsReadOnly,
             CanEdit: !entry.IsReadOnly,
             CanDelete: !entry.IsReadOnly,
             DetailItems: details,
             DiagnosticText: GetString(ResourceKeys.PluginManagementDiagnosticNotRun),
             DecryptorEntry: entry,
-            ResourceProcessorEntry: null);
+            ResourceProcessorEntry: null,
+            PostExportPluginEntry: null);
     }
 
     public PluginManagementPluginItemViewModel BuildResourceProcessor(ResourceProcessorCatalogEntryDto entry)
@@ -172,13 +176,54 @@ internal sealed class PluginManagementPluginPresenter
                 entry.ExecutablePath,
                 resourceKindText),
             IsDecryptor: false,
+            IsPostExportPlugin: false,
             IsReadOnly: entry.IsReadOnly,
             CanEdit: !entry.IsReadOnly,
             CanDelete: !entry.IsReadOnly,
             DetailItems: details,
             DiagnosticText: GetString(ResourceKeys.PluginManagementDiagnosticNotRun),
             DecryptorEntry: null,
-            ResourceProcessorEntry: entry);
+            ResourceProcessorEntry: entry,
+            PostExportPluginEntry: null);
+    }
+
+    public PluginManagementPluginItemViewModel BuildPostExportPlugin(PostExportPluginCatalogEntryDto entry)
+    {
+        ArgumentNullException.ThrowIfNull(entry);
+        var details = new List<PluginManagementDetailItemViewModel>
+        {
+            Detail(ResourceKeys.PluginManagementDetailIdLabel, entry.Id),
+            Detail(ResourceKeys.PluginManagementDetailVersionLabel, NormalizeVersion(entry.Version)),
+            Detail(ResourceKeys.PluginManagementDetailTypeLabel, GetString(ResourceKeys.PluginManagementTypePostExport)),
+            Detail(ResourceKeys.PluginManagementDetailArgumentsLabel, JoinArguments(entry.ProcessArguments))
+        };
+        AddDetailIfPresent(details, ResourceKeys.PluginManagementDetailExecutablePathLabel, entry.ExecutablePath);
+        AddDetailIfPresent(details, ResourceKeys.PluginManagementDetailWorkingDirectoryLabel, entry.WorkingDirectoryPath);
+        AddDetailIfPresent(details, ResourceKeys.PluginManagementDetailManifestPathLabel, entry.ManifestFilePath);
+        return new PluginManagementPluginItemViewModel(
+            entry.Id,
+            string.IsNullOrWhiteSpace(entry.DisplayName) ? entry.Id : entry.DisplayName,
+            GetString(ResourceKeys.PluginManagementTypePostExport),
+            GetString(ResourceKeys.PluginManagementScopePostExport),
+            entry.Description,
+            entry.IsReadOnly
+                ? GetString(ResourceKeys.PluginManagementBadgeReadOnly)
+                : GetString(ResourceKeys.PluginManagementBadgeUserManaged),
+            ResolveStatusText(entry.Status),
+            ResolveStatusFilterKey(entry.Status),
+            PluginManagementFilterKeys.PostExport,
+            [PluginManagementFilterKeys.PostExport],
+            BuildSearchText(entry.Id, entry.DisplayName, entry.Description, entry.ManifestFilePath, entry.ExecutablePath),
+            IsDecryptor: false,
+            IsPostExportPlugin: true,
+            IsReadOnly: entry.IsReadOnly,
+            CanEdit: !entry.IsReadOnly,
+            CanDelete: !entry.IsReadOnly,
+            DetailItems: details,
+            DiagnosticText: GetString(ResourceKeys.PluginManagementDiagnosticNotRun),
+            DecryptorEntry: null,
+            ResourceProcessorEntry: null,
+            PostExportPluginEntry: entry);
     }
 
     public string GetDecryptorDisplayName(string decryptorId)

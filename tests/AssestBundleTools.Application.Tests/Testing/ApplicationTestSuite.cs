@@ -81,6 +81,14 @@ internal static partial class ApplicationTestSuite
             ResourceProcessorCatalogHandlerTests.Delete_ShouldRejectReadOnlyProcessor);
         await RunTestAsync(
             failures,
+            nameof(PostExportPluginCatalogHandlerTests.Upsert_ShouldSavePostExportPlugin_WhenManifestPathArgumentIsPresent),
+            PostExportPluginCatalogHandlerTests.Upsert_ShouldSavePostExportPlugin_WhenManifestPathArgumentIsPresent);
+        await RunTestAsync(
+            failures,
+            nameof(PostExportPluginCatalogHandlerTests.Upsert_ShouldRejectPostExportPlugin_WhenManifestPathArgumentIsMissing),
+            PostExportPluginCatalogHandlerTests.Upsert_ShouldRejectPostExportPlugin_WhenManifestPathArgumentIsMissing);
+        await RunTestAsync(
+            failures,
             nameof(GetAssetEditDraftRestorePlanHandlerTests.HandleAsync_ShouldReturnFailure_WhenWorkspaceKeyIsBlank),
             GetAssetEditDraftRestorePlanHandlerTests.HandleAsync_ShouldReturnFailure_WhenWorkspaceKeyIsBlank);
         await RunTestAsync(
@@ -621,6 +629,14 @@ internal static partial class ApplicationTestSuite
             failures,
             nameof(SaveWorkspaceHandlersTests.SaveWorkspaceAsNewBundleHandler_ShouldWriteManifest_ForPartialBundleSuccess),
             SaveWorkspaceHandlersTests.SaveWorkspaceAsNewBundleHandler_ShouldWriteManifest_ForPartialBundleSuccess);
+        await RunTestAsync(
+            failures,
+            nameof(SaveWorkspaceHandlersTests.SaveWorkspaceAsNewBundleHandler_ShouldLaunchPostExportPlugin_WithWrittenManifest),
+            SaveWorkspaceHandlersTests.SaveWorkspaceAsNewBundleHandler_ShouldLaunchPostExportPlugin_WithWrittenManifest);
+        await RunTestAsync(
+            failures,
+            nameof(SaveWorkspaceHandlersTests.SaveWorkspaceAsNewBundleHandler_ShouldPreserveSuccessfulExport_WhenPostExportPluginLaunchFails),
+            SaveWorkspaceHandlersTests.SaveWorkspaceAsNewBundleHandler_ShouldPreserveSuccessfulExport_WhenPostExportPluginLaunchFails);
 
         if (failures.Count == 0)
         {

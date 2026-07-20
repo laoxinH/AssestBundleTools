@@ -20,6 +20,7 @@ public sealed partial class PluginManagementViewModel : ObservableObject
 {
     private readonly IAssetBundleDecryptorCatalogService _assetBundleDecryptorCatalogService;
     private readonly IResourceProcessorCatalogService _resourceProcessorCatalogService;
+    private readonly IPostExportPluginCatalogService _postExportPluginCatalogService;
     private readonly IAppNotificationService _appNotificationService;
     private readonly IAppLogService _appLogService;
     private readonly ILocalizationService _localizationService;
@@ -27,6 +28,7 @@ public sealed partial class PluginManagementViewModel : ObservableObject
     private readonly PluginManagementPluginPresenter _pluginPresenter;
     private readonly Dictionary<string, AssetBundleDecryptorCatalogEntryDto> _decryptorEntriesById = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, ResourceProcessorCatalogEntryDto> _resourceProcessorEntriesById = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, PostExportPluginCatalogEntryDto> _postExportPluginEntriesById = new(StringComparer.OrdinalIgnoreCase);
     private string _searchText = string.Empty;
     private string _selectedDiagnosticText = string.Empty;
     private bool _isLoading;
@@ -37,6 +39,7 @@ public sealed partial class PluginManagementViewModel : ObservableObject
     public PluginManagementViewModel(
         IAssetBundleDecryptorCatalogService assetBundleDecryptorCatalogService,
         IResourceProcessorCatalogService resourceProcessorCatalogService,
+        IPostExportPluginCatalogService postExportPluginCatalogService,
         IAssetBundleDecryptorRegistry assetBundleDecryptorRegistry,
         IAppNotificationService appNotificationService,
         IAppLogService appLogService,
@@ -45,6 +48,7 @@ public sealed partial class PluginManagementViewModel : ObservableObject
     {
         _assetBundleDecryptorCatalogService = assetBundleDecryptorCatalogService ?? throw new ArgumentNullException(nameof(assetBundleDecryptorCatalogService));
         _resourceProcessorCatalogService = resourceProcessorCatalogService ?? throw new ArgumentNullException(nameof(resourceProcessorCatalogService));
+        _postExportPluginCatalogService = postExportPluginCatalogService ?? throw new ArgumentNullException(nameof(postExportPluginCatalogService));
         _appNotificationService = appNotificationService ?? throw new ArgumentNullException(nameof(appNotificationService));
         _appLogService = appLogService ?? throw new ArgumentNullException(nameof(appLogService));
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
@@ -67,6 +71,8 @@ public sealed partial class PluginManagementViewModel : ObservableObject
     public ObservableCollection<PluginManagementPluginItemViewModel> VisibleDecryptorPlugins { get; } = new();
 
     public ObservableCollection<PluginManagementPluginItemViewModel> VisibleResourceProcessorPlugins { get; } = new();
+
+    public ObservableCollection<PluginManagementPluginItemViewModel> VisiblePostExportPlugins { get; } = new();
 
     public ObservableCollection<PluginManagementFilterOptionViewModel> TypeFilters { get; }
 
@@ -139,15 +145,23 @@ public sealed partial class PluginManagementViewModel : ObservableObject
 
     public bool HasVisibleResourceProcessorPlugins => VisibleResourceProcessorPlugins.Count > 0;
 
+    public bool HasVisiblePostExportPlugins => VisiblePostExportPlugins.Count > 0;
+
     public string VisiblePluginCountText => VisiblePlugins.Count.ToString(CultureInfo.CurrentCulture);
 
     public string VisibleDecryptorPluginCountText => VisibleDecryptorPlugins.Count.ToString(CultureInfo.CurrentCulture);
 
     public string VisibleResourceProcessorPluginCountText => VisibleResourceProcessorPlugins.Count.ToString(CultureInfo.CurrentCulture);
 
+    public string VisiblePostExportPluginCountText => VisiblePostExportPlugins.Count.ToString(CultureInfo.CurrentCulture);
+
     public bool HasSelectedPlugin => SelectedPlugin is not null;
 
-    public string SelectedPluginIconGlyph => SelectedPlugin?.IsDecryptor == true ? "\uE8EB" : "\uE6E9";
+    public string SelectedPluginIconGlyph => SelectedPlugin?.IsDecryptor == true
+        ? "\uE8EB"
+        : SelectedPlugin?.IsPostExportPlugin == true
+            ? "\uE74C"
+            : "\uE6E9";
 
     public bool CanEditSelectedPlugin => SelectedPlugin?.CanEdit == true;
 
@@ -156,14 +170,18 @@ public sealed partial class PluginManagementViewModel : ObservableObject
     public bool CanOpenSelectedPluginLocation =>
         !string.IsNullOrWhiteSpace(SelectedPlugin?.DecryptorEntry?.ManifestFilePath) ||
         !string.IsNullOrWhiteSpace(SelectedPlugin?.ResourceProcessorEntry?.ManifestFilePath) ||
+        !string.IsNullOrWhiteSpace(SelectedPlugin?.PostExportPluginEntry?.ManifestFilePath) ||
         !string.IsNullOrWhiteSpace(SelectedPlugin?.DecryptorEntry?.Definition.ExecutablePath) ||
-        !string.IsNullOrWhiteSpace(SelectedPlugin?.ResourceProcessorEntry?.ExecutablePath);
+        !string.IsNullOrWhiteSpace(SelectedPlugin?.ResourceProcessorEntry?.ExecutablePath) ||
+        !string.IsNullOrWhiteSpace(SelectedPlugin?.PostExportPluginEntry?.ExecutablePath);
 
     public Visibility EmptyStateVisibility => HasVisiblePlugins ? Visibility.Collapsed : Visibility.Visible;
 
     public Visibility DecryptorGroupVisibility => HasVisibleDecryptorPlugins ? Visibility.Visible : Visibility.Collapsed;
 
     public Visibility ResourceProcessorGroupVisibility => HasVisibleResourceProcessorPlugins ? Visibility.Visible : Visibility.Collapsed;
+
+    public Visibility PostExportGroupVisibility => HasVisiblePostExportPlugins ? Visibility.Visible : Visibility.Collapsed;
 
     public Visibility DetailsVisibility => HasSelectedPlugin ? Visibility.Visible : Visibility.Collapsed;
 
@@ -196,9 +214,16 @@ public sealed partial class PluginManagementViewModel : ObservableObject
                 return;
             }
 
+            var postExportResult = await _postExportPluginCatalogService.GetEntriesAsync(cancellationToken);
+            if (!TryGetValue(postExportResult, out var postExportEntries, ResourceKeys.PluginManagementPostExportLoadFailedMessage))
+            {
+                return;
+            }
+
             ReplacePlugins(
                 decryptorEntries ?? Array.Empty<AssetBundleDecryptorCatalogEntryDto>(),
-                processorEntries ?? Array.Empty<ResourceProcessorCatalogEntryDto>());
+                processorEntries ?? Array.Empty<ResourceProcessorCatalogEntryDto>(),
+                postExportEntries ?? Array.Empty<PostExportPluginCatalogEntryDto>());
         }
         finally
         {
@@ -347,8 +372,10 @@ public sealed partial class PluginManagementViewModel : ObservableObject
         var targetPath =
             SelectedPlugin?.DecryptorEntry?.ManifestFilePath ??
             SelectedPlugin?.ResourceProcessorEntry?.ManifestFilePath ??
+            SelectedPlugin?.PostExportPluginEntry?.ManifestFilePath ??
             SelectedPlugin?.DecryptorEntry?.Definition.ExecutablePath ??
-            SelectedPlugin?.ResourceProcessorEntry?.ExecutablePath;
+            SelectedPlugin?.ResourceProcessorEntry?.ExecutablePath ??
+            SelectedPlugin?.PostExportPluginEntry?.ExecutablePath;
         if (string.IsNullOrWhiteSpace(targetPath))
         {
             return false;
@@ -383,11 +410,13 @@ public sealed partial class PluginManagementViewModel : ObservableObject
 
     private void ReplacePlugins(
         IReadOnlyList<AssetBundleDecryptorCatalogEntryDto> decryptorEntries,
-        IReadOnlyList<ResourceProcessorCatalogEntryDto> processorEntries)
+        IReadOnlyList<ResourceProcessorCatalogEntryDto> processorEntries,
+        IReadOnlyList<PostExportPluginCatalogEntryDto> postExportEntries)
     {
         var selectedId = SelectedPlugin?.Id;
         _decryptorEntriesById.Clear();
         _resourceProcessorEntriesById.Clear();
+        _postExportPluginEntriesById.Clear();
         Plugins.Clear();
 
         Plugins.Add(_pluginPresenter.BuildAutoDetectDecryptor());
@@ -401,6 +430,12 @@ public sealed partial class PluginManagementViewModel : ObservableObject
         {
             _resourceProcessorEntriesById[entry.Id] = entry;
             Plugins.Add(_pluginPresenter.BuildResourceProcessor(entry));
+        }
+
+        foreach (var entry in postExportEntries)
+        {
+            _postExportPluginEntriesById[entry.Id] = entry;
+            Plugins.Add(_pluginPresenter.BuildPostExportPlugin(entry));
         }
 
         RefreshVisiblePlugins();
@@ -428,14 +463,19 @@ public sealed partial class PluginManagementViewModel : ObservableObject
         VisiblePlugins.Clear();
         VisibleDecryptorPlugins.Clear();
         VisibleResourceProcessorPlugins.Clear();
+        VisiblePostExportPlugins.Clear();
         foreach (var plugin in candidates
-                     .OrderBy(static plugin => plugin.IsDecryptor ? 0 : 1)
+                     .OrderBy(static plugin => plugin.IsDecryptor ? 0 : plugin.IsPostExportPlugin ? 2 : 1)
                      .ThenBy(static plugin => plugin.DisplayName, StringComparer.OrdinalIgnoreCase))
         {
             VisiblePlugins.Add(plugin);
             if (plugin.IsDecryptor)
             {
                 VisibleDecryptorPlugins.Add(plugin);
+            }
+            else if (plugin.IsPostExportPlugin)
+            {
+                VisiblePostExportPlugins.Add(plugin);
             }
             else
             {

@@ -1,6 +1,7 @@
 using AssestBundleTools.Application.Common.Abstractions;
 using AssestBundleTools.Application.Common.Errors;
 using AssestBundleTools.Application.Common.Results;
+using AssestBundleTools.Application.Bundles.Dtos;
 using AssestBundleTools.Application.Bundles.Services;
 using AssestBundleTools.Application.Saving.Dtos;
 using AssestBundleTools.Application.Saving.Services;
@@ -24,6 +25,8 @@ public sealed class SaveWorkspaceAsNewBundleHandler : ICommandHandler<SaveWorksp
     private readonly IWorkspaceBundleExportManifestStore? _manifestStore;
     private readonly WorkspaceSaveResourceProcessorRunner _resourceProcessorRunner;
     private readonly IWorkspaceDataStoreFactory? _workspaceDataStoreFactory;
+    private readonly IPostExportPluginCatalogStore? _postExportPluginCatalogStore;
+    private readonly IWorkspacePostExportPluginLauncher? _postExportPluginLauncher;
 
     public SaveWorkspaceAsNewBundleHandler(
         IWorkspaceSessionRegistry workspaceSessionRegistry,
@@ -32,7 +35,9 @@ public sealed class SaveWorkspaceAsNewBundleHandler : ICommandHandler<SaveWorksp
         IWorkspaceBundleExporter? bundleExporter = null,
         IWorkspaceBundleExportManifestStore? manifestStore = null,
         IResourceProcessorCatalogStore? resourceProcessorCatalogStore = null,
-        IWorkspaceResourceProcessorExecutor? resourceProcessorExecutor = null)
+        IWorkspaceResourceProcessorExecutor? resourceProcessorExecutor = null,
+        IPostExportPluginCatalogStore? postExportPluginCatalogStore = null,
+        IWorkspacePostExportPluginLauncher? postExportPluginLauncher = null)
     {
         _workspaceSessionRegistry = workspaceSessionRegistry ?? throw new ArgumentNullException(nameof(workspaceSessionRegistry));
         _workspaceDataStoreFactory = workspaceDataStoreFactory;
@@ -45,6 +50,8 @@ public sealed class SaveWorkspaceAsNewBundleHandler : ICommandHandler<SaveWorksp
         _resourceProcessorRunner = new WorkspaceSaveResourceProcessorRunner(
             resourceProcessorCatalogStore,
             resourceProcessorExecutor);
+        _postExportPluginCatalogStore = postExportPluginCatalogStore;
+        _postExportPluginLauncher = postExportPluginLauncher;
     }
 
     public async Task<Result<WorkspaceSaveExecutionResultDto>> HandleAsync(
@@ -104,6 +111,11 @@ public sealed class SaveWorkspaceAsNewBundleHandler : ICommandHandler<SaveWorksp
 
         var operationId = $"save-{DateTimeOffset.UtcNow:yyyyMMddHHmmss}-{Guid.NewGuid():N}";
         var processorSelections = NormalizeProcessorSelections(command.ProcessorSelections);
+        if (!TryResolvePostExportPlugin(command.PostExportPluginId, out var postExportPlugin, out var postExportPluginError))
+        {
+            return Result<WorkspaceSaveExecutionResultDto>.Failure(postExportPluginError!);
+        }
+
         var resourceProcessorPlanResult = _resourceProcessorRunner.BuildPlan(processorSelections);
         if (resourceProcessorPlanResult.IsFailure)
         {
@@ -188,6 +200,34 @@ public sealed class SaveWorkspaceAsNewBundleHandler : ICommandHandler<SaveWorksp
             manifestPath = manifestResult.Value?.ManifestPath;
         }
 
+        WorkspacePostExportPluginLaunchResultDto? postExportPluginLaunchResult = null;
+        if (postExportPlugin is not null && !string.IsNullOrWhiteSpace(manifestPath))
+        {
+            command.Progress?.Report(new WorkspaceSaveExecutionProgressDto(
+                WorkspaceSaveExecutionStageDto.PostExportPluginLaunching,
+                CompletedBundleCount: bundleResults.Count,
+                TotalBundleCount: selectedPlans.Count,
+                SucceededBundleCount: successfulResults.Length,
+                FailedBundleCount: bundleResults.Count - successfulResults.Length));
+
+            var launchResult = await _postExportPluginLauncher!.LaunchAsync(
+                new WorkspacePostExportPluginLaunchRequestDto(
+                    postExportPlugin,
+                    manifestPath,
+                    plan.OutputDirectory,
+                    plan.WorkspaceId,
+                    command.WorkspaceKey),
+                cancellationToken);
+            if (launchResult.IsCancelled)
+            {
+                return Result<WorkspaceSaveExecutionResultDto>.Cancelled();
+            }
+
+            postExportPluginLaunchResult = launchResult.IsSuccess && launchResult.Value is not null
+                ? launchResult.Value
+                : CreatePostExportPluginLaunchFailure(postExportPlugin, launchResult.Errors.FirstOrDefault());
+        }
+
         var completedAtUtc = DateTimeOffset.UtcNow;
         command.Progress?.Report(new WorkspaceSaveExecutionProgressDto(
             WorkspaceSaveExecutionStageDto.Completed,
@@ -197,7 +237,13 @@ public sealed class SaveWorkspaceAsNewBundleHandler : ICommandHandler<SaveWorksp
             FailedBundleCount: bundleResults.Count - successfulResults.Length));
 
         return Result<WorkspaceSaveExecutionResultDto>.Success(
-            CreateExecutionResult(plan, selectedPlans, bundleResults, manifestPath, completedAtUtc));
+            CreateExecutionResult(
+                plan,
+                selectedPlans,
+                bundleResults,
+                manifestPath,
+                postExportPluginLaunchResult,
+                completedAtUtc));
     }
 
     private static WorkspaceSaveExecutionResultDto CreateSummaryResult(
@@ -227,6 +273,7 @@ public sealed class SaveWorkspaceAsNewBundleHandler : ICommandHandler<SaveWorksp
         IReadOnlyList<PlannedWorkspaceBundleSave> selectedPlans,
         IReadOnlyList<WorkspaceSaveBundleExecutionResultDto> bundleResults,
         string? manifestPath,
+        WorkspacePostExportPluginLaunchResultDto? postExportPluginLaunchResult,
         DateTimeOffset completedAtUtc)
     {
         var succeededCount = bundleResults.Count(static result => result.Status == WorkspaceSaveBundleExecutionStatusDto.Succeeded);
@@ -256,8 +303,56 @@ public sealed class SaveWorkspaceAsNewBundleHandler : ICommandHandler<SaveWorksp
             FailedBundleCount: failedCount,
             WrittenBundleCount: succeededCount,
             ExportManifestPath: manifestPath,
-            BundleResults: bundleResults);
+            BundleResults: bundleResults,
+            PostExportPluginLaunchResult: postExportPluginLaunchResult);
     }
+
+    private bool TryResolvePostExportPlugin(
+        string? pluginId,
+        out PostExportPluginCatalogEntryDto? plugin,
+        out AssestBundleTools.Domain.Common.Errors.AppError? error)
+    {
+        plugin = null;
+        error = null;
+        if (string.IsNullOrWhiteSpace(pluginId))
+        {
+            return true;
+        }
+
+        var normalizedId = pluginId.Trim();
+        if (_postExportPluginCatalogStore is null || _postExportPluginLauncher is null)
+        {
+            error = ApplicationErrors.PostExportPluginCatalogNotFound(normalizedId);
+            return false;
+        }
+
+        plugin = _postExportPluginCatalogStore.Load().FirstOrDefault(entry =>
+            string.Equals(entry.Id, normalizedId, StringComparison.OrdinalIgnoreCase));
+        if (plugin is null || plugin.Status != ResourceProcessorStatus.Available)
+        {
+            error = ApplicationErrors.PostExportPluginCatalogNotFound(normalizedId);
+            plugin = null;
+            return false;
+        }
+
+        return true;
+    }
+
+    private static WorkspacePostExportPluginLaunchResultDto CreatePostExportPluginLaunchFailure(
+        PostExportPluginCatalogEntryDto plugin,
+        AssestBundleTools.Domain.Common.Errors.AppError? error) =>
+        new(
+            plugin.Id,
+            plugin.DisplayName,
+            WorkspacePostExportPluginLaunchStatusDto.LaunchFailed,
+            error?.Code,
+            error is null
+                ? null
+                : string.Join(
+                    "; ",
+                    error.Parameters
+                        .Where(static parameter => parameter.Value is not null)
+                        .Select(static parameter => $"{parameter.Key}={parameter.Value}")));
 
     private static WorkspaceSavePlan CreatePlanSnapshot(
         WorkspaceSavePlan plan,

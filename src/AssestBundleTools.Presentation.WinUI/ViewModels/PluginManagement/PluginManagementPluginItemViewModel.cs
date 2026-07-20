@@ -19,13 +19,15 @@ public sealed record PluginManagementPluginItemViewModel(
     IReadOnlyList<string> ResourceTypeFilterKeys,
     string SearchText,
     bool IsDecryptor,
+    bool IsPostExportPlugin,
     bool IsReadOnly,
     bool CanEdit,
     bool CanDelete,
     IReadOnlyList<PluginManagementDetailItemViewModel> DetailItems,
     string DiagnosticText,
     AssetBundleDecryptorCatalogEntryDto? DecryptorEntry,
-    ResourceProcessorCatalogEntryDto? ResourceProcessorEntry)
+    ResourceProcessorCatalogEntryDto? ResourceProcessorEntry,
+    PostExportPluginCatalogEntryDto? PostExportPluginEntry)
 {
     public Visibility DescriptionVisibility =>
         string.IsNullOrWhiteSpace(Description) ? Visibility.Collapsed : Visibility.Visible;
@@ -51,7 +53,12 @@ public sealed record PluginManagementPluginItemViewModel(
 
         if (string.Equals(filterKey, PluginManagementFilterKeys.ExportProcessor, StringComparison.Ordinal))
         {
-            return !IsDecryptor;
+            return !IsDecryptor && !IsPostExportPlugin;
+        }
+
+        if (string.Equals(filterKey, PluginManagementFilterKeys.PostExport, StringComparison.Ordinal))
+        {
+            return IsPostExportPlugin;
         }
 
         return ResourceTypeFilterKeys.Any(resourceTypeFilterKey =>
@@ -84,6 +91,7 @@ internal static class PluginManagementFilterKeys
     public const string All = "all";
     public const string ImportDecryptor = "import-decryptor";
     public const string ExportProcessor = "export-processor";
+    public const string PostExport = "post-export";
     public const string Texture2D = "resource-kind:texture2d";
     public const string Audio = "resource-kind:audio";
     public const string Atlas = "resource-kind:atlas";

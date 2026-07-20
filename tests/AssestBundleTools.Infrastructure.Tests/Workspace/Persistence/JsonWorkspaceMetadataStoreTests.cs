@@ -204,7 +204,8 @@ internal static class JsonWorkspaceMetadataStoreTests
                     new WorkspaceExportProcessorSettingSnapshotDto("audio", true, "resource.processor.audio.fmod-fsb5"),
                     new WorkspaceExportProcessorSettingSnapshotDto("texture2d", false, null)
                 ],
-                UseSourceCodec: false));
+                UseSourceCodec: false,
+                PostExportPluginId: "post-export.zip"));
 
         store.Save(metadata);
         var loadedMetadata = store.Load("workspace-a");
@@ -239,6 +240,10 @@ internal static class JsonWorkspaceMetadataStoreTests
             restoredExportSettings.AudioWriteMode,
             "Audio write mode should round-trip.");
         TestAssert.False(restoredExportSettings.UseSourceCodec, "Source codec setting should round-trip.");
+        TestAssert.Equal(
+            "post-export.zip",
+            restoredExportSettings.PostExportPluginId,
+            "Post-export plugin selection should round-trip.");
         var restoredAudioProcessor = TestAssert.Single(restoredExportSettings.ProcessorSettings!.Where(static setting =>
             setting.ResourceKind == "audio"));
         TestAssert.True(restoredAudioProcessor.IsEnabled, "Audio processor enabled state should round-trip.");

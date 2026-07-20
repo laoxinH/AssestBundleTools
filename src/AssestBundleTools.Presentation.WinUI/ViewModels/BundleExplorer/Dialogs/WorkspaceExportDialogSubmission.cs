@@ -12,4 +12,5 @@ public sealed record WorkspaceExportDialogSubmission(
     WorkspaceBundleExportOutputConflictPolicyDto OutputConflictPolicy,
     WorkspaceBundleExportAudioWriteModeDto AudioWriteMode,
     bool UseSourceCodec,
+    string? PostExportPluginId,
     WorkspaceExportSettingsSnapshotDto ExportSettings);

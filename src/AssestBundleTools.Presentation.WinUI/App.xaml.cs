@@ -57,6 +57,7 @@ public partial class App : Microsoft.UI.Xaml.Application
             WorkspaceCacheMaintenanceGateway = services.WorkspaceCacheMaintenanceGateway;
             AssetBundleDecryptorCatalogService = services.AssetBundleDecryptorCatalogService;
             ResourceProcessorCatalogService = services.ResourceProcessorCatalogService;
+            PostExportPluginCatalogService = services.PostExportPluginCatalogService;
             WorkspaceDialogService = services.WorkspaceDialogService;
             AppInteractionFeedbackService = services.AppInteractionFeedbackService;
             WorkspaceWindowService = services.WorkspaceWindowService;
@@ -127,6 +128,8 @@ public partial class App : Microsoft.UI.Xaml.Application
     public IAssetBundleDecryptorCatalogService AssetBundleDecryptorCatalogService { get; }
 
     public IResourceProcessorCatalogService ResourceProcessorCatalogService { get; }
+
+    public IPostExportPluginCatalogService PostExportPluginCatalogService { get; }
 
     public IWorkspaceDialogService WorkspaceDialogService { get; }
 

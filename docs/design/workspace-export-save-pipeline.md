@@ -49,6 +49,7 @@ WorkspaceExportWindow 收集选择
   -> AB 写包阶段，跨 bundle 受控并行，同 bundle 单 writer
   -> 可选来源 codec 回写，仍属于同 bundle writer 原子边界
   -> 输出 AB 导出修改清单 JSON
+  -> 可选导出后插件，单次消费 manifest
   -> SaveExecutionCompleted / Failed 操作记录与检查点
   -> Presentation 消费任务结果；检查点落地后再广播已提交操作通知
 ```
@@ -604,6 +605,12 @@ Writer 诊断 detail 应包含失败阶段，例如 `load-bundle / apply-changes
 - `checkpointId` 只对成功 bundle 存在；失败 bundle 不应伪造检查点。
 - `diagnostics[]` 使用稳定 `code / severity / parameters`，可选保留外部工具 fallback message。
 
+### 10.3 导出后插件交接
+
+manifest 原子写入成功且至少一个 bundle 成功后，保存用例可以拉起用户选择的一个 `postExport` 插件。Application 只向执行端口提供所选目录项、`manifestPath / outputDirectory / workspaceId / workspaceKey` 和取消令牌；Infrastructure 展开参数并创建进程，创建成功后立即完成交接，不等待退出。插件可以通过 schema v2 的 `writtenAssets[]` 定位资产，但是否使用、如何处理及何时完成均由插件自行决定。
+
+导出后插件拉起结果与 bundle 写出结果分离：拉起失败保留已写 AB、manifest 路径和成功 bundle 计数，并在 `WorkspaceSaveExecutionResultDto.PostExportPluginLaunchResult` 中返回稳定插件身份、状态和诊断；Presentation 使用警告摘要展示，不得把它格式化成某个 bundle 写包失败。进程成功创建后主程序不跟踪退出码或插件处理状态。
+
 ## 11. 操作记录与检查点
 
 真实导出必须接入工作区可恢复操作记录：
@@ -681,7 +688,8 @@ Presentation 回归优先覆盖：
 7. [已落地] 新增 AB 导出 manifest store，写出 `_abt-bundle-export-manifest.json`。
 8. [待补] 接入保存检查点和操作记录 committed 状态。
 9. [已落地] 将工作区导出窗口的开始按钮接到真实 `SaveRebuild` 后台任务。
-10. [进行中] 补 Presentation、本地化、自动化回归和端到端手动验证；当前 CLI 处理器端口与 TextAsset / Texture2D 对象级写包已补 Application / Infrastructure 回归。
+10. [已落地] 接入可选 `postExport` 插件目录、工作区选择持久化和 manifest 写出后的单次进程交接；主程序不等待或解释插件结果。
+11. [进行中] 继续补真实样本端到端手动验证；当前 CLI 处理器、对象级写包、导出 manifest 和导出后 handoff 已补 Application / Infrastructure / Presentation 回归。
 
 ## 15. 收口结论
 

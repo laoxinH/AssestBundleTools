@@ -326,6 +326,67 @@ public static class ApplicationErrors
                 ("OutputPath", outputPath),
                 ("Detail", detail)));
 
+    public static AppError PostExportPluginCatalogInvalid(string field) =>
+        new(
+            code: "Bundle.PostExportPlugin.Catalog.Invalid",
+            category: ErrorCategory.Validation,
+            severity: ErrorSeverity.Warning,
+            messageToken: "Error.Bundle.PostExportPlugin.Catalog.Invalid",
+            parameters: CreateParameters(("Field", field)),
+            isUserActionable: true);
+
+    public static AppError PostExportPluginCatalogNotFound(string pluginId) =>
+        new(
+            code: "Bundle.PostExportPlugin.Catalog.NotFound",
+            category: ErrorCategory.NotFound,
+            severity: ErrorSeverity.Error,
+            messageToken: "Error.Bundle.PostExportPlugin.Catalog.NotFound",
+            parameters: CreateParameters(("PluginId", pluginId)),
+            isUserActionable: true);
+
+    public static AppError PostExportPluginCatalogReadOnly(string pluginId) =>
+        new(
+            code: "Bundle.PostExportPlugin.Catalog.ReadOnly",
+            category: ErrorCategory.Validation,
+            severity: ErrorSeverity.Warning,
+            messageToken: "Error.Bundle.PostExportPlugin.Catalog.ReadOnly",
+            parameters: CreateParameters(("PluginId", pluginId)),
+            isUserActionable: true);
+
+    public static AppError PostExportPluginCatalogAlreadyExists(string pluginId) =>
+        new(
+            code: "Bundle.PostExportPlugin.Catalog.AlreadyExists",
+            category: ErrorCategory.Validation,
+            severity: ErrorSeverity.Warning,
+            messageToken: "Error.Bundle.PostExportPlugin.Catalog.AlreadyExists",
+            parameters: CreateParameters(("PluginId", pluginId)),
+            isUserActionable: true);
+
+    public static AppError PostExportPluginCatalogSaveFailed(string? detail = null) =>
+        new(
+            code: "Bundle.PostExportPlugin.Catalog.SaveFailed",
+            category: ErrorCategory.IoFailure,
+            severity: ErrorSeverity.Error,
+            messageToken: "Error.Bundle.PostExportPlugin.Catalog.SaveFailed",
+            parameters: CreateParameters(("Detail", detail)));
+
+    public static AppError PostExportPluginCatalogDeleteFailed(string? detail = null) =>
+        new(
+            code: "Bundle.PostExportPlugin.Catalog.DeleteFailed",
+            category: ErrorCategory.IoFailure,
+            severity: ErrorSeverity.Error,
+            messageToken: "Error.Bundle.PostExportPlugin.Catalog.DeleteFailed",
+            parameters: CreateParameters(("Detail", detail)));
+
+    public static AppError PostExportPluginLaunchFailed(string pluginId, string? detail = null) =>
+        new(
+            code: "Bundle.Save.PostExportPlugin.LaunchFailed",
+            category: ErrorCategory.ExternalDependency,
+            severity: ErrorSeverity.Warning,
+            messageToken: "Error.Bundle.Save.PostExportPlugin.LaunchFailed",
+            parameters: CreateParameters(("PluginId", pluginId), ("Detail", detail)),
+            isUserActionable: true);
+
     public static AppError ResourceProcessorNotFound(string processorId) =>
         new(
             code: "Bundle.Save.ResourceProcessor.NotFound",

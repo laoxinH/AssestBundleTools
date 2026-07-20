@@ -69,6 +69,7 @@ public sealed class PluginManagementPageContractTests
 
         Assert.Contains("ItemsSource=\"{x:Bind ViewModel.VisibleDecryptorPlugins", pluginPage);
         Assert.Contains("ItemsSource=\"{x:Bind ViewModel.VisibleResourceProcessorPlugins", pluginPage);
+        Assert.Contains("ItemsSource=\"{x:Bind ViewModel.VisiblePostExportPlugins", pluginPage);
         Assert.Contains("PluginManagementToolbarSurfaceStyle", pluginPage);
         Assert.Contains("PluginManagementCatalogStatChipStyle", pluginPage);
         Assert.Contains("PluginManagementListViewItemStyle", pluginPage);
@@ -79,6 +80,7 @@ public sealed class PluginManagementPageContractTests
         Assert.Contains("x:Name=\"AddPluginMenuButton\"", pluginPage);
         Assert.Contains("x:Name=\"AddDecryptorMenuFlyoutItem\"", pluginPage);
         Assert.Contains("x:Name=\"AddResourceProcessorMenuFlyoutItem\"", pluginPage);
+        Assert.Contains("x:Name=\"AddPostExportPluginMenuFlyoutItem\"", pluginPage);
         Assert.Contains("x:Name=\"PluginDirectoryHelpHost\"", pluginPage);
         Assert.Contains("PointerEntered=\"OnPluginDirectoryHelpPointerEntered\"", pluginPage);
         Assert.Contains("Text=\"{x:Bind ViewModel.VisiblePluginCountText, Mode=OneWay}\"", pluginPage);
@@ -92,17 +94,20 @@ public sealed class PluginManagementPageContractTests
         Assert.Contains("ToolTipService.SetToolTip(AddPluginMenuButton", pluginPageCode);
         Assert.Contains("OnAddDecryptorMenuFlyoutItemClick", pluginPageCode);
         Assert.Contains("OnAddResourceProcessorMenuFlyoutItemClick", pluginPageCode);
+        Assert.Contains("OnAddPostExportPluginMenuFlyoutItemClick", pluginPageCode);
         Assert.Contains("AssetBundleDecryptorEditorDialogContent", pluginPageCode);
         Assert.Contains("ResourceProcessorEditorDialogContent", pluginPageCode);
+        Assert.Contains("PostExportPluginEditorDialogContent", pluginPageCode);
         Assert.Contains("ViewModel.DeleteDecryptorAsync", pluginPageCode);
         Assert.Contains("ViewModel.DeleteResourceProcessorAsync", pluginPageCode);
+        Assert.Contains("ViewModel.DeletePostExportPluginAsync", pluginPageCode);
         Assert.DoesNotContain("DecryptorCatalogTitleText", settingsPage);
         Assert.DoesNotContain("AssetBundleDecryptorCatalogService", settingsViewModel);
         Assert.DoesNotContain("DecryptorEntries", settingsViewModel);
     }
 
     [Fact]
-    public void PluginManagement_ShouldRepresentDecryptorAndResourceProcessorCatalogs()
+    public void PluginManagement_ShouldRepresentAllSupportedPluginCatalogs()
     {
         var repositoryRoot = FindRepositoryRoot();
         var viewModel = File.ReadAllText(Path.Combine(
@@ -122,14 +127,17 @@ public sealed class PluginManagementPageContractTests
 
         Assert.Contains("IAssetBundleDecryptorCatalogService", viewModel);
         Assert.Contains("IResourceProcessorCatalogService", viewModel);
+        Assert.Contains("IPostExportPluginCatalogService", viewModel);
         Assert.Contains("VisibleDecryptorPlugins", viewModel);
         Assert.Contains("VisibleResourceProcessorPlugins", viewModel);
+        Assert.Contains("VisiblePostExportPlugins", viewModel);
         Assert.Contains("VisiblePluginCountText", viewModel);
         Assert.Contains("VisibleDecryptorPluginCountText", viewModel);
         Assert.Contains("VisibleResourceProcessorPluginCountText", viewModel);
         Assert.Contains("SelectedPluginIconGlyph", viewModel);
         Assert.Contains("BuildAutoDetectDecryptor", viewModel);
         Assert.Contains("BuildResourceProcessor", viewModel);
+        Assert.Contains("BuildPostExportPlugin", viewModel);
         Assert.Contains("PluginManagementFilterKeys.Texture2D", presenter);
         Assert.Contains("PluginManagementFilterKeys.Audio", presenter);
         Assert.Contains("PluginManagementFilterKeys.Atlas", presenter);

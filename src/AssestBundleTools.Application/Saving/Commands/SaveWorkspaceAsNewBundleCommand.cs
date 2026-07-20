@@ -20,4 +20,5 @@ public sealed record SaveWorkspaceAsNewBundleCommand(
     WorkspaceBundleExportOutputConflictPolicyDto OutputConflictPolicy = WorkspaceBundleExportOutputConflictPolicyDto.ReplaceExisting,
     WorkspaceBundleExportAudioWriteModeDto AudioWriteMode = WorkspaceBundleExportAudioWriteModeDto.MatchOriginalContainer,
     IProgress<WorkspaceSaveExecutionDiagnosticDto>? Diagnostics = null,
-    bool UseSourceCodec = true);
+    bool UseSourceCodec = true,
+    string? PostExportPluginId = null);

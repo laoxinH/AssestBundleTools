@@ -1,6 +1,7 @@
 using AssestBundleTools.Infrastructure.Tests.Bundles.Decryption;
 using AssestBundleTools.Infrastructure.Tests.Bundles.Internal;
 using AssestBundleTools.Infrastructure.Tests.Bundles.Processing;
+using AssestBundleTools.Infrastructure.Tests.Bundles.PostExport;
 using AssestBundleTools.Infrastructure.Tests.Bundles.Reading;
 using AssestBundleTools.Infrastructure.Tests.Bundles.Previewing;
 using AssestBundleTools.Infrastructure.Tests.Extensions.Installation;
@@ -697,6 +698,18 @@ internal static class InfrastructureTestSuite
             failures,
             nameof(FileSystemResourceProcessorCatalogStoreTests.DeleteUserManagedProcessor_ShouldRemoveManifest),
             FileSystemResourceProcessorCatalogStoreTests.DeleteUserManagedProcessor_ShouldRemoveManifest);
+        await RunTestAsync(
+            failures,
+            nameof(FileSystemPostExportPluginTests.Catalog_ShouldRoundTripAndDeleteUserManagedPlugin),
+            FileSystemPostExportPluginTests.Catalog_ShouldRoundTripAndDeleteUserManagedPlugin);
+        await RunTestAsync(
+            failures,
+            nameof(FileSystemPostExportPluginTests.Launcher_ShouldReportProcessStarted_WithoutOwningPluginCompletion),
+            FileSystemPostExportPluginTests.Launcher_ShouldReportProcessStarted_WithoutOwningPluginCompletion);
+        await RunTestAsync(
+            failures,
+            nameof(FileSystemPostExportPluginTests.Launcher_ShouldFailBeforeProcessStart_WhenManifestIsMissing),
+            FileSystemPostExportPluginTests.Launcher_ShouldFailBeforeProcessStart_WhenManifestIsMissing);
         await RunTestAsync(
             failures,
             nameof(FileSystemResourceProcessorExecutorTests.ExecuteAsync_ShouldRunCli_AndParseResultJson),

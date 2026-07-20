@@ -51,6 +51,7 @@ public sealed partial class WorkspaceExportDialogContent : UserControl
         AutomationProperties.SetName(ForceAudioPayloadWriteHelpHost, ForceAudioPayloadWriteText.Text);
         AutomationProperties.SetHelpText(ForceAudioPayloadWriteHelpHost, forceAudioPayloadWriteToolTipText);
         CompressionModeLabelText.Text = UiText.Get(ResourceKeys.WorkspaceExportDialogCompressionModeLabel);
+        PostExportPluginLabelText.Text = UiText.Get(ResourceKeys.WorkspaceExportDialogPostPluginLabel);
     }
 
     private void OnSelectAllBundlesButtonClick(object sender, RoutedEventArgs e) =>

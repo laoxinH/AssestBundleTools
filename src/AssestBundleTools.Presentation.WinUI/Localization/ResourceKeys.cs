@@ -254,6 +254,7 @@ public static class ResourceKeys
     public const string PluginManagementAddPluginMenuButtonToolTip = "PluginManagementPage.AddPluginMenuButton.ToolTip";
     public const string PluginManagementAddDecryptorButton = "PluginManagementPage.AddDecryptorButton.Content";
     public const string PluginManagementAddResourceProcessorButton = "PluginManagementPage.AddResourceProcessorButton.Content";
+    public const string PluginManagementAddPostExportPluginButton = "PluginManagementPage.AddPostExportPluginButton.Content";
     public const string PluginManagementDirectoryEmptyTitle = "PluginManagementPage.Directory.EmptyTitle";
     public const string PluginManagementDirectoryEmptyText = "PluginManagementPage.Directory.EmptyText";
     public const string PluginManagementDetailsEmptyTitle = "PluginManagementPage.Details.EmptyTitle";
@@ -266,7 +267,9 @@ public static class ResourceKeys
     public const string PluginManagementTypeFilterAll = "PluginManagementPage.TypeFilter.All";
     public const string PluginManagementTypeImportDecryptor = "PluginManagementPage.Type.ImportDecryptor";
     public const string PluginManagementTypeExportProcessor = "PluginManagementPage.Type.ExportProcessor";
+    public const string PluginManagementTypePostExport = "PluginManagementPage.Type.PostExport";
     public const string PluginManagementScopeImportDecryptor = "PluginManagementPage.Scope.ImportDecryptor";
+    public const string PluginManagementScopePostExport = "PluginManagementPage.Scope.PostExport";
     public const string PluginManagementStatusFilterAll = "PluginManagementPage.StatusFilter.All";
     public const string PluginManagementStatusAvailable = "PluginManagementPage.Status.Available";
     public const string PluginManagementStatusWarning = "PluginManagementPage.Status.Warning";
@@ -308,8 +311,11 @@ public static class ResourceKeys
     public const string PluginManagementDecryptorDeleteDescriptionFormat = "PluginManagementPage.DecryptorDelete.Description.Format";
     public const string PluginManagementProcessorDeleteTitle = "PluginManagementPage.ProcessorDelete.Title";
     public const string PluginManagementProcessorDeleteDescriptionFormat = "PluginManagementPage.ProcessorDelete.Description.Format";
+    public const string PluginManagementPostExportDeleteTitle = "PluginManagementPage.PostExportDelete.Title";
+    public const string PluginManagementPostExportDeleteDescriptionFormat = "PluginManagementPage.PostExportDelete.Description.Format";
     public const string PluginManagementDecryptorLoadFailedMessage = "PluginManagementPage.DecryptorLoadFailedMessage";
     public const string PluginManagementProcessorLoadFailedMessage = "PluginManagementPage.ProcessorLoadFailedMessage";
+    public const string PluginManagementPostExportLoadFailedMessage = "PluginManagementPage.PostExportLoadFailedMessage";
     public const string PluginManagementDecryptorSaveSucceededMessageFormat = "PluginManagementPage.DecryptorSaveSucceededMessage.Format";
     public const string PluginManagementDecryptorSaveFailedMessage = "PluginManagementPage.DecryptorSaveFailedMessage";
     public const string PluginManagementDecryptorDeleteSucceededMessageFormat = "PluginManagementPage.DecryptorDeleteSucceededMessage.Format";
@@ -318,6 +324,10 @@ public static class ResourceKeys
     public const string PluginManagementProcessorSaveFailedMessage = "PluginManagementPage.ProcessorSaveFailedMessage";
     public const string PluginManagementProcessorDeleteSucceededMessageFormat = "PluginManagementPage.ProcessorDeleteSucceededMessage.Format";
     public const string PluginManagementProcessorDeleteFailedMessage = "PluginManagementPage.ProcessorDeleteFailedMessage";
+    public const string PluginManagementPostExportSaveSucceededMessageFormat = "PluginManagementPage.PostExportSaveSucceededMessage.Format";
+    public const string PluginManagementPostExportSaveFailedMessage = "PluginManagementPage.PostExportSaveFailedMessage";
+    public const string PluginManagementPostExportDeleteSucceededMessageFormat = "PluginManagementPage.PostExportDeleteSucceededMessage.Format";
+    public const string PluginManagementPostExportDeleteFailedMessage = "PluginManagementPage.PostExportDeleteFailedMessage";
     public const string PluginEditorStepBasic = "PluginEditor.Step.Basic";
     public const string PluginEditorStepExecution = "PluginEditor.Step.Execution";
     public const string PluginEditorStepArguments = "PluginEditor.Step.Arguments";
@@ -360,6 +370,17 @@ public static class ResourceKeys
     public const string ResourceProcessorEditorValidationExecutablePathRequired = "ResourceProcessorEditor.Validation.ExecutablePathRequired";
     public const string ResourceProcessorEditorValidationTimeoutInvalid = "ResourceProcessorEditor.Validation.TimeoutInvalid";
     public const string ResourceProcessorEditorValidationArgumentsRequired = "ResourceProcessorEditor.Validation.ArgumentsRequired";
+
+    public const string PostExportPluginEditorNewTitle = "PostExportPluginEditor.NewTitle";
+    public const string PostExportPluginEditorEditTitleFormat = "PostExportPluginEditor.EditTitle.Format";
+    public const string PostExportPluginEditorPrimaryButton = "PostExportPluginEditor.PrimaryButton";
+    public const string PostExportPluginEditorArgumentsLabel = "PostExportPluginEditor.Arguments.Label";
+    public const string PostExportPluginEditorArgumentsDescription = "PostExportPluginEditor.Arguments.Description";
+    public const string PostExportPluginEditorIdPlaceholder = "PostExportPluginEditor.Id.Placeholder";
+    public const string PostExportPluginEditorDisplayNamePlaceholder = "PostExportPluginEditor.DisplayName.Placeholder";
+    public const string PostExportPluginEditorExecutablePathPlaceholder = "PostExportPluginEditor.ExecutablePath.Placeholder";
+    public const string PostExportPluginEditorValidationRequired = "PostExportPluginEditor.Validation.Required";
+    public const string PostExportPluginEditorValidationManifestPathRequired = "PostExportPluginEditor.Validation.ManifestPathRequired";
 
     public const string SettingsDiagnosticsPageTitle = "SettingsDiagnosticsPage.PageTitleText.Text";
     public const string SettingsDiagnosticsNavWorkspace = "SettingsDiagnosticsPage.Navigation.Workspace";
@@ -760,6 +781,11 @@ public static class ResourceKeys
     public const string WorkspaceExportDialogForceAudioPayloadWriteWarning = "WorkspaceExportDialog.ForceAudioPayloadWriteWarning";
     public const string WorkspaceExportDialogAudioPayloadContainerMismatch = "WorkspaceExportDialog.AudioPayloadContainerMismatch";
     public const string WorkspaceExportDialogCompressionModeLabel = "WorkspaceExportDialog.CompressionMode.Label";
+    public const string WorkspaceExportDialogPostPluginLabel = "WorkspaceExportDialog.PostPlugin.Label";
+    public const string WorkspaceExportDialogPostPluginNone = "WorkspaceExportDialog.PostPlugin.None";
+    public const string WorkspaceExportDialogPostPluginNoneDescription = "WorkspaceExportDialog.PostPlugin.NoneDescription";
+    public const string WorkspaceExportDialogStatusPostPluginLaunching = "WorkspaceExportDialog.Status.PostPluginLaunching";
+    public const string WorkspaceExportDialogPostPluginLaunchFailedFormat = "WorkspaceExportDialog.PostPlugin.LaunchFailed.Format";
     public const string WorkspaceExportDialogCompressionFastLz4 = "WorkspaceExportDialog.Compression.FastLz4";
     public const string WorkspaceExportDialogCompressionFastLz4Description = "WorkspaceExportDialog.Compression.FastLz4Description";
     public const string WorkspaceExportDialogCompressionPreserveOriginal = "WorkspaceExportDialog.Compression.PreserveOriginal";

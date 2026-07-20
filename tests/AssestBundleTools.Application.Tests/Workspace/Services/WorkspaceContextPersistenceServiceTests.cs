@@ -179,7 +179,8 @@ internal static class WorkspaceContextPersistenceServiceTests
                 new WorkspaceExportProcessorSettingSnapshotDto("audio", true, "resource.processor.audio.fmod-fsb5"),
                 new WorkspaceExportProcessorSettingSnapshotDto("texture2d", false, null)
             ],
-            UseSourceCodec: false);
+            UseSourceCodec: false,
+            PostExportPluginId: "post-export.zip");
     }
 
     private static void AssertExportSettings(
@@ -193,6 +194,7 @@ internal static class WorkspaceContextPersistenceServiceTests
         TestAssert.Equal(expected.CompressionMode, restored.CompressionMode, message);
         TestAssert.Equal(expected.AudioWriteMode, restored.AudioWriteMode, message);
         TestAssert.Equal(expected.UseSourceCodec, restored.UseSourceCodec, message);
+        TestAssert.Equal(expected.PostExportPluginId, restored.PostExportPluginId, message);
         TestAssert.Equal(expected.ProcessorSettings?.Count ?? 0, restored.ProcessorSettings?.Count ?? 0, message);
         TestAssert.Equal(
             expected.ProcessorSettings![0].ProcessorId,

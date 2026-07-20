@@ -42,7 +42,8 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
         WorkspaceChangeSummaryDto? changeSummary,
         WorkspaceSavePreviewDto? savePreview,
         IReadOnlyList<ResourceProcessorCatalogEntryDto>? resourceProcessorCatalogEntries = null,
-        WorkspaceExportSettingsSnapshotDto? exportSettings = null)
+        WorkspaceExportSettingsSnapshotDto? exportSettings = null,
+        IReadOnlyList<PostExportPluginCatalogEntryDto>? postExportPluginCatalogEntries = null)
     {
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
         _failureDisplayFormatter = new WorkspaceExportFailureDisplayFormatter(_localizationService);
@@ -60,8 +61,12 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
             _optionFactory.CreateResourceProcessorOptions(resourceProcessorCatalogEntries ?? Array.Empty<ResourceProcessorCatalogEntryDto>()));
         CompressionOptions = new ObservableCollection<WorkspaceExportCompressionOptionViewModel>(
             _optionFactory.CreateCompressionOptions());
+        PostExportPluginOptions = new ObservableCollection<WorkspaceExportPostPluginOptionViewModel>(
+            _optionFactory.CreatePostExportPluginOptions(
+                postExportPluginCatalogEntries ?? Array.Empty<PostExportPluginCatalogEntryDto>()));
         _selectedCompressionOption = CompressionOptions.FirstOrDefault(static option =>
             option.Mode == WorkspaceBundleExportCompressionModeDto.PreserveOriginal);
+        SelectedPostExportPlugin = PostExportPluginOptions.FirstOrDefault(static option => option.IsNone);
         _selectedBundleSortOption = BundleSortOptions.FirstOrDefault();
         ApplyExportSettings(exportSettings);
         ObserveResourceProcessorSettings();
@@ -85,6 +90,8 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
     public ObservableCollection<WorkspaceExportResourceProcessorOptionViewModel> ResourceProcessors { get; }
 
     public ObservableCollection<WorkspaceExportCompressionOptionViewModel> CompressionOptions { get; }
+
+    public ObservableCollection<WorkspaceExportPostPluginOptionViewModel> PostExportPluginOptions { get; }
 
     public string OutputDirectoryText
     {
@@ -361,6 +368,7 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
                 : WorkspaceBundleExportOutputConflictPolicyDto.FailIfExists,
             exportSettings.AudioWriteMode,
             exportSettings.UseSourceCodec,
+            exportSettings.PostExportPluginId,
             exportSettings);
     }
 
@@ -378,7 +386,8 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
             ProcessorSettings: ResourceProcessors
                 .Select(processor => _optionFactory.CreateProcessorSettingSnapshot(processor))
                 .ToArray(),
-            UseSourceCodec: UseSourceCodec);
+            UseSourceCodec: UseSourceCodec,
+            PostExportPluginId: CapturePostExportPluginId());
     }
 
     private void ApplyExportSettings(WorkspaceExportSettingsSnapshotDto? exportSettings)
@@ -395,6 +404,7 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
         SelectedCompressionOption = CompressionOptions.FirstOrDefault(option => option.Mode == exportSettings.CompressionMode)
                                     ?? CompressionOptions.FirstOrDefault(static option =>
                                         option.Mode == WorkspaceBundleExportCompressionModeDto.PreserveOriginal);
+        RestorePostExportPluginSelection(exportSettings.PostExportPluginId);
         ApplyProcessorSettings(exportSettings.ProcessorSettings ?? Array.Empty<WorkspaceExportProcessorSettingSnapshotDto>());
     }
 
@@ -459,11 +469,16 @@ public sealed partial class WorkspaceExportDialogViewModel : ObservableObject
     {
         var failedBundle = result.BundleResults.FirstOrDefault(static bundle =>
             bundle.Status == WorkspaceSaveBundleExecutionStatusDto.Failed);
-        if (failedBundle is null)
+        if (failedBundle is not null)
         {
-            return null;
+            return _failureDisplayFormatter.Format(failedBundle);
         }
 
-        return _failureDisplayFormatter.Format(failedBundle);
+        var postExportResult = result.PostExportPluginLaunchResult;
+        return postExportResult?.Status == WorkspacePostExportPluginLaunchStatusDto.LaunchFailed
+            ? _localizationService.GetFormattedString(
+                ResourceKeys.WorkspaceExportDialogPostPluginLaunchFailedFormat,
+                postExportResult.PluginDisplayName)
+            : null;
     }
 }
