@@ -28,6 +28,7 @@ internal sealed class InspectorInformationCardPresenter
         string assetTypeText,
         string bundleDisplayName,
         string sizeText,
+        string serializedObjectSizeText,
         string containerPath,
         string serializedFileName,
         string pathIdText,
@@ -49,6 +50,7 @@ internal sealed class InspectorInformationCardPresenter
             assetTypeText,
             bundleDisplayName,
             sizeText,
+            serializedObjectSizeText,
             containerPath,
             serializedFileName,
             pathIdText,
@@ -100,6 +102,7 @@ internal sealed class InspectorInformationCardPresenter
         string assetTypeText,
         string bundleDisplayName,
         string sizeText,
+        string serializedObjectSizeText,
         string containerPath,
         string serializedFileName,
         string pathIdText,
@@ -112,6 +115,13 @@ internal sealed class InspectorInformationCardPresenter
             new(_informationTextSet.BundleLabel, bundleDisplayName),
             new(_informationTextSet.AssetSizeLabel, sizeText)
         };
+
+        if (!string.IsNullOrWhiteSpace(serializedObjectSizeText))
+        {
+            rows.Add(new InspectorInfoRowViewModel(
+                _informationTextSet.SerializedObjectSizeLabel,
+                serializedObjectSizeText));
+        }
 
         if (!string.IsNullOrWhiteSpace(containerPath))
         {

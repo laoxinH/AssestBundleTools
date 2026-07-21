@@ -34,14 +34,6 @@ public sealed partial class InspectorPanelViewModel
         RebuildInformationCards();
     }
 
-    public void OverrideSizeText(string sizeText)
-    {
-        SizeText = string.IsNullOrWhiteSpace(sizeText)
-            ? string.Empty
-            : sizeText.Trim();
-        RebuildInformationCards();
-    }
-
     public void ApplyImagePreview(
         ImageSource imageSource,
         int imagePixelWidth,

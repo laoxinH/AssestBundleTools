@@ -20,8 +20,29 @@ internal static class AssetsToolsAssetDisplayMetadataResolver
         return classId switch
         {
             AssetClassID.Texture2D => ResolvePreferredTextureSizeInBytes(baseField),
+            AssetClassID.AudioClip => ResolvePreferredAudioSizeInBytes(baseField),
             _ => null
         };
+    }
+
+    private static long? ResolvePreferredAudioSizeInBytes(AssetTypeValueField audioClipField)
+    {
+        var resourceSize = AssetsToolsFieldReader.ReadInt64(
+            AssetsToolsFieldReader.TryGetField(audioClipField, "m_Resource", "m_Size"));
+        var inlineDataSize = AssetsToolsFieldReader.ReadByteArrayLength(
+            AssetsToolsFieldReader.TryGetField(audioClipField, "m_AudioData"));
+
+        return SelectPreferredAudioSizeInBytes(resourceSize, inlineDataSize);
+    }
+
+    internal static long? SelectPreferredAudioSizeInBytes(long? resourceSize, long? inlineDataSize)
+    {
+        if (resourceSize is > 0)
+        {
+            return resourceSize;
+        }
+
+        return inlineDataSize is > 0 ? inlineDataSize : null;
     }
 
     private static long? ResolvePreferredTextureSizeInBytes(AssetTypeValueField textureField)

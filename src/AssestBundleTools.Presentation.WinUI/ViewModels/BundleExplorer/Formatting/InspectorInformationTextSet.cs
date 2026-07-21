@@ -25,7 +25,8 @@ public sealed record InspectorInformationTextSet(
     string PreviewFallbackReasonLabel,
     string PreviewDiagnosticDetailLabel,
     string CopyToolTipText,
-    string ItemCountFormat)
+    string ItemCountFormat,
+    string SerializedObjectSizeLabel = "")
 {
     public string FormatItemCount(int count)
     {

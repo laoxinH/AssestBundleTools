@@ -151,14 +151,21 @@ internal sealed class BundleExplorerAssetInspectorPresenter
         assetTab.ApplyDetails(details);
         assetTab.CanEdit = canEdit;
 
+        var sourceDataSizeInBytes = ResolveDisplaySizeInBytes(
+            details.SizeInBytes,
+            details.PreferredDisplaySizeInBytes);
+        var serializedObjectSizeText = details.PreferredDisplaySizeInBytes is > 0 &&
+                                       details.PreferredDisplaySizeInBytes.Value != details.SizeInBytes
+            ? _localizedValueFormatter.FormatCompactByteSize(details.SizeInBytes)
+            : string.Empty;
+
         assetTab.Inspector.Apply(
             assetName: details.Name,
             bundleDisplayName: _bundlePane.ResolveBundleDisplayName(details.BundleId),
             assetTypeText: ResolveAssetTypeDisplayName(details.AssetType, details.AssetTypeDisplayName),
             containerPath: details.ContainerPath,
             serializedFileName: details.SerializedFileName ?? string.Empty,
-            sizeText: _localizedValueFormatter.FormatCompactByteSize(
-                ResolveDisplaySizeInBytes(details.SizeInBytes, details.PreferredDisplaySizeInBytes)),
+            sizeText: _localizedValueFormatter.FormatCompactByteSize(sourceDataSizeInBytes),
             pathIdText: details.PathId.ToString(CultureInfo.InvariantCulture),
             extractCapabilityText: details.CanExtract
                 ? GetString(ResourceKeys.InspectorCapabilityAvailable)
@@ -203,7 +210,8 @@ internal sealed class BundleExplorerAssetInspectorPresenter
             editButtonText: CanUseTextEditor(details)
                 ? GetString(ResourceKeys.InspectorModifyButton)
                 : string.Empty,
-            editButtonIconGlyph: EditGlyph);
+            editButtonIconGlyph: EditGlyph,
+            serializedObjectSizeText: serializedObjectSizeText);
     }
 
     public void SyncInspectorActionStates(

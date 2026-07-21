@@ -16,6 +16,68 @@ namespace AssestBundleTools.Presentation.Tests.ViewModels;
 public sealed class BundleExplorerAssetInspectorPresenterTests
 {
     [Fact]
+    public void CreateAssetEntry_ShouldUsePreferredSourceDataSize()
+    {
+        var localizationService = new TestLocalizationService();
+        var presenter = new BundleExplorerAssetInspectorPresenter(
+            new BundleExplorerBundlePaneViewModel(localizationService),
+            localizationService);
+        var item = new AssetListItemDto(
+            new AssetId("audio-asset"),
+            new BundleId("audio-bundle"),
+            "voice",
+            "Assets/Audio/voice.fsb",
+            AssetType.AudioClip,
+            SizeInBytes: 172,
+            PreferredDisplaySizeInBytes: 17_888,
+            HasPreview: true,
+            IsModified: false,
+            AssetTypeDisplayName: "AudioClip",
+            PathId: 1,
+            CanExtract: true);
+
+        var entry = presenter.CreateAssetEntry(item);
+
+        Assert.Equal(
+            new LocalizedValueFormatter(localizationService).FormatCompactByteSize(17_888),
+            entry.SizeText);
+    }
+
+    [Fact]
+    public void PresentAssetDocumentTab_ShouldSeparateSourceDataAndSerializedRecordSizes()
+    {
+        var localizationService = new TestLocalizationService();
+        var bundleId = new BundleId("audio-bundle");
+        var assetId = new AssetId("audio-asset");
+        var presenter = new BundleExplorerAssetInspectorPresenter(
+            new BundleExplorerBundlePaneViewModel(localizationService),
+            localizationService);
+        var assetTab = new AssetDocumentTabViewModel(
+            bundleId,
+            assetId,
+            "voice",
+            InspectorInformationTextSetFactory.Create(localizationService));
+        var details = CreateAssetDetails(WorkspaceId.New(), bundleId, assetId) with
+        {
+            AssetType = AssetType.AudioClip,
+            AssetTypeDisplayName = "AudioClip",
+            SizeInBytes = 172,
+            PreferredDisplaySizeInBytes = 17_888
+        };
+        var formatter = new LocalizedValueFormatter(localizationService);
+
+        presenter.PresentAssetDocumentTab(assetTab, details, canEdit: true, isBusy: false);
+
+        var rows = assetTab.Inspector.InformationCards.Single(static card => card.Key == "basic").Rows;
+        Assert.Contains(rows, row =>
+            row.Label == ResourceKeys.InspectorAssetSizeLabel &&
+            row.Value == formatter.FormatCompactByteSize(17_888));
+        Assert.Contains(rows, row =>
+            row.Label == ResourceKeys.InspectorSerializedObjectSizeLabel &&
+            row.Value == formatter.FormatCompactByteSize(172));
+    }
+
+    [Fact]
     public void CreateAssetTypeOptions_ShouldProjectDynamicFacets_WithPreferredOrderingAndCounts()
     {
         var localizationService = new TestLocalizationService();

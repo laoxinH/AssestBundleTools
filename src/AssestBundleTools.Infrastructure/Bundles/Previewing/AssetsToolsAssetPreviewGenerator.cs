@@ -321,7 +321,7 @@ public sealed class AssetsToolsAssetPreviewGenerator : IAssetPreviewGenerator
 
         return AssetsToolsImagePreviewSupport.TryEncodeTexturePreview(
             textureImage,
-            AssetsToolsImagePreviewSupport.BuildTexturePreviewInfoItems(baseField, textureImage, request.SizeInBytes),
+            AssetsToolsImagePreviewSupport.BuildTexturePreviewInfoItems(baseField, textureImage),
             AssetsToolsAssetDisplayMetadataResolver.ResolvePreferredDisplaySizeInBytes(AssetClassID.Texture2D, baseField),
             imageOverlay: null,
             imageFocus: null,

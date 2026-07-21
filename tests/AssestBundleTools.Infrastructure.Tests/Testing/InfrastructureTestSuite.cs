@@ -468,6 +468,18 @@ internal static class InfrastructureTestSuite
             AssetsToolsBundleLoadedSessionCacheTests.InvalidateWorkspace_ShouldRemoveMatchingWorkspaceArtifactIdentities);
         await RunTestAsync(
             failures,
+            nameof(AssetsToolsAssetDisplayMetadataResolverTests.SelectPreferredAudioSizeInBytes_ShouldPreferStreamedResourceSize),
+            AssetsToolsAssetDisplayMetadataResolverTests.SelectPreferredAudioSizeInBytes_ShouldPreferStreamedResourceSize);
+        await RunTestAsync(
+            failures,
+            nameof(AssetsToolsAssetDisplayMetadataResolverTests.SelectPreferredAudioSizeInBytes_ShouldUseInlinePayloadAsFallback),
+            AssetsToolsAssetDisplayMetadataResolverTests.SelectPreferredAudioSizeInBytes_ShouldUseInlinePayloadAsFallback);
+        await RunTestAsync(
+            failures,
+            nameof(AssetsToolsAssetDisplayMetadataResolverTests.SelectPreferredAudioSizeInBytes_ShouldIgnoreMissingOrInvalidSizes),
+            AssetsToolsAssetDisplayMetadataResolverTests.SelectPreferredAudioSizeInBytes_ShouldIgnoreMissingOrInvalidSizes);
+        await RunTestAsync(
+            failures,
             nameof(AssetsToolsTextAssetPreviewClassifierTests.TryDecodeReadableTextPayload_ShouldAcceptJsonSkelText),
             AssetsToolsTextAssetPreviewClassifierTests.TryDecodeReadableTextPayload_ShouldAcceptJsonSkelText);
         await RunTestAsync(

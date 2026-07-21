@@ -1097,6 +1097,7 @@ public static class ResourceKeys
     public const string InspectorContainerPathLabel = "InspectorPanelView.ContainerPathLabelText.Text";
     public const string InspectorSerializedFileLabel = "InspectorPanelView.SerializedFileLabelText.Text";
     public const string InspectorAssetSizeLabel = "InspectorPanelView.AssetSizeLabelText.Text";
+    public const string InspectorSerializedObjectSizeLabel = "InspectorPanelView.SerializedObjectSizeLabelText.Text";
     public const string InspectorPathIdLabel = "InspectorPanelView.PathIdLabelText.Text";
     public const string InspectorPreviewCacheStatusLabel = "InspectorPanelView.PreviewCacheStatusLabelText.Text";
     public const string InspectorPreviewFallbackReasonLabel = "InspectorPanelView.PreviewFallbackReasonLabelText.Text";

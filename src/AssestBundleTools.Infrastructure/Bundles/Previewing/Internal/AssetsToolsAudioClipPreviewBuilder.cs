@@ -27,7 +27,7 @@ internal static class AssetsToolsAudioClipPreviewBuilder
         ArgumentNullException.ThrowIfNull(baseField);
         ArgumentNullException.ThrowIfNull(request);
 
-        var metadata = ReadMetadata(baseField, request.SizeInBytes);
+        var metadata = ReadMetadata(baseField);
         if (!TryReadPayload(bundleInstance, baseField, request.ResolvedBundlePath, out var payload))
         {
             return new AudioClipPreviewSource(
@@ -172,9 +172,7 @@ internal static class AssetsToolsAudioClipPreviewBuilder
         };
     }
 
-    private static AudioClipMetadata ReadMetadata(
-        AssetTypeValueField baseField,
-        long serializedObjectSizeInBytes)
+    private static AudioClipMetadata ReadMetadata(AssetTypeValueField baseField)
     {
         return new AudioClipMetadata(
             Name: AssetsToolsFieldReader.ReadString(AssetsToolsFieldReader.TryGetField(baseField, "m_Name")),
@@ -183,8 +181,7 @@ internal static class AssetsToolsAudioClipPreviewBuilder
             Frequency: AssetsToolsFieldReader.ReadInt32(AssetsToolsFieldReader.TryGetField(baseField, "m_Frequency")),
             BitsPerSample: AssetsToolsFieldReader.ReadInt32(AssetsToolsFieldReader.TryGetField(baseField, "m_BitsPerSample")),
             LengthInSeconds: AssetsToolsFieldReader.ReadFloat(AssetsToolsFieldReader.TryGetField(baseField, "m_Length")),
-            CompressionFormat: AssetsToolsFieldReader.ReadInt32(AssetsToolsFieldReader.TryGetField(baseField, "m_CompressionFormat")),
-            SerializedObjectSizeInBytes: serializedObjectSizeInBytes);
+            CompressionFormat: AssetsToolsFieldReader.ReadInt32(AssetsToolsFieldReader.TryGetField(baseField, "m_CompressionFormat")));
     }
 
     private static bool TryReadPayload(
@@ -394,7 +391,6 @@ internal static class AssetsToolsAudioClipPreviewBuilder
         AddTextInfo(items, AssetPreviewInfoKey.AudioPayloadSource, previewSource.Payload?.SourceKind.ToString());
         AddTextInfo(items, AssetPreviewInfoKey.AudioPayloadFile, previewSource.Payload?.SourceDisplayName);
         AddByteSizeInfo(items, AssetPreviewInfoKey.AudioPayloadSize, previewSource.Payload?.PayloadSizeInBytes);
-        AddByteSizeInfo(items, AssetPreviewInfoKey.SerializedObjectSize, previewSource.Metadata.SerializedObjectSizeInBytes);
         AddIntegerInfo(items, AssetPreviewInfoKey.AudioLoadType, previewSource.Metadata.LoadType);
         AddIntegerInfo(items, AssetPreviewInfoKey.AudioChannels, previewSource.Metadata.Channels);
         AddFrequencyInfo(items, AssetPreviewInfoKey.AudioFrequency, previewSource.Metadata.Frequency);
@@ -647,8 +643,7 @@ internal static class AssetsToolsAudioClipPreviewBuilder
         int? Frequency,
         int? BitsPerSample,
         float? LengthInSeconds,
-        int? CompressionFormat,
-        long SerializedObjectSizeInBytes);
+        int? CompressionFormat);
 
     internal sealed record AudioClipPreviewSource(
         AudioClipMetadata Metadata,

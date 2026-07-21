@@ -1309,13 +1309,13 @@
     <value>Type</value>
   </data>
   <data name="AssetPaneView.AssetSizeHeaderText.Text" xml:space="preserve">
-    <value>Size</value>
+    <value>Source size</value>
   </data>
   <data name="AssetPaneView.SortByName.ToolTip" xml:space="preserve">
     <value>Sort by name</value>
   </data>
   <data name="AssetPaneView.SortBySize.ToolTip" xml:space="preserve">
-    <value>Sort by size</value>
+    <value>Sort by source data size</value>
   </data>
   <data name="AssetPaneView.AssetStateHeaderText.Text" xml:space="preserve">
     <value>State</value>
@@ -1408,7 +1408,10 @@
     <value>Serialized File</value>
   </data>
   <data name="InspectorPanelView.AssetSizeLabelText.Text" xml:space="preserve">
-    <value>Size</value>
+    <value>Source data size</value>
+  </data>
+  <data name="InspectorPanelView.SerializedObjectSizeLabelText.Text" xml:space="preserve">
+    <value>Serialized record size</value>
   </data>
   <data name="InspectorPanelView.PathIdLabelText.Text" xml:space="preserve">
     <value>PathId</value>

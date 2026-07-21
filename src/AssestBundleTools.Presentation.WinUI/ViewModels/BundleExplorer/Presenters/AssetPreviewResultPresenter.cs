@@ -19,7 +19,6 @@ internal sealed class AssetPreviewResultPresenter
     private readonly MaterialTexturePreviewLoader _materialTexturePreviewLoader;
     private readonly IAppLogService _appLogService;
     private readonly ILocalizationService _localizationService;
-    private readonly LocalizedValueFormatter _localizedValueFormatter;
     private readonly AssetPreviewDisplayFormatter _assetPreviewDisplayFormatter;
     private readonly MaterialPreviewDisplayFormatter _materialPreviewDisplayFormatter;
     private readonly AnimationClipPreviewDisplayFormatter _animationClipPreviewDisplayFormatter;
@@ -39,7 +38,6 @@ internal sealed class AssetPreviewResultPresenter
         _materialTexturePreviewLoader = materialTexturePreviewLoader ?? throw new ArgumentNullException(nameof(materialTexturePreviewLoader));
         _appLogService = appLogService ?? throw new ArgumentNullException(nameof(appLogService));
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
-        _localizedValueFormatter = new LocalizedValueFormatter(_localizationService);
         _assetPreviewDisplayFormatter = new AssetPreviewDisplayFormatter(_localizationService);
         _materialPreviewDisplayFormatter = new MaterialPreviewDisplayFormatter(_localizationService);
         _animationClipPreviewDisplayFormatter = new AnimationClipPreviewDisplayFormatter(_localizationService);
@@ -71,10 +69,6 @@ internal sealed class AssetPreviewResultPresenter
             GetString(ResourceKeys.AssetStateModified));
 
         var previewInfoRows = _assetPreviewDisplayFormatter.BuildPreviewInfoRows(preview.PreviewInfoItems);
-        if (preview.PreferredDisplaySizeInBytes is { } preferredDisplaySizeInBytes && preferredDisplaySizeInBytes > 0)
-        {
-            assetTab.Inspector.OverrideSizeText(_localizedValueFormatter.FormatCompactByteSize(preferredDisplaySizeInBytes));
-        }
 
         switch (preview.Kind)
         {

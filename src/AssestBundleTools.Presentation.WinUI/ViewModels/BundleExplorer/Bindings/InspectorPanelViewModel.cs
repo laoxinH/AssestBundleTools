@@ -18,6 +18,7 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
     private string _containerPath = string.Empty;
     private string _serializedFileName = string.Empty;
     private string _sizeText = string.Empty;
+    private string _serializedObjectSizeText = string.Empty;
     private string _pathIdText = string.Empty;
     private string _extractCapabilityText = string.Empty;
     private string _fileReplacementCapabilityText = string.Empty;
@@ -91,6 +92,12 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
     {
         get => _sizeText;
         set => SetProperty(ref _sizeText, value);
+    }
+
+    public string SerializedObjectSizeText
+    {
+        get => _serializedObjectSizeText;
+        set => SetProperty(ref _serializedObjectSizeText, value);
     }
 
     public string PathIdText
@@ -283,6 +290,7 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
         ContainerPath = string.Empty;
         SerializedFileName = string.Empty;
         SizeText = string.Empty;
+        SerializedObjectSizeText = string.Empty;
         PathIdText = string.Empty;
         ExtractCapabilityText = string.Empty;
         FileReplacementCapabilityText = string.Empty;
@@ -347,7 +355,8 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
         string? modifyButtonIconGlyph = null,
         bool canEditText = false,
         string? editButtonText = null,
-        string? editButtonIconGlyph = null)
+        string? editButtonIconGlyph = null,
+        string? serializedObjectSizeText = null)
     {
         AssetName = assetName;
         BundleDisplayName = bundleDisplayName;
@@ -355,6 +364,7 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
         ContainerPath = NormalizePathValue(containerPath);
         SerializedFileName = NormalizeSerializedFileName(serializedFileName);
         SizeText = sizeText;
+        SerializedObjectSizeText = serializedObjectSizeText ?? string.Empty;
         PathIdText = pathIdText;
         ExtractCapabilityText = extractCapabilityText;
         FileReplacementCapabilityText = fileReplacementCapabilityText;
@@ -410,6 +420,7 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
             AssetTypeText,
             BundleDisplayName,
             SizeText,
+            SerializedObjectSizeText,
             ContainerPath,
             SerializedFileName,
             PathIdText,

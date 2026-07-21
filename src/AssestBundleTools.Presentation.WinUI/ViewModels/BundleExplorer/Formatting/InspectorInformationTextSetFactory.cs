@@ -32,6 +32,7 @@ internal static class InspectorInformationTextSetFactory
             PreviewFallbackReasonLabel: localizationService.GetRequiredString(ResourceKeys.InspectorPreviewFallbackReasonLabel),
             PreviewDiagnosticDetailLabel: localizationService.GetRequiredString(ResourceKeys.InspectorPreviewDiagnosticDetailLabel),
             CopyToolTipText: localizationService.GetRequiredString(ResourceKeys.InspectorInfoCardCopyToolTip),
-            ItemCountFormat: localizationService.GetRequiredString(ResourceKeys.InspectorInfoCardItemCountFormat));
+            ItemCountFormat: localizationService.GetRequiredString(ResourceKeys.InspectorInfoCardItemCountFormat),
+            SerializedObjectSizeLabel: localizationService.GetRequiredString(ResourceKeys.InspectorSerializedObjectSizeLabel));
     }
 }

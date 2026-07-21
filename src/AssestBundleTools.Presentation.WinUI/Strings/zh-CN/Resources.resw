@@ -1309,13 +1309,13 @@
     <value>类型</value>
   </data>
   <data name="AssetPaneView.AssetSizeHeaderText.Text" xml:space="preserve">
-    <value>大小</value>
+    <value>源大小</value>
   </data>
   <data name="AssetPaneView.SortByName.ToolTip" xml:space="preserve">
     <value>按名称排序</value>
   </data>
   <data name="AssetPaneView.SortBySize.ToolTip" xml:space="preserve">
-    <value>按大小排序</value>
+    <value>按源数据大小排序</value>
   </data>
   <data name="AssetPaneView.AssetStateHeaderText.Text" xml:space="preserve">
     <value>状态</value>
@@ -1408,7 +1408,10 @@
     <value>序列化文件</value>
   </data>
   <data name="InspectorPanelView.AssetSizeLabelText.Text" xml:space="preserve">
-    <value>大小</value>
+    <value>源数据大小</value>
+  </data>
+  <data name="InspectorPanelView.SerializedObjectSizeLabelText.Text" xml:space="preserve">
+    <value>序列化记录大小</value>
   </data>
   <data name="InspectorPanelView.PathIdLabelText.Text" xml:space="preserve">
     <value>PathId</value>

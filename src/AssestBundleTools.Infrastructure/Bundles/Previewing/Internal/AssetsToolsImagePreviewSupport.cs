@@ -125,8 +125,7 @@ internal static class AssetsToolsImagePreviewSupport
 
     public static IReadOnlyList<AssetPreviewInfoItemDto> BuildTexturePreviewInfoItems(
         AssetTypeValueField textureField,
-        AssetsToolsDecodedTextureImage textureImage,
-        long serializedObjectSizeInBytes)
+        AssetsToolsDecodedTextureImage textureImage)
     {
         var completeImageSize = AssetsToolsFieldReader.ReadInt64(AssetsToolsFieldReader.TryGetField(textureField, "m_CompleteImageSize"));
         var streamSize = AssetsToolsFieldReader.ReadInt64(AssetsToolsFieldReader.TryGetField(textureField, "m_StreamData", "size"));
@@ -140,7 +139,6 @@ internal static class AssetsToolsImagePreviewSupport
         AddTextInfo(items, AssetPreviewInfoKey.ImageDimensions, FormatDimensions(textureImage.Width, textureImage.Height));
         AddTextInfo(items, AssetPreviewInfoKey.PreviewPixelEncoding, PixelEncoding);
         AddTextInfo(items, AssetPreviewInfoKey.PreviewOutputFormat, ContainerEncoding);
-        AddByteSizeInfo(items, AssetPreviewInfoKey.SerializedObjectSize, serializedObjectSizeInBytes);
         AddIntegerInfo(items, AssetPreviewInfoKey.TextureFormatId, AssetsToolsFieldReader.ReadInt32(AssetsToolsFieldReader.TryGetField(textureField, "m_TextureFormat")));
         AddIntegerInfo(items, AssetPreviewInfoKey.TextureMipCount, AssetsToolsFieldReader.ReadInt32(AssetsToolsFieldReader.TryGetField(textureField, "m_MipCount")));
         AddByteSizeInfo(items, AssetPreviewInfoKey.TextureDecodedSize, textureImage.RgbaPixels.LongLength);
