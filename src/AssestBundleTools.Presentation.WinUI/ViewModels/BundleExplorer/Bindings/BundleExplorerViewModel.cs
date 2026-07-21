@@ -22,7 +22,7 @@ namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Binding
 /// 负责工作区加载、恢复、资源包标签导航与浏览状态持久化。
 /// 而资产窗格、检查器和预览、替换动作已分别下沉到更细粒度的子 ViewModel。
 /// </remarks>
-public sealed class BundleExplorerViewModel : ObservableObject, IDisposable
+public sealed partial class BundleExplorerViewModel : ObservableObject, IDisposable
 {
     private readonly BundleExplorerBrowserStateCoordinator _browserStateCoordinator;
     private readonly BundleExplorerBundleTabCoordinator _bundleTabCoordinator;

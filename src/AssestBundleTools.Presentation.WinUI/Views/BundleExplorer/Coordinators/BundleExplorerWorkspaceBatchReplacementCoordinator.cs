@@ -7,6 +7,7 @@ using AssestBundleTools.Application.Workspace.Services;
 using AssestBundleTools.Domain.Common.Errors;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Dialogs;
 using Microsoft.UI.Xaml;
 
@@ -59,7 +60,12 @@ public sealed partial class BundleExplorerPage
                 .ToArray();
             var viewModel = new WorkspaceBatchReplacementDialogViewModel(_localizationService, bundleNodes);
             var windowNotificationService = new AppNotificationService();
-            var window = new WorkspaceBatchReplacementWindow(viewModel, windowNotificationService);
+            var window = new WorkspaceBatchReplacementWindow(
+                viewModel,
+                windowNotificationService,
+                WorkspaceWindowSizePreferenceMapper.ToWindowSize(
+                    _owner.ViewModel.GetRememberedWorkspaceWindowSize(
+                        WorkspaceWindowSizeKind.BatchReplacement)));
             App.CurrentApp.RegisterAuxiliaryWindow(
                 window,
                 _owner.TryGetHostWindow(out var hostWindow) ? hostWindow : null);
@@ -94,6 +100,13 @@ public sealed partial class BundleExplorerPage
 
             void OnWindowClosed(object sender, WindowEventArgs args)
             {
+                if (WorkspaceWindowSizePreferenceMapper.ToWorkspaceSize(window.LastRestoredSize) is { } size)
+                {
+                    _owner.ViewModel.RememberWorkspaceWindowSize(
+                        WorkspaceWindowSizeKind.BatchReplacement,
+                        size);
+                }
+
                 window.SourceDirectoryRequested -= OnSourceDirectoryRequested;
                 window.RefreshRequested -= OnRefreshRequested;
                 window.StartReplacementRequested -= OnStartReplacementRequested;

@@ -26,6 +26,7 @@ public sealed partial class MainWindow : Microsoft.UI.Xaml.Window
     private readonly ILocalizationService _localizationService;
     private readonly ShellLaunchRequest? _launchRequest;
     private AppWindow? _appWindow;
+    private DpiAwareWindowSizeTracker? _windowSizeTracker;
 
     public MainWindow()
         : this(new ResourceLocalizationService())
@@ -49,6 +50,7 @@ public sealed partial class MainWindow : Microsoft.UI.Xaml.Window
 
         InitializeLocalizedText();
         StartupDiagnostics.Log("MainWindow localized text initialized.");
+        Closed += OnMainWindowClosed;
     }
 
     /// <summary>
@@ -78,7 +80,10 @@ public sealed partial class MainWindow : Microsoft.UI.Xaml.Window
             DpiAwareWindowLayoutService.Apply(
                 windowHandle,
                 _appWindow,
-                DpiAwareWindowLayoutProfile.MainWindow);
+                DpiAwareWindowLayoutProfile.MainWindow,
+                TryGetRememberedMainWindowSize());
+            _windowSizeTracker = new DpiAwareWindowSizeTracker(windowHandle, _appWindow);
+            _appWindow.Changed += OnMainAppWindowChanged;
             TryApplyWindowIcon();
 
             ExtendsContentIntoTitleBar = true;
@@ -99,6 +104,35 @@ public sealed partial class MainWindow : Microsoft.UI.Xaml.Window
             StartupDiagnostics.Log($"Window chrome initialization failed: {ex}");
             Debug.WriteLine($"Window chrome initialization failed: {ex}");
         }
+    }
+
+    private static DpiAwareWindowSize? TryGetRememberedMainWindowSize()
+    {
+        var preferences = App.CurrentApp.AppPreferencesService;
+        return preferences.MainWindowWidth is { } width &&
+               preferences.MainWindowHeight is { } height
+            ? new DpiAwareWindowSize(width, height)
+            : null;
+    }
+
+    private void OnMainAppWindowChanged(AppWindow sender, AppWindowChangedEventArgs args) =>
+        _windowSizeTracker?.HandleWindowChanged(args);
+
+    private void OnMainWindowClosed(object sender, WindowEventArgs args)
+    {
+        Closed -= OnMainWindowClosed;
+        _windowSizeTracker?.CaptureCurrentSize();
+        if (_windowSizeTracker?.LastRestoredSize is { IsValid: true } size)
+        {
+            App.CurrentApp.AppPreferencesService.TrySetMainWindowSize(size.Width, size.Height);
+        }
+
+        if (_appWindow is not null)
+        {
+            _appWindow.Changed -= OnMainAppWindowChanged;
+        }
+
+        _windowSizeTracker = null;
     }
 
     private void TryApplyWindowIcon()

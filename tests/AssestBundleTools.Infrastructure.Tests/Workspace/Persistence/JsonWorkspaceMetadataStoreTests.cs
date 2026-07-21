@@ -205,7 +205,12 @@ internal static class JsonWorkspaceMetadataStoreTests
                     new WorkspaceExportProcessorSettingSnapshotDto("texture2d", false, null)
                 ],
                 UseSourceCodec: false,
-                PostExportPluginId: "post-export.zip"));
+                PostExportPluginId: "post-export.zip"),
+            WindowSizes: new WorkspaceWindowSizePreferencesDto(
+                BatchExtraction: new WorkspaceWindowSizeDto(1080d, 700d),
+                BatchReplacement: new WorkspaceWindowSizeDto(1120d, 720d),
+                Export: new WorkspaceWindowSizeDto(1200d, 740d),
+                AssetEditor: new WorkspaceWindowSizeDto(980d, 620d)));
 
         store.Save(metadata);
         var loadedMetadata = store.Load("workspace-a");
@@ -226,6 +231,14 @@ internal static class JsonWorkspaceMetadataStoreTests
         TestAssert.False(restoredMetadata.ShowPreviewableOnly, "Previewable-only flag should round-trip.");
         TestAssert.Equal("bundle-001", restoredMetadata.ActiveBundleTabId, "Active bundle tab should round-trip.");
         TestAssert.Equal("decryptor-a", restoredMetadata.AssetBundleDecryptorId, "Decryptor id should round-trip.");
+        TestAssert.Equal(
+            new WorkspaceWindowSizeDto(1080d, 700d),
+            restoredMetadata.WindowSizes?.BatchExtraction,
+            "Batch extraction window size should round-trip.");
+        TestAssert.Equal(
+            new WorkspaceWindowSizeDto(980d, 620d),
+            restoredMetadata.WindowSizes?.AssetEditor,
+            "Asset editor window size should round-trip.");
         var restoredExportSettings = TestAssert.NotNull(
             restoredMetadata.ExportSettings,
             "Export settings should round-trip.");

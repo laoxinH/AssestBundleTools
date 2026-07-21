@@ -25,3 +25,12 @@ internal readonly record struct DpiAwareWindowLayoutProfile(
         MinimumWidth: 760d,
         MinimumHeight: 520d);
 }
+
+internal readonly record struct DpiAwareWindowSize(double Width, double Height)
+{
+    public bool IsValid =>
+        Width > 0d &&
+        Height > 0d &&
+        double.IsFinite(Width) &&
+        double.IsFinite(Height);
+}

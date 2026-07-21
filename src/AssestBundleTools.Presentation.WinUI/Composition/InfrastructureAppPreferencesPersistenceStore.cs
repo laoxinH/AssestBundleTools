@@ -28,7 +28,9 @@ internal sealed class InfrastructureAppPreferencesPersistenceStore : IAppPrefere
             snapshot.BundleArtifactCacheMaximumSizeInBytes,
             snapshot.OperationRecordLimit,
             snapshot.DisplayLanguage,
-            snapshot.ElevatedDragDropCompatibilityEnabled);
+            snapshot.ElevatedDragDropCompatibilityEnabled,
+            snapshot.MainWindowWidth,
+            snapshot.MainWindowHeight);
     }
 
     public void Save(AppPreferencesPersistenceSnapshot snapshot)
@@ -45,6 +47,8 @@ internal sealed class InfrastructureAppPreferencesPersistenceStore : IAppPrefere
             snapshot.OperationRecordLimit,
             snapshot.AssetEditorCloseBehavior,
             snapshot.DisplayLanguage,
-            snapshot.ElevatedDragDropCompatibilityEnabled));
+            snapshot.ElevatedDragDropCompatibilityEnabled,
+            snapshot.MainWindowWidth,
+            snapshot.MainWindowHeight));
     }
 }

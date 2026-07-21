@@ -67,4 +67,21 @@ internal static class JsonAppPreferencesStoreTests
             loadedSnapshot.ElevatedDragDropCompatibilityEnabled,
             "Elevated drag-drop compatibility should round-trip through the preferences store.");
     }
+
+    public static void Save_ShouldRoundTripMainWindowSize()
+    {
+        using var temporaryDirectory = new TemporaryDirectoryScope();
+        var store = new JsonAppPreferencesStore(temporaryDirectory.DirectoryPath);
+        var snapshot = AppPreferencesSnapshot.Default with
+        {
+            MainWindowWidth = 1180.5d,
+            MainWindowHeight = 720.25d
+        };
+
+        store.Save(snapshot);
+        var loadedSnapshot = store.Load();
+
+        TestAssert.Equal(1180.5d, loadedSnapshot.MainWindowWidth, "Main window width should round-trip.");
+        TestAssert.Equal(720.25d, loadedSnapshot.MainWindowHeight, "Main window height should round-trip.");
+    }
 }

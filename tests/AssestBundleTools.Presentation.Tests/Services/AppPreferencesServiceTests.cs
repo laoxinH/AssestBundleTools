@@ -59,6 +59,37 @@ public sealed class AppPreferencesServiceTests
         Assert.Equal(1, store.SaveCallCount);
     }
 
+    [Fact]
+    public void TrySetMainWindowSize_ShouldPersistEffectiveDimensions()
+    {
+        var store = new TestAppPreferencesPersistenceStore(CreateSnapshot("system"));
+        var service = new AppPreferencesService(store);
+
+        var succeeded = service.TrySetMainWindowSize(1180.5d, 720.25d);
+
+        Assert.True(succeeded);
+        Assert.Equal(1180.5d, service.MainWindowWidth);
+        Assert.Equal(720.25d, service.MainWindowHeight);
+        Assert.Equal(1180.5d, store.SavedSnapshot?.MainWindowWidth);
+        Assert.Equal(720.25d, store.SavedSnapshot?.MainWindowHeight);
+        Assert.Equal(1, store.SaveCallCount);
+    }
+
+    [Theory]
+    [InlineData(0d, 720d)]
+    [InlineData(1180d, -1d)]
+    [InlineData(double.NaN, 720d)]
+    public void TrySetMainWindowSize_ShouldRejectInvalidDimensions(double width, double height)
+    {
+        var store = new TestAppPreferencesPersistenceStore(CreateSnapshot("system"));
+        var service = new AppPreferencesService(store);
+
+        var succeeded = service.TrySetMainWindowSize(width, height);
+
+        Assert.False(succeeded);
+        Assert.Equal(0, store.SaveCallCount);
+    }
+
     private static AppPreferencesPersistenceSnapshot CreateSnapshot(string displayLanguage)
     {
         return new AppPreferencesPersistenceSnapshot(

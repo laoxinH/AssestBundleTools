@@ -40,6 +40,10 @@ internal static class InfrastructureTestSuite
             JsonAppPreferencesStoreTests.Save_ShouldRoundTripElevatedDragDropCompatibility);
         await RunTestAsync(
             failures,
+            nameof(JsonAppPreferencesStoreTests.Save_ShouldRoundTripMainWindowSize),
+            JsonAppPreferencesStoreTests.Save_ShouldRoundTripMainWindowSize);
+        await RunTestAsync(
+            failures,
             nameof(JsonWorkspaceCatalogStoreTests.Load_ShouldReturnEmptySnapshot_WhenCatalogFileDoesNotExist),
             JsonWorkspaceCatalogStoreTests.Load_ShouldReturnEmptySnapshot_WhenCatalogFileDoesNotExist);
         await RunTestAsync(

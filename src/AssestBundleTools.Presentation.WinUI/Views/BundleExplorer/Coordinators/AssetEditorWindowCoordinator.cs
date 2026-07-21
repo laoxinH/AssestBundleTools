@@ -327,6 +327,7 @@ public sealed partial class BundleExplorerPage
             if (_windowStateIds.TryGetValue(window, out var windowStateId))
             {
                 _windowStateStore.UpdateWindowLayout(windowStateId, snapshot);
+                RememberAssetEditorWindowSize(window);
                 RequestWindowStatePersistence();
             }
         }
@@ -413,7 +414,10 @@ public sealed partial class BundleExplorerPage
                 viewModel,
                 OpenDocumentInNewWindowFromEditorAsync,
                 OpenAssetDocumentGroupInNewWindowFromEditorAsync,
-                _openConflictActivator.TryActivateFromEditorAsync);
+                _openConflictActivator.TryActivateFromEditorAsync,
+                WorkspaceWindowSizePreferenceMapper.ToWindowSize(
+                    _owner.ViewModel.GetRememberedWorkspaceWindowSize(
+                        WorkspaceWindowSizeKind.AssetEditor)));
             App.CurrentApp.RegisterAuxiliaryWindow(window);
             var dpiAwareDefaultLayout = window.TryCaptureLayoutSnapshot(out var capturedLayout)
                 ? capturedLayout
@@ -461,6 +465,17 @@ public sealed partial class BundleExplorerPage
         private void RequestWindowStatePersistence()
         {
             _owner.ViewModel.RequestAssetEditorWindowStatePersistence();
+        }
+
+        private void RememberAssetEditorWindowSize(AssetEditorWindow window)
+        {
+            if (window.TryCaptureRememberedSize(out var rememberedSize) &&
+                WorkspaceWindowSizePreferenceMapper.ToWorkspaceSize(rememberedSize) is { } size)
+            {
+                _owner.ViewModel.RememberWorkspaceWindowSize(
+                    WorkspaceWindowSizeKind.AssetEditor,
+                    size);
+            }
         }
     }
 }

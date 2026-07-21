@@ -62,6 +62,10 @@ public sealed class AppPreferencesService : IAppPreferencesService
     public bool ElevatedDragDropCompatibilityEnabled =>
         _currentSnapshot.ElevatedDragDropCompatibilityEnabled;
 
+    public double? MainWindowWidth => CoerceWindowDimension(_currentSnapshot.MainWindowWidth);
+
+    public double? MainWindowHeight => CoerceWindowDimension(_currentSnapshot.MainWindowHeight);
+
     public bool TrySetRestoreLastWorkspaceOnStartup(bool value)
     {
         if (_currentSnapshot.RestoreLastWorkspaceOnStartup == value)
@@ -359,6 +363,43 @@ public sealed class AppPreferencesService : IAppPreferencesService
         }
     }
 
+    public bool TrySetMainWindowSize(double width, double height)
+    {
+        var normalizedWidth = CoerceWindowDimension(width);
+        var normalizedHeight = CoerceWindowDimension(height);
+        if (normalizedWidth is null || normalizedHeight is null)
+        {
+            return false;
+        }
+
+        if (_currentSnapshot.MainWindowWidth == normalizedWidth &&
+            _currentSnapshot.MainWindowHeight == normalizedHeight)
+        {
+            return true;
+        }
+
+        var updatedSnapshot = _currentSnapshot with
+        {
+            MainWindowWidth = normalizedWidth,
+            MainWindowHeight = normalizedHeight
+        };
+
+        try
+        {
+            _preferencesStore.Save(updatedSnapshot);
+            _currentSnapshot = updatedSnapshot;
+            return true;
+        }
+        catch (IOException)
+        {
+            return false;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return false;
+        }
+    }
+
     private static RecentWorkspaceOpenBehavior DeserializeRecentWorkspaceOpenBehavior(string? behaviorKey)
     {
         return behaviorKey switch
@@ -438,4 +479,9 @@ public sealed class AppPreferencesService : IAppPreferencesService
             MinimumOperationRecordLimit,
             MaximumOperationRecordLimit);
     }
+
+    private static double? CoerceWindowDimension(double? value) =>
+        value is > 0d && double.IsFinite(value.Value)
+            ? value
+            : null;
 }

@@ -18,4 +18,5 @@ public sealed record WorkspaceBrowserStateSnapshotDto(
     string? LastBundleId,
     string? LastAssetId,
     IReadOnlyList<WorkspaceAssetEditorWindowStateDto>? OpenAssetEditorWindows = null,
-    WorkspaceExportSettingsSnapshotDto? ExportSettings = null);
+    WorkspaceExportSettingsSnapshotDto? ExportSettings = null,
+    WorkspaceWindowSizePreferencesDto? WindowSizes = null);

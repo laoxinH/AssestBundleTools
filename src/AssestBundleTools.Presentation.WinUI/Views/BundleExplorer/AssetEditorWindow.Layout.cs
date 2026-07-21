@@ -14,6 +14,7 @@ public sealed partial class AssetEditorWindow
     private const int SwShow = 5;
     private const int SwRestore = 9;
     private AppWindow? _appWindow;
+    private DpiAwareWindowSizeTracker? _windowSizeTracker;
     private AssetEditorWindowLayoutSnapshot? _lastPublishedLayout;
     private bool _isApplyingInitialLayout;
 
@@ -21,6 +22,19 @@ public sealed partial class AssetEditorWindow
 
     internal bool TryCaptureLayoutSnapshot(out AssetEditorWindowLayoutSnapshot layout) =>
         TryCaptureCurrentLayout(out layout);
+
+    internal bool TryCaptureRememberedSize(out DpiAwareWindowSize size)
+    {
+        _windowSizeTracker?.CaptureCurrentSize();
+        if (_windowSizeTracker?.LastRestoredSize is { IsValid: true } rememberedSize)
+        {
+            size = rememberedSize;
+            return true;
+        }
+
+        size = default;
+        return false;
+    }
 
     internal void BringToFront()
     {
@@ -57,6 +71,7 @@ public sealed partial class AssetEditorWindow
                 safeLayout.Y,
                 safeLayout.Width,
                 safeLayout.Height));
+            _windowSizeTracker?.CaptureCurrentSize();
         }
         catch (Exception ex)
         {
@@ -92,7 +107,7 @@ public sealed partial class AssetEditorWindow
         }
     }
 
-    private void TryInitializeWindowLayoutTracking()
+    private void TryInitializeWindowLayoutTracking(DpiAwareWindowSize? rememberedSize)
     {
         try
         {
@@ -104,7 +119,9 @@ public sealed partial class AssetEditorWindow
                 DpiAwareWindowLayoutService.Apply(
                     windowHandle,
                     _appWindow,
-                    DpiAwareWindowLayoutProfile.AssetEditorWindow);
+                    DpiAwareWindowLayoutProfile.AssetEditorWindow,
+                    rememberedSize);
+                _windowSizeTracker = new DpiAwareWindowSizeTracker(windowHandle, _appWindow);
 
                 if (AppWindowTitleBar.IsCustomizationSupported())
                 {
@@ -126,6 +143,7 @@ public sealed partial class AssetEditorWindow
 
     private void OnAppWindowChanged(AppWindow sender, AppWindowChangedEventArgs args)
     {
+        _windowSizeTracker?.HandleWindowChanged(args);
         if (args.DidPresenterChange && AppWindowTitleBar.IsCustomizationSupported())
         {
             ModernWindowAppearanceService.ConfigureTitleBar(sender.TitleBar);

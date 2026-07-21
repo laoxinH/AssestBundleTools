@@ -109,7 +109,8 @@ public sealed class WorkspaceExportWindowContractTests
             "WorkspaceExportDialogOptionFactory.cs"));
 
         Assert.Contains("var windowNotificationService = new AppNotificationService();", coordinator);
-        Assert.Contains("new WorkspaceExportWindow(viewModel, windowNotificationService)", coordinator);
+        Assert.Contains("new WorkspaceExportWindow(", coordinator);
+        Assert.Contains("WorkspaceWindowSizeKind.Export", coordinator);
         Assert.Contains("App.CurrentApp.RegisterAuxiliaryWindow(", coordinator);
         Assert.Contains("TryGetOwnedAuxiliaryWindow<WorkspaceExportWindow>", coordinator);
         Assert.Contains("TryActivateExistingWindow()", coordinator);

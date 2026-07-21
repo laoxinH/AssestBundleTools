@@ -63,13 +63,15 @@ internal static class WorkspaceContextPersistenceServiceTests
     {
         const string workspaceKey = "workspace-a";
         var editorWindows = CreateEditorWindows("window-1");
+        var windowSizes = CreateWindowSizes();
         var exportSettings = CreateExportSettings(
             exportToWorkspaceDirectory: true,
             overwriteExistingFiles: true);
         var metadataStore = new TestWorkspaceMetadataStore(CreateMetadata(
             workspaceKey,
             editorWindows,
-            exportSettings));
+            exportSettings,
+            windowSizes));
         var service = CreateService(metadataStore);
 
         service.SaveWorkspaceActivationMetadata(new WorkspaceActivationMetadataSaveRequestDto(
@@ -89,6 +91,44 @@ internal static class WorkspaceContextPersistenceServiceTests
             exportSettings,
             savedMetadata.ExportSettings,
             "Activation metadata save should preserve existing export settings.");
+        TestAssert.Equal(
+            windowSizes,
+            savedMetadata.WindowSizes,
+            "Activation metadata save should preserve workspace window sizes.");
+        return Task.CompletedTask;
+    }
+
+    public static Task SaveWorkspaceBrowserState_ShouldPersistWindowSizes()
+    {
+        const string workspaceKey = "workspace-a";
+        var metadataStore = new TestWorkspaceMetadataStore(CreateMetadata(workspaceKey, null));
+        var service = CreateService(metadataStore);
+        var windowSizes = CreateWindowSizes();
+
+        service.SaveWorkspaceBrowserState(new WorkspaceBrowserStateSaveRequestDto(
+            WorkspaceKey: workspaceKey,
+            WorkspaceDataRootPath: @"D:\WorkspaceData",
+            DisplayName: "Example Workspace",
+            SourcePath: @"C:\Workspace",
+            AssetBundleDecryptorId: null,
+            BrowserState: new WorkspaceBrowserStateSnapshotDto(
+                BundleSearchKeyword: string.Empty,
+                AssetSearchKeyword: string.Empty,
+                AssetTypeFilter: null,
+                ShowModifiedOnly: false,
+                ShowPreviewableOnly: false,
+                OpenBundleTabs: Array.Empty<WorkspaceMetadataBundleTabDto>(),
+                ActiveBundleTabId: null,
+                LastBundleId: null,
+                LastAssetId: null,
+                WindowSizes: windowSizes)));
+
+        var savedMetadata = metadataStore.LastSavedMetadata ?? throw new InvalidOperationException("Expected saved metadata.");
+        TestAssert.Equal(windowSizes, savedMetadata.WindowSizes, "Workspace window sizes should be persisted.");
+        TestAssert.Equal(
+            windowSizes,
+            service.LoadWorkspaceBrowserState(workspaceKey, @"D:\WorkspaceData")?.WindowSizes,
+            "Workspace window sizes should map back into browser state.");
         return Task.CompletedTask;
     }
 
@@ -140,7 +180,8 @@ internal static class WorkspaceContextPersistenceServiceTests
     private static WorkspaceMetadataDto CreateMetadata(
         string workspaceKey,
         IReadOnlyList<WorkspaceAssetEditorWindowStateDto>? openAssetEditorWindows,
-        WorkspaceExportSettingsSnapshotDto? exportSettings = null)
+        WorkspaceExportSettingsSnapshotDto? exportSettings = null,
+        WorkspaceWindowSizePreferencesDto? windowSizes = null)
     {
         return new WorkspaceMetadataDto(
             WorkspaceKey: workspaceKey,
@@ -162,8 +203,16 @@ internal static class WorkspaceContextPersistenceServiceTests
             AssetBundleDecryptorId: "decryptor-a",
             ExcludedBundleSourcePaths: Array.Empty<string>(),
             OpenAssetEditorWindows: openAssetEditorWindows,
-            ExportSettings: exportSettings);
+            ExportSettings: exportSettings,
+            WindowSizes: windowSizes);
     }
+
+    private static WorkspaceWindowSizePreferencesDto CreateWindowSizes() =>
+        new(
+            BatchExtraction: new WorkspaceWindowSizeDto(1080d, 700d),
+            BatchReplacement: new WorkspaceWindowSizeDto(1120d, 720d),
+            Export: new WorkspaceWindowSizeDto(1200d, 740d),
+            AssetEditor: new WorkspaceWindowSizeDto(980d, 620d));
 
     private static WorkspaceExportSettingsSnapshotDto CreateExportSettings(
         bool exportToWorkspaceDirectory,

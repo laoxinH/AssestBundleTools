@@ -29,6 +29,23 @@ public sealed class DpiAwareWindowLayoutCalculatorTests
         Assert.Equal(new DpiAwareWindowLayout(320, 136, 1280, 768, 900, 640), layout);
     }
 
+    [Fact]
+    public void Calculate_WithRememberedEffectiveSize_ShouldScaleAndClampOnCurrentDisplay()
+    {
+        var rememberedProfile = DpiAwareWindowLayoutProfile.MainWindow with
+        {
+            InitialWidth = 1100d,
+            InitialHeight = 700d
+        };
+
+        var layout = DpiAwareWindowLayoutCalculator.Calculate(
+            rememberedProfile,
+            dpi: 144,
+            new PhysicalWorkArea(0, 0, 1920, 1040));
+
+        Assert.Equal(new DpiAwareWindowLayout(135, 24, 1650, 992, 1350, 960), layout);
+    }
+
     [Theory]
     [InlineData(120, 200, 60, 1520, 920, 1300, 850)]
     [InlineData(144, 48, 24, 1824, 992, 1560, 992)]

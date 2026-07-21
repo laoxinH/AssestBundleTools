@@ -4,6 +4,7 @@ using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Domain.Bundles;
 using AssestBundleTools.Presentation.Tests.Testing;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Coordinators;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
 
@@ -399,6 +400,41 @@ public sealed class BundleExplorerBrowserStateCoordinatorTests
         var persistedWindow = Assert.Single(persistedBrowserState.OpenAssetEditorWindows!);
         Assert.Equal(7, persistedWindow.WindowStateId);
         Assert.Equal("asset-button", Assert.Single(persistedWindow.OpenAssetTabs).AssetId);
+    }
+
+    [Fact]
+    public async Task WindowSizes_ShouldRestoreAndPersistPerWorkspaceWindowKind()
+    {
+        var context = CreateContext();
+        context.WorkspaceContextService.CurrentBrowserState = new WorkspaceBrowserStateSnapshotDto(
+            BundleSearchKeyword: string.Empty,
+            AssetSearchKeyword: string.Empty,
+            AssetTypeFilter: null,
+            ShowModifiedOnly: false,
+            ShowPreviewableOnly: false,
+            OpenBundleTabs: Array.Empty<WorkspaceMetadataBundleTabDto>(),
+            ActiveBundleTabId: null,
+            LastBundleId: null,
+            LastAssetId: null,
+            WindowSizes: new WorkspaceWindowSizePreferencesDto(
+                BatchExtraction: new WorkspaceWindowSizeDto(1080d, 700d)));
+
+        await context.Coordinator.TryRestoreWorkspaceBrowserStateAsync();
+        var restored = context.Coordinator.GetRememberedWindowSize(
+            WorkspaceWindowSizeKind.BatchExtraction);
+        var changed = context.Coordinator.RememberWindowSize(
+            WorkspaceWindowSizeKind.Export,
+            new WorkspaceWindowSizeDto(1200d, 740d));
+        context.Coordinator.PersistWorkspaceBrowserStateNow();
+
+        Assert.Equal(new WorkspaceWindowSizeDto(1080d, 700d), restored);
+        Assert.True(changed);
+        Assert.Equal(
+            new WorkspaceWindowSizeDto(1080d, 700d),
+            context.WorkspaceContextService.CurrentBrowserState?.WindowSizes?.BatchExtraction);
+        Assert.Equal(
+            new WorkspaceWindowSizeDto(1200d, 740d),
+            context.WorkspaceContextService.CurrentBrowserState?.WindowSizes?.Export);
     }
 
     private static BrowserStateCoordinatorContext CreateContext(

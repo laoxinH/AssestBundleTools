@@ -29,4 +29,5 @@ public sealed record WorkspaceMetadataDto(
     string? AssetBundleDecryptorId = null,
     IReadOnlyList<string>? ExcludedBundleSourcePaths = null,
     IReadOnlyList<WorkspaceAssetEditorWindowStateDto>? OpenAssetEditorWindows = null,
-    WorkspaceExportSettingsSnapshotDto? ExportSettings = null);
+    WorkspaceExportSettingsSnapshotDto? ExportSettings = null,
+    WorkspaceWindowSizePreferencesDto? WindowSizes = null);

@@ -47,7 +47,8 @@ public sealed class WorkspaceBatchExtractionDialogContractTests
             "WorkspaceBatchExtractionWindow.xaml");
 
         Assert.True(File.Exists(windowXamlPath));
-        Assert.Contains("new WorkspaceBatchExtractionWindow(viewModel, windowNotificationService)", coordinator);
+        Assert.Contains("new WorkspaceBatchExtractionWindow(", coordinator);
+        Assert.Contains("WorkspaceWindowSizeKind.BatchExtraction", coordinator);
         Assert.Contains("App.CurrentApp.RegisterAuxiliaryWindow(", coordinator);
         Assert.Contains("TryGetOwnedAuxiliaryWindow<WorkspaceBatchExtractionWindow>", coordinator);
         Assert.Contains("_owner.TryGetHostWindow(out var hostWindow) ? hostWindow : null", coordinator);
@@ -75,7 +76,8 @@ public sealed class WorkspaceBatchExtractionDialogContractTests
             "Coordinators",
             "BundleExplorerWorkspaceBatchReplacementCoordinator.cs"));
 
-        Assert.Contains("new WorkspaceBatchReplacementWindow(viewModel, windowNotificationService)", coordinator);
+        Assert.Contains("new WorkspaceBatchReplacementWindow(", coordinator);
+        Assert.Contains("WorkspaceWindowSizeKind.BatchReplacement", coordinator);
         Assert.Contains("App.CurrentApp.RegisterAuxiliaryWindow(", coordinator);
         Assert.Contains("TryGetOwnedAuxiliaryWindow<WorkspaceBatchReplacementWindow>", coordinator);
         Assert.Contains("_owner.TryGetHostWindow(out var hostWindow) ? hostWindow : null", coordinator);

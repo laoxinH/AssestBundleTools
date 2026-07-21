@@ -30,6 +30,21 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
         Func<AssetEditorWindow, AssetDocumentTabItemViewModel, Task> openDocumentInNewWindowAsync,
         Func<AssetEditorWindow, Task> openAssetDocumentGroupInNewWindowAsync,
         Func<AssetEditorWindow, ResolvedAssetNavigationTarget, Task<bool>> activateOpenAssetDocumentAsync)
+        : this(
+            viewModel,
+            openDocumentInNewWindowAsync,
+            openAssetDocumentGroupInNewWindowAsync,
+            activateOpenAssetDocumentAsync,
+            rememberedSize: null)
+    {
+    }
+
+    internal AssetEditorWindow(
+        AssetEditorWindowViewModel viewModel,
+        Func<AssetEditorWindow, AssetDocumentTabItemViewModel, Task> openDocumentInNewWindowAsync,
+        Func<AssetEditorWindow, Task> openAssetDocumentGroupInNewWindowAsync,
+        Func<AssetEditorWindow, ResolvedAssetNavigationTarget, Task<bool>> activateOpenAssetDocumentAsync,
+        DpiAwareWindowSize? rememberedSize)
     {
         ViewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
         _openDocumentInNewWindowAsync = openDocumentInNewWindowAsync ?? throw new ArgumentNullException(nameof(openDocumentInNewWindowAsync));
@@ -39,7 +54,7 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
         ModernWindowAppearanceService.TryApplySystemBackdrop(this);
         ApplyLocalizedText();
         UpdateWindowTitle();
-        TryInitializeWindowLayoutTracking();
+        TryInitializeWindowLayoutTracking(rememberedSize);
 
         ViewModel.PropertyChanged += OnViewModelPropertyChanged;
         ViewModel.DocumentGroup.PropertyChanged += OnDocumentGroupPropertyChanged;
@@ -347,6 +362,7 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
             _appWindow.Changed -= OnAppWindowChanged;
             _appWindow = null;
         }
+        _windowSizeTracker = null;
 
         ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
         ViewModel.DocumentGroup.PropertyChanged -= OnDocumentGroupPropertyChanged;

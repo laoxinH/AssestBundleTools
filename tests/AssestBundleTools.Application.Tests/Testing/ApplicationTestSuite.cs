@@ -217,6 +217,10 @@ internal static partial class ApplicationTestSuite
             WorkspaceContextPersistenceServiceTests.SaveWorkspaceActivationMetadata_ShouldPreserveExistingAssetEditorWindowSnapshots);
         await RunTestAsync(
             failures,
+            nameof(WorkspaceContextPersistenceServiceTests.SaveWorkspaceBrowserState_ShouldPersistWindowSizes),
+            WorkspaceContextPersistenceServiceTests.SaveWorkspaceBrowserState_ShouldPersistWindowSizes);
+        await RunTestAsync(
+            failures,
             nameof(WorkspaceContextPersistenceServiceTests.SaveWorkspaceBrowserState_ShouldPreserveExistingExportSettings_WhenSnapshotOmitsExportSettings),
             WorkspaceContextPersistenceServiceTests.SaveWorkspaceBrowserState_ShouldPreserveExistingExportSettings_WhenSnapshotOmitsExportSettings);
         await RunTestAsync(

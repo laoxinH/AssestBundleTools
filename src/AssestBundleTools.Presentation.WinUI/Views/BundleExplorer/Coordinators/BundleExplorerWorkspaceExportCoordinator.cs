@@ -8,15 +8,15 @@ using AssestBundleTools.Application.Workspace.Services;
 using AssestBundleTools.Domain.Common.Errors;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Dialogs;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
-using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using System.IO;
 
 namespace AssestBundleTools.Presentation.WinUI.Views.BundleExplorer;
 
-internal sealed class BundleExplorerWorkspaceExportCoordinator
+internal sealed partial class BundleExplorerWorkspaceExportCoordinator
 {
     private readonly BundleExplorerPage _owner;
     private readonly IWorkspaceBatchOperationsGateway _workspaceBatchOperationsGateway;
@@ -120,7 +120,12 @@ internal sealed class BundleExplorerWorkspaceExportCoordinator
             exportSettings,
             postExportPluginCatalogEntries);
         var windowNotificationService = new AppNotificationService();
-        var window = new WorkspaceExportWindow(viewModel, windowNotificationService);
+        var window = new WorkspaceExportWindow(
+            viewModel,
+            windowNotificationService,
+            WorkspaceWindowSizePreferenceMapper.ToWindowSize(
+                _owner.ViewModel.GetRememberedWorkspaceWindowSize(
+                    WorkspaceWindowSizeKind.Export)));
         App.CurrentApp.RegisterAuxiliaryWindow(window, _owner.TryGetHostWindow(out var hostWindow) ? hostWindow : null);
         _activeWindow = window;
         viewModel.ExportSettingsChanged += OnExportSettingsChanged;
@@ -149,6 +154,13 @@ internal sealed class BundleExplorerWorkspaceExportCoordinator
 
         void OnWindowClosed(object sender, WindowEventArgs args)
         {
+            if (WorkspaceWindowSizePreferenceMapper.ToWorkspaceSize(window.LastRestoredSize) is { } size)
+            {
+                _owner.ViewModel.RememberWorkspaceWindowSize(
+                    WorkspaceWindowSizeKind.Export,
+                    size);
+            }
+
             viewModel.ExportSettingsChanged -= OnExportSettingsChanged;
             window.StartExportRequested -= OnStartExportRequested;
             window.CancelExportRequested -= OnCancelExportRequested;
@@ -450,43 +462,4 @@ internal sealed class BundleExplorerWorkspaceExportCoordinator
 
     private string GetString(string resourceKey) => _localizationService.GetRequiredString(resourceKey);
 
-    private sealed class WorkspaceSaveExecutionProgressBridge : IProgress<WorkspaceSaveExecutionProgressDto>
-    {
-        private readonly IBackgroundWorkProgress _progress;
-        private readonly WorkspaceExportDialogViewModel _viewModel;
-        private readonly DispatcherQueue _dispatcherQueue;
-        private readonly ILocalizationService _localizationService;
-
-        public WorkspaceSaveExecutionProgressBridge(
-            IBackgroundWorkProgress progress,
-            WorkspaceExportDialogViewModel viewModel,
-            DispatcherQueue dispatcherQueue,
-            ILocalizationService localizationService)
-        {
-            _progress = progress ?? throw new ArgumentNullException(nameof(progress));
-            _viewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
-            _dispatcherQueue = dispatcherQueue ?? throw new ArgumentNullException(nameof(dispatcherQueue));
-            _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
-        }
-
-        public void Report(WorkspaceSaveExecutionProgressDto value)
-        {
-            ArgumentNullException.ThrowIfNull(value);
-
-            var totalCount = Math.Max(1, value.TotalBundleCount);
-            var completedCount = Math.Clamp(value.CompletedBundleCount, 0, totalCount);
-            var detail = value.Stage == WorkspaceSaveExecutionStageDto.PostExportPluginLaunching
-                ? _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogStatusPostPluginLaunching)
-                : string.IsNullOrWhiteSpace(value.CurrentBundleDisplayName)
-                    ? _localizationService.GetRequiredString(ResourceKeys.WorkspaceExportDialogStatusPreparing)
-                : _localizationService.GetFormattedString(
-                    ResourceKeys.WorkspaceExportDialogStatusBundleFormat,
-                    value.CurrentBundleDisplayName,
-                    value.SucceededBundleCount,
-                    value.FailedBundleCount);
-            _progress.ReportProgress(completedCount, totalCount, detail);
-            _dispatcherQueue.TryEnqueue(() =>
-                _viewModel.ApplyExecutionProgress(completedCount, totalCount, detail));
-        }
-    }
 }

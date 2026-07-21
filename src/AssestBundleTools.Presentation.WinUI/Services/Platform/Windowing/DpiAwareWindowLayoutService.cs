@@ -13,7 +13,8 @@ internal static class DpiAwareWindowLayoutService
     public static DpiAwareWindowLayout Apply(
         nint windowHandle,
         AppWindow appWindow,
-        DpiAwareWindowLayoutProfile profile)
+        DpiAwareWindowLayoutProfile profile,
+        DpiAwareWindowSize? preferredSize = null)
     {
         ArgumentOutOfRangeException.ThrowIfEqual(windowHandle, nint.Zero);
         ArgumentNullException.ThrowIfNull(appWindow);
@@ -22,8 +23,11 @@ internal static class DpiAwareWindowLayoutService
         var displayArea = DisplayArea.GetFromWindowId(windowId, DisplayAreaFallback.Nearest);
         var workArea = displayArea.WorkArea;
         var dpi = GetDpiForWindow(windowHandle);
+        var effectiveProfile = preferredSize is { IsValid: true } size
+            ? profile with { InitialWidth = size.Width, InitialHeight = size.Height }
+            : profile;
         var layout = DpiAwareWindowLayoutCalculator.Calculate(
-            profile,
+            effectiveProfile,
             dpi > 0 ? dpi : DefaultDpi,
             new PhysicalWorkArea(workArea.X, workArea.Y, workArea.Width, workArea.Height));
 
@@ -35,6 +39,28 @@ internal static class DpiAwareWindowLayoutService
 
         appWindow.MoveAndResize(new RectInt32(layout.X, layout.Y, layout.Width, layout.Height));
         return layout;
+    }
+
+    public static bool TryCaptureEffectiveSize(
+        nint windowHandle,
+        AppWindow appWindow,
+        out DpiAwareWindowSize size)
+    {
+        ArgumentNullException.ThrowIfNull(appWindow);
+        if (windowHandle == nint.Zero ||
+            appWindow.Presenter is OverlappedPresenter { State: not OverlappedPresenterState.Restored })
+        {
+            size = default;
+            return false;
+        }
+
+        var dpi = GetDpiForWindow(windowHandle);
+        var scale = Math.Max(dpi, DefaultDpi) / (double)DefaultDpi;
+        var physicalSize = appWindow.Size;
+        size = new DpiAwareWindowSize(
+            physicalSize.Width / scale,
+            physicalSize.Height / scale);
+        return size.IsValid;
     }
 
     [DllImport("user32.dll")]

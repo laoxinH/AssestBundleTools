@@ -8,6 +8,7 @@ using AssestBundleTools.Application.Workspace.Services;
 using AssestBundleTools.Domain.Common.Errors;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
+using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Contracts;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Dialogs;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
 using Microsoft.UI.Dispatching;
@@ -82,7 +83,12 @@ public sealed partial class BundleExplorerPage
                 _owner.ViewModel.DocumentWorkspace.ActiveBundleTab?.BundleId);
 
             var windowNotificationService = new AppNotificationService();
-            var window = new WorkspaceBatchExtractionWindow(viewModel, windowNotificationService);
+            var window = new WorkspaceBatchExtractionWindow(
+                viewModel,
+                windowNotificationService,
+                WorkspaceWindowSizePreferenceMapper.ToWindowSize(
+                    _owner.ViewModel.GetRememberedWorkspaceWindowSize(
+                        WorkspaceWindowSizeKind.BatchExtraction)));
             App.CurrentApp.RegisterAuxiliaryWindow(
                 window,
                 _owner.TryGetHostWindow(out var hostWindow) ? hostWindow : null);
@@ -119,6 +125,13 @@ public sealed partial class BundleExplorerPage
 
             void OnBatchExtractionWindowClosed(object sender, WindowEventArgs args)
             {
+                if (WorkspaceWindowSizePreferenceMapper.ToWorkspaceSize(window.LastRestoredSize) is { } size)
+                {
+                    _owner.ViewModel.RememberWorkspaceWindowSize(
+                        WorkspaceWindowSizeKind.BatchExtraction,
+                        size);
+                }
+
                 if (ReferenceEquals(_activeBatchExtractionWindow, window))
                 {
                     _activeBatchExtractionWindow = null;

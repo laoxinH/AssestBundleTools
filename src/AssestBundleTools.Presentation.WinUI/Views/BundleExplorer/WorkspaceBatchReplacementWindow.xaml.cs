@@ -21,10 +21,20 @@ public sealed partial class WorkspaceBatchReplacementWindow : Window
     private const int SwRestore = 9;
     private readonly WorkspaceBatchReplacementDialogContent _content;
     private AppWindow? _appWindow;
+    private DpiAwareWindowSizeTracker? _windowSizeTracker;
+    private DpiAwareWindowSize? _lastRestoredSize;
 
     public WorkspaceBatchReplacementWindow(
         WorkspaceBatchReplacementDialogViewModel viewModel,
         IAppNotificationService notificationService)
+        : this(viewModel, notificationService, rememberedSize: null)
+    {
+    }
+
+    internal WorkspaceBatchReplacementWindow(
+        WorkspaceBatchReplacementDialogViewModel viewModel,
+        IAppNotificationService notificationService,
+        DpiAwareWindowSize? rememberedSize)
     {
         ViewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
         NotificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
@@ -38,7 +48,7 @@ public sealed partial class WorkspaceBatchReplacementWindow : Window
         ContentHost.Content = _content;
 
         ApplyLocalizedText();
-        TryInitializeWindowChromeAndLayout();
+        TryInitializeWindowChromeAndLayout(rememberedSize);
         Closed += OnClosed;
     }
 
@@ -51,6 +61,8 @@ public sealed partial class WorkspaceBatchReplacementWindow : Window
     public WorkspaceBatchReplacementDialogViewModel ViewModel { get; }
 
     public IAppNotificationService NotificationService { get; }
+
+    internal DpiAwareWindowSize? LastRestoredSize => _lastRestoredSize;
 
     public void BringToFront()
     {
@@ -87,6 +99,7 @@ public sealed partial class WorkspaceBatchReplacementWindow : Window
     private void OnClosed(object sender, WindowEventArgs args)
     {
         Closed -= OnClosed;
+        CaptureRestoredSize();
         _content.SourceDirectoryRequested -= OnSourceDirectoryRequested;
         _content.RefreshRequested -= OnRefreshRequested;
         if (_appWindow is not null)
@@ -94,6 +107,7 @@ public sealed partial class WorkspaceBatchReplacementWindow : Window
             _appWindow.Changed -= OnAppWindowChanged;
             _appWindow = null;
         }
+        _windowSizeTracker = null;
     }
 
     private void ApplyLocalizedText()
@@ -107,7 +121,7 @@ public sealed partial class WorkspaceBatchReplacementWindow : Window
         CancelButton.Content = UiText.Get(ResourceKeys.WorkspaceBatchReplacementDialogCloseButton);
     }
 
-    private void TryInitializeWindowChromeAndLayout()
+    private void TryInitializeWindowChromeAndLayout(DpiAwareWindowSize? rememberedSize)
     {
         try
         {
@@ -117,7 +131,10 @@ public sealed partial class WorkspaceBatchReplacementWindow : Window
             DpiAwareWindowLayoutService.Apply(
                 windowHandle,
                 _appWindow,
-                DpiAwareWindowLayoutProfile.WorkspaceOperationWindow);
+                DpiAwareWindowLayoutProfile.WorkspaceOperationWindow,
+                rememberedSize);
+            _windowSizeTracker = new DpiAwareWindowSizeTracker(windowHandle, _appWindow);
+            CaptureRestoredSize();
 
             if (AppWindowTitleBar.IsCustomizationSupported())
             {
@@ -137,10 +154,21 @@ public sealed partial class WorkspaceBatchReplacementWindow : Window
 
     private void OnAppWindowChanged(AppWindow sender, AppWindowChangedEventArgs args)
     {
+        _windowSizeTracker?.HandleWindowChanged(args);
+        CaptureRestoredSize();
         if (args.DidPresenterChange && AppWindowTitleBar.IsCustomizationSupported())
         {
             ModernWindowAppearanceService.ConfigureTitleBar(sender.TitleBar);
             UpdateTitleBarInsetColumns(sender.TitleBar);
+        }
+    }
+
+    private void CaptureRestoredSize()
+    {
+        _windowSizeTracker?.CaptureCurrentSize();
+        if (_windowSizeTracker?.LastRestoredSize is { IsValid: true } size)
+        {
+            _lastRestoredSize = size;
         }
     }
 

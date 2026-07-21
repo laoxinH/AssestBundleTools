@@ -30,6 +30,10 @@ public interface IAppPreferencesService
 
     bool ElevatedDragDropCompatibilityEnabled { get; }
 
+    double? MainWindowWidth { get; }
+
+    double? MainWindowHeight { get; }
+
     bool TrySetRestoreLastWorkspaceOnStartup(bool value);
 
     bool TrySetRecentWorkspaceOpenBehavior(RecentWorkspaceOpenBehavior value);
@@ -49,4 +53,6 @@ public interface IAppPreferencesService
     bool TrySetOperationRecordLimit(int value);
 
     bool TrySetElevatedDragDropCompatibilityEnabled(bool value);
+
+    bool TrySetMainWindowSize(double width, double height);
 }

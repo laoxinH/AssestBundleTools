@@ -25,6 +25,7 @@ internal sealed class BundleExplorerBrowserStateCoordinator : IBundleExplorerBro
     private readonly Func<IReadOnlyList<WorkspaceAssetEditorWindowStateDto>> _captureOpenAssetEditorWindows;
     private readonly Func<IReadOnlyList<WorkspaceAssetEditorWindowStateDto>> _capturePendingAssetEditorWindows;
     private readonly Action<IReadOnlyList<WorkspaceAssetEditorWindowStateDto>?> _restorePendingAssetEditorWindows;
+    private WorkspaceWindowSizePreferencesDto? _windowSizes;
     private bool _isRestoringWorkspaceBrowserState;
     private CancellationTokenSource? _workspaceBrowserStatePersistenceCts;
 
@@ -66,6 +67,7 @@ internal sealed class BundleExplorerBrowserStateCoordinator : IBundleExplorerBro
         var browserState = _workspaceContextService.GetCurrentWorkspaceBrowserState();
         if (browserState is null)
         {
+            _windowSizes = null;
             ClearPendingAssetEditorWindowRestoreState();
             return false;
         }
@@ -74,6 +76,7 @@ internal sealed class BundleExplorerBrowserStateCoordinator : IBundleExplorerBro
         try
         {
             _bundlePane.RestoreSearchState(browserState.BundleSearchKeyword);
+            _windowSizes = browserState.WindowSizes;
             _restorePendingAssetEditorWindows(browserState.OpenAssetEditorWindows);
 
             var restoredTabs = RestoreBundleTabsFromBrowserState(browserState);
@@ -144,6 +147,36 @@ internal sealed class BundleExplorerBrowserStateCoordinator : IBundleExplorerBro
     public void ClearPendingAssetEditorWindowRestoreState()
     {
         _restorePendingAssetEditorWindows(Array.Empty<WorkspaceAssetEditorWindowStateDto>());
+    }
+
+    public WorkspaceWindowSizeDto? GetRememberedWindowSize(WorkspaceWindowSizeKind kind) =>
+        kind switch
+        {
+            WorkspaceWindowSizeKind.BatchExtraction => _windowSizes?.BatchExtraction,
+            WorkspaceWindowSizeKind.BatchReplacement => _windowSizes?.BatchReplacement,
+            WorkspaceWindowSizeKind.Export => _windowSizes?.Export,
+            WorkspaceWindowSizeKind.AssetEditor => _windowSizes?.AssetEditor,
+            _ => null
+        };
+
+    public bool RememberWindowSize(WorkspaceWindowSizeKind kind, WorkspaceWindowSizeDto size)
+    {
+        ArgumentNullException.ThrowIfNull(size);
+        if (!IsValidWindowSize(size) || Equals(GetRememberedWindowSize(kind), size))
+        {
+            return false;
+        }
+
+        var current = _windowSizes ?? new WorkspaceWindowSizePreferencesDto();
+        _windowSizes = kind switch
+        {
+            WorkspaceWindowSizeKind.BatchExtraction => current with { BatchExtraction = size },
+            WorkspaceWindowSizeKind.BatchReplacement => current with { BatchReplacement = size },
+            WorkspaceWindowSizeKind.Export => current with { Export = size },
+            WorkspaceWindowSizeKind.AssetEditor => current with { AssetEditor = size },
+            _ => current
+        };
+        return true;
     }
 
     private List<BundleDocumentTabViewModel> RestoreBundleTabsFromBrowserState(
@@ -272,8 +305,15 @@ internal sealed class BundleExplorerBrowserStateCoordinator : IBundleExplorerBro
             ActiveBundleTabId: activeTab?.BundleId.Value,
             LastBundleId: activeTab?.BundleId.Value,
             LastAssetId: activeTab?.ActiveAssetTab?.AssetId.Value ?? activeTab?.SelectedAssetId,
-            OpenAssetEditorWindows: CaptureAssetEditorWindowsForPersistence());
+            OpenAssetEditorWindows: CaptureAssetEditorWindowsForPersistence(),
+            WindowSizes: _windowSizes);
     }
+
+    private static bool IsValidWindowSize(WorkspaceWindowSizeDto size) =>
+        size.Width > 0d &&
+        size.Height > 0d &&
+        double.IsFinite(size.Width) &&
+        double.IsFinite(size.Height);
 
     private IReadOnlyList<WorkspaceAssetEditorWindowStateDto> CaptureAssetEditorWindowsForPersistence()
     {

@@ -16,6 +16,8 @@ public sealed partial class WorkspaceExportWindow : Window
     private const int SwShow = 5;
     private const int SwRestore = 9;
     private AppWindow? _appWindow;
+    private DpiAwareWindowSizeTracker? _windowSizeTracker;
+    private DpiAwareWindowSize? _lastRestoredSize;
 
     public event EventHandler? StartExportRequested;
 
@@ -24,6 +26,14 @@ public sealed partial class WorkspaceExportWindow : Window
     public WorkspaceExportWindow(
         WorkspaceExportDialogViewModel viewModel,
         IAppNotificationService notificationService)
+        : this(viewModel, notificationService, rememberedSize: null)
+    {
+    }
+
+    internal WorkspaceExportWindow(
+        WorkspaceExportDialogViewModel viewModel,
+        IAppNotificationService notificationService,
+        DpiAwareWindowSize? rememberedSize)
     {
         ViewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
         NotificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
@@ -32,13 +42,15 @@ public sealed partial class WorkspaceExportWindow : Window
         ContentRoot.DataContext = ViewModel;
         ContentHost.Content = new WorkspaceExportDialogContent(ViewModel);
         ApplyLocalizedText();
-        TryInitializeWindowChromeAndLayout();
+        TryInitializeWindowChromeAndLayout(rememberedSize);
         Closed += OnClosed;
     }
 
     public WorkspaceExportDialogViewModel ViewModel { get; }
 
     public IAppNotificationService NotificationService { get; }
+
+    internal DpiAwareWindowSize? LastRestoredSize => _lastRestoredSize;
 
     public void BringToFront()
     {
@@ -78,11 +90,13 @@ public sealed partial class WorkspaceExportWindow : Window
     private void OnClosed(object sender, WindowEventArgs args)
     {
         Closed -= OnClosed;
+        CaptureRestoredSize();
         if (_appWindow is not null)
         {
             _appWindow.Changed -= OnAppWindowChanged;
             _appWindow = null;
         }
+        _windowSizeTracker = null;
     }
 
     private void ApplyLocalizedText()
@@ -95,7 +109,7 @@ public sealed partial class WorkspaceExportWindow : Window
         PlanSummaryTitleText.Text = UiText.Get(ResourceKeys.WorkspaceExportDialogPreviewSectionTitle);
     }
 
-    private void TryInitializeWindowChromeAndLayout()
+    private void TryInitializeWindowChromeAndLayout(DpiAwareWindowSize? rememberedSize)
     {
         try
         {
@@ -105,7 +119,10 @@ public sealed partial class WorkspaceExportWindow : Window
             DpiAwareWindowLayoutService.Apply(
                 windowHandle,
                 _appWindow,
-                DpiAwareWindowLayoutProfile.WorkspaceOperationWindow);
+                DpiAwareWindowLayoutProfile.WorkspaceOperationWindow,
+                rememberedSize);
+            _windowSizeTracker = new DpiAwareWindowSizeTracker(windowHandle, _appWindow);
+            CaptureRestoredSize();
 
             if (AppWindowTitleBar.IsCustomizationSupported())
             {
@@ -125,10 +142,21 @@ public sealed partial class WorkspaceExportWindow : Window
 
     private void OnAppWindowChanged(AppWindow sender, AppWindowChangedEventArgs args)
     {
+        _windowSizeTracker?.HandleWindowChanged(args);
+        CaptureRestoredSize();
         if (args.DidPresenterChange && AppWindowTitleBar.IsCustomizationSupported())
         {
             ModernWindowAppearanceService.ConfigureTitleBar(sender.TitleBar);
             UpdateTitleBarInsetColumns(sender.TitleBar);
+        }
+    }
+
+    private void CaptureRestoredSize()
+    {
+        _windowSizeTracker?.CaptureCurrentSize();
+        if (_windowSizeTracker?.LastRestoredSize is { IsValid: true } size)
+        {
+            _lastRestoredSize = size;
         }
     }
 
