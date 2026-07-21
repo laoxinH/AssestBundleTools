@@ -48,6 +48,9 @@ public sealed class AppPreferencesService : IAppPreferencesService
     public AppDisplayLanguage DisplayLanguage =>
         AppDisplayLanguageCodec.Deserialize(_currentSnapshot.DisplayLanguage);
 
+    public AppThemePreference Theme =>
+        AppThemePreferenceCodec.Deserialize(_currentSnapshot.Theme);
+
     public int WorkspaceImportWorkerCount => CoerceWorkspaceImportWorkerCount(_currentSnapshot.WorkspaceImportWorkerCount);
 
     public int PreviewWorkerCount => CoercePreviewWorkerCount(_currentSnapshot.PreviewWorkerCount);
@@ -78,20 +81,7 @@ public sealed class AppPreferencesService : IAppPreferencesService
             RestoreLastWorkspaceOnStartup = value
         };
 
-        try
-        {
-            _preferencesStore.Save(updatedSnapshot);
-            _currentSnapshot = updatedSnapshot;
-            return true;
-        }
-        catch (IOException)
-        {
-            return false;
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return false;
-        }
+        return TryPersistSnapshot(updatedSnapshot);
     }
 
     public bool TrySetRecentWorkspaceOpenBehavior(RecentWorkspaceOpenBehavior value)
@@ -110,20 +100,7 @@ public sealed class AppPreferencesService : IAppPreferencesService
             RecentWorkspaceOpenBehavior = serializedValue
         };
 
-        try
-        {
-            _preferencesStore.Save(updatedSnapshot);
-            _currentSnapshot = updatedSnapshot;
-            return true;
-        }
-        catch (IOException)
-        {
-            return false;
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return false;
-        }
+        return TryPersistSnapshot(updatedSnapshot);
     }
 
     public bool TrySetAssetEditorCloseBehavior(AssetEditorCloseBehavior value)
@@ -142,20 +119,7 @@ public sealed class AppPreferencesService : IAppPreferencesService
             AssetEditorCloseBehavior = serializedValue
         };
 
-        try
-        {
-            _preferencesStore.Save(updatedSnapshot);
-            _currentSnapshot = updatedSnapshot;
-            return true;
-        }
-        catch (IOException)
-        {
-            return false;
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return false;
-        }
+        return TryPersistSnapshot(updatedSnapshot);
     }
 
     public bool TrySetDisplayLanguage(AppDisplayLanguage value)
@@ -174,21 +138,24 @@ public sealed class AppPreferencesService : IAppPreferencesService
             DisplayLanguage = serializedValue
         };
 
-        try
+        if (!TryPersistSnapshot(updatedSnapshot))
         {
-            _preferencesStore.Save(updatedSnapshot);
-            _currentSnapshot = updatedSnapshot;
-            _displayLanguageOverride?.Apply(value);
+            return false;
+        }
+
+        _displayLanguageOverride?.Apply(value);
+        return true;
+    }
+
+    public bool TrySetTheme(AppThemePreference value)
+    {
+        var serializedValue = AppThemePreferenceCodec.Serialize(value);
+        if (string.Equals(_currentSnapshot.Theme, serializedValue, StringComparison.OrdinalIgnoreCase))
+        {
             return true;
         }
-        catch (IOException)
-        {
-            return false;
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return false;
-        }
+
+        return TryPersistSnapshot(_currentSnapshot with { Theme = serializedValue });
     }
 
     public bool TrySetWorkspaceImportWorkerCount(int value)
@@ -204,20 +171,7 @@ public sealed class AppPreferencesService : IAppPreferencesService
             WorkspaceImportWorkerCount = coercedValue
         };
 
-        try
-        {
-            _preferencesStore.Save(updatedSnapshot);
-            _currentSnapshot = updatedSnapshot;
-            return true;
-        }
-        catch (IOException)
-        {
-            return false;
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return false;
-        }
+        return TryPersistSnapshot(updatedSnapshot);
     }
 
     public bool TrySetPreviewWorkerCount(int value)
@@ -233,20 +187,7 @@ public sealed class AppPreferencesService : IAppPreferencesService
             PreviewWorkerCount = coercedValue
         };
 
-        try
-        {
-            _preferencesStore.Save(updatedSnapshot);
-            _currentSnapshot = updatedSnapshot;
-            return true;
-        }
-        catch (IOException)
-        {
-            return false;
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return false;
-        }
+        return TryPersistSnapshot(updatedSnapshot);
     }
 
     public bool TrySetBundleArtifactCacheAutoPruneEnabled(bool value)
@@ -261,20 +202,7 @@ public sealed class AppPreferencesService : IAppPreferencesService
             BundleArtifactCacheAutoPruneEnabled = value
         };
 
-        try
-        {
-            _preferencesStore.Save(updatedSnapshot);
-            _currentSnapshot = updatedSnapshot;
-            return true;
-        }
-        catch (IOException)
-        {
-            return false;
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return false;
-        }
+        return TryPersistSnapshot(updatedSnapshot);
     }
 
     public bool TrySetBundleArtifactCacheMaximumSizeInBytes(long value)
@@ -290,20 +218,7 @@ public sealed class AppPreferencesService : IAppPreferencesService
             BundleArtifactCacheMaximumSizeInBytes = coercedValue
         };
 
-        try
-        {
-            _preferencesStore.Save(updatedSnapshot);
-            _currentSnapshot = updatedSnapshot;
-            return true;
-        }
-        catch (IOException)
-        {
-            return false;
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return false;
-        }
+        return TryPersistSnapshot(updatedSnapshot);
     }
 
     public bool TrySetOperationRecordLimit(int value)
@@ -319,20 +234,7 @@ public sealed class AppPreferencesService : IAppPreferencesService
             OperationRecordLimit = coercedValue
         };
 
-        try
-        {
-            _preferencesStore.Save(updatedSnapshot);
-            _currentSnapshot = updatedSnapshot;
-            return true;
-        }
-        catch (IOException)
-        {
-            return false;
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return false;
-        }
+        return TryPersistSnapshot(updatedSnapshot);
     }
 
     public bool TrySetElevatedDragDropCompatibilityEnabled(bool value)
@@ -347,20 +249,7 @@ public sealed class AppPreferencesService : IAppPreferencesService
             ElevatedDragDropCompatibilityEnabled = value
         };
 
-        try
-        {
-            _preferencesStore.Save(updatedSnapshot);
-            _currentSnapshot = updatedSnapshot;
-            return true;
-        }
-        catch (IOException)
-        {
-            return false;
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return false;
-        }
+        return TryPersistSnapshot(updatedSnapshot);
     }
 
     public bool TrySetMainWindowSize(double width, double height)
@@ -384,10 +273,15 @@ public sealed class AppPreferencesService : IAppPreferencesService
             MainWindowHeight = normalizedHeight
         };
 
+        return TryPersistSnapshot(updatedSnapshot);
+    }
+
+    private bool TryPersistSnapshot(AppPreferencesPersistenceSnapshot snapshot)
+    {
         try
         {
-            _preferencesStore.Save(updatedSnapshot);
-            _currentSnapshot = updatedSnapshot;
+            _preferencesStore.Save(snapshot);
+            _currentSnapshot = snapshot;
             return true;
         }
         catch (IOException)

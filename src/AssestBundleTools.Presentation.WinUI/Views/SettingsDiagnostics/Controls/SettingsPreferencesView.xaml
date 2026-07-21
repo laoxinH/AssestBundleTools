@@ -67,6 +67,39 @@
                                 SelectedIndex="{x:Bind ViewModel.DisplayLanguageSelectedIndex, Mode=TwoWay}" />
                         </Grid>
                     </Border>
+
+                    <Border Style="{StaticResource SettingsDiagnosticsSettingRowStyle}">
+                        <Grid ColumnSpacing="22">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="32" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <FontIcon
+                                Glyph="&#xE619;"
+                                Style="{StaticResource SettingsDiagnosticsSettingIconStyle}" />
+
+                            <StackPanel
+                                Grid.Column="1"
+                                MinWidth="0"
+                                Spacing="3">
+                                <TextBlock
+                                    x:Name="ThemeLabelText"
+                                    Style="{StaticResource SettingsDiagnosticsSettingTitleTextStyle}" />
+                                <TextBlock
+                                    x:Name="ThemeDescriptionText"
+                                    Style="{StaticResource SettingsDiagnosticsSettingDescriptionTextStyle}" />
+                            </StackPanel>
+
+                            <ComboBox
+                                x:Name="ThemeComboBox"
+                                Grid.Column="2"
+                                Width="246"
+                                VerticalAlignment="Center"
+                                SelectedIndex="{x:Bind ViewModel.ThemeSelectedIndex, Mode=TwoWay}" />
+                        </Grid>
+                    </Border>
                 </StackPanel>
 
                 <StackPanel Spacing="8">

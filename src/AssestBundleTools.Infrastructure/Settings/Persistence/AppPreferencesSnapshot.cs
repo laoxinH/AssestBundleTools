@@ -19,12 +19,14 @@ public sealed record AppPreferencesSnapshot(
     string DisplayLanguage = AppPreferencesSnapshot.DefaultDisplayLanguage,
     bool ElevatedDragDropCompatibilityEnabled = false,
     double? MainWindowWidth = null,
-    double? MainWindowHeight = null)
+    double? MainWindowHeight = null,
+    string Theme = AppPreferencesSnapshot.DefaultTheme)
 {
     public const long DefaultBundleArtifactCacheMaximumSizeInBytes = 4L * 1024L * 1024L * 1024L;
     public const int DefaultOperationRecordLimit = 250;
     public const string DefaultAssetEditorCloseBehavior = "returnToMainWindow";
     public const string DefaultDisplayLanguage = "system";
+    public const string DefaultTheme = "system";
 
     public static AppPreferencesSnapshot Default { get; } = new(
         RestoreLastWorkspaceOnStartup: true,
@@ -38,5 +40,6 @@ public sealed record AppPreferencesSnapshot(
         DisplayLanguage: DefaultDisplayLanguage,
         ElevatedDragDropCompatibilityEnabled: false,
         MainWindowWidth: null,
-        MainWindowHeight: null);
+        MainWindowHeight: null,
+        Theme: DefaultTheme);
 }

@@ -20,6 +20,7 @@ public partial class App : Microsoft.UI.Xaml.Application
     private readonly List<MainWindow> _windows = [];
     private readonly List<Microsoft.UI.Xaml.Window> _activeOwnerWindows = [];
     private readonly Dictionary<Microsoft.UI.Xaml.Window, MainWindow> _auxiliaryWindowOwners = [];
+    private readonly AppThemeService _appThemeService;
     private MainWindow? _activeWindow;
     private Microsoft.UI.Xaml.Window? _activeOwnerWindow;
     private IAssetBundleDecryptorRegistry _assetBundleDecryptorRegistry;
@@ -37,6 +38,7 @@ public partial class App : Microsoft.UI.Xaml.Application
 
             LocalizationService = services.LocalizationService;
             AppPreferencesService = services.AppPreferencesService;
+            _appThemeService = new AppThemeService(AppPreferencesService.Theme);
             _assetBundleDecryptorRegistry = services.AssetBundleDecryptorRegistry;
             _reloadAssetBundleDecryptorRegistry = services.ReloadAssetBundleDecryptorRegistry;
             WorkspaceExplorerGateway = services.WorkspaceExplorerGateway;
@@ -90,6 +92,8 @@ public partial class App : Microsoft.UI.Xaml.Application
     public ILocalizationService LocalizationService { get; }
 
     public IAppPreferencesService AppPreferencesService { get; }
+
+    public IAppThemeService AppThemeService => _appThemeService;
 
     public IAssetBundleDecryptorRegistry AssetBundleDecryptorRegistry => _assetBundleDecryptorRegistry;
 

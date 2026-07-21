@@ -113,6 +113,7 @@ public partial class App
         if (!_activeOwnerWindows.Contains(window))
         {
             _activeOwnerWindows.Add(window);
+            _appThemeService.RegisterWindow(window);
             window.Activated += OnWindowActivated;
             window.Closed += OnWindowClosed;
         }
@@ -144,6 +145,7 @@ public partial class App
 
         window.Activated -= OnWindowActivated;
         window.Closed -= OnWindowClosed;
+        _appThemeService.UnregisterWindow(window);
         _activeOwnerWindows.Remove(window);
         if (ReferenceEquals(_activeOwnerWindow, window))
         {

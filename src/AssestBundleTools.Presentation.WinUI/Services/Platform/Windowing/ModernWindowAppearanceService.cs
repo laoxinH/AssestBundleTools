@@ -54,6 +54,33 @@ internal static class ModernWindowAppearanceService
         titleBar.ButtonPressedBackgroundColor = ColorHelper.FromArgb(38, 128, 128, 128);
     }
 
+    internal static void ApplyTitleBarTheme(Window window, ElementTheme actualTheme)
+    {
+        ArgumentNullException.ThrowIfNull(window);
+
+        try
+        {
+            var titleBar = window.AppWindow?.TitleBar;
+            if (titleBar is null)
+            {
+                return;
+            }
+
+            var foreground = actualTheme == ElementTheme.Dark ? Colors.White : Colors.Black;
+            var inactiveForeground = actualTheme == ElementTheme.Dark
+                ? ColorHelper.FromArgb(153, 255, 255, 255)
+                : ColorHelper.FromArgb(153, 0, 0, 0);
+            titleBar.ButtonForegroundColor = foreground;
+            titleBar.ButtonHoverForegroundColor = foreground;
+            titleBar.ButtonPressedForegroundColor = foreground;
+            titleBar.ButtonInactiveForegroundColor = inactiveForeground;
+        }
+        catch (Exception ex)
+        {
+            Log($"Title bar theme update failed: {ex}", diagnosticLogger: null);
+        }
+    }
+
     private static void Log(string message, Action<string>? diagnosticLogger)
     {
         diagnosticLogger?.Invoke(message);

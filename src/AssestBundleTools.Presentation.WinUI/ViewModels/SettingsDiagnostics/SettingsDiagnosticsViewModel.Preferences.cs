@@ -9,6 +9,7 @@ public sealed partial class SettingsDiagnosticsViewModel
     private int _recentWorkspaceOpenBehaviorSelectedIndex;
     private int _assetEditorCloseBehaviorSelectedIndex;
     private int _displayLanguageSelectedIndex;
+    private int _themeSelectedIndex;
     private int _workspaceImportWorkerCountSelectedIndex;
     private int _previewWorkerCountSelectedIndex;
     private int _operationRecordLimitSelectedIndex;
@@ -135,6 +136,31 @@ public sealed partial class SettingsDiagnosticsViewModel
 
             _appLogService.AppendError(GetString(ResourceKeys.SettingsDiagnosticsDisplayLanguageSaveFailedMessage));
             ShowErrorNotification(ResourceKeys.SettingsDiagnosticsDisplayLanguageSaveFailedMessage);
+            OnPropertyChanged();
+        }
+    }
+
+    public int ThemeSelectedIndex
+    {
+        get => _themeSelectedIndex;
+        set
+        {
+            var selectedIndex = SettingsDiagnosticsPreferenceOptionMapper.CoerceThemeSelectedIndex(value);
+            if (_themeSelectedIndex == selectedIndex)
+            {
+                return;
+            }
+
+            var theme = SettingsDiagnosticsPreferenceOptionMapper.ConvertSelectedIndexToTheme(selectedIndex);
+            if (_appPreferencesService.TrySetTheme(theme))
+            {
+                _appThemeService.Apply(theme);
+                SetProperty(ref _themeSelectedIndex, selectedIndex);
+                return;
+            }
+
+            _appLogService.AppendError(GetString(ResourceKeys.SettingsDiagnosticsThemeSaveFailedMessage));
+            ShowErrorNotification(ResourceKeys.SettingsDiagnosticsThemeSaveFailedMessage);
             OnPropertyChanged();
         }
     }

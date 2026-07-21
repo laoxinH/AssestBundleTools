@@ -31,6 +31,23 @@ internal static class SettingsDiagnosticsPreferenceOptionMapper
             : 0;
     }
 
+    public static int ConvertThemeToSelectedIndex(AppThemePreference theme) => theme switch
+    {
+        AppThemePreference.Light => 1,
+        AppThemePreference.Dark => 2,
+        _ => 0
+    };
+
+    public static AppThemePreference ConvertSelectedIndexToTheme(int selectedIndex) => selectedIndex switch
+    {
+        1 => AppThemePreference.Light,
+        2 => AppThemePreference.Dark,
+        _ => AppThemePreference.SystemDefault
+    };
+
+    public static int CoerceThemeSelectedIndex(int selectedIndex) =>
+        selectedIndex is >= 0 and <= 2 ? selectedIndex : 0;
+
     public static int ConvertRecentWorkspaceOpenBehaviorToSelectedIndex(RecentWorkspaceOpenBehavior behavior)
     {
         return behavior switch

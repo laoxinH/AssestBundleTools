@@ -12,12 +12,16 @@ public sealed partial class SettingsAboutView : UserControl
 {
     private readonly AssemblyAppVersionProvider _versionProvider = new();
     private readonly ApplicationUpdateCoordinator _updateCoordinator;
+    private readonly string _currentVersion;
     private bool _isSubscribed;
 
     public SettingsAboutView(ApplicationUpdateCoordinator updateCoordinator)
     {
         _updateCoordinator = updateCoordinator ?? throw new ArgumentNullException(nameof(updateCoordinator));
+        _currentVersion = _versionProvider.GetCurrentVersion();
         InitializeComponent();
+        CurrentReleaseNotesLinkButton.NavigateUri = GitHubReleaseUriFactory.CreateCurrentReleaseUri(_currentVersion);
+        ReleaseHistoryLinkButton.NavigateUri = GitHubReleaseUriFactory.HistoryUri;
         ApplyLocalizedText();
         ApplyUpdateState();
         Loaded += OnLoaded;
@@ -35,7 +39,7 @@ public sealed partial class SettingsAboutView : UserControl
         ProductDescriptionText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsAboutProductDescription);
         VersionText.Text = UiText.GetFormatted(
             ResourceKeys.SettingsDiagnosticsAboutVersionFormat,
-            _versionProvider.GetCurrentVersion());
+            _currentVersion);
 
         LinksTitleText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsAboutLinksTitle);
         LinksHintText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsAboutLinksHint);
@@ -62,6 +66,21 @@ public sealed partial class SettingsAboutView : UserControl
         UpdateTitleText.Text = UiText.Get(ResourceKeys.ApplicationUpdateSectionTitle);
         UpdateHintText.Text = UiText.Get(ResourceKeys.ApplicationUpdateSectionHint);
         UpdateCancelButton.Content = UiText.Get(ResourceKeys.ApplicationUpdateCancelButton);
+        CurrentReleaseNotesTitleText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsAboutCurrentReleaseNotesTitle);
+        CurrentReleaseNotesDescriptionText.Text = UiText.GetFormatted(
+            ResourceKeys.SettingsDiagnosticsAboutCurrentReleaseNotesDescriptionFormat,
+            _currentVersion);
+        ReleaseHistoryTitleText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsAboutReleaseHistoryTitle);
+        ReleaseHistoryDescriptionText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsAboutReleaseHistoryDescription);
+        var viewReleaseNotesText = UiText.Get(ResourceKeys.SettingsDiagnosticsAboutViewReleaseNotesButton);
+        CurrentReleaseNotesLinkButtonText.Text = viewReleaseNotesText;
+        ReleaseHistoryLinkButtonText.Text = viewReleaseNotesText;
+        AutomationProperties.SetName(
+            CurrentReleaseNotesLinkButton,
+            $"{CurrentReleaseNotesTitleText.Text}: {viewReleaseNotesText}");
+        AutomationProperties.SetName(
+            ReleaseHistoryLinkButton,
+            $"{ReleaseHistoryTitleText.Text}: {viewReleaseNotesText}");
     }
 
     private void OnLoaded(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)

@@ -32,6 +32,14 @@ public sealed partial class SettingsPreferencesView : UserControl
             UiText.Get(ResourceKeys.SettingsDiagnosticsDisplayLanguageOptionSimplifiedChinese),
             UiText.Get(ResourceKeys.SettingsDiagnosticsDisplayLanguageOptionEnglish)
         };
+        ThemeLabelText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsThemeLabel);
+        ThemeDescriptionText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsThemeRowDescription);
+        ThemeComboBox.ItemsSource = new[]
+        {
+            UiText.Get(ResourceKeys.SettingsDiagnosticsThemeOptionSystemDefault),
+            UiText.Get(ResourceKeys.SettingsDiagnosticsThemeOptionLight),
+            UiText.Get(ResourceKeys.SettingsDiagnosticsThemeOptionDark)
+        };
         StartupBehaviorTitleText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsStartupBehaviorTitle);
         StartupBehaviorHintText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsStartupBehaviorHint);
         RestoreLastWorkspaceOnStartupLabelText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsRestoreLastWorkspaceToggleHeader);

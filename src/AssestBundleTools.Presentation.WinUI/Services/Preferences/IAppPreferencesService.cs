@@ -18,6 +18,8 @@ public interface IAppPreferencesService
 
     AppDisplayLanguage DisplayLanguage { get; }
 
+    AppThemePreference Theme { get; }
+
     int WorkspaceImportWorkerCount { get; }
 
     int PreviewWorkerCount { get; }
@@ -41,6 +43,8 @@ public interface IAppPreferencesService
     bool TrySetAssetEditorCloseBehavior(AssetEditorCloseBehavior value);
 
     bool TrySetDisplayLanguage(AppDisplayLanguage value);
+
+    bool TrySetTheme(AppThemePreference value);
 
     bool TrySetWorkspaceImportWorkerCount(int value);
 

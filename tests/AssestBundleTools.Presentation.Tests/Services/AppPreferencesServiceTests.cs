@@ -46,6 +46,31 @@ public sealed class AppPreferencesServiceTests
     }
 
     [Fact]
+    public void TrySetTheme_ShouldPersistStablePreferenceKey()
+    {
+        var store = new TestAppPreferencesPersistenceStore(CreateSnapshot("system"));
+        var service = new AppPreferencesService(store);
+
+        var succeeded = service.TrySetTheme(AppThemePreference.Dark);
+
+        Assert.True(succeeded);
+        Assert.Equal(AppThemePreference.Dark, service.Theme);
+        Assert.Equal("dark", store.SavedSnapshot?.Theme);
+        Assert.Equal(1, store.SaveCallCount);
+    }
+
+    [Fact]
+    public void Constructor_ShouldCoerceUnknownThemeToSystemDefault()
+    {
+        var store = new TestAppPreferencesPersistenceStore(
+            CreateSnapshot("system") with { Theme = "unsupported" });
+
+        var service = new AppPreferencesService(store);
+
+        Assert.Equal(AppThemePreference.SystemDefault, service.Theme);
+    }
+
+    [Fact]
     public void TrySetElevatedDragDropCompatibilityEnabled_ShouldPersistValue()
     {
         var store = new TestAppPreferencesPersistenceStore(CreateSnapshot("system"));

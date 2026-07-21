@@ -30,7 +30,8 @@ internal sealed class InfrastructureAppPreferencesPersistenceStore : IAppPrefere
             snapshot.DisplayLanguage,
             snapshot.ElevatedDragDropCompatibilityEnabled,
             snapshot.MainWindowWidth,
-            snapshot.MainWindowHeight);
+            snapshot.MainWindowHeight,
+            snapshot.Theme);
     }
 
     public void Save(AppPreferencesPersistenceSnapshot snapshot)
@@ -49,6 +50,7 @@ internal sealed class InfrastructureAppPreferencesPersistenceStore : IAppPrefere
             snapshot.DisplayLanguage,
             snapshot.ElevatedDragDropCompatibilityEnabled,
             snapshot.MainWindowWidth,
-            snapshot.MainWindowHeight));
+            snapshot.MainWindowHeight,
+            snapshot.Theme));
     }
 }

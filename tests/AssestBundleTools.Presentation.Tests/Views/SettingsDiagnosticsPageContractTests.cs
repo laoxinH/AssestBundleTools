@@ -184,6 +184,8 @@ public sealed class SettingsDiagnosticsPageContractTests
         Assert.Contains("x:Name=\"AssetEditorCloseBehaviorComboBox\"", preferencesXaml);
         Assert.Contains("x:Name=\"DisplayLanguageComboBox\"", preferencesXaml);
         Assert.Contains("DisplayLanguageSelectedIndex", preferencesXaml);
+        Assert.Contains("x:Name=\"ThemeComboBox\"", preferencesXaml);
+        Assert.Contains("ThemeSelectedIndex", preferencesXaml);
         Assert.Contains("x:Name=\"RestoreLastWorkspaceOnStartupToggleSwitch\"", preferencesXaml);
         Assert.Contains("x:Name=\"ElevatedDragDropCompatibilityToggleSwitch\"", preferencesXaml);
         Assert.Contains("ElevatedDragDropCompatibilityEnabled", preferencesXaml);
@@ -206,6 +208,7 @@ public sealed class SettingsDiagnosticsPageContractTests
         Assert.Contains("SettingsDiagnosticsElevatedDragDropCompatibilityDescription", preferencesCode);
         Assert.Contains("SettingsDiagnosticsDisplayLanguageOptionSystemDefault", preferencesCode);
         Assert.Contains("SettingsDiagnosticsDisplayLanguageSaveFailedMessage", resourceKeys);
+        Assert.Contains("SettingsDiagnosticsThemeSaveFailedMessage", resourceKeys);
         Assert.Contains("SettingsDiagnosticsBundleArtifactCacheMaximumSizeRowDescription", performanceCacheCode);
         Assert.Contains("SettingsDiagnosticsNavLogs", resourceKeys);
         Assert.Contains("SettingsDiagnosticsNavAbout", resourceKeys);
@@ -216,6 +219,10 @@ public sealed class SettingsDiagnosticsPageContractTests
         Assert.Contains("https://www.modwu.com/", aboutXaml);
         Assert.Contains("AssemblyAppVersionProvider", aboutCode);
         Assert.Contains("x:Name=\"UpdateActionButton\"", aboutXaml);
+        Assert.Contains("x:Name=\"CurrentReleaseNotesLinkButton\"", aboutXaml);
+        Assert.Contains("x:Name=\"ReleaseHistoryLinkButton\"", aboutXaml);
+        Assert.Contains("GitHubReleaseUriFactory.CreateCurrentReleaseUri", aboutCode);
+        Assert.Contains("GitHubReleaseUriFactory.HistoryUri", aboutCode);
         Assert.Contains("CheckManuallyAsync", aboutCode);
         Assert.Contains("DownloadAndApplyAsync", aboutCode);
         Assert.Contains("MinVerTagPrefix>v</MinVerTagPrefix>", buildProps);

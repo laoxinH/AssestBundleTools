@@ -19,6 +19,7 @@ public sealed partial class SettingsDiagnosticsViewModel : ObservableObject, IDi
     private readonly IAppLogService _appLogService;
     private readonly IAppNotificationService _appNotificationService;
     private readonly IAppPreferencesService _appPreferencesService;
+    private readonly IAppThemeService _appThemeService;
     private readonly IWorkspaceContextService _workspaceContextService;
     private readonly ILocalizationService _localizationService;
     private string _activeWorkspaceDisplayName = string.Empty;
@@ -33,6 +34,7 @@ public sealed partial class SettingsDiagnosticsViewModel : ObservableObject, IDi
         IAppLogService appLogService,
         IAppNotificationService appNotificationService,
         IAppPreferencesService appPreferencesService,
+        IAppThemeService appThemeService,
         IWorkspaceContextService workspaceContextService,
         ILocalizationService localizationService,
         IWorkspaceCacheMaintenanceGateway workspaceCacheMaintenanceGateway,
@@ -41,6 +43,7 @@ public sealed partial class SettingsDiagnosticsViewModel : ObservableObject, IDi
         _appLogService = appLogService ?? throw new ArgumentNullException(nameof(appLogService));
         _appNotificationService = appNotificationService ?? throw new ArgumentNullException(nameof(appNotificationService));
         _appPreferencesService = appPreferencesService ?? throw new ArgumentNullException(nameof(appPreferencesService));
+        _appThemeService = appThemeService ?? throw new ArgumentNullException(nameof(appThemeService));
         _workspaceContextService = workspaceContextService ?? throw new ArgumentNullException(nameof(workspaceContextService));
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
         BundleArtifactCache = new SettingsWorkspaceCacheViewModel(
@@ -65,6 +68,9 @@ public sealed partial class SettingsDiagnosticsViewModel : ObservableObject, IDi
         _displayLanguageSelectedIndex =
             SettingsDiagnosticsPreferenceOptionMapper.ConvertDisplayLanguageToSelectedIndex(
                 _appPreferencesService.DisplayLanguage);
+        _themeSelectedIndex =
+            SettingsDiagnosticsPreferenceOptionMapper.ConvertThemeToSelectedIndex(
+                _appPreferencesService.Theme);
         _workspaceImportWorkerCountSelectedIndex =
             SettingsDiagnosticsPreferenceOptionMapper.ConvertWorkspaceImportWorkerCountToSelectedIndex(
                 _appPreferencesService.WorkspaceImportWorkerCount);

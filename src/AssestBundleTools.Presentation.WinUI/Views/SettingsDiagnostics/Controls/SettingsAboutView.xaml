@@ -87,48 +87,94 @@
                     </StackPanel>
 
                     <Border Padding="0" Style="{StaticResource SettingsDiagnosticsGroupCardStyle}">
-                        <Grid Padding="18,14" ColumnSpacing="14" RowSpacing="10">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                            </Grid.RowDefinitions>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="32" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <Grid Padding="18,14" ColumnSpacing="14" RowSpacing="10">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="32" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
 
-                            <FontIcon Glyph="&#xE895;" Style="{StaticResource SettingsDiagnosticsSettingIconStyle}" />
-                            <StackPanel Grid.Column="1" MinWidth="0" Spacing="3">
-                                <TextBlock
-                                    x:Name="UpdateStatusText"
-                                    Style="{StaticResource SettingsDiagnosticsSettingTitleTextStyle}"
-                                    TextWrapping="Wrap" />
-                                <TextBlock
-                                    x:Name="UpdateVersionText"
-                                    Style="{StaticResource SettingsDiagnosticsSettingDescriptionTextStyle}"
-                                    TextWrapping="Wrap" />
-                            </StackPanel>
-                            <Button
-                                x:Name="UpdateActionButton"
-                                Grid.Column="2"
-                                Click="OnUpdateActionButtonClick" />
-                            <Button
-                                x:Name="UpdateCancelButton"
-                                Grid.Column="3"
-                                Click="OnUpdateCancelButtonClick"
-                                Visibility="Collapsed" />
+                                <FontIcon Glyph="&#xE895;" Style="{StaticResource SettingsDiagnosticsSettingIconStyle}" />
+                                <StackPanel Grid.Column="1" MinWidth="0" Spacing="3">
+                                    <TextBlock
+                                        x:Name="UpdateStatusText"
+                                        Style="{StaticResource SettingsDiagnosticsSettingTitleTextStyle}"
+                                        TextWrapping="Wrap" />
+                                    <TextBlock
+                                        x:Name="UpdateVersionText"
+                                        Style="{StaticResource SettingsDiagnosticsSettingDescriptionTextStyle}"
+                                        TextWrapping="Wrap" />
+                                </StackPanel>
+                                <Button
+                                    x:Name="UpdateActionButton"
+                                    Grid.Column="2"
+                                    Click="OnUpdateActionButtonClick" />
+                                <Button
+                                    x:Name="UpdateCancelButton"
+                                    Grid.Column="3"
+                                    Click="OnUpdateCancelButtonClick"
+                                    Visibility="Collapsed" />
 
-                            <ProgressBar
-                                x:Name="UpdateProgressBar"
-                                Grid.Row="1"
-                                Grid.Column="1"
-                                Grid.ColumnSpan="3"
-                                MinWidth="180"
-                                Maximum="100"
-                                Visibility="Collapsed" />
-                        </Grid>
+                                <ProgressBar
+                                    x:Name="UpdateProgressBar"
+                                    Grid.Row="1"
+                                    Grid.Column="1"
+                                    Grid.ColumnSpan="3"
+                                    MinWidth="180"
+                                    Maximum="100"
+                                    Visibility="Collapsed" />
+                            </Grid>
+
+                            <Border Height="1" Margin="64,0,18,0" Background="{ThemeResource CardStrokeColorDefaultBrush}" />
+
+                            <Grid Padding="18,14" ColumnSpacing="14">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="32" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <FontIcon Glyph="&#xE6FF;" Style="{StaticResource SettingsDiagnosticsSettingIconStyle}" />
+                                <StackPanel Grid.Column="1" MinWidth="0" Spacing="3">
+                                    <TextBlock x:Name="CurrentReleaseNotesTitleText" Style="{StaticResource SettingsDiagnosticsSettingTitleTextStyle}" />
+                                    <TextBlock x:Name="CurrentReleaseNotesDescriptionText" Style="{StaticResource SettingsDiagnosticsSettingDescriptionTextStyle}" />
+                                </StackPanel>
+                                <HyperlinkButton x:Name="CurrentReleaseNotesLinkButton" Grid.Column="2">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <TextBlock x:Name="CurrentReleaseNotesLinkButtonText" />
+                                        <FontIcon FontFamily="{StaticResource AppIconFontFamily}" FontSize="13" Glyph="&#xE15F;" />
+                                    </StackPanel>
+                                </HyperlinkButton>
+                            </Grid>
+
+                            <Border Height="1" Margin="64,0,18,0" Background="{ThemeResource CardStrokeColorDefaultBrush}" />
+
+                            <Grid Padding="18,14" ColumnSpacing="14">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="32" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <FontIcon Glyph="&#xEA2E;" Style="{StaticResource SettingsDiagnosticsSettingIconStyle}" />
+                                <StackPanel Grid.Column="1" MinWidth="0" Spacing="3">
+                                    <TextBlock x:Name="ReleaseHistoryTitleText" Style="{StaticResource SettingsDiagnosticsSettingTitleTextStyle}" />
+                                    <TextBlock x:Name="ReleaseHistoryDescriptionText" Style="{StaticResource SettingsDiagnosticsSettingDescriptionTextStyle}" />
+                                </StackPanel>
+                                <HyperlinkButton
+                                    x:Name="ReleaseHistoryLinkButton"
+                                    Grid.Column="2">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <TextBlock x:Name="ReleaseHistoryLinkButtonText" />
+                                        <FontIcon FontFamily="{StaticResource AppIconFontFamily}" FontSize="13" Glyph="&#xE15F;" />
+                                    </StackPanel>
+                                </HyperlinkButton>
+                            </Grid>
+                        </StackPanel>
                     </Border>
                 </StackPanel>
 

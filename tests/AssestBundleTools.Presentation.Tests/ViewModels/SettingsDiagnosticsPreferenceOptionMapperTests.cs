@@ -33,6 +33,27 @@ public sealed class SettingsDiagnosticsPreferenceOptionMapperTests
     }
 
     [Theory]
+    [InlineData(AppThemePreference.SystemDefault, 0)]
+    [InlineData(AppThemePreference.Light, 1)]
+    [InlineData(AppThemePreference.Dark, 2)]
+    public void Theme_ShouldRoundTripThroughSelectedIndex(AppThemePreference theme, int selectedIndex)
+    {
+        Assert.Equal(selectedIndex, SettingsDiagnosticsPreferenceOptionMapper.ConvertThemeToSelectedIndex(theme));
+        Assert.Equal(theme, SettingsDiagnosticsPreferenceOptionMapper.ConvertSelectedIndexToTheme(selectedIndex));
+    }
+
+    [Theory]
+    [InlineData(-1)]
+    [InlineData(3)]
+    public void Theme_ShouldCoerceUnknownSelectionToSystemDefault(int selectedIndex)
+    {
+        Assert.Equal(0, SettingsDiagnosticsPreferenceOptionMapper.CoerceThemeSelectedIndex(selectedIndex));
+        Assert.Equal(
+            AppThemePreference.SystemDefault,
+            SettingsDiagnosticsPreferenceOptionMapper.ConvertSelectedIndexToTheme(selectedIndex));
+    }
+
+    [Theory]
     [InlineData(AssetEditorCloseBehavior.ReturnToMainWindow, 0)]
     [InlineData(AssetEditorCloseBehavior.DirectClose, 1)]
     public void AssetEditorCloseBehavior_ShouldRoundTripThroughSelectedIndex(

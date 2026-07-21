@@ -23,6 +23,18 @@ internal static class JsonAppPreferencesStoreTests
             "Display language should round-trip through the app preferences store.");
     }
 
+    public static void Save_ShouldRoundTripTheme()
+    {
+        using var temporaryDirectory = new TemporaryDirectoryScope();
+        var store = new JsonAppPreferencesStore(temporaryDirectory.DirectoryPath);
+        var snapshot = AppPreferencesSnapshot.Default with { Theme = "dark" };
+
+        store.Save(snapshot);
+        var loadedSnapshot = store.Load();
+
+        TestAssert.Equal("dark", loadedSnapshot.Theme, "Theme should round-trip through app preferences.");
+    }
+
     public static void Load_ShouldUseSystemLanguage_WhenLegacySnapshotOmitsDisplayLanguage()
     {
         using var temporaryDirectory = new TemporaryDirectoryScope();
@@ -44,6 +56,10 @@ internal static class JsonAppPreferencesStoreTests
             AppPreferencesSnapshot.DefaultDisplayLanguage,
             loadedSnapshot.DisplayLanguage,
             "Legacy preferences should default the display language to the system setting.");
+        TestAssert.Equal(
+            AppPreferencesSnapshot.DefaultTheme,
+            loadedSnapshot.Theme,
+            "Legacy preferences should default the theme to the system setting.");
         TestAssert.Equal(
             false,
             loadedSnapshot.ElevatedDragDropCompatibilityEnabled,

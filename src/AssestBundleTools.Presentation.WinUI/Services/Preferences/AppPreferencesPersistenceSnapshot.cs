@@ -19,4 +19,5 @@ internal sealed record AppPreferencesPersistenceSnapshot(
     string DisplayLanguage = AppDisplayLanguageCodec.SystemDefaultPreferenceKey,
     bool ElevatedDragDropCompatibilityEnabled = false,
     double? MainWindowWidth = null,
-    double? MainWindowHeight = null);
+    double? MainWindowHeight = null,
+    string Theme = AppThemePreferenceCodec.SystemDefaultPreferenceKey);

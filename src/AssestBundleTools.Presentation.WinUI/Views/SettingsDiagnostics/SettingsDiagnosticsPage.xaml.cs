@@ -22,6 +22,7 @@ public sealed partial class SettingsDiagnosticsPage : Page
             App.CurrentApp.AppLogService,
             App.CurrentApp.AppNotificationService,
             App.CurrentApp.AppPreferencesService,
+            App.CurrentApp.AppThemeService,
             App.CurrentApp.WorkspaceContextService,
             App.CurrentApp.LocalizationService,
             App.CurrentApp.WorkspaceCacheMaintenanceGateway,

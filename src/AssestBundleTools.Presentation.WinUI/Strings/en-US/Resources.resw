@@ -3481,7 +3481,7 @@
     <value>Appearance &amp; Language</value>
   </data>
   <data name="SettingsDiagnosticsPage.AppearanceLanguage.Hint" xml:space="preserve">
-    <value>Manage the display language used by the application.</value>
+    <value>Manage the application theme and display language.</value>
   </data>
   <data name="SettingsDiagnosticsPage.DisplayLanguage.Label" xml:space="preserve">
     <value>Display language</value>
@@ -3497,6 +3497,21 @@
   </data>
   <data name="SettingsDiagnosticsPage.DisplayLanguage.Option.English" xml:space="preserve">
     <value>English</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.Theme.Label" xml:space="preserve">
+    <value>App theme</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.Theme.RowDescription" xml:space="preserve">
+    <value>Follow Windows or always use the light or dark theme. Changes apply to every window immediately.</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.Theme.Option.SystemDefault" xml:space="preserve">
+    <value>Use system setting</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.Theme.Option.Light" xml:space="preserve">
+    <value>Light</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.Theme.Option.Dark" xml:space="preserve">
+    <value>Dark</value>
   </data>
   <data name="SettingsDiagnosticsPage.StartupBehaviorTitleText.Text" xml:space="preserve">
     <value>Startup &amp; Window Behavior</value>
@@ -3639,6 +3654,9 @@
   <data name="SettingsDiagnosticsPage.DisplayLanguage.SaveFailedMessage" xml:space="preserve">
     <value>Failed to save the display language. Check access to the app data directory and continue diagnosing in Settings &amp; Diagnostics.</value>
   </data>
+  <data name="SettingsDiagnosticsPage.Theme.SaveFailedMessage" xml:space="preserve">
+    <value>Failed to save the app theme. Check access to the app data directory and try again.</value>
+  </data>
   <data name="SettingsDiagnosticsPage.StartupBehavior.SaveFailedMessage" xml:space="preserve">
     <value>Failed to save the startup restore preference. Check access to the app data directory and continue diagnosing in Settings &amp; Diagnostics.</value>
   </data>
@@ -3743,6 +3761,21 @@
   </data>
   <data name="SettingsDiagnosticsPage.About.Version.Format" xml:space="preserve">
     <value>Version {0}</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.About.CurrentReleaseNotes.Title" xml:space="preserve">
+    <value>Current version release notes</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.About.CurrentReleaseNotes.Description.Format" xml:space="preserve">
+    <value>View the release notes and changes for version {0}.</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.About.ReleaseHistory.Title" xml:space="preserve">
+    <value>Release history</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.About.ReleaseHistory.Description" xml:space="preserve">
+    <value>Browse all versions and release notes on GitHub Releases.</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.About.ViewReleaseNotesButton" xml:space="preserve">
+    <value>View</value>
   </data>
   <data name="SettingsDiagnosticsPage.About.Links.Title" xml:space="preserve">
     <value>Project &amp; Support</value>

@@ -423,6 +423,11 @@ public static class ResourceKeys
     public const string SettingsDiagnosticsDisplayLanguageOptionSystemDefault = "SettingsDiagnosticsPage.DisplayLanguage.Option.SystemDefault";
     public const string SettingsDiagnosticsDisplayLanguageOptionSimplifiedChinese = "SettingsDiagnosticsPage.DisplayLanguage.Option.SimplifiedChinese";
     public const string SettingsDiagnosticsDisplayLanguageOptionEnglish = "SettingsDiagnosticsPage.DisplayLanguage.Option.English";
+    public const string SettingsDiagnosticsThemeLabel = "SettingsDiagnosticsPage.Theme.Label";
+    public const string SettingsDiagnosticsThemeRowDescription = "SettingsDiagnosticsPage.Theme.RowDescription";
+    public const string SettingsDiagnosticsThemeOptionSystemDefault = "SettingsDiagnosticsPage.Theme.Option.SystemDefault";
+    public const string SettingsDiagnosticsThemeOptionLight = "SettingsDiagnosticsPage.Theme.Option.Light";
+    public const string SettingsDiagnosticsThemeOptionDark = "SettingsDiagnosticsPage.Theme.Option.Dark";
     public const string SettingsDiagnosticsStartupBehaviorTitle = "SettingsDiagnosticsPage.StartupBehaviorTitleText.Text";
     public const string SettingsDiagnosticsStartupBehaviorHint = "SettingsDiagnosticsPage.StartupBehaviorHintText.Text";
     public const string SettingsDiagnosticsRestoreLastWorkspaceToggleHeader = "SettingsDiagnosticsPage.RestoreLastWorkspaceOnStartupToggle.Header";
@@ -470,6 +475,7 @@ public static class ResourceKeys
     public const string SettingsDiagnosticsOperationRecordLimitOptionFiveHundred = "SettingsDiagnosticsPage.OperationRecordLimit.Option.FiveHundred";
     public const string SettingsDiagnosticsOperationRecordLimitOptionOneThousand = "SettingsDiagnosticsPage.OperationRecordLimit.Option.OneThousand";
     public const string SettingsDiagnosticsDisplayLanguageSaveFailedMessage = "SettingsDiagnosticsPage.DisplayLanguage.SaveFailedMessage";
+    public const string SettingsDiagnosticsThemeSaveFailedMessage = "SettingsDiagnosticsPage.Theme.SaveFailedMessage";
     public const string SettingsDiagnosticsStartupBehaviorSaveFailedMessage = "SettingsDiagnosticsPage.StartupBehavior.SaveFailedMessage";
     public const string SettingsDiagnosticsRecentWorkspaceOpenBehaviorSaveFailedMessage = "SettingsDiagnosticsPage.RecentWorkspaceOpenBehavior.SaveFailedMessage";
     public const string SettingsDiagnosticsAssetEditorCloseBehaviorSaveFailedMessage = "SettingsDiagnosticsPage.AssetEditorCloseBehavior.SaveFailedMessage";
@@ -520,6 +526,11 @@ public static class ResourceKeys
     public const string SettingsDiagnosticsAboutIconArtistValue = "SettingsDiagnosticsPage.About.IconArtist.Value";
     public const string SettingsDiagnosticsAboutPlatformLabel = "SettingsDiagnosticsPage.About.Platform.Label";
     public const string SettingsDiagnosticsAboutPlatformValue = "SettingsDiagnosticsPage.About.Platform.Value";
+    public const string SettingsDiagnosticsAboutCurrentReleaseNotesTitle = "SettingsDiagnosticsPage.About.CurrentReleaseNotes.Title";
+    public const string SettingsDiagnosticsAboutCurrentReleaseNotesDescriptionFormat = "SettingsDiagnosticsPage.About.CurrentReleaseNotes.Description.Format";
+    public const string SettingsDiagnosticsAboutReleaseHistoryTitle = "SettingsDiagnosticsPage.About.ReleaseHistory.Title";
+    public const string SettingsDiagnosticsAboutReleaseHistoryDescription = "SettingsDiagnosticsPage.About.ReleaseHistory.Description";
+    public const string SettingsDiagnosticsAboutViewReleaseNotesButton = "SettingsDiagnosticsPage.About.ViewReleaseNotesButton";
     public const string ApplicationUpdateSectionTitle = "ApplicationUpdate.Section.Title";
     public const string ApplicationUpdateSectionHint = "ApplicationUpdate.Section.Hint";
     public const string ApplicationUpdateStateIdle = "ApplicationUpdate.State.Idle";

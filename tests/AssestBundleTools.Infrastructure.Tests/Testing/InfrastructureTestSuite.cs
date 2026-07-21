@@ -32,6 +32,10 @@ internal static class InfrastructureTestSuite
             JsonAppPreferencesStoreTests.Save_ShouldRoundTripDisplayLanguage);
         await RunTestAsync(
             failures,
+            nameof(JsonAppPreferencesStoreTests.Save_ShouldRoundTripTheme),
+            JsonAppPreferencesStoreTests.Save_ShouldRoundTripTheme);
+        await RunTestAsync(
+            failures,
             nameof(JsonAppPreferencesStoreTests.Load_ShouldUseSystemLanguage_WhenLegacySnapshotOmitsDisplayLanguage),
             JsonAppPreferencesStoreTests.Load_ShouldUseSystemLanguage_WhenLegacySnapshotOmitsDisplayLanguage);
         await RunTestAsync(

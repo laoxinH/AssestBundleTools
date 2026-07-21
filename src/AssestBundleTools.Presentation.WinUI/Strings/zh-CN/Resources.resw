@@ -3481,7 +3481,7 @@
     <value>界面与语言</value>
   </data>
   <data name="SettingsDiagnosticsPage.AppearanceLanguage.Hint" xml:space="preserve">
-    <value>管理应用界面的显示语言。</value>
+    <value>管理应用界面的主题颜色与显示语言。</value>
   </data>
   <data name="SettingsDiagnosticsPage.DisplayLanguage.Label" xml:space="preserve">
     <value>显示语言</value>
@@ -3497,6 +3497,21 @@
   </data>
   <data name="SettingsDiagnosticsPage.DisplayLanguage.Option.English" xml:space="preserve">
     <value>English</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.Theme.Label" xml:space="preserve">
+    <value>应用主题</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.Theme.RowDescription" xml:space="preserve">
+    <value>选择跟随 Windows，或固定使用浅色、深色主题。更改立即应用到所有窗口。</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.Theme.Option.SystemDefault" xml:space="preserve">
+    <value>跟随系统</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.Theme.Option.Light" xml:space="preserve">
+    <value>浅色</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.Theme.Option.Dark" xml:space="preserve">
+    <value>深色</value>
   </data>
   <data name="SettingsDiagnosticsPage.StartupBehaviorTitleText.Text" xml:space="preserve">
     <value>启动与窗口行为</value>
@@ -3639,6 +3654,9 @@
   <data name="SettingsDiagnosticsPage.DisplayLanguage.SaveFailedMessage" xml:space="preserve">
     <value>保存显示语言失败，请检查应用数据目录权限或在“设置与诊断”中继续排查。</value>
   </data>
+  <data name="SettingsDiagnosticsPage.Theme.SaveFailedMessage" xml:space="preserve">
+    <value>保存应用主题失败，请检查应用数据目录权限后重试。</value>
+  </data>
   <data name="SettingsDiagnosticsPage.StartupBehavior.SaveFailedMessage" xml:space="preserve">
     <value>保存启动恢复偏好失败，请检查应用数据目录权限或在“设置与诊断”中继续排查。</value>
   </data>
@@ -3743,6 +3761,21 @@
   </data>
   <data name="SettingsDiagnosticsPage.About.Version.Format" xml:space="preserve">
     <value>版本 {0}</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.About.CurrentReleaseNotes.Title" xml:space="preserve">
+    <value>当前版本更新日志</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.About.CurrentReleaseNotes.Description.Format" xml:space="preserve">
+    <value>查看版本 {0} 的发布说明与功能变更。</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.About.ReleaseHistory.Title" xml:space="preserve">
+    <value>历史更新日志</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.About.ReleaseHistory.Description" xml:space="preserve">
+    <value>浏览 GitHub Releases 中的全部版本与发布说明。</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.About.ViewReleaseNotesButton" xml:space="preserve">
+    <value>查看</value>
   </data>
   <data name="SettingsDiagnosticsPage.About.Links.Title" xml:space="preserve">
     <value>项目与支持</value>
