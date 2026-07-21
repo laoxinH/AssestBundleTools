@@ -134,7 +134,7 @@ Preview.FullContentUnavailable
 - **解码后大小**：例如纹理解码为 RGBA 后的像素缓冲长度。它只属于预览诊断，不作为列表大小或源数据大小。
 - **预览 / 提取输出大小**：例如 FSB5 转码得到的 WAV、纹理编码得到的 PNG 文件长度。它描述派生文件，不得覆盖资产详情中的源数据大小或序列化记录大小。
 
-`AssetPreviewDto.PreferredDisplaySizeInBytes` 仍可参与具体预览摘要，例如同时显示音频原载荷与转码输出；Presentation 在应用预览结果时不得用该字段反向改写资产详情基础信息。源数据大小应在 reader 建立资产索引时通过稳定元数据写入资产 DTO，避免为了列表展示触发完整预览或导出。
+`AssetPreviewDto.PreferredDisplaySizeInBytes` 仍可参与具体预览摘要，例如同时显示音频原载荷与转码输出；Presentation 在应用预览结果时不得用该字段反向改写资产详情基础信息。源数据大小应在 reader 建立资产索引时通过稳定元数据写入资产 DTO，避免为了列表展示触发完整预览或导出。新增或修改索引元数据语义时必须同步提升 reader parser version，使旧工作区缓存自动失效重建。
 
 ## 5. 文本预览与未来文本编辑
 

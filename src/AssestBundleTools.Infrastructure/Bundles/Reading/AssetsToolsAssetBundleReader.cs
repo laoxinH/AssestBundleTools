@@ -18,9 +18,9 @@ namespace AssestBundleTools.Infrastructure.Bundles.Reading;
 /// </remarks>
 public sealed class AssetsToolsAssetBundleReader : IAssetBundleReader
 {
-    // 资源包索引当前新增原始压缩格式，保存导出需要从缓存传递该值而不是在写包阶段重新推断，
-    // 需要提升版本以触发旧索引缓存自动重建。
-    private const string ParserVersion = "assetstools.net/3.0.4-dependency-graph.8";
+    // 资源包索引新增 Texture2D / AudioClip 源载荷大小，旧缓存缺少该元数据，
+    // 必须提升版本以触发自动重建，避免列表继续回退到序列化记录大小。
+    private const string ParserVersion = "assetstools.net/3.0.4-dependency-graph.9";
 
     private static readonly HashSet<AssetClassID> MetadataOnlyAssetClassIds =
     [

@@ -480,6 +480,14 @@ internal static class InfrastructureTestSuite
             AssetsToolsAssetDisplayMetadataResolverTests.SelectPreferredAudioSizeInBytes_ShouldIgnoreMissingOrInvalidSizes);
         await RunTestAsync(
             failures,
+            nameof(AssetsToolsAudioClipSizeTests.CacheParserVersion_ShouldInvalidateIndexesWithoutSourcePayloadSizes),
+            AssetsToolsAudioClipSizeTests.CacheParserVersion_ShouldInvalidateIndexesWithoutSourcePayloadSizes);
+        await RunTestAsync(
+            failures,
+            nameof(AssetsToolsAudioClipSizeTests.ReadAsync_ShouldExposeAudioPayloadSize_FromRealSampleWhenAvailable),
+            AssetsToolsAudioClipSizeTests.ReadAsync_ShouldExposeAudioPayloadSize_FromRealSampleWhenAvailable);
+        await RunTestAsync(
+            failures,
             nameof(AssetsToolsTextAssetPreviewClassifierTests.TryDecodeReadableTextPayload_ShouldAcceptJsonSkelText),
             AssetsToolsTextAssetPreviewClassifierTests.TryDecodeReadableTextPayload_ShouldAcceptJsonSkelText);
         await RunTestAsync(

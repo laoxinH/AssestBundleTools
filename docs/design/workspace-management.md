@@ -853,7 +853,7 @@ cache/
 - 资产缓存当前已额外保存 `AssetTypeDisplayName`，便于工作台在 `AssetType.Unknown` 场景下仍展示真实 Unity 类型名
 - 资产缓存当前已额外保存 `SerializedFileName / PathId`，用于把预览请求稳定定位到真实序列化对象
 - 资源包索引缓存当前已额外保存 `SerializedFileNames` 集合，用于在工作区运行时把 `archive:/CAB-*` 这类外部依赖尽量反查回具体资源包文件名
-- 资源包索引缓存当前已纳入 `source fingerprint + decryptorId + decryptorVersion + parserVersion + toolVersion` 的命中复用判断
+- 资源包索引缓存当前已纳入 `source fingerprint + decryptorId + decryptorVersion + parserVersion + toolVersion` 的命中复用判断；Reader 新增或修改索引字段语义时必须提升 `parserVersion`，确保旧缓存自动重建
 - 导入处理当前已从“整工作区清空后重建”收敛为“逐资源包复用、逐资源包失效重建、移除缺失缓存”
 - 当资源包索引失效或导入来源移除时，当前实现会同步清理对应 `bundleCacheKey` 下的预览缓存描述与内容文件
 - 工作台资源详情当前已正式接入 `PreviewCacheStore` 的按需生成、命中与失效清理链路
