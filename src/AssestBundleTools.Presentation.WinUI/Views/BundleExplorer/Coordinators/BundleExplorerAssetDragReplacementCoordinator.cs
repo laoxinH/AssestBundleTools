@@ -102,14 +102,19 @@ internal sealed class BundleExplorerAssetDragReplacementCoordinator
         }
 
         AppendReceivedLog(target.DisplayName, string.Join("; ", sourcePaths));
-        var draft = await _owner.ViewModel.DragReplacementCommands.PrepareSpineGroupAsync(
+        var preparation = await _owner.ViewModel.DragReplacementCommands.PrepareSpineGroupAsync(
             target,
             sourcePaths);
+        var draft = preparation.Draft;
         if (draft is null)
         {
-            ShowWarning(_localizationService.GetFormattedString(
-                ResourceKeys.AssetPaneDragReplacementNoSpineMatchesFormat,
-                target.DisplayName));
+            if (!preparation.FailureWasReported)
+            {
+                ShowWarning(_localizationService.GetFormattedString(
+                    ResourceKeys.AssetPaneDragReplacementNoSpineMatchesFormat,
+                    target.DisplayName));
+            }
+
             return;
         }
 

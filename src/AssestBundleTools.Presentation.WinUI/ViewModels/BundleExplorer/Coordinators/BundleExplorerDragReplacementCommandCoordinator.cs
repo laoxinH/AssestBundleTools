@@ -63,16 +63,27 @@ internal sealed class BundleExplorerDragReplacementCommandCoordinator
                 _operationFeedbackBridge.AppendResultFailure);
     }
 
-    public Task<SpineAssetGroupEditDraftViewModel?> PrepareSpineGroupAsync(
+    public async Task<SpineDragReplacementPreparationResult> PrepareSpineGroupAsync(
         SpineAssetGroupEntryViewModel target,
-        IReadOnlyList<string> sourcePaths) =>
-        !TryGetWorkspace(out var workspaceSummary)
-            ? Task.FromResult<SpineAssetGroupEditDraftViewModel?>(null)
-            : _actionHandler.PrepareSpineGroupAsync(
-                workspaceSummary,
-                target,
-                sourcePaths,
-                _operationFeedbackBridge.AppendResultFailure);
+        IReadOnlyList<string> sourcePaths)
+    {
+        if (!TryGetWorkspace(out var workspaceSummary))
+        {
+            return new SpineDragReplacementPreparationResult(null, FailureWasReported: true);
+        }
+
+        var failureWasReported = false;
+        var draft = await _actionHandler.PrepareSpineGroupAsync(
+            workspaceSummary,
+            target,
+            sourcePaths,
+            errors =>
+            {
+                failureWasReported = errors.Count > 0;
+                _operationFeedbackBridge.AppendResultFailure(errors);
+            });
+        return new SpineDragReplacementPreparationResult(draft, failureWasReported);
+    }
 
     public Task<bool> ApplySpineGroupAsync(SpineAssetGroupEditDraftViewModel draft)
     {
@@ -94,3 +105,7 @@ internal sealed class BundleExplorerDragReplacementCommandCoordinator
         return !_isBusyProvider() && workspaceSummary is not null;
     }
 }
+
+internal sealed record SpineDragReplacementPreparationResult(
+    SpineAssetGroupEditDraftViewModel? Draft,
+    bool FailureWasReported);

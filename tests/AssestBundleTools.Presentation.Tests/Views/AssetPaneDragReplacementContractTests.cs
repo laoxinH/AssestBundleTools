@@ -73,6 +73,21 @@ public sealed class AssetPaneDragReplacementContractTests
     }
 
     [Fact]
+    public void AssetPaneDragReplacement_ShouldNotMaskSpineMatchFailureWithNoMatchesWarning()
+    {
+        var projectRoot = GetPresentationProjectRoot();
+        var coordinator = Read(projectRoot,
+            "Views", "BundleExplorer", "Coordinators", "BundleExplorerAssetDragReplacementCoordinator.cs");
+        var commandCoordinator = Read(projectRoot,
+            "ViewModels", "BundleExplorer", "Coordinators", "BundleExplorerDragReplacementCommandCoordinator.cs");
+
+        Assert.Contains("SpineDragReplacementPreparationResult", commandCoordinator);
+        Assert.Contains("failureWasReported = errors.Count > 0", commandCoordinator);
+        Assert.Contains("if (!preparation.FailureWasReported)", coordinator);
+        Assert.Contains("ResourceKeys.AssetPaneDragReplacementNoSpineMatchesFormat", coordinator);
+    }
+
+    [Fact]
     public void AssetPaneDragReplacement_ShouldLocalizeConfirmationAndDiagnostics()
     {
         var projectRoot = GetPresentationProjectRoot();
