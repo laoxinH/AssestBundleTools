@@ -21,7 +21,8 @@ public sealed record AppPreferencesSnapshot(
     double? MainWindowWidth = null,
     double? MainWindowHeight = null,
     string Theme = AppPreferencesSnapshot.DefaultTheme,
-    bool UseContentAwareSpineSkeletonFileExtension = false)
+    bool UseContentAwareSpineSkeletonFileExtension = false,
+    bool FirstRunTutorialPromptHandled = false)
 {
     public const long DefaultBundleArtifactCacheMaximumSizeInBytes = 4L * 1024L * 1024L * 1024L;
     public const int DefaultOperationRecordLimit = 250;
@@ -43,5 +44,6 @@ public sealed record AppPreferencesSnapshot(
         MainWindowWidth: null,
         MainWindowHeight: null,
         Theme: DefaultTheme,
-        UseContentAwareSpineSkeletonFileExtension: false);
+        UseContentAwareSpineSkeletonFileExtension: false,
+        FirstRunTutorialPromptHandled: false);
 }

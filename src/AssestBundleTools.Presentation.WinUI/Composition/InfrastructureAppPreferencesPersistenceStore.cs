@@ -32,7 +32,8 @@ internal sealed class InfrastructureAppPreferencesPersistenceStore : IAppPrefere
             snapshot.MainWindowWidth,
             snapshot.MainWindowHeight,
             snapshot.Theme,
-            snapshot.UseContentAwareSpineSkeletonFileExtension);
+            snapshot.UseContentAwareSpineSkeletonFileExtension,
+            snapshot.FirstRunTutorialPromptHandled);
     }
 
     public void Save(AppPreferencesPersistenceSnapshot snapshot)
@@ -53,6 +54,7 @@ internal sealed class InfrastructureAppPreferencesPersistenceStore : IAppPrefere
             snapshot.MainWindowWidth,
             snapshot.MainWindowHeight,
             snapshot.Theme,
-            snapshot.UseContentAwareSpineSkeletonFileExtension));
+            snapshot.UseContentAwareSpineSkeletonFileExtension,
+            snapshot.FirstRunTutorialPromptHandled));
     }
 }

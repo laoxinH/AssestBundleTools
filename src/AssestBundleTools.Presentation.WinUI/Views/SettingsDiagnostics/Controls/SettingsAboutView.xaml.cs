@@ -47,12 +47,20 @@ public sealed partial class SettingsAboutView : UserControl
         GitHubAddressText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsAboutGitHubAddress);
         WebsiteTitleText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsAboutWebsiteTitle);
         WebsiteAddressText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsAboutWebsiteAddress);
+        PublishSponsorTitleText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsAboutPublishSponsorTitle);
+        PublishSponsorAddressText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsAboutPublishSponsorAddress);
+        TutorialTitleText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsAboutTutorialTitle);
+        TutorialAddressText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsAboutTutorialAddress);
 
         var openLinkText = UiText.Get(ResourceKeys.SettingsDiagnosticsAboutOpenLinkButton);
         GitHubLinkButtonText.Text = openLinkText;
         WebsiteLinkButtonText.Text = openLinkText;
+        PublishSponsorLinkButtonText.Text = openLinkText;
+        TutorialLinkButtonText.Text = openLinkText;
         AutomationProperties.SetName(GitHubLinkButton, $"{GitHubTitleText.Text}: {openLinkText}");
         AutomationProperties.SetName(WebsiteLinkButton, $"{WebsiteTitleText.Text}: {openLinkText}");
+        AutomationProperties.SetName(PublishSponsorLinkButton, $"{PublishSponsorTitleText.Text}: {openLinkText}");
+        AutomationProperties.SetName(TutorialLinkButton, $"{TutorialTitleText.Text}: {openLinkText}");
 
         CreditsTitleText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsAboutCreditsTitle);
         CreditsHintText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsAboutCreditsHint);

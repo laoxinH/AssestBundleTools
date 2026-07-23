@@ -956,6 +956,18 @@
   <data name="App.ElevationWarning.ContinueButton" xml:space="preserve">
     <value>Continue</value>
   </data>
+  <data name="App.FirstRunTutorialPrompt.Title" xml:space="preserve">
+    <value>Welcome to AssestBundleTools</value>
+  </data>
+  <data name="App.FirstRunTutorialPrompt.Message" xml:space="preserve">
+    <value>Open the user guide now? It covers workspace creation, bundle import, preview, replacement, and export. You can also open it later from Settings and Diagnostics &gt; About &gt; User Guide.</value>
+  </data>
+  <data name="App.FirstRunTutorialPrompt.OpenButton" xml:space="preserve">
+    <value>Open tutorial</value>
+  </data>
+  <data name="App.FirstRunTutorialPrompt.CloseButton" xml:space="preserve">
+    <value>Not now</value>
+  </data>
   <data name="App.ElevationRestart.FailedMessage" xml:space="preserve">
     <value>The app could not restart without administrator privileges. This window remains open; use the file or folder import buttons and check Diagnostics for details.</value>
   </data>
@@ -3812,6 +3824,18 @@
   </data>
   <data name="SettingsDiagnosticsPage.About.Website.Address" xml:space="preserve">
     <value>www.modwu.com</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.About.PublishSponsor.Title" xml:space="preserve">
+    <value>Releases &amp; Sponsorship</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.About.PublishSponsor.Address" xml:space="preserve">
+    <value>www.modwu.com/10638.html</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.About.Tutorial.Title" xml:space="preserve">
+    <value>User Guide</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.About.Tutorial.Address" xml:space="preserve">
+    <value>www.modwu.com/10635.html</value>
   </data>
   <data name="SettingsDiagnosticsPage.About.OpenLinkButton" xml:space="preserve">
     <value>Open</value>

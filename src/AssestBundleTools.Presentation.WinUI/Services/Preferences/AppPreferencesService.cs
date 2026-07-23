@@ -68,6 +68,9 @@ public sealed class AppPreferencesService : IAppPreferencesService
     public bool UseContentAwareSpineSkeletonFileExtension =>
         _currentSnapshot.UseContentAwareSpineSkeletonFileExtension;
 
+    public bool FirstRunTutorialPromptHandled =>
+        _currentSnapshot.FirstRunTutorialPromptHandled;
+
     public double? MainWindowWidth => CoerceWindowDimension(_currentSnapshot.MainWindowWidth);
 
     public double? MainWindowHeight => CoerceWindowDimension(_currentSnapshot.MainWindowHeight);
@@ -265,6 +268,19 @@ public sealed class AppPreferencesService : IAppPreferencesService
         return TryPersistSnapshot(_currentSnapshot with
         {
             UseContentAwareSpineSkeletonFileExtension = value
+        });
+    }
+
+    public bool TryMarkFirstRunTutorialPromptHandled()
+    {
+        if (_currentSnapshot.FirstRunTutorialPromptHandled)
+        {
+            return true;
+        }
+
+        return TryPersistSnapshot(_currentSnapshot with
+        {
+            FirstRunTutorialPromptHandled = true
         });
     }
 

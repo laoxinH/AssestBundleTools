@@ -64,6 +64,10 @@ internal static class JsonAppPreferencesStoreTests
             false,
             loadedSnapshot.ElevatedDragDropCompatibilityEnabled,
             "Legacy preferences should keep elevated drag-drop compatibility disabled.");
+        TestAssert.Equal(
+            false,
+            loadedSnapshot.FirstRunTutorialPromptHandled,
+            "Legacy preferences should leave the first-run tutorial prompt pending.");
     }
 
     public static void Save_ShouldRoundTripElevatedDragDropCompatibility()
@@ -99,5 +103,23 @@ internal static class JsonAppPreferencesStoreTests
 
         TestAssert.Equal(1180.5d, loadedSnapshot.MainWindowWidth, "Main window width should round-trip.");
         TestAssert.Equal(720.25d, loadedSnapshot.MainWindowHeight, "Main window height should round-trip.");
+    }
+
+    public static void Save_ShouldRoundTripFirstRunTutorialPromptState()
+    {
+        using var temporaryDirectory = new TemporaryDirectoryScope();
+        var store = new JsonAppPreferencesStore(temporaryDirectory.DirectoryPath);
+        var snapshot = AppPreferencesSnapshot.Default with
+        {
+            FirstRunTutorialPromptHandled = true
+        };
+
+        store.Save(snapshot);
+        var loadedSnapshot = store.Load();
+
+        TestAssert.Equal(
+            true,
+            loadedSnapshot.FirstRunTutorialPromptHandled,
+            "First-run tutorial prompt state should round-trip through app preferences.");
     }
 }

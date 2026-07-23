@@ -34,6 +34,8 @@ public interface IAppPreferencesService
 
     bool UseContentAwareSpineSkeletonFileExtension { get; }
 
+    bool FirstRunTutorialPromptHandled { get; }
+
     double? MainWindowWidth { get; }
 
     double? MainWindowHeight { get; }
@@ -61,6 +63,8 @@ public interface IAppPreferencesService
     bool TrySetElevatedDragDropCompatibilityEnabled(bool value);
 
     bool TrySetUseContentAwareSpineSkeletonFileExtension(bool value);
+
+    bool TryMarkFirstRunTutorialPromptHandled();
 
     bool TrySetMainWindowSize(double width, double height);
 }

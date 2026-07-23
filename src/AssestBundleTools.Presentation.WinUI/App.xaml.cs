@@ -39,6 +39,9 @@ public partial class App : Microsoft.UI.Xaml.Application
             LocalizationService = services.LocalizationService;
             AppPreferencesService = services.AppPreferencesService;
             _appThemeService = new AppThemeService(AppPreferencesService.Theme);
+            FirstRunTutorialPromptCoordinator = new FirstRunTutorialPromptCoordinator(
+                LocalizationService,
+                AppPreferencesService);
             _assetBundleDecryptorRegistry = services.AssetBundleDecryptorRegistry;
             _reloadAssetBundleDecryptorRegistry = services.ReloadAssetBundleDecryptorRegistry;
             WorkspaceExplorerGateway = services.WorkspaceExplorerGateway;
@@ -94,6 +97,8 @@ public partial class App : Microsoft.UI.Xaml.Application
     public IAppPreferencesService AppPreferencesService { get; }
 
     public IAppThemeService AppThemeService => _appThemeService;
+
+    internal FirstRunTutorialPromptCoordinator FirstRunTutorialPromptCoordinator { get; }
 
     public IAssetBundleDecryptorRegistry AssetBundleDecryptorRegistry => _assetBundleDecryptorRegistry;
 
@@ -211,6 +216,7 @@ public partial class App : Microsoft.UI.Xaml.Application
             launchRequest);
         if (!restartStarted)
         {
+            await FirstRunTutorialPromptCoordinator.PromptIfNeededAsync(window);
             await ApplicationUpdateCoordinator.CheckAtStartupAsync();
             return;
         }

@@ -48,6 +48,10 @@ internal static class InfrastructureTestSuite
             JsonAppPreferencesStoreTests.Save_ShouldRoundTripMainWindowSize);
         await RunTestAsync(
             failures,
+            nameof(JsonAppPreferencesStoreTests.Save_ShouldRoundTripFirstRunTutorialPromptState),
+            JsonAppPreferencesStoreTests.Save_ShouldRoundTripFirstRunTutorialPromptState);
+        await RunTestAsync(
+            failures,
             nameof(JsonWorkspaceCatalogStoreTests.Load_ShouldReturnEmptySnapshot_WhenCatalogFileDoesNotExist),
             JsonWorkspaceCatalogStoreTests.Load_ShouldReturnEmptySnapshot_WhenCatalogFileDoesNotExist);
         await RunTestAsync(

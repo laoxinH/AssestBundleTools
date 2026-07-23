@@ -145,6 +145,10 @@ public static class ResourceKeys
     public const string AppElevationRestartFailedMessage = "App.ElevationRestart.FailedMessage";
     public const string AppElevationRestartFailedLogFormat = "App.ElevationRestart.FailedLog.Format";
     public const string AppElevationRestartStillElevatedMessage = "App.ElevationRestart.StillElevatedMessage";
+    public const string FirstRunTutorialPromptTitle = "App.FirstRunTutorialPrompt.Title";
+    public const string FirstRunTutorialPromptMessage = "App.FirstRunTutorialPrompt.Message";
+    public const string FirstRunTutorialPromptOpenButton = "App.FirstRunTutorialPrompt.OpenButton";
+    public const string FirstRunTutorialPromptCloseButton = "App.FirstRunTutorialPrompt.CloseButton";
     public const string AppElevatedDragDropCompatibilityTitle = "App.ElevatedDragDropCompatibility.Title";
     public const string AppElevatedDragDropCompatibilityEnabledMessage = "App.ElevatedDragDropCompatibility.EnabledMessage";
     public const string AppElevatedDragDropCompatibilityFailedMessage = "App.ElevatedDragDropCompatibility.FailedMessage";
@@ -522,6 +526,10 @@ public static class ResourceKeys
     public const string SettingsDiagnosticsAboutGitHubAddress = "SettingsDiagnosticsPage.About.GitHub.Address";
     public const string SettingsDiagnosticsAboutWebsiteTitle = "SettingsDiagnosticsPage.About.Website.Title";
     public const string SettingsDiagnosticsAboutWebsiteAddress = "SettingsDiagnosticsPage.About.Website.Address";
+    public const string SettingsDiagnosticsAboutPublishSponsorTitle = "SettingsDiagnosticsPage.About.PublishSponsor.Title";
+    public const string SettingsDiagnosticsAboutPublishSponsorAddress = "SettingsDiagnosticsPage.About.PublishSponsor.Address";
+    public const string SettingsDiagnosticsAboutTutorialTitle = "SettingsDiagnosticsPage.About.Tutorial.Title";
+    public const string SettingsDiagnosticsAboutTutorialAddress = "SettingsDiagnosticsPage.About.Tutorial.Address";
     public const string SettingsDiagnosticsAboutOpenLinkButton = "SettingsDiagnosticsPage.About.OpenLinkButton";
     public const string SettingsDiagnosticsAboutCreditsTitle = "SettingsDiagnosticsPage.About.Credits.Title";
     public const string SettingsDiagnosticsAboutCreditsHint = "SettingsDiagnosticsPage.About.Credits.Hint";

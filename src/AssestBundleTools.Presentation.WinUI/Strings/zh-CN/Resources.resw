@@ -956,6 +956,18 @@
   <data name="App.ElevationWarning.ContinueButton" xml:space="preserve">
     <value>继续使用</value>
   </data>
+  <data name="App.FirstRunTutorialPrompt.Title" xml:space="preserve">
+    <value>欢迎使用 AssestBundleTools</value>
+  </data>
+  <data name="App.FirstRunTutorialPrompt.Message" xml:space="preserve">
+    <value>是否现在打开使用教程？教程包含工作区创建、资源包导入、预览、替换与导出的完整流程。暂不打开也没关系，之后可随时从“设置与诊断 &gt; 关于 &gt; 使用教程”打开。</value>
+  </data>
+  <data name="App.FirstRunTutorialPrompt.OpenButton" xml:space="preserve">
+    <value>打开教程</value>
+  </data>
+  <data name="App.FirstRunTutorialPrompt.CloseButton" xml:space="preserve">
+    <value>暂不打开</value>
+  </data>
   <data name="App.ElevationRestart.FailedMessage" xml:space="preserve">
     <value>无法以非管理员模式重启。当前窗口已保留，请使用文件或目录导入按钮，并在诊断中心查看详细信息。</value>
   </data>
@@ -3812,6 +3824,18 @@
   </data>
   <data name="SettingsDiagnosticsPage.About.Website.Address" xml:space="preserve">
     <value>www.modwu.com</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.About.PublishSponsor.Title" xml:space="preserve">
+    <value>发布与赞助</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.About.PublishSponsor.Address" xml:space="preserve">
+    <value>www.modwu.com/10638.html</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.About.Tutorial.Title" xml:space="preserve">
+    <value>使用教程</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.About.Tutorial.Address" xml:space="preserve">
+    <value>www.modwu.com/10635.html</value>
   </data>
   <data name="SettingsDiagnosticsPage.About.OpenLinkButton" xml:space="preserve">
     <value>打开</value>

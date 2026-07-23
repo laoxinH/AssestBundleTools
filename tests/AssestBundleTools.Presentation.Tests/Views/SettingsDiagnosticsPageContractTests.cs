@@ -217,6 +217,10 @@ public sealed class SettingsDiagnosticsPageContractTests
         Assert.Contains("ms-appx:///Assets/AppLogo.png", aboutXaml);
         Assert.Contains("https://github.com/laoxinH/AssestBundleTools", aboutXaml);
         Assert.Contains("https://www.modwu.com/", aboutXaml);
+        Assert.Contains("https://www.modwu.com/10638.html", aboutXaml);
+        Assert.Contains("https://www.modwu.com/10635.html", aboutXaml);
+        Assert.Contains("PublishSponsorLinkButton", aboutCode);
+        Assert.Contains("TutorialLinkButton", aboutCode);
         Assert.Contains("AssemblyAppVersionProvider", aboutCode);
         Assert.Contains("x:Name=\"UpdateActionButton\"", aboutXaml);
         Assert.Contains("x:Name=\"CurrentReleaseNotesLinkButton\"", aboutXaml);

@@ -98,6 +98,20 @@ public sealed class AppPreferencesServiceTests
     }
 
     [Fact]
+    public void TryMarkFirstRunTutorialPromptHandled_ShouldPersistOnce()
+    {
+        var store = new TestAppPreferencesPersistenceStore(CreateSnapshot("system"));
+        var service = new AppPreferencesService(store);
+
+        Assert.False(service.FirstRunTutorialPromptHandled);
+        Assert.True(service.TryMarkFirstRunTutorialPromptHandled());
+        Assert.True(service.FirstRunTutorialPromptHandled);
+        Assert.True(store.SavedSnapshot?.FirstRunTutorialPromptHandled);
+        Assert.True(service.TryMarkFirstRunTutorialPromptHandled());
+        Assert.Equal(1, store.SaveCallCount);
+    }
+
+    [Fact]
     public void TrySetMainWindowSize_ShouldPersistEffectiveDimensions()
     {
         var store = new TestAppPreferencesPersistenceStore(CreateSnapshot("system"));

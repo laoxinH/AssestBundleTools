@@ -21,4 +21,5 @@ internal sealed record AppPreferencesPersistenceSnapshot(
     double? MainWindowWidth = null,
     double? MainWindowHeight = null,
     string Theme = AppThemePreferenceCodec.SystemDefaultPreferenceKey,
-    bool UseContentAwareSpineSkeletonFileExtension = false);
+    bool UseContentAwareSpineSkeletonFileExtension = false,
+    bool FirstRunTutorialPromptHandled = false);

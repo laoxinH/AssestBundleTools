@@ -194,7 +194,7 @@ Texture2D 预览提供缩放、棋盘背景、尺寸、编码和输出格式等�
 
 ![性能与缓存](assets/user-guide-v1/11-performance-cache.png)
 
-“关于”页显示当前版本、GitHub 仓库、官网和手动更新入口。发布版本也会在启动后检查 GitHub Releases。
+“关于”页显示当前版本、GitHub 仓库、官网、[发布与赞助](https://www.modwu.com/10638.html)、[使用教程](https://www.modwu.com/10635.html)和手动更新入口。应用首次启动时会询问是否立即打开教程；选择暂不打开后，仍可随时从“设置与诊断 > 关于 > 使用教程”进入。发布版本也会在启动后检查 GitHub Releases。
 
 ![关于与更新](assets/user-guide-v1/11-about-update.png)
 
