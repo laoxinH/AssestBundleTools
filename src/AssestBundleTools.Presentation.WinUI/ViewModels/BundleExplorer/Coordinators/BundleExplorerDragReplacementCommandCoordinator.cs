@@ -63,12 +63,16 @@ internal sealed class BundleExplorerDragReplacementCommandCoordinator
                 _operationFeedbackBridge.AppendResultFailure);
     }
 
-    public SpineAssetGroupEditDraftViewModel? PrepareSpineGroup(
+    public Task<SpineAssetGroupEditDraftViewModel?> PrepareSpineGroupAsync(
         SpineAssetGroupEntryViewModel target,
-        string sourceDirectoryPath) =>
-        _isBusyProvider()
-            ? null
-            : _actionHandler.PrepareSpineGroup(target, sourceDirectoryPath);
+        IReadOnlyList<string> sourcePaths) =>
+        !TryGetWorkspace(out var workspaceSummary)
+            ? Task.FromResult<SpineAssetGroupEditDraftViewModel?>(null)
+            : _actionHandler.PrepareSpineGroupAsync(
+                workspaceSummary,
+                target,
+                sourcePaths,
+                _operationFeedbackBridge.AppendResultFailure);
 
     public Task<bool> ApplySpineGroupAsync(SpineAssetGroupEditDraftViewModel draft)
     {

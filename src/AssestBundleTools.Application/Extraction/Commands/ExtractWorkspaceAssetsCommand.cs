@@ -18,4 +18,5 @@ public sealed record ExtractWorkspaceAssetsCommand(
     IReadOnlyList<WorkspaceBatchExtractionCategoryDto>? SelectedCategories = null,
     IProgress<WorkspaceBatchExtractionProgressDto>? Progress = null,
     IReadOnlyList<AssetId>? SelectedAssetIds = null,
-    IReadOnlyList<string>? SelectedSpineGroupIds = null);
+    IReadOnlyList<string>? SelectedSpineGroupIds = null,
+    bool UseContentAwareSpineSkeletonFileExtension = false);

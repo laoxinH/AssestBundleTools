@@ -21,6 +21,7 @@ internal sealed class BundleExplorerBatchExtractionBackgroundExecutor
     private readonly ILocalizationService _localizationService;
     private readonly IBackgroundWorkScheduler _backgroundWorkScheduler;
     private readonly IWorkspaceOperationChangeNotifier? _operationChangeNotifier;
+    private readonly Func<bool> _useContentAwareSpineSkeletonFileExtensionProvider;
 
     public BundleExplorerBatchExtractionBackgroundExecutor(
         IWorkspaceAssetOperationGateway workspaceAssetOperationGateway,
@@ -28,7 +29,8 @@ internal sealed class BundleExplorerBatchExtractionBackgroundExecutor
         IBackgroundTaskRunner? backgroundTaskRunner,
         IAppBackgroundTaskStatusService? backgroundTaskStatusService,
         IWorkspaceOperationChangeNotifier? operationChangeNotifier,
-        IBackgroundWorkScheduler? backgroundWorkScheduler = null)
+        IBackgroundWorkScheduler? backgroundWorkScheduler = null,
+        Func<bool>? useContentAwareSpineSkeletonFileExtensionProvider = null)
     {
         _workspaceAssetOperationGateway = workspaceAssetOperationGateway ?? throw new ArgumentNullException(nameof(workspaceAssetOperationGateway));
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
@@ -36,6 +38,8 @@ internal sealed class BundleExplorerBatchExtractionBackgroundExecutor
             backgroundTaskRunner ?? InlineBackgroundTaskRunner.Instance,
             backgroundTaskStatusService ?? NullAppBackgroundTaskStatusService.Instance);
         _operationChangeNotifier = operationChangeNotifier;
+        _useContentAwareSpineSkeletonFileExtensionProvider =
+            useContentAwareSpineSkeletonFileExtensionProvider ?? (static () => false);
     }
 
     public async Task<BundleExplorerBatchAssetExtractionExecutionResult> ExtractAssetsAsync(
@@ -153,7 +157,10 @@ internal sealed class BundleExplorerBatchExtractionBackgroundExecutor
                     {
                         var progress = new InlineProgress<WorkspaceBatchExtractionProgressDto>(
                             snapshot => ReportWorkspaceBatchProgress(context, snapshot));
-                        var commandWithProgress = command with { Progress = progress };
+                        var commandWithProgress = ApplySpineSkeletonExtensionPreference(command) with
+                        {
+                            Progress = progress
+                        };
                         return await executeAsync(commandWithProgress, context.CancellationToken);
                     })
                 {
@@ -194,7 +201,10 @@ internal sealed class BundleExplorerBatchExtractionBackgroundExecutor
                     {
                         var progress = new InlineProgress<WorkspaceBatchExtractionProgressDto>(
                             snapshot => ReportWorkspaceBatchProgress(context, snapshot));
-                        var commandWithProgress = command with { Progress = progress };
+                        var commandWithProgress = ApplySpineSkeletonExtensionPreference(command) with
+                        {
+                            Progress = progress
+                        };
                         return await executeAsync(commandWithProgress, context.CancellationToken);
                     })
                 {
@@ -278,7 +288,8 @@ internal sealed class BundleExplorerBatchExtractionBackgroundExecutor
                     SpineBatchExtractionOutputDirectoryResolver.Build(
                         selectedOutputDirectory,
                         entry,
-                        defaultBundleDisplayName))))
+                        defaultBundleDisplayName),
+                    _useContentAwareSpineSkeletonFileExtensionProvider())))
             .ToArray();
 
         using var notificationBatch = _operationChangeNotifier?.BeginNotificationBatch();
@@ -370,7 +381,12 @@ internal sealed class BundleExplorerBatchExtractionBackgroundExecutor
                     {
                         context.Progress.ReportProgress(0, 1, displayName);
                         var result = await _workspaceAssetOperationGateway.ExtractSpineAssetGroupAsync(
-                            command,
+                            command with
+                            {
+                                UseContentAwareSkeletonFileExtension =
+                                    command.UseContentAwareSkeletonFileExtension ||
+                                    _useContentAwareSpineSkeletonFileExtensionProvider()
+                            },
                             context.CancellationToken);
                         context.Progress.ReportProgress(1, 1, displayName);
                         return result;
@@ -431,6 +447,15 @@ internal sealed class BundleExplorerBatchExtractionBackgroundExecutor
             totalCount,
             snapshot.ItemDisplayName);
     }
+
+    private ExtractWorkspaceAssetsCommand ApplySpineSkeletonExtensionPreference(
+        ExtractWorkspaceAssetsCommand command) =>
+        command with
+        {
+            UseContentAwareSpineSkeletonFileExtension =
+                command.UseContentAwareSpineSkeletonFileExtension ||
+                _useContentAwareSpineSkeletonFileExtensionProvider()
+        };
 
     private sealed record AssetBatchExtractionItem(
         string DisplayName,

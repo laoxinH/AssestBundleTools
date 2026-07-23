@@ -1,6 +1,7 @@
 using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Domain.Bundles;
 using AssestBundleTools.Domain.Workspace;
+using AssestBundleTools.Application.Extraction.Dtos;
 
 namespace AssestBundleTools.Application.Extraction.Commands;
 
@@ -14,4 +15,5 @@ public sealed record ExtractAssetCommand(
     string? WorkspaceKey = null,
     string? WorkspaceDataRootPath = null,
     string? SuggestedOutputPath = null,
-    bool PreserveSuggestedFileName = false);
+    bool PreserveSuggestedFileName = false,
+    SpineSkeletonExportExtensionMode SpineSkeletonExtensionMode = SpineSkeletonExportExtensionMode.None);

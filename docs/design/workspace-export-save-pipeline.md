@@ -17,6 +17,7 @@
 - 保存预览和保存执行骨架已经读取现有 `cache/bundles` 标准化 artifact 输入图，并通过 `IWorkspaceSaveOutputProbe` 做输出路径 preflight。
 - `SaveRebuild` 后台 profile 已存在，工作区导出窗口可以复用统一后台任务调度。
 - 普通批量提取已经具备“单个后台任务 + 跨 AB 受控并行 + 同 AB 内顺序 + 输出 manifest”的成熟范式。
+- Spine 组提取的 skeleton 外部命名由 Presentation 偏好投影到提取命令：默认模式不改变 payload，统一使用 `.skel`；用户开启内容感知命名后，预览管线识别为 JSON 的 payload 使用 `.json`，binary payload 使用 `.skel`。该设置只影响输出文件名，不做 JSON / binary 转换，也不得改变写出的原始 skeleton 字节。
 - 工作区导出窗口已接到真实 `SaveRebuild` 后台任务：首次打开默认不勾选“导出到工作区输出目录”，点击开始导出会打开输出目录选择器；用户勾选后输出到 `<workspaceDataRootPath>/exports`，该选择会随当前工作区导出设置恢复。
 - `SaveWorkspaceAsNewBundleCommand` 已携带输出目录、选中资源包、资源处理器选择、导出压缩策略、工作区 artifact 上下文和执行进度回调。
 - Application 已通过 `IWorkspaceBundleExporter` / `IWorkspaceBundleExportManifestStore` 编排第一阶段真实导出：按选中 bundle 有界并发写出，汇总 `Succeeded / PartiallySucceeded / Failed` 结果，并在有成功输出时写出 `_abt-bundle-export-manifest.json`。

@@ -31,7 +31,8 @@ internal sealed class InfrastructureAppPreferencesPersistenceStore : IAppPrefere
             snapshot.ElevatedDragDropCompatibilityEnabled,
             snapshot.MainWindowWidth,
             snapshot.MainWindowHeight,
-            snapshot.Theme);
+            snapshot.Theme,
+            snapshot.UseContentAwareSpineSkeletonFileExtension);
     }
 
     public void Save(AppPreferencesPersistenceSnapshot snapshot)
@@ -51,6 +52,7 @@ internal sealed class InfrastructureAppPreferencesPersistenceStore : IAppPrefere
             snapshot.ElevatedDragDropCompatibilityEnabled,
             snapshot.MainWindowWidth,
             snapshot.MainWindowHeight,
-            snapshot.Theme));
+            snapshot.Theme,
+            snapshot.UseContentAwareSpineSkeletonFileExtension));
     }
 }

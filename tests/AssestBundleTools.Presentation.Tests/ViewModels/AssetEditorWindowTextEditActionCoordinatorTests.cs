@@ -480,6 +480,16 @@ public sealed class AssetEditorWindowTextEditActionCoordinatorTests
             CancellationToken cancellationToken = default) =>
             throw new NotSupportedException();
 
+        public Task<Result<IReadOnlyList<SpineReplacementSourceMatchDto>>> MatchSpineReplacementSourcesAsync(
+            MatchSpineReplacementSourcesQuery query,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<Result<SpineSkeletonFormatCompatibilityDto>> CheckSpineSkeletonReplacementCompatibilityAsync(
+            CheckSpineSkeletonReplacementCompatibilityQuery query,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
         public Task<Result<AssetTextEditDraftUpdatedResultDto>> UpdateTextAssetEditDraftAsync(
             UpdateTextAssetEditDraftCommand command,
             CancellationToken cancellationToken = default) =>

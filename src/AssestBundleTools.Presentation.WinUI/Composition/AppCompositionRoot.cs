@@ -187,6 +187,7 @@ internal static class AppCompositionRoot
         var assetExtractionFileStore = new FileSystemAssetExtractionFileStore();
         var workspaceExportManifestStore = new FileSystemWorkspaceExportManifestStore();
         var workspaceBatchReplacementSourceFileProbe = new FileSystemWorkspaceBatchReplacementSourceFileProbe();
+        var replacementSourcePathExpander = new FileSystemReplacementSourcePathExpander();
         var workspaceAssetExtractionExporter = new WorkspaceAssetExtractionExporter(
             getAssetPreviewHandler,
             assetExtractionFileStore);
@@ -219,13 +220,23 @@ internal static class AppCompositionRoot
             workspaceBatchReplacementSourceFileProbe,
             loadSpineAssetGroupsHandler);
         var getFileReplacementCandidateHandler = new GetFileReplacementCandidateHandler(workspaceSessionRegistry);
+        var spineSkeletonReplacementCompatibilityService = new SpineSkeletonReplacementCompatibilityService(
+            workspaceSessionRegistry,
+            getAssetPreviewHandler,
+            replacementPreviewSourceProvider);
+        var matchSpineReplacementSourcesHandler = new MatchSpineReplacementSourcesHandler(
+            replacementSourcePathExpander,
+            spineSkeletonReplacementCompatibilityService);
+        var checkSpineSkeletonReplacementCompatibilityHandler = new CheckSpineSkeletonReplacementCompatibilityHandler(
+            spineSkeletonReplacementCompatibilityService);
         var getWorkspaceReplacementCandidatesHandler = new GetWorkspaceReplacementCandidatesHandler(workspaceSessionRegistry);
         var workspaceReplacementOperationRecorder = new WorkspaceReplacementOperationRecorder(
             workspaceDataStoreFactory,
             workspaceOperationLogService);
         var replaceAssetFromFileHandler = new ReplaceAssetFromFileHandler(
             workspaceSessionRegistry,
-            workspaceReplacementOperationRecorder);
+            workspaceReplacementOperationRecorder,
+            spineSkeletonReplacementCompatibilityService);
         var executeWorkspaceBatchReplacementHandler = new ExecuteWorkspaceBatchReplacementHandler(
             workspaceSessionRegistry,
             replaceAssetFromFileHandler,
@@ -329,6 +340,8 @@ internal static class AppCompositionRoot
             extractAssetHandler: extractAssetHandler,
             extractSpineAssetGroupHandler: extractSpineAssetGroupHandler,
             getFileReplacementCandidateHandler: getFileReplacementCandidateHandler,
+            matchSpineReplacementSourcesHandler: matchSpineReplacementSourcesHandler,
+            checkSpineSkeletonReplacementCompatibilityHandler: checkSpineSkeletonReplacementCompatibilityHandler,
             getWorkspaceReplacementCandidatesHandler: getWorkspaceReplacementCandidatesHandler,
             replaceAssetFromFileHandler: replaceAssetFromFileHandler,
             replaceAssetFromWorkspaceHandler: replaceAssetFromWorkspaceHandler,

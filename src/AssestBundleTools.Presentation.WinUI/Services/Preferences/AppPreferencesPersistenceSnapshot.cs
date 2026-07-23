@@ -20,4 +20,5 @@ internal sealed record AppPreferencesPersistenceSnapshot(
     bool ElevatedDragDropCompatibilityEnabled = false,
     double? MainWindowWidth = null,
     double? MainWindowHeight = null,
-    string Theme = AppThemePreferenceCodec.SystemDefaultPreferenceKey);
+    string Theme = AppThemePreferenceCodec.SystemDefaultPreferenceKey,
+    bool UseContentAwareSpineSkeletonFileExtension = false);

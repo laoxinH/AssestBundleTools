@@ -292,6 +292,16 @@ public sealed class BundleExplorerViewModelResolvedAssetNavigationTests
             CancellationToken cancellationToken = default) =>
             throw new NotSupportedException();
 
+        public Task<Result<IReadOnlyList<SpineReplacementSourceMatchDto>>> MatchSpineReplacementSourcesAsync(
+            MatchSpineReplacementSourcesQuery query,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<Result<SpineSkeletonFormatCompatibilityDto>> CheckSpineSkeletonReplacementCompatibilityAsync(
+            CheckSpineSkeletonReplacementCompatibilityQuery query,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
         public Task<Result<AssetTextEditDraftDto>> CreateTextAssetEditDraftAsync(
             CreateTextAssetEditDraftCommand command,
             CancellationToken cancellationToken = default) =>

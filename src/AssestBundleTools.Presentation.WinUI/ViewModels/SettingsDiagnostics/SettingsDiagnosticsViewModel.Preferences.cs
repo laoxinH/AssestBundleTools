@@ -6,6 +6,7 @@ public sealed partial class SettingsDiagnosticsViewModel
 {
     private bool _restoreLastWorkspaceOnStartup;
     private bool _elevatedDragDropCompatibilityEnabled;
+    private bool _useContentAwareSpineSkeletonFileExtension;
     private int _recentWorkspaceOpenBehaviorSelectedIndex;
     private int _assetEditorCloseBehaviorSelectedIndex;
     private int _displayLanguageSelectedIndex;
@@ -111,6 +112,29 @@ public sealed partial class SettingsDiagnosticsViewModel
                 ResourceKeys.SettingsDiagnosticsElevatedDragDropCompatibilitySaveFailedMessage));
             ShowErrorNotification(
                 ResourceKeys.SettingsDiagnosticsElevatedDragDropCompatibilitySaveFailedMessage);
+            OnPropertyChanged();
+        }
+    }
+
+    public bool UseContentAwareSpineSkeletonFileExtension
+    {
+        get => _useContentAwareSpineSkeletonFileExtension;
+        set
+        {
+            if (_useContentAwareSpineSkeletonFileExtension == value)
+            {
+                return;
+            }
+
+            if (_appPreferencesService.TrySetUseContentAwareSpineSkeletonFileExtension(value))
+            {
+                SetProperty(ref _useContentAwareSpineSkeletonFileExtension, value);
+                return;
+            }
+
+            _appLogService.AppendError(GetString(
+                ResourceKeys.SettingsDiagnosticsSpineSkeletonExtensionSaveFailedMessage));
+            ShowErrorNotification(ResourceKeys.SettingsDiagnosticsSpineSkeletonExtensionSaveFailedMessage);
             OnPropertyChanged();
         }
     }

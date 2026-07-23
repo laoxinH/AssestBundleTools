@@ -52,6 +52,14 @@ public interface IWorkspaceAssetOperationGateway
         ApplySpriteEditCommand command,
         CancellationToken cancellationToken = default);
 
+    Task<Result<IReadOnlyList<SpineReplacementSourceMatchDto>>> MatchSpineReplacementSourcesAsync(
+        MatchSpineReplacementSourcesQuery query,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<SpineSkeletonFormatCompatibilityDto>> CheckSpineSkeletonReplacementCompatibilityAsync(
+        CheckSpineSkeletonReplacementCompatibilityQuery query,
+        CancellationToken cancellationToken = default);
+
     Task<Result<AssetTextEditDraftDto>> CreateTextAssetEditDraftAsync(
         CreateTextAssetEditDraftCommand command,
         CancellationToken cancellationToken = default);

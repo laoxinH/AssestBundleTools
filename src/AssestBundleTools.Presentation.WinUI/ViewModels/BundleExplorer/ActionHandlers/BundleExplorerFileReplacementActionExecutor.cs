@@ -130,7 +130,8 @@ internal sealed class BundleExplorerFileReplacementActionExecutor
         AssetDetailsDto details,
         FileReplacementCandidateDto candidate,
         Action<IReadOnlyList<AppError>> appendResultFailure,
-        ReplacementOperationContextDto? operationContext = null) =>
+        ReplacementOperationContextDto? operationContext = null,
+        bool requireSpineSkeletonFormatMatch = false) =>
         await ApplyFileReplacementAsync(
             workspaceSummary,
             details.BundleId,
@@ -138,7 +139,8 @@ internal sealed class BundleExplorerFileReplacementActionExecutor
             details.Name,
             candidate,
             appendResultFailure,
-            operationContext);
+            operationContext,
+            requireSpineSkeletonFormatMatch);
 
     public async Task<bool> ApplyFileReplacementAsync(
         WorkspaceSummaryDto workspaceSummary,
@@ -147,7 +149,8 @@ internal sealed class BundleExplorerFileReplacementActionExecutor
         string targetAssetName,
         FileReplacementCandidateDto candidate,
         Action<IReadOnlyList<AppError>> appendResultFailure,
-        ReplacementOperationContextDto? operationContext = null)
+        ReplacementOperationContextDto? operationContext = null,
+        bool requireSpineSkeletonFormatMatch = false)
     {
         var fileResult = await _workspaceAssetOperationGateway.ReplaceAssetFromFileAsync(
             new ReplaceAssetFromFileCommand(
@@ -158,7 +161,8 @@ internal sealed class BundleExplorerFileReplacementActionExecutor
                 candidate.SourceAssetType,
                 workspaceSummary.WorkspaceKey,
                 workspaceSummary.WorkspaceDataRootPath,
-                operationContext));
+                operationContext,
+                requireSpineSkeletonFormatMatch));
 
         if (!TryGetValue(fileResult, out var fileReplacementResult, appendResultFailure))
         {

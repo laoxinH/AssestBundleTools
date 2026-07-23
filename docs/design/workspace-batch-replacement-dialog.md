@@ -538,8 +538,9 @@ BackgroundWorkRequest<Result<WorkspaceBatchReplacementResultDto>>
 - 只有指针实际落在已实现的资产行或 Spine 组行内才进入替换；列表空白、表头和其他窗格继续沿用原有行为。
 - 普通模式使用 WinUI `StorageItems`，管理员兼容模式使用统一 `WM_DROPFILES` 精确目标路由；两种入口必须生成相同的“目标行 + 来源路径”请求。
 - 管理员模式下，资产行目标使用 `Item` 优先级，高于资源包窗格的工作区导入 `Surface` 目标，避免替换来源被误导入为新 AB。
-- 普通资产首版只接受一个文件。Spine 组首版只接受一个目录，并复用现有 `ApplyDirectoryMatches` 对 skeleton、atlas 和 texture page 做角色、扩展名及名称键匹配。
-- 路径形态不符合目标要求、普通资产类型校验失败、Spine 目录没有匹配组成资源时，不显示替换确认，也不写操作记录。
+- 普通资产只接受一个文件。Spine 组接受一个目录或一次拖入的多个文件；两种来源形态都交给 Application 层同一匹配查询，按组成角色和名称键生成替换映射，不在 Presentation ViewModel 中枚举目录或复制匹配规则。
+- Spine skeleton 的兼容性以真实 payload 为准：目标和来源分别通过既有预览管线识别为 JSON 或 binary，只有格式一致时才能形成候选并最终写入；`.skel / .json / .bytes` 只参与文件选择和名称匹配，不能作为格式判据。当前官方 runtime 适配器只承担读取与播放，不提供可证明无损的跨版本 serializer，因此不得隐式执行 JSON 与 binary 互转。
+- 路径形态不符合目标要求、普通资产类型校验失败、Spine 来源没有名称与内容格式均兼容的组成资源时，不显示替换确认，也不写操作记录。
 
 确认与执行约束：
 

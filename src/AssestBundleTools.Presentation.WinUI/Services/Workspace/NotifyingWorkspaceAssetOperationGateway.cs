@@ -67,6 +67,16 @@ internal sealed class NotifyingWorkspaceAssetOperationGateway : IWorkspaceAssetO
         CancellationToken cancellationToken = default) =>
         _inner.GetFileReplacementCandidateAsync(query, cancellationToken);
 
+    public Task<Result<IReadOnlyList<SpineReplacementSourceMatchDto>>> MatchSpineReplacementSourcesAsync(
+        MatchSpineReplacementSourcesQuery query,
+        CancellationToken cancellationToken = default) =>
+        _inner.MatchSpineReplacementSourcesAsync(query, cancellationToken);
+
+    public Task<Result<SpineSkeletonFormatCompatibilityDto>> CheckSpineSkeletonReplacementCompatibilityAsync(
+        CheckSpineSkeletonReplacementCompatibilityQuery query,
+        CancellationToken cancellationToken = default) =>
+        _inner.CheckSpineSkeletonReplacementCompatibilityAsync(query, cancellationToken);
+
     public Task<Result<IReadOnlyList<WorkspaceReplacementCandidateDto>>> GetWorkspaceReplacementCandidatesAsync(
         GetWorkspaceReplacementCandidatesQuery query,
         CancellationToken cancellationToken = default) =>

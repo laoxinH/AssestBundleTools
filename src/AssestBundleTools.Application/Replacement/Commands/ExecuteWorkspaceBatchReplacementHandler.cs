@@ -172,7 +172,8 @@ public sealed class ExecuteWorkspaceBatchReplacementHandler : ICommandHandler<Ex
                 executionTarget.AssetType,
                 command.WorkspaceKey,
                 command.WorkspaceDataRootPath,
-                CreateOperationContext(batchId, candidate, allCandidates)),
+                CreateOperationContext(batchId, candidate, allCandidates),
+                RequireSpineSkeletonFormatMatch(candidate)),
             cancellationToken);
 
         if (replaceResult.IsCancelled)
@@ -184,6 +185,10 @@ public sealed class ExecuteWorkspaceBatchReplacementHandler : ICommandHandler<Ex
             ? CreateItemResult(candidate, WorkspaceBatchReplacementItemStatus.Replaced)
             : CreateItemResult(candidate, WorkspaceBatchReplacementItemStatus.Failed, replaceResult.Errors.FirstOrDefault()?.Code);
     }
+
+    private static bool RequireSpineSkeletonFormatMatch(WorkspaceBatchReplacementCandidateDto candidate) =>
+        string.Equals(candidate.OutputRole, "Skeleton", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(candidate.OutputRole, "SpineSkeleton", StringComparison.OrdinalIgnoreCase);
 
     private static ReplacementOperationContextDto CreateOperationContext(
         string batchId,

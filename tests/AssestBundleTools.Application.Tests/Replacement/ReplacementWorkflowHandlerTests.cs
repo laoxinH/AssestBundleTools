@@ -1,4 +1,5 @@
 using System.IO;
+using System.Text;
 using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Assets.Queries;
 using AssestBundleTools.Application.Bundles.Dtos;
@@ -23,6 +24,80 @@ namespace AssestBundleTools.Application.Tests.Replacement;
 
 internal static class ReplacementWorkflowHandlerTests
 {
+    public static async Task MatchSpineReplacementSourcesHandler_ShouldUsePayloadFormat_NotFileExtension()
+    {
+        var workspaceId = CreateWorkspaceId();
+        var bundleId = new BundleId("bundle.spine");
+        var skeletonAssetId = new AssetId("asset.skeleton");
+        var registry = new TestWorkspaceSessionRegistry();
+        registry.RegisterAssetDetails(CreateAssetDetails(
+            workspaceId,
+            bundleId,
+            skeletonAssetId,
+            AssetType.TextAsset,
+            "hero.skel.bytes"));
+        var targetPreview = new StaticAssetPreviewHandler(CreateSkeletonPreview(
+            workspaceId,
+            bundleId,
+            skeletonAssetId,
+            AssetPreviewKind.Binary,
+            binaryContent: [0x1c, 0x00, 0x00, 0x00]));
+        var jsonNamedSkel = @"D:\Replacement\hero.skel";
+        var binaryNamedJson = @"D:\Replacement\hero.json";
+        var sourceProvider = new StaticReplacementPreviewSourceProvider(new Dictionary<string, AssetPreviewContentDto>(StringComparer.OrdinalIgnoreCase)
+        {
+            [jsonNamedSkel] = new(
+                AssetPreviewKind.Text,
+                "application/json",
+                Encoding.UTF8.GetBytes("{\"skeleton\":{\"spine\":\"4.2\"},\"bones\":[]}")),
+            [binaryNamedJson] = new(
+                AssetPreviewKind.Binary,
+                "application/octet-stream",
+                [0x1c, 0x00, 0x00, 0x00])
+        });
+        var compatibilityService = new SpineSkeletonReplacementCompatibilityService(
+            registry,
+            targetPreview,
+            sourceProvider);
+        var handler = new MatchSpineReplacementSourcesHandler(
+            new PassthroughReplacementSourcePathExpander(),
+            compatibilityService);
+        var group = new SpineAssetGroupDto(
+            "spine-hero",
+            bundleId,
+            "hero",
+            "hero",
+            SkeletonAssets:
+            [
+                new SpineAssetGroupPartDto(
+                    SpineAssetGroupPartRole.Skeleton,
+                    bundleId,
+                    skeletonAssetId,
+                    "bundle.spine.ab",
+                    "hero.skel.bytes",
+                    "Assets/Spine/hero.skel.bytes",
+                    AssetType.TextAsset,
+                    "TextAsset")
+            ],
+            AtlasAssets: [],
+            TexturePageAssets: [],
+            Diagnostics: []);
+
+        var result = await handler.HandleAsync(new MatchSpineReplacementSourcesQuery(
+            workspaceId,
+            "workspace-key",
+            @"D:\WorkspaceData",
+            group,
+            [jsonNamedSkel, binaryNamedJson]));
+
+        TestAssert.True(result.IsSuccess, "Spine source matching should succeed.");
+        var match = TestAssert.Single(result.Value ?? []);
+        TestAssert.Equal(
+            binaryNamedJson,
+            match.SourceFilePath,
+            "Matching should reject JSON content for a binary target and accept binary content regardless of its extension.");
+    }
+
     public static async Task GetFileReplacementCandidateHandler_ShouldPreferTargetAssetType_WhenSharedExtensionMatches()
     {
         var workspaceId = CreateWorkspaceId();
@@ -1656,6 +1731,86 @@ internal static class ReplacementWorkflowHandlerTests
             LastExtractedAtUtc: null,
             Dependencies: dependencies ?? Array.Empty<AssetDependencyDto>(),
             AssetTypeDisplayName: assetTypeDisplayName);
+    }
+
+    private static AssetPreviewDto CreateSkeletonPreview(
+        WorkspaceId workspaceId,
+        BundleId bundleId,
+        AssetId assetId,
+        AssetPreviewKind kind,
+        byte[]? binaryContent = null,
+        string? textContent = null) =>
+        new(
+            workspaceId,
+            bundleId,
+            assetId,
+            kind,
+            kind == AssetPreviewKind.Text ? "application/json" : "application/octet-stream",
+            binaryContent,
+            textContent,
+            PreviewPayloadFilePath: null,
+            PreviewInfoItems: [],
+            PreviewMessage: null,
+            PreferredDisplaySizeInBytes: binaryContent?.Length,
+            IsFromCache: false,
+            GeneratedAtUtc: DateTimeOffset.UtcNow,
+            Diagnostic: new AssetPreviewDiagnosticDto(
+                AssetPreviewCacheStatusKind.Missing,
+                AssetPreviewFallbackReasonKind.None))
+        {
+            FullTextContent = textContent
+        };
+
+    private sealed class StaticAssetPreviewHandler(AssetPreviewDto preview) :
+        IQueryHandler<GetAssetPreviewQuery, Result<AssetPreviewDto>>
+    {
+        public Task<Result<AssetPreviewDto>> HandleAsync(
+            GetAssetPreviewQuery query,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(Result<AssetPreviewDto>.Success(preview));
+    }
+
+    private sealed class PassthroughReplacementSourcePathExpander : IReplacementSourcePathExpander
+    {
+        public Task<Result<IReadOnlyList<string>>> ExpandAsync(
+            IReadOnlyList<string> sourcePaths,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(Result<IReadOnlyList<string>>.Success(sourcePaths));
+    }
+
+    private sealed class StaticReplacementPreviewSourceProvider(
+        IReadOnlyDictionary<string, AssetPreviewContentDto> previews) : IReplacementPreviewSourceProvider
+    {
+        public Task<Result<AssetPreviewContentDto>> LoadFilePreviewAsync(
+            AssetDetailsDto targetDetails,
+            string sourceFilePath,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(previews.TryGetValue(sourceFilePath, out var preview)
+                ? Result<AssetPreviewContentDto>.Success(preview)
+                : Result<AssetPreviewContentDto>.Failure(ApplicationErrors.BatchReplacementSourceFileReadFailed(sourceFilePath)));
+
+        public Task<Result<ReplacementTextChunkDto>> LoadFileTextChunkAsync(
+            string sourceFilePath,
+            int offset,
+            int length,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<Result<ReplacementTextLineRangeDto>> LoadFileTextLinesAsync(
+            string sourceFilePath,
+            int startLineIndex,
+            int lineCount,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<Result<ReplacementTextSearchResultDto>> SearchFileTextAsync(
+            string sourceFilePath,
+            string searchText,
+            int startLineIndex,
+            int maxMatchCount,
+            bool matchCase,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
     }
 
     private static WorkspaceChangeSummaryDto CreateWorkspaceChangeSummary(

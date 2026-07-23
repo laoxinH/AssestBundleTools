@@ -85,6 +85,19 @@ public sealed class AppPreferencesServiceTests
     }
 
     [Fact]
+    public void TrySetUseContentAwareSpineSkeletonFileExtension_ShouldPersistValue()
+    {
+        var store = new TestAppPreferencesPersistenceStore(CreateSnapshot("system"));
+        var service = new AppPreferencesService(store);
+
+        Assert.False(service.UseContentAwareSpineSkeletonFileExtension);
+        Assert.True(service.TrySetUseContentAwareSpineSkeletonFileExtension(true));
+        Assert.True(service.UseContentAwareSpineSkeletonFileExtension);
+        Assert.True(store.SavedSnapshot?.UseContentAwareSpineSkeletonFileExtension);
+        Assert.Equal(1, store.SaveCallCount);
+    }
+
+    [Fact]
     public void TrySetMainWindowSize_ShouldPersistEffectiveDimensions()
     {
         var store = new TestAppPreferencesPersistenceStore(CreateSnapshot("system"));

@@ -88,7 +88,12 @@ public sealed class ExtractSpineAssetGroupHandler : ICommandHandler<ExtractSpine
                     part.AssetId,
                     command.WorkspaceKey,
                     command.WorkspaceDataRootPath,
-                    BuildPartSuggestedOutputPath(groupOutputDirectory, part)),
+                    BuildPartSuggestedOutputPath(groupOutputDirectory, part),
+                    SpineSkeletonExtensionMode: part.Role == SpineAssetGroupPartRole.Skeleton
+                        ? command.UseContentAwareSkeletonFileExtension
+                            ? SpineSkeletonExportExtensionMode.ContentAware
+                            : SpineSkeletonExportExtensionMode.UniformSkel
+                        : SpineSkeletonExportExtensionMode.None),
                 cancellationToken);
             if (extractionResult.IsCancelled)
             {

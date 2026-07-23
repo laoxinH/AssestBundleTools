@@ -42,19 +42,25 @@ public sealed partial class BundleExplorerAssetExtractionActionHandlerTests
     }
 
     [Fact]
-    public async Task DragReplacement_ShouldMatchAndApplySpineExportDirectoryAsRelatedBatch()
+    public async Task DragReplacement_ShouldMatchAndApplyMultipleSpineFilesAsRelatedBatch()
     {
         var directoryPath = Path.Combine(Path.GetTempPath(), $"abt-spine-drop-{Guid.NewGuid():N}");
         Directory.CreateDirectory(directoryPath);
         try
         {
             var sourcePath = Path.Combine(directoryPath, "hero.png");
+            var unrelatedPath = Path.Combine(directoryPath, "readme.txt");
             File.WriteAllText(sourcePath, "png");
+            File.WriteAllText(unrelatedPath, "ignored");
             var gateway = new RecordingWorkspaceAssetOperationGateway();
             var handler = CreateDragReplacementHandler(gateway);
             var target = CreateTextureOnlySpineGroupEntry();
 
-            var draft = handler.PrepareSpineGroup(target, directoryPath);
+            var draft = await handler.PrepareSpineGroupAsync(
+                CreateWorkspaceSummary(),
+                target,
+                [unrelatedPath, sourcePath],
+                _ => throw new Xunit.Sdk.XunitException("Spine matching should succeed."));
             var applied = await handler.ApplySpineGroupAsync(
                 CreateWorkspaceSummary(),
                 Assert.IsType<SpineAssetGroupEditDraftViewModel>(draft),
@@ -62,6 +68,7 @@ public sealed partial class BundleExplorerAssetExtractionActionHandlerTests
                 _ => throw new Xunit.Sdk.XunitException("Spine replacement should succeed."));
 
             Assert.True(applied);
+            Assert.Equal(2, Assert.Single(gateway.SpineReplacementSourceMatchQueries).SourcePaths.Count);
             var command = Assert.Single(gateway.ReplaceAssetFromFileCommands);
             Assert.Equal(sourcePath, command.SourceFilePath);
             Assert.NotNull(command.OperationContext);

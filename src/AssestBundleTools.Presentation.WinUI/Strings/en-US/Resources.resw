@@ -3537,6 +3537,21 @@
   <data name="SettingsDiagnosticsPage.ElevatedDragDropCompatibility.SaveFailedMessage" xml:space="preserve">
     <value>Failed to save the elevated drag-and-drop compatibility preference. Check the app data directory permissions.</value>
   </data>
+  <data name="SettingsDiagnosticsPage.ExtractionOutput.Title" xml:space="preserve">
+    <value>Extraction and export</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.ExtractionOutput.Hint" xml:space="preserve">
+    <value>Control external resource file names without changing their payloads.</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.SpineSkeletonExtension.Label" xml:space="preserve">
+    <value>Use content-aware Spine skeleton extensions</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.SpineSkeletonExtension.Description" xml:space="preserve">
+    <value>Export JSON skeletons as .json and binary skeletons as .skel. When off, all skeletons use .skel.</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.SpineSkeletonExtension.SaveFailedMessage" xml:space="preserve">
+    <value>Failed to save the Spine skeleton extension preference.</value>
+  </data>
   <data name="SettingsDiagnosticsPage.RecentWorkspaceOpenBehavior.Label" xml:space="preserve">
     <value>Console recent-workspace open behavior</value>
   </data>
@@ -4319,6 +4334,9 @@
   </data>
   <data name="Error.Asset.Extract.PayloadUnavailable" xml:space="preserve">
     <value>No writable extraction payload could be generated: {0}</value>
+  </data>
+  <data name="Error.Asset.Replace.SpineSkeletonFormatMismatch" xml:space="preserve">
+    <value>The Spine skeleton formats are incompatible. Target: {TargetFormat}; source: {SourceFormat}. Select a file whose content format matches the target.</value>
   </data>
   <data name="Error.Asset.Preview.FullContentReferenceInvalid" xml:space="preserve">
     <value>The full preview content reference is invalid. Generate the preview again.</value>

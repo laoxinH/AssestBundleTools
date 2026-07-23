@@ -49,7 +49,8 @@ public sealed partial class BundleExplorerAssetExtractionActionHandlerTests
             new TestLocalizationService(),
             filePicker,
             backgroundTaskRunner,
-            backgroundTaskStatusService);
+            backgroundTaskStatusService,
+            useContentAwareSpineSkeletonFileExtensionProvider: static () => true);
         var workspaceSummary = CreateWorkspaceSummary();
         var firstEntry = CreateAssetEntry("asset-1", "hero");
         var secondEntry = CreateAssetEntry("asset-2", "hero_alpha");
@@ -64,6 +65,7 @@ public sealed partial class BundleExplorerAssetExtractionActionHandlerTests
 
         Assert.Equal(1, filePicker.BatchExtractionOutputDirectoryPickCount);
         Assert.Equal(2, gateway.ExtractAssetCommands.Count);
+        Assert.All(gateway.ExtractAssetCommands, static command => Assert.False(command.PreserveSuggestedFileName));
         Assert.All(
             gateway.ExtractAssetCommands,
             command => Assert.StartsWith(
@@ -216,7 +218,8 @@ public sealed partial class BundleExplorerAssetExtractionActionHandlerTests
             new TestLocalizationService(),
             filePicker,
             backgroundTaskRunner,
-            backgroundTaskStatusService);
+            backgroundTaskStatusService,
+            useContentAwareSpineSkeletonFileExtensionProvider: static () => true);
         var firstEntry = CreateSpineGroupEntry("group-1", "char_1001_amiya2.ab");
         var secondEntry = CreateSpineGroupEntry("group-2", "char_1001_amiya2.ab");
         var busyStates = new List<bool>();
@@ -232,6 +235,9 @@ public sealed partial class BundleExplorerAssetExtractionActionHandlerTests
         Assert.Equal(2, gateway.ExtractSpineAssetGroupCommands.Count);
         Assert.Equal(firstEntry.Item.GroupId, gateway.ExtractSpineAssetGroupCommands[0].GroupId);
         Assert.Equal(secondEntry.Item.GroupId, gateway.ExtractSpineAssetGroupCommands[1].GroupId);
+        Assert.All(
+            gateway.ExtractSpineAssetGroupCommands,
+            static command => Assert.True(command.UseContentAwareSkeletonFileExtension));
         Assert.All(
             gateway.ExtractSpineAssetGroupCommands,
             command => Assert.Equal(
@@ -790,6 +796,8 @@ public sealed partial class BundleExplorerAssetExtractionActionHandlerTests
 
         public List<ReplaceAssetFromFileCommand> ReplaceAssetFromFileCommands { get; } = [];
 
+        public List<MatchSpineReplacementSourcesQuery> SpineReplacementSourceMatchQueries { get; } = [];
+
         public List<UndoAssetReplacementCommand> UndoAssetReplacementCommands { get; } = [];
 
         public List<RedoAssetReplacementCommand> RedoAssetReplacementCommands { get; } = [];
@@ -909,6 +917,25 @@ public sealed partial class BundleExplorerAssetExtractionActionHandlerTests
                     "hero.png",
                     DateTimeOffset.UtcNow)));
         }
+
+        public Task<Result<IReadOnlyList<SpineReplacementSourceMatchDto>>> MatchSpineReplacementSourcesAsync(
+            MatchSpineReplacementSourcesQuery query,
+            CancellationToken cancellationToken = default)
+        {
+            SpineReplacementSourceMatchQueries.Add(query);
+            var sourcePath = query.SourcePaths.FirstOrDefault(static path =>
+                string.Equals(Path.GetExtension(path), ".png", StringComparison.OrdinalIgnoreCase));
+            var target = query.Group.TexturePageAssets.FirstOrDefault();
+            IReadOnlyList<SpineReplacementSourceMatchDto> matches = sourcePath is null || target is null
+                ? []
+                : [new SpineReplacementSourceMatchDto(target.AssetId, sourcePath)];
+            return Task.FromResult(Result<IReadOnlyList<SpineReplacementSourceMatchDto>>.Success(matches));
+        }
+
+        public Task<Result<SpineSkeletonFormatCompatibilityDto>> CheckSpineSkeletonReplacementCompatibilityAsync(
+            CheckSpineSkeletonReplacementCompatibilityQuery query,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
 
         public Task<Result<AssetSpriteEditAppliedResultDto>> ApplySpriteEditAsync(
             ApplySpriteEditCommand command,

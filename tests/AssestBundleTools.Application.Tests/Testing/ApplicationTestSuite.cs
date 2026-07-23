@@ -431,6 +431,10 @@ internal static partial class ApplicationTestSuite
             ReplacementWorkflowHandlerTests.GetWorkspaceReplacementCandidatesHandler_ShouldReturnFailure_WhenRegistryProvidesNoCandidates);
         await RunTestAsync(
             failures,
+            nameof(ReplacementWorkflowHandlerTests.MatchSpineReplacementSourcesHandler_ShouldUsePayloadFormat_NotFileExtension),
+            ReplacementWorkflowHandlerTests.MatchSpineReplacementSourcesHandler_ShouldUsePayloadFormat_NotFileExtension);
+        await RunTestAsync(
+            failures,
             nameof(ReplacementWorkflowHandlerTests.GetWorkspaceReplacementCandidatesHandler_ShouldReturnFailure_WhenTargetAssetDoesNotExist),
             ReplacementWorkflowHandlerTests.GetWorkspaceReplacementCandidatesHandler_ShouldReturnFailure_WhenTargetAssetDoesNotExist);
         await RunTestAsync(

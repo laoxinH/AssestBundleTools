@@ -63,6 +63,11 @@ public sealed partial class SettingsPreferencesView : UserControl
             UiText.Get(ResourceKeys.SettingsDiagnosticsAssetEditorCloseBehaviorOptionReturnToMainWindow),
             UiText.Get(ResourceKeys.SettingsDiagnosticsAssetEditorCloseBehaviorOptionDirectClose)
         };
+        ExtractionOutputTitleText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsExtractionOutputTitle);
+        ExtractionOutputHintText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsExtractionOutputHint);
+        SpineSkeletonExtensionLabelText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsSpineSkeletonExtensionLabel);
+        SpineSkeletonExtensionDescriptionText.Text = UiText.Get(
+            ResourceKeys.SettingsDiagnosticsSpineSkeletonExtensionDescription);
         OperationRecordsTitleText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsOperationRecordsTitle);
         OperationRecordsHintText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsOperationRecordsHint);
         OperationRecordLimitLabelText.Text = UiText.Get(ResourceKeys.SettingsDiagnosticsOperationRecordLimitLabel);

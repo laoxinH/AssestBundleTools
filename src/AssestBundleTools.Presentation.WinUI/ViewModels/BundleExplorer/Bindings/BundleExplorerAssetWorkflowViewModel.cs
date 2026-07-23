@@ -69,7 +69,8 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
         IAppBackgroundTaskStatusService? backgroundTaskStatusService = null,
         IBackgroundWorkScheduler? backgroundWorkScheduler = null,
         Func<int>? previewWorkerCountProvider = null,
-        IOnlineComponentInstallPromptCoordinator? onlineComponentInstallPromptCoordinator = null)
+        IOnlineComponentInstallPromptCoordinator? onlineComponentInstallPromptCoordinator = null,
+        Func<bool>? useContentAwareSpineSkeletonFileExtensionProvider = null)
     {
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
         ArgumentNullException.ThrowIfNull(workspaceExplorerGateway);
@@ -122,7 +123,8 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
             workspaceOperationChangeNotifier,
             workspaceBatchOperationsGateway,
             backgroundWorkScheduler,
-            OperationPendingTracker);
+            OperationPendingTracker,
+            useContentAwareSpineSkeletonFileExtensionProvider);
         var dragReplacementActionHandler = new BundleExplorerDragReplacementActionHandler(
             workspaceAssetOperationGateway,
             appLogService,

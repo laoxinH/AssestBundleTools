@@ -38,7 +38,8 @@ internal sealed class BundleExplorerAssetExtractionActionHandler
         IAppBackgroundTaskStatusService? backgroundTaskStatusService = null,
         IWorkspaceOperationChangeNotifier? operationChangeNotifier = null,
         IWorkspaceBatchOperationsGateway? workspaceBatchOperationsGateway = null,
-        IBackgroundWorkScheduler? backgroundWorkScheduler = null)
+        IBackgroundWorkScheduler? backgroundWorkScheduler = null,
+        Func<bool>? useContentAwareSpineSkeletonFileExtensionProvider = null)
     {
         _workspaceAssetOperationGateway = workspaceAssetOperationGateway ?? throw new ArgumentNullException(nameof(workspaceAssetOperationGateway));
         _appLogService = appLogService ?? throw new ArgumentNullException(nameof(appLogService));
@@ -52,7 +53,8 @@ internal sealed class BundleExplorerAssetExtractionActionHandler
             backgroundTaskRunner,
             backgroundTaskStatusService,
             operationChangeNotifier,
-            backgroundWorkScheduler);
+            backgroundWorkScheduler,
+            useContentAwareSpineSkeletonFileExtensionProvider);
     }
 
     public async Task ExtractSelectedAssetAsync(

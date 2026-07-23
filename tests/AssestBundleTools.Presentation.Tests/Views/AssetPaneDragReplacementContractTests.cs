@@ -55,7 +55,7 @@ public sealed class AssetPaneDragReplacementContractTests
 
         var assetConfirm = coordinator.IndexOf("ConfirmAsync(", StringComparison.Ordinal);
         var assetApply = coordinator.IndexOf("DragReplacementCommands.ApplyAssetAsync", StringComparison.Ordinal);
-        var spinePrepare = coordinator.IndexOf("DragReplacementCommands.PrepareSpineGroup", StringComparison.Ordinal);
+        var spinePrepare = coordinator.IndexOf("DragReplacementCommands.PrepareSpineGroupAsync", StringComparison.Ordinal);
         var spineConfirm = coordinator.IndexOf("ResourceKeys.AssetPaneDragReplacementSpineConfirmFormat", StringComparison.Ordinal);
         var spineApply = coordinator.IndexOf("DragReplacementCommands.ApplySpineGroupAsync", StringComparison.Ordinal);
 
@@ -63,9 +63,11 @@ public sealed class AssetPaneDragReplacementContractTests
         Assert.True(spinePrepare >= 0 && spinePrepare < spineConfirm && spineConfirm < spineApply);
         Assert.Contains("GetFileReplacementCandidateAsync", actionHandler);
         Assert.Contains("ApplyFileReplacementAsync", actionHandler);
-        Assert.Contains("CreateDirectoryMatchDraft", actionHandler);
+        Assert.Contains("CreateSourceMatchDraftAsync", actionHandler);
         Assert.Contains("ApplySpineEditAsync", actionHandler);
-        Assert.Contains("draft.ApplyDirectoryMatches(sourceDirectoryPath)", spineHandler);
+        Assert.Contains("MatchSpineReplacementSourcesAsync", spineHandler);
+        Assert.Contains("draft.ApplyMatches(matches)", spineHandler);
+        Assert.Contains("requireSpineSkeletonFormatMatch", spineHandler);
         Assert.Contains("BeginNotificationBatch", spineHandler);
         Assert.Contains("CreateSpineReplacementOperationContext(group, draft)", spineHandler);
     }

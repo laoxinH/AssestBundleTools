@@ -230,8 +230,8 @@ internal static partial class ExtractionWorkflowHandlerTests
             requestedPaths.All(path => path.Contains(@"D:\Selected\char_1001_amiya2", StringComparison.OrdinalIgnoreCase)),
             "All Spine group parts should be written into a dedicated group folder.");
         TestAssert.True(
-            requestedPaths.Any(static path => path.EndsWith("char_1001_amiya2.skel.bytes", StringComparison.OrdinalIgnoreCase)),
-            "The skeleton payload should keep its .skel.bytes extension.");
+            requestedPaths.Any(static path => path.EndsWith("char_1001_amiya2.skel", StringComparison.OrdinalIgnoreCase)),
+            "The default skeleton export should use the uniform .skel extension.");
         TestAssert.True(
             requestedPaths.Any(static path => path.EndsWith("char_1001_amiya2.atlas", StringComparison.OrdinalIgnoreCase)),
             "The atlas text should keep its atlas extension.");
@@ -252,6 +252,50 @@ internal static partial class ExtractionWorkflowHandlerTests
         TestAssert.Equal(4, operations[^1].Result?.CompletedCount ?? 0, "Spine group summary should record completed part count.");
         TestAssert.Equal(0, operations[^1].Result?.FailedCount ?? -1, "Spine group summary should record failed part count.");
         TestAssert.Equal(4, operations[^1].Result?.AffectedAssetIds?.Count ?? 0, "Spine group summary should list affected part asset ids.");
+    }
+
+    public static async Task ExtractSpineAssetGroupHandler_ShouldUseJsonExtension_ForJsonSkeleton_WhenPreferenceEnabled()
+    {
+        var workspaceId = new WorkspaceId("workspace-session-1");
+        var bundleId = new BundleId("bundle.char_1001_amiya2");
+        var registry = new TestWorkspaceSessionRegistry(workspaceId);
+        var parts = RegisterSpineGroupAssets(workspaceId, bundleId, registry);
+        var previewHandler = new TestAssetPreviewHandler();
+        RegisterSpineGroupPreviews(workspaceId, bundleId, parts, previewHandler);
+        previewHandler.RegisterPreview(CreateTextPreview(
+            workspaceId,
+            bundleId,
+            parts.SkeletonAssetId,
+            "json skeleton",
+            "{\"skeleton\":{\"spine\":\"4.2\"},\"bones\":[]}"));
+        var fileStore = new TestAssetExtractionFileStore();
+        var changeStore = new TestWorkspaceChangeStore();
+        var singleHandler = CreateHandler(registry, previewHandler, fileStore, changeStore);
+        var handler = new ExtractSpineAssetGroupHandler(
+            registry,
+            new LoadSpineAssetGroupDetailsHandler(registry, previewHandler),
+            singleHandler);
+
+        var result = await handler.HandleAsync(new ExtractSpineAssetGroupCommand(
+            workspaceId,
+            WorkspaceKey,
+            WorkspaceDataRootPath,
+            bundleId,
+            "spine-group:bundle.char_1001_amiya2:assets/characters/char_1001_amiya2",
+            @"D:\Selected",
+            UseContentAwareSkeletonFileExtension: true));
+
+        TestAssert.True(result.IsSuccess, "Content-aware Spine group extraction should succeed.");
+        TestAssert.True(
+            fileStore.Requests.Any(static request => request.SuggestedOutputPath.EndsWith(
+                "char_1001_amiya2.json",
+                StringComparison.OrdinalIgnoreCase)),
+            "A JSON skeleton should use a clean .json file name when the preference is enabled.");
+        TestAssert.True(
+            fileStore.Requests.All(static request => !request.SuggestedOutputPath.EndsWith(
+                ".skel.json",
+                StringComparison.OrdinalIgnoreCase)),
+            "The content-aware name should not retain a stale .skel segment.");
     }
 
     public static async Task ExtractSpineAssetGroupHandler_ShouldUseExtractionPlanDetailsMode()

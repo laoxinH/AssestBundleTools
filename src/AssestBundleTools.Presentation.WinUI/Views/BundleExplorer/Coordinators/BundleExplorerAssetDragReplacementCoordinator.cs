@@ -95,17 +95,16 @@ internal sealed class BundleExplorerAssetDragReplacementCoordinator
         SpineAssetGroupEntryViewModel target,
         IReadOnlyList<string> sourcePaths)
     {
-        if (sourcePaths.Count != 1)
+        if (sourcePaths.Count == 0)
         {
             ShowInvalidSourceWarning();
             return;
         }
 
-        var sourceDirectoryPath = sourcePaths[0];
-        AppendReceivedLog(target.DisplayName, sourceDirectoryPath);
-        var draft = _owner.ViewModel.DragReplacementCommands.PrepareSpineGroup(
+        AppendReceivedLog(target.DisplayName, string.Join("; ", sourcePaths));
+        var draft = await _owner.ViewModel.DragReplacementCommands.PrepareSpineGroupAsync(
             target,
-            sourceDirectoryPath);
+            sourcePaths);
         if (draft is null)
         {
             ShowWarning(_localizationService.GetFormattedString(
@@ -119,13 +118,18 @@ internal sealed class BundleExplorerAssetDragReplacementCoordinator
                     ResourceKeys.AssetPaneDragReplacementSpineConfirmFormat,
                     target.DisplayName,
                     draft.ChangedParts.Count,
-                    Path.GetFileName(sourceDirectoryPath))))
+                    ResolveSourceLabel(sourcePaths))))
         {
             return;
         }
 
         await _owner.ViewModel.DragReplacementCommands.ApplySpineGroupAsync(draft);
     }
+
+    private static string ResolveSourceLabel(IReadOnlyList<string> sourcePaths) =>
+        sourcePaths.Count == 1
+            ? Path.GetFileName(sourcePaths[0].Trim().TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar))
+            : string.Join(", ", sourcePaths.Select(Path.GetFileName).Where(static name => !string.IsNullOrWhiteSpace(name)));
 
     private async Task<bool> ConfirmAsync(string content)
     {

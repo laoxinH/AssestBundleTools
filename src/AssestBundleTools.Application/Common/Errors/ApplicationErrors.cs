@@ -316,6 +316,17 @@ public static class ApplicationErrors
                 ("OutputPath", outputPath),
                 ("Detail", detail)));
 
+    public static AppError SpineSkeletonFormatMismatch(string targetFormat, string sourceFormat) =>
+        new(
+            code: "Asset.Replace.SpineSkeletonFormatMismatch",
+            category: ErrorCategory.Validation,
+            severity: ErrorSeverity.Warning,
+            messageToken: "Error.Asset.Replace.SpineSkeletonFormatMismatch",
+            parameters: CreateParameters(
+                ("TargetFormat", targetFormat),
+                ("SourceFormat", sourceFormat)),
+            isUserActionable: true);
+
     public static AppError BundleExportManifestWriteFailed(string outputPath, string? detail = null) =>
         new(
             code: "Bundle.Save.ManifestWriteFailed",

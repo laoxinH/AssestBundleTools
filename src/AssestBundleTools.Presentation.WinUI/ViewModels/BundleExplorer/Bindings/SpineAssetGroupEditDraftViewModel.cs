@@ -1,7 +1,6 @@
 using System.Collections.ObjectModel;
-using System.IO;
 using AssestBundleTools.Application.Assets.Dtos;
-using AssestBundleTools.Application.Replacement.Services;
+using AssestBundleTools.Application.Replacement.Dtos;
 using AssestBundleTools.Domain.Assets;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
@@ -89,30 +88,19 @@ public sealed class SpineAssetGroupEditDraftViewModel : ObservableObject
         return true;
     }
 
-    public bool ApplyDirectoryMatches(string directoryPath)
+    public bool ApplyMatches(IReadOnlyList<SpineReplacementSourceMatchDto> matches)
     {
-        if (string.IsNullOrWhiteSpace(directoryPath) ||
-            !Directory.Exists(directoryPath))
-        {
-            return false;
-        }
-
-        var files = Directory.EnumerateFiles(directoryPath.Trim())
-            .OrderBy(static path => Path.GetFileName(path), StringComparer.OrdinalIgnoreCase)
-            .Select(static path => new SpineEditDirectoryCandidate(
-                path,
-                EnumerateMatchKeys(Path.GetFileName(path)).ToHashSet(StringComparer.OrdinalIgnoreCase)))
-            .ToArray();
+        ArgumentNullException.ThrowIfNull(matches);
+        var matchesByAssetId = matches
+            .GroupBy(static match => match.TargetAssetId.Value, StringComparer.Ordinal)
+            .ToDictionary(static group => group.Key, static group => group.First().SourceFilePath, StringComparer.Ordinal);
         var changed = false;
         foreach (var part in Parts)
         {
-            var partKeys = EnumeratePartMatchKeys(part).ToArray();
-            var matchedFile = files.FirstOrDefault(candidate =>
-                IsCandidateCompatible(part, candidate.FilePath) &&
-                partKeys.Any(candidate.MatchKeys.Contains));
-            if (matchedFile is not null)
+            if (matchesByAssetId.TryGetValue(part.AssetId, out var sourceFilePath) &&
+                !string.Equals(part.SelectedSourceFilePath, sourceFilePath, StringComparison.Ordinal))
             {
-                part.SetSelectedSourceFilePath(matchedFile.FilePath);
+                part.SetSelectedSourceFilePath(sourceFilePath);
                 changed = true;
             }
         }
@@ -250,67 +238,6 @@ public sealed class SpineAssetGroupEditDraftViewModel : ObservableObject
         }
     }
 
-    private static string NormalizeMatchKey(string? value) =>
-        string.IsNullOrWhiteSpace(value)
-            ? string.Empty
-            : value.Trim().ToLowerInvariant();
-
-    private static IEnumerable<string> EnumeratePartMatchKeys(SpineAssetGroupEditPartViewModel part)
-    {
-        foreach (var key in EnumerateMatchKeys(part.DisplayName))
-        {
-            yield return key;
-        }
-
-        foreach (var key in EnumerateMatchKeys(Path.GetFileName(NormalizePathSeparators(part.Part.AssetPath))))
-        {
-            yield return key;
-        }
-    }
-
-    private static IEnumerable<string> EnumerateMatchKeys(string? value)
-    {
-        var current = NormalizeMatchKey(value);
-        if (string.IsNullOrEmpty(current))
-        {
-            yield break;
-        }
-
-        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        while (!string.IsNullOrEmpty(current) && seen.Add(current))
-        {
-            yield return current;
-
-            var withoutExtension = NormalizeMatchKey(Path.GetFileNameWithoutExtension(current));
-            if (string.Equals(current, withoutExtension, StringComparison.OrdinalIgnoreCase))
-            {
-                yield break;
-            }
-
-            current = withoutExtension;
-        }
-    }
-
-    private static bool IsCandidateCompatible(SpineAssetGroupEditPartViewModel part, string sourceFilePath) =>
-        part.Part.Role switch
-        {
-            SpineAssetGroupPartRole.Skeleton => HasExtension(sourceFilePath, ".skel") ||
-                                                HasExtension(sourceFilePath, ".json") ||
-                                                HasExtension(sourceFilePath, ".bytes"),
-            SpineAssetGroupPartRole.Atlas => HasExtension(sourceFilePath, ".atlas") ||
-                                             HasExtension(sourceFilePath, ".txt"),
-            SpineAssetGroupPartRole.TexturePage => ReplacementFileTypeCatalog.IsFilePathCompatible(
-                AssetType.Texture2D,
-                sourceFilePath),
-            _ => ReplacementFileTypeCatalog.IsFilePathCompatible(part.AssetType, sourceFilePath)
-        };
-
-    private static bool HasExtension(string sourceFilePath, string extension) =>
-        string.Equals(Path.GetExtension(sourceFilePath), extension, StringComparison.OrdinalIgnoreCase);
-
-    private static string NormalizePathSeparators(string? value) =>
-        string.IsNullOrWhiteSpace(value) ? string.Empty : value.Replace('/', Path.DirectorySeparatorChar);
-
     private static string CreateBatchId() => string.Concat("spine_batch_", Guid.NewGuid().ToString("N"));
 
     private static string CreateRelationId() => string.Concat("spine_relation_", Guid.NewGuid().ToString("N"));
@@ -319,5 +246,4 @@ public sealed class SpineAssetGroupEditDraftViewModel : ObservableObject
 
     private sealed record SpineEditDraftSnapshot(IReadOnlyDictionary<string, string?> SourceFilePaths);
 
-    private sealed record SpineEditDirectoryCandidate(string FilePath, IReadOnlySet<string> MatchKeys);
 }

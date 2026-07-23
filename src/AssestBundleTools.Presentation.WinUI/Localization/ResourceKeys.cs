@@ -436,6 +436,11 @@ public static class ResourceKeys
     public const string SettingsDiagnosticsElevatedDragDropCompatibilityLabel = "SettingsDiagnosticsPage.ElevatedDragDropCompatibility.Label";
     public const string SettingsDiagnosticsElevatedDragDropCompatibilityDescription = "SettingsDiagnosticsPage.ElevatedDragDropCompatibility.Description";
     public const string SettingsDiagnosticsElevatedDragDropCompatibilitySaveFailedMessage = "SettingsDiagnosticsPage.ElevatedDragDropCompatibility.SaveFailedMessage";
+    public const string SettingsDiagnosticsSpineSkeletonExtensionLabel = "SettingsDiagnosticsPage.SpineSkeletonExtension.Label";
+    public const string SettingsDiagnosticsSpineSkeletonExtensionDescription = "SettingsDiagnosticsPage.SpineSkeletonExtension.Description";
+    public const string SettingsDiagnosticsSpineSkeletonExtensionSaveFailedMessage = "SettingsDiagnosticsPage.SpineSkeletonExtension.SaveFailedMessage";
+    public const string SettingsDiagnosticsExtractionOutputTitle = "SettingsDiagnosticsPage.ExtractionOutput.Title";
+    public const string SettingsDiagnosticsExtractionOutputHint = "SettingsDiagnosticsPage.ExtractionOutput.Hint";
     public const string SettingsDiagnosticsRecentWorkspaceOpenBehaviorLabel = "SettingsDiagnosticsPage.RecentWorkspaceOpenBehavior.Label";
     public const string SettingsDiagnosticsRecentWorkspaceOpenBehaviorDescription = "SettingsDiagnosticsPage.RecentWorkspaceOpenBehavior.Description";
     public const string SettingsDiagnosticsRecentWorkspaceOpenBehaviorRowDescription = "SettingsDiagnosticsPage.RecentWorkspaceOpenBehavior.RowDescription";

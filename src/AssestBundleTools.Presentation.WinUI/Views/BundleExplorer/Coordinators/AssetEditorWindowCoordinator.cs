@@ -409,7 +409,8 @@ public sealed partial class BundleExplorerPage
                 App.CurrentApp.BackgroundWorkScheduler,
                 () => App.CurrentApp.AppPreferencesService.PreviewWorkerCount,
                 _owner.ViewModel.AssetWorkflow.OperationPendingTracker,
-                App.CurrentApp.OnlineComponentInstallPromptCoordinator);
+                App.CurrentApp.OnlineComponentInstallPromptCoordinator,
+                () => App.CurrentApp.AppPreferencesService.UseContentAwareSpineSkeletonFileExtension);
             var window = new AssetEditorWindow(
                 viewModel,
                 OpenDocumentInNewWindowFromEditorAsync,

@@ -120,6 +120,10 @@ internal static partial class ApplicationTestSuite
             ExtractionWorkflowHandlerTests.ExtractSpineAssetGroupHandler_ShouldExtractSkeletonAtlasTextureAndAlphaPages);
         await RunTestAsync(
             failures,
+            nameof(ExtractionWorkflowHandlerTests.ExtractSpineAssetGroupHandler_ShouldUseJsonExtension_ForJsonSkeleton_WhenPreferenceEnabled),
+            ExtractionWorkflowHandlerTests.ExtractSpineAssetGroupHandler_ShouldUseJsonExtension_ForJsonSkeleton_WhenPreferenceEnabled);
+        await RunTestAsync(
+            failures,
             nameof(ExtractionWorkflowHandlerTests.ExtractSpineAssetGroupHandler_ShouldUseExtractionPlanDetailsMode),
             ExtractionWorkflowHandlerTests.ExtractSpineAssetGroupHandler_ShouldUseExtractionPlanDetailsMode);
         await RunTestAsync(

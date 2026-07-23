@@ -184,14 +184,16 @@ internal sealed class AssetEditorWindowAssetActionCoordinator
 
     public async Task<bool> SelectSpineEditBatchSourceDirectoryAsync()
     {
-        if (!TryGetActiveSpineGroupEditContext(out _, out var spineGroupTab))
+        if (!TryGetActiveSpineGroupEditContext(out var workspaceSummary, out var spineGroupTab))
         {
             return false;
         }
 
         return await _modificationActionHandler.SelectSpineEditBatchSourceDirectoryAsync(
+            workspaceSummary,
             spineGroupTab,
-            _setBusy);
+            _setBusy,
+            _operationFeedbackBridge.AppendResultFailure);
     }
 
     public async Task SelectSpriteTextureReplacementSourceAsync()

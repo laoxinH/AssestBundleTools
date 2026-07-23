@@ -471,7 +471,8 @@ public sealed class ExtractWorkspaceAssetsHandler : ICommandHandler<ExtractWorks
                 command.WorkspaceDataRootPath ?? string.Empty,
                 item.SpineGroup.BundleId,
                 item.SpineGroup.GroupId,
-                item.SpineGroup.SuggestedOutputDirectory),
+                item.SpineGroup.SuggestedOutputDirectory,
+                command.UseContentAwareSpineSkeletonFileExtension),
             cancellationToken);
         if (result.IsCancelled)
         {

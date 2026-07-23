@@ -1,5 +1,6 @@
 using AssestBundleTools.Domain.Bundles;
 using AssestBundleTools.Domain.Workspace;
+using AssestBundleTools.Application.Extraction.Dtos;
 
 namespace AssestBundleTools.Application.Extraction.Commands;
 
@@ -12,4 +13,5 @@ public sealed record ExtractSpineAssetGroupCommand(
     string WorkspaceDataRootPath,
     BundleId BundleId,
     string GroupId,
-    string OutputDirectory);
+    string OutputDirectory,
+    bool UseContentAwareSkeletonFileExtension = false);

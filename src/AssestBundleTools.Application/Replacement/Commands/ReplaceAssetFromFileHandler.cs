@@ -14,58 +14,96 @@ public sealed class ReplaceAssetFromFileHandler : ICommandHandler<ReplaceAssetFr
 {
     private readonly IWorkspaceSessionRegistry _workspaceSessionRegistry;
     private readonly WorkspaceReplacementOperationRecorder? _operationRecorder;
+    private readonly SpineSkeletonReplacementCompatibilityService? _spineSkeletonCompatibilityService;
 
     public ReplaceAssetFromFileHandler(
         IWorkspaceSessionRegistry workspaceSessionRegistry,
-        WorkspaceReplacementOperationRecorder? operationRecorder = null)
+        WorkspaceReplacementOperationRecorder? operationRecorder = null,
+        SpineSkeletonReplacementCompatibilityService? spineSkeletonCompatibilityService = null)
     {
         _workspaceSessionRegistry = workspaceSessionRegistry ?? throw new ArgumentNullException(nameof(workspaceSessionRegistry));
         _operationRecorder = operationRecorder;
+        _spineSkeletonCompatibilityService = spineSkeletonCompatibilityService;
     }
 
-    public Task<Result<AssetFileReplacementResultDto>> HandleAsync(
+    public async Task<Result<AssetFileReplacementResultDto>> HandleAsync(
         ReplaceAssetFromFileCommand command,
         CancellationToken cancellationToken = default)
     {
         if (cancellationToken.IsCancellationRequested)
         {
-            return Task.FromResult(Result<AssetFileReplacementResultDto>.Cancelled());
+            return Result<AssetFileReplacementResultDto>.Cancelled();
         }
 
         if (string.IsNullOrWhiteSpace(command.WorkspaceId.Value))
         {
-            return Task.FromResult(Result<AssetFileReplacementResultDto>.Failure(ApplicationErrors.WorkspaceIdRequired()));
+            return Result<AssetFileReplacementResultDto>.Failure(ApplicationErrors.WorkspaceIdRequired());
         }
 
         if (string.IsNullOrWhiteSpace(command.TargetBundleId.Value))
         {
-            return Task.FromResult(Result<AssetFileReplacementResultDto>.Failure(ApplicationErrors.BundleIdRequired()));
+            return Result<AssetFileReplacementResultDto>.Failure(ApplicationErrors.BundleIdRequired());
         }
 
         if (string.IsNullOrWhiteSpace(command.TargetAssetId.Value))
         {
-            return Task.FromResult(Result<AssetFileReplacementResultDto>.Failure(ApplicationErrors.AssetIdRequired()));
+            return Result<AssetFileReplacementResultDto>.Failure(ApplicationErrors.AssetIdRequired());
         }
 
         if (string.IsNullOrWhiteSpace(command.SourceFilePath))
         {
-            return Task.FromResult(Result<AssetFileReplacementResultDto>.Failure(ApplicationErrors.SourceFilePathRequired()));
+            return Result<AssetFileReplacementResultDto>.Failure(ApplicationErrors.SourceFilePathRequired());
         }
 
         if (!_workspaceSessionRegistry.ContainsWorkspace(command.WorkspaceId))
         {
-            return Task.FromResult(Result<AssetFileReplacementResultDto>.Failure(ApplicationErrors.WorkspaceNotFound(command.WorkspaceId)));
+            return Result<AssetFileReplacementResultDto>.Failure(ApplicationErrors.WorkspaceNotFound(command.WorkspaceId));
         }
 
         if (!_workspaceSessionRegistry.TryGetAssetDetails(command.WorkspaceId, command.TargetBundleId, command.TargetAssetId, out var targetDetails))
         {
-            return Task.FromResult(Result<AssetFileReplacementResultDto>.Failure(ApplicationErrors.AssetNotFound(command.TargetAssetId)));
+            return Result<AssetFileReplacementResultDto>.Failure(ApplicationErrors.AssetNotFound(command.TargetAssetId));
         }
 
         if (targetDetails!.AssetType != command.SourceAssetType)
         {
-            return Task.FromResult(Result<AssetFileReplacementResultDto>.Failure(
-                ApplicationErrors.AssetTypeMismatch(command.SourceAssetType, targetDetails.AssetType)));
+            return Result<AssetFileReplacementResultDto>.Failure(
+                ApplicationErrors.AssetTypeMismatch(command.SourceAssetType, targetDetails.AssetType));
+        }
+
+        if (command.RequireSpineSkeletonFormatMatch)
+        {
+            if (_spineSkeletonCompatibilityService is null)
+            {
+                return Result<AssetFileReplacementResultDto>.Failure(
+                    ApplicationErrors.SpineSkeletonFormatMismatch("Unknown", "Unknown"));
+            }
+
+            var compatibilityResult = await _spineSkeletonCompatibilityService.CheckAsync(
+                command.WorkspaceId,
+                command.WorkspaceKey ?? string.Empty,
+                command.WorkspaceDataRootPath ?? string.Empty,
+                command.TargetBundleId,
+                command.TargetAssetId,
+                command.SourceFilePath,
+                cancellationToken);
+            if (compatibilityResult.IsCancelled)
+            {
+                return Result<AssetFileReplacementResultDto>.Cancelled();
+            }
+
+            if (!compatibilityResult.IsSuccess || compatibilityResult.Value is null)
+            {
+                return Result<AssetFileReplacementResultDto>.Failure(compatibilityResult.Errors);
+            }
+
+            if (!compatibilityResult.Value.IsCompatible)
+            {
+                return Result<AssetFileReplacementResultDto>.Failure(
+                    ApplicationErrors.SpineSkeletonFormatMismatch(
+                        compatibilityResult.Value.TargetFormat.ToString(),
+                        compatibilityResult.Value.SourceFormat.ToString()));
+            }
         }
 
         _workspaceSessionRegistry.TryReplaceAssetFromFile(
@@ -78,6 +116,6 @@ public sealed class ReplaceAssetFromFileHandler : ICommandHandler<ReplaceAssetFr
 
         _operationRecorder?.RecordFileReplacement(command, targetDetails!, replacementResult!);
 
-        return Task.FromResult(Result<AssetFileReplacementResultDto>.Success(replacementResult!));
+        return Result<AssetFileReplacementResultDto>.Success(replacementResult!);
     }
 }

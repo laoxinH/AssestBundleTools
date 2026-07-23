@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Assets.Queries;
+using AssestBundleTools.Application.Assets.Services;
 using AssestBundleTools.Application.Common.Abstractions;
 using AssestBundleTools.Application.Common.Errors;
 using AssestBundleTools.Application.Common.Results;
@@ -65,7 +66,8 @@ public sealed class WorkspaceAssetExtractionExporter
             command.SuggestedOutputPath ?? extractionResult.SuggestedOutputPath,
             targetDetails,
             preview,
-            command.PreserveSuggestedFileName);
+            command.PreserveSuggestedFileName,
+            command.SpineSkeletonExtensionMode);
         var payload = ResolvePayload(preview, targetDetails, suggestedOutputPath);
         if (payload.Content is not { Length: > 0 } &&
             string.IsNullOrWhiteSpace(payload.SourcePayloadFilePath))
@@ -186,7 +188,8 @@ public sealed class WorkspaceAssetExtractionExporter
         string suggestedOutputPath,
         AssetDetailsDto targetDetails,
         AssetPreviewDto preview,
-        bool preserveSuggestedFileName)
+        bool preserveSuggestedFileName,
+        SpineSkeletonExportExtensionMode spineSkeletonExtensionMode)
     {
         if (preserveSuggestedFileName)
         {
@@ -194,7 +197,11 @@ public sealed class WorkspaceAssetExtractionExporter
         }
 
         var directory = Path.GetDirectoryName(suggestedOutputPath);
-        var fileName = BuildOutputFileName(targetDetails, preview, Path.GetFileName(suggestedOutputPath));
+        var fileName = BuildOutputFileName(
+            targetDetails,
+            preview,
+            Path.GetFileName(suggestedOutputPath),
+            spineSkeletonExtensionMode);
         return string.IsNullOrWhiteSpace(directory)
             ? fileName
             : Path.Combine(directory, fileName);
@@ -203,10 +210,19 @@ public sealed class WorkspaceAssetExtractionExporter
     private static string BuildOutputFileName(
         AssetDetailsDto targetDetails,
         AssetPreviewDto preview,
-        string? suggestedFileName)
+        string? suggestedFileName,
+        SpineSkeletonExportExtensionMode spineSkeletonExtensionMode)
     {
         var defaultSourceName = ResolveSourceFileName(targetDetails);
-        var extension = ResolveOutputExtension(defaultSourceName, preview);
+        var extension = ResolveOutputExtension(defaultSourceName, preview, spineSkeletonExtensionMode);
+        if (spineSkeletonExtensionMode != SpineSkeletonExportExtensionMode.None)
+        {
+            var skeletonStem = ResolveSpineSkeletonFileNameStem(suggestedFileName) ??
+                               ResolveSpineSkeletonFileNameStem(defaultSourceName) ??
+                               targetDetails.AssetId.Value;
+            return $"{skeletonStem}{extension}";
+        }
+
         var sourceName = ShouldPreferSourceFileName(targetDetails, preview, defaultSourceName, extension, suggestedFileName)
             ? defaultSourceName
             : ResolveSuggestedFileNameStem(suggestedFileName, extension) ?? defaultSourceName;
@@ -217,6 +233,26 @@ public sealed class WorkspaceAssetExtractionExporter
         }
 
         return $"{sourceName}{extension}";
+    }
+
+    private static string? ResolveSpineSkeletonFileNameStem(string? fileName)
+    {
+        if (string.IsNullOrWhiteSpace(fileName))
+        {
+            return null;
+        }
+
+        var stem = Path.GetFileName(fileName.Trim());
+        foreach (var extension in new[] { ".skel.bytes", ".skel", ".json", ".bytes" })
+        {
+            if (stem.EndsWith(extension, StringComparison.OrdinalIgnoreCase))
+            {
+                stem = stem[..^extension.Length];
+                break;
+            }
+        }
+
+        return string.IsNullOrWhiteSpace(stem) ? null : stem;
     }
 
     private static bool ShouldPreferSourceFileName(
@@ -298,7 +334,20 @@ public sealed class WorkspaceAssetExtractionExporter
             : fileName.Trim();
     }
 
-    private static string ResolveOutputExtension(string sourceName, AssetPreviewDto preview) =>
+    private static string ResolveOutputExtension(
+        string sourceName,
+        AssetPreviewDto preview,
+        SpineSkeletonExportExtensionMode spineSkeletonExtensionMode) =>
+        spineSkeletonExtensionMode switch
+        {
+            SpineSkeletonExportExtensionMode.UniformSkel => ".skel",
+            SpineSkeletonExportExtensionMode.ContentAware
+                when SpineSkeletonPayloadFormatClassifier.Classify(preview) == SpineSkeletonAssetFormat.Json => ".json",
+            SpineSkeletonExportExtensionMode.ContentAware => ".skel",
+            _ => ResolveDefaultOutputExtension(sourceName, preview)
+        };
+
+    private static string ResolveDefaultOutputExtension(string sourceName, AssetPreviewDto preview) =>
         preview.Kind switch
         {
             AssetPreviewKind.Image => ".png",

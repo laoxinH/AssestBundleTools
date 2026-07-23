@@ -302,7 +302,9 @@ public sealed partial class BundleExplorerPage
                 WorkspaceKey: workspaceKey,
                 WorkspaceDataRootPath: workspaceDataRootPath,
                 SelectedBundleIds: submission.SelectedBundleIds,
-                SelectedCategories: submission.SelectedCategories);
+                SelectedCategories: submission.SelectedCategories,
+                UseContentAwareSpineSkeletonFileExtension:
+                    App.CurrentApp.AppPreferencesService.UseContentAwareSpineSkeletonFileExtension);
             Result<WorkspaceBatchExtractionResultDto> result;
             try
             {

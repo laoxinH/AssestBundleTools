@@ -55,7 +55,8 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
             App.CurrentApp.BackgroundWorkScheduler,
             App.CurrentApp.WorkspaceCacheMaintenanceGateway,
             () => App.CurrentApp.AppPreferencesService.PreviewWorkerCount,
-            App.CurrentApp.OnlineComponentInstallPromptCoordinator);
+            App.CurrentApp.OnlineComponentInstallPromptCoordinator,
+            () => App.CurrentApp.AppPreferencesService.UseContentAwareSpineSkeletonFileExtension);
 
         InitializeComponent();
         RegisterWorkspaceImportDropHandlers();
@@ -68,7 +69,9 @@ public sealed partial class BundleExplorerPage : Page, IAssetDocumentTabDragHost
             App.CurrentApp.BackgroundTaskRunner,
             App.CurrentApp.AppBackgroundTaskStatusService,
             App.CurrentApp.WorkspaceOperationChangeNotifier,
-            App.CurrentApp.BackgroundWorkScheduler);
+            App.CurrentApp.BackgroundWorkScheduler,
+            useContentAwareSpineSkeletonFileExtensionProvider:
+                () => App.CurrentApp.AppPreferencesService.UseContentAwareSpineSkeletonFileExtension);
         PrimaryAssetPaneView.DragExportRequested += OnPrimaryPaneDragExportRequested;
         PrimaryAssetPaneView.DragExportCleanupRequested += OnPrimaryPaneDragExportCleanupRequested;
         PrimaryAssetPaneView.ElevatedDragExportAttempted += OnPrimaryPaneElevatedDragExportAttempted;

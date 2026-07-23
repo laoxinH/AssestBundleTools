@@ -16,4 +16,5 @@ public sealed record ReplaceAssetFromFileCommand(
     AssetType SourceAssetType,
     string? WorkspaceKey = null,
     string? WorkspaceDataRootPath = null,
-    ReplacementOperationContextDto? OperationContext = null);
+    ReplacementOperationContextDto? OperationContext = null,
+    bool RequireSpineSkeletonFormatMatch = false);

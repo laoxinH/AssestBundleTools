@@ -3537,6 +3537,21 @@
   <data name="SettingsDiagnosticsPage.ElevatedDragDropCompatibility.SaveFailedMessage" xml:space="preserve">
     <value>保存管理员拖放兼容偏好失败，请检查应用数据目录权限。</value>
   </data>
+  <data name="SettingsDiagnosticsPage.ExtractionOutput.Title" xml:space="preserve">
+    <value>提取与导出</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.ExtractionOutput.Hint" xml:space="preserve">
+    <value>控制外部资源文件的命名方式，不改变资源载荷。</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.SpineSkeletonExtension.Label" xml:space="preserve">
+    <value>按内容区分 Spine 骨架扩展名</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.SpineSkeletonExtension.Description" xml:space="preserve">
+    <value>开启后 JSON 骨架导出为 .json，二进制骨架导出为 .skel；关闭时统一导出为 .skel。</value>
+  </data>
+  <data name="SettingsDiagnosticsPage.SpineSkeletonExtension.SaveFailedMessage" xml:space="preserve">
+    <value>保存 Spine 骨架扩展名设置失败。</value>
+  </data>
   <data name="SettingsDiagnosticsPage.RecentWorkspaceOpenBehavior.Label" xml:space="preserve">
     <value>控制台最近工作区打开方式</value>
   </data>
@@ -4319,6 +4334,9 @@
   </data>
   <data name="Error.Asset.Extract.PayloadUnavailable" xml:space="preserve">
     <value>未能生成可写出的提取内容：{0}</value>
+  </data>
+  <data name="Error.Asset.Replace.SpineSkeletonFormatMismatch" xml:space="preserve">
+    <value>Spine 骨架格式不兼容：目标为 {TargetFormat}，来源为 {SourceFormat}。请选择与目标内容格式一致的文件。</value>
   </data>
   <data name="Error.Asset.Preview.FullContentReferenceInvalid" xml:space="preserve">
     <value>完整预览内容引用无效，请重新生成预览。</value>

@@ -40,7 +40,8 @@ internal sealed class BundleExplorerAssetModificationActionHandler
         IWorkspaceOperationChangeNotifier? operationChangeNotifier = null,
         IWorkspaceBatchOperationsGateway? workspaceBatchOperationsGateway = null,
         IBackgroundWorkScheduler? backgroundWorkScheduler = null,
-        WorkspaceOperationPendingTracker? operationPendingTracker = null)
+        WorkspaceOperationPendingTracker? operationPendingTracker = null,
+        Func<bool>? useContentAwareSpineSkeletonFileExtensionProvider = null)
     {
         _workspaceAssetOperationGateway = workspaceAssetOperationGateway ?? throw new ArgumentNullException(nameof(workspaceAssetOperationGateway));
         _appLogService = appLogService ?? throw new ArgumentNullException(nameof(appLogService));
@@ -63,7 +64,8 @@ internal sealed class BundleExplorerAssetModificationActionHandler
             backgroundTaskStatusService,
             operationChangeNotifier,
             workspaceBatchOperationsGateway,
-            backgroundWorkScheduler);
+            backgroundWorkScheduler,
+            useContentAwareSpineSkeletonFileExtensionProvider);
         _spriteEditActionHandler = new BundleExplorerSpriteEditActionHandler(
             _workspaceAssetOperationGateway,
             _appLogService,
@@ -88,6 +90,7 @@ internal sealed class BundleExplorerAssetModificationActionHandler
             operationPendingTracker);
         _spineEditActionHandler = new BundleExplorerSpineEditActionHandler(
             _fileReplacementActionExecutor,
+            _workspaceAssetOperationGateway,
             filePickerService,
             _appLogService,
             _appNotificationService,
@@ -423,11 +426,15 @@ internal sealed class BundleExplorerAssetModificationActionHandler
             appendResultFailure);
 
     public Task<bool> SelectSpineEditBatchSourceDirectoryAsync(
+        WorkspaceSummaryDto workspaceSummary,
         SpineAssetGroupDocumentTabViewModel spineGroupTab,
-        Action<bool> setBusyState) =>
+        Action<bool> setBusyState,
+        Action<IReadOnlyList<AppError>> appendResultFailure) =>
         _spineEditActionHandler.SelectSpineEditBatchSourceDirectoryAsync(
+            workspaceSummary,
             spineGroupTab,
-            setBusyState);
+            setBusyState,
+            appendResultFailure);
 
     public Task<bool> ApplySpineEditAsync(
         WorkspaceSummaryDto workspaceSummary,

@@ -20,7 +20,8 @@ public sealed record AppPreferencesSnapshot(
     bool ElevatedDragDropCompatibilityEnabled = false,
     double? MainWindowWidth = null,
     double? MainWindowHeight = null,
-    string Theme = AppPreferencesSnapshot.DefaultTheme)
+    string Theme = AppPreferencesSnapshot.DefaultTheme,
+    bool UseContentAwareSpineSkeletonFileExtension = false)
 {
     public const long DefaultBundleArtifactCacheMaximumSizeInBytes = 4L * 1024L * 1024L * 1024L;
     public const int DefaultOperationRecordLimit = 250;
@@ -41,5 +42,6 @@ public sealed record AppPreferencesSnapshot(
         ElevatedDragDropCompatibilityEnabled: false,
         MainWindowWidth: null,
         MainWindowHeight: null,
-        Theme: DefaultTheme);
+        Theme: DefaultTheme,
+        UseContentAwareSpineSkeletonFileExtension: false);
 }

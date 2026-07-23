@@ -62,7 +62,8 @@ public sealed partial class BundleExplorerViewModel : ObservableObject, IDisposa
         IBackgroundWorkScheduler? backgroundWorkScheduler = null,
         IWorkspaceCacheMaintenanceGateway? workspaceCacheMaintenanceGateway = null,
         Func<int>? previewWorkerCountProvider = null,
-        IOnlineComponentInstallPromptCoordinator? onlineComponentInstallPromptCoordinator = null)
+        IOnlineComponentInstallPromptCoordinator? onlineComponentInstallPromptCoordinator = null,
+        Func<bool>? useContentAwareSpineSkeletonFileExtensionProvider = null)
     {
         ArgumentNullException.ThrowIfNull(workspaceExplorerGateway);
         ArgumentNullException.ThrowIfNull(workspaceAssetInspectionGateway);
@@ -116,7 +117,8 @@ public sealed partial class BundleExplorerViewModel : ObservableObject, IDisposa
             backgroundTaskStatusService: backgroundTaskStatusService,
             backgroundWorkScheduler: backgroundWorkScheduler,
             previewWorkerCountProvider: previewWorkerCountProvider,
-            onlineComponentInstallPromptCoordinator: onlineComponentInstallPromptCoordinator);
+            onlineComponentInstallPromptCoordinator: onlineComponentInstallPromptCoordinator,
+            useContentAwareSpineSkeletonFileExtensionProvider: useContentAwareSpineSkeletonFileExtensionProvider);
         _bundleTabCoordinator = new BundleExplorerBundleTabCoordinator(
             _bundlePane,
             _documentWorkspace,

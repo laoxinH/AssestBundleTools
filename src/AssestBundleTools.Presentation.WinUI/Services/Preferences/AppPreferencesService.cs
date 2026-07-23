@@ -65,6 +65,9 @@ public sealed class AppPreferencesService : IAppPreferencesService
     public bool ElevatedDragDropCompatibilityEnabled =>
         _currentSnapshot.ElevatedDragDropCompatibilityEnabled;
 
+    public bool UseContentAwareSpineSkeletonFileExtension =>
+        _currentSnapshot.UseContentAwareSpineSkeletonFileExtension;
+
     public double? MainWindowWidth => CoerceWindowDimension(_currentSnapshot.MainWindowWidth);
 
     public double? MainWindowHeight => CoerceWindowDimension(_currentSnapshot.MainWindowHeight);
@@ -250,6 +253,19 @@ public sealed class AppPreferencesService : IAppPreferencesService
         };
 
         return TryPersistSnapshot(updatedSnapshot);
+    }
+
+    public bool TrySetUseContentAwareSpineSkeletonFileExtension(bool value)
+    {
+        if (_currentSnapshot.UseContentAwareSpineSkeletonFileExtension == value)
+        {
+            return true;
+        }
+
+        return TryPersistSnapshot(_currentSnapshot with
+        {
+            UseContentAwareSpineSkeletonFileExtension = value
+        });
     }
 
     public bool TrySetMainWindowSize(double width, double height)

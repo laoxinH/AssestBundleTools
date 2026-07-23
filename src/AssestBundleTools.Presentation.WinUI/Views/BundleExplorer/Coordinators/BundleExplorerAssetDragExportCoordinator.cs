@@ -37,7 +37,8 @@ internal sealed class BundleExplorerAssetDragExportCoordinator
         IAppBackgroundTaskStatusService backgroundTaskStatusService,
         IWorkspaceOperationChangeNotifier operationChangeNotifier,
         IBackgroundWorkScheduler backgroundWorkScheduler,
-        AssetDragExportStagingService? stagingService = null)
+        AssetDragExportStagingService? stagingService = null,
+        Func<bool>? useContentAwareSpineSkeletonFileExtensionProvider = null)
     {
         _appLogService = appLogService ?? throw new ArgumentNullException(nameof(appLogService));
         _appNotificationService = appNotificationService ?? throw new ArgumentNullException(nameof(appNotificationService));
@@ -49,7 +50,8 @@ internal sealed class BundleExplorerAssetDragExportCoordinator
             backgroundTaskRunner,
             backgroundTaskStatusService,
             operationChangeNotifier,
-            backgroundWorkScheduler);
+            backgroundWorkScheduler,
+            useContentAwareSpineSkeletonFileExtensionProvider);
     }
 
     public Task<AssetPaneDragExportPayload?> PrepareAsync(

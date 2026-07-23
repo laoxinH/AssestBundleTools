@@ -32,6 +32,7 @@ internal sealed class BundleExplorerDragReplacementActionHandler
             filePickerService);
         _spineEditActionHandler = new BundleExplorerSpineEditActionHandler(
             _fileReplacementActionExecutor,
+            workspaceAssetOperationGateway,
             filePickerService,
             appLogService,
             appNotificationService,
@@ -97,14 +98,19 @@ internal sealed class BundleExplorerDragReplacementActionHandler
         }
     }
 
-    public SpineAssetGroupEditDraftViewModel? PrepareSpineGroup(
+    public Task<SpineAssetGroupEditDraftViewModel?> PrepareSpineGroupAsync(
+        WorkspaceSummaryDto workspaceSummary,
         SpineAssetGroupEntryViewModel target,
-        string sourceDirectoryPath)
+        IReadOnlyList<string> sourcePaths,
+        Action<IReadOnlyList<AppError>> appendResultFailure)
     {
+        ArgumentNullException.ThrowIfNull(workspaceSummary);
         ArgumentNullException.ThrowIfNull(target);
-        return _spineEditActionHandler.CreateDirectoryMatchDraft(
+        return _spineEditActionHandler.CreateSourceMatchDraftAsync(
+            workspaceSummary,
             target.Item,
-            sourceDirectoryPath);
+            sourcePaths,
+            appendResultFailure);
     }
 
     public Task<bool> ApplySpineGroupAsync(

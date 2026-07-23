@@ -68,7 +68,8 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
         IBackgroundWorkScheduler? backgroundWorkScheduler = null,
         Func<int>? previewWorkerCountProvider = null,
         WorkspaceOperationPendingTracker? operationPendingTracker = null,
-        IOnlineComponentInstallPromptCoordinator? onlineComponentInstallPromptCoordinator = null)
+        IOnlineComponentInstallPromptCoordinator? onlineComponentInstallPromptCoordinator = null,
+        Func<bool>? useContentAwareSpineSkeletonFileExtensionProvider = null)
         : this(
             CreateSingleAssetGroup(initialAssetTab),
             workspaceAssetInspectionGateway,
@@ -89,7 +90,8 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
             backgroundWorkScheduler,
             previewWorkerCountProvider,
             operationPendingTracker,
-            onlineComponentInstallPromptCoordinator)
+            onlineComponentInstallPromptCoordinator,
+            useContentAwareSpineSkeletonFileExtensionProvider)
     {
     }
 
@@ -115,7 +117,8 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
         IBackgroundWorkScheduler? backgroundWorkScheduler = null,
         Func<int>? previewWorkerCountProvider = null,
         WorkspaceOperationPendingTracker? operationPendingTracker = null,
-        IOnlineComponentInstallPromptCoordinator? onlineComponentInstallPromptCoordinator = null)
+        IOnlineComponentInstallPromptCoordinator? onlineComponentInstallPromptCoordinator = null,
+        Func<bool>? useContentAwareSpineSkeletonFileExtensionProvider = null)
     {
         ArgumentNullException.ThrowIfNull(initialAssetGroup);
         _workspaceAssetInspectionGateway = workspaceAssetInspectionGateway ?? throw new ArgumentNullException(nameof(workspaceAssetInspectionGateway));
@@ -187,7 +190,9 @@ public sealed partial class AssetEditorWindowViewModel : ObservableObject, IDisp
             backgroundTaskStatusService,
             workspaceOperationChangeNotifier,
             backgroundWorkScheduler: backgroundWorkScheduler,
-            operationPendingTracker: operationPendingTracker);
+            operationPendingTracker: operationPendingTracker,
+            useContentAwareSpineSkeletonFileExtensionProvider:
+                useContentAwareSpineSkeletonFileExtensionProvider);
         _assetActionCoordinator = new AssetEditorWindowAssetActionCoordinator(
             _workspaceShell,
             pathNavigationService,
