@@ -4338,6 +4338,9 @@
   <data name="Error.Asset.Replace.SpineSkeletonFormatMismatch" xml:space="preserve">
     <value>The Spine skeleton formats are incompatible. Target: {TargetFormat}; source: {SourceFormat}. Select a file whose content format matches the target.</value>
   </data>
+  <data name="Error.Asset.Replace.SpineSourceConflict" xml:space="preserve">
+    <value>The Spine part "{0}" matches {1} usable replacement files. Remove the conflicting files and select the sources again.</value>
+  </data>
   <data name="Error.Asset.Preview.FullContentReferenceInvalid" xml:space="preserve">
     <value>The full preview content reference is invalid. Generate the preview again.</value>
   </data>

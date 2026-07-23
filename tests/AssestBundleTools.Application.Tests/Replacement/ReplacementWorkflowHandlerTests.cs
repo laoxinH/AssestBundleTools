@@ -98,6 +98,59 @@ internal static class ReplacementWorkflowHandlerTests
             "Matching should reject JSON content for a binary target and accept binary content regardless of its extension.");
     }
 
+    public static async Task MatchSpineReplacementSourcesHandler_ShouldFail_WhenMultipleSourcesMatchOnePart()
+    {
+        var workspaceId = CreateWorkspaceId();
+        var bundleId = new BundleId("bundle.spine");
+        var atlasAssetId = new AssetId("asset.atlas");
+        var compatibilityService = new SpineSkeletonReplacementCompatibilityService(
+            new TestWorkspaceSessionRegistry(),
+            new StaticAssetPreviewHandler(null!),
+            new StaticReplacementPreviewSourceProvider(
+                new Dictionary<string, AssetPreviewContentDto>(StringComparer.OrdinalIgnoreCase)));
+        var handler = new MatchSpineReplacementSourcesHandler(
+            new PassthroughReplacementSourcePathExpander(),
+            compatibilityService);
+        var group = new SpineAssetGroupDto(
+            "spine-hero",
+            bundleId,
+            "hero",
+            "hero",
+            SkeletonAssets: [],
+            AtlasAssets:
+            [
+                new SpineAssetGroupPartDto(
+                    SpineAssetGroupPartRole.Atlas,
+                    bundleId,
+                    atlasAssetId,
+                    "bundle.spine.ab",
+                    "hero.atlas",
+                    "Assets/Spine/hero.atlas",
+                    AssetType.TextAsset,
+                    "TextAsset")
+            ],
+            TexturePageAssets: [],
+            Diagnostics: []);
+
+        var result = await handler.HandleAsync(new MatchSpineReplacementSourcesQuery(
+            workspaceId,
+            "workspace-key",
+            @"D:\WorkspaceData",
+            group,
+            [@"D:\Replacement\Folder\hero.atlas", @"D:\Replacement\hero.atlas"]));
+
+        TestAssert.True(result.IsFailure, "Ambiguous Spine source matching should fail.");
+        var error = TestAssert.Single(result.Errors);
+        TestAssert.Equal(
+            "Asset.Replace.SpineSourceConflict",
+            error.Code,
+            "Ambiguous matching should return the stable Spine source conflict error.");
+        TestAssert.Equal(
+            2,
+            Convert.ToInt32(error.Parameters["CandidateCount"]),
+            "The conflict should report every compatible candidate for the target part.");
+    }
+
     public static async Task GetFileReplacementCandidateHandler_ShouldPreferTargetAssetType_WhenSharedExtensionMatches()
     {
         var workspaceId = CreateWorkspaceId();

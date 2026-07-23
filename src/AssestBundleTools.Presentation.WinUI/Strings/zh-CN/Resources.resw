@@ -4338,6 +4338,9 @@
   <data name="Error.Asset.Replace.SpineSkeletonFormatMismatch" xml:space="preserve">
     <value>Spine 骨架格式不兼容：目标为 {TargetFormat}，来源为 {SourceFormat}。请选择与目标内容格式一致的文件。</value>
   </data>
+  <data name="Error.Asset.Replace.SpineSourceConflict" xml:space="preserve">
+    <value>Spine 组成资源“{0}”匹配到 {1} 个可用替换文件。请移除同名冲突文件后重新选择。</value>
+  </data>
   <data name="Error.Asset.Preview.FullContentReferenceInvalid" xml:space="preserve">
     <value>完整预览内容引用无效，请重新生成预览。</value>
   </data>

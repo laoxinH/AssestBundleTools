@@ -1,6 +1,7 @@
 using System.IO;
 using AssestBundleTools.Application.Assets.Dtos;
 using AssestBundleTools.Application.Common.Abstractions;
+using AssestBundleTools.Application.Common.Errors;
 using AssestBundleTools.Application.Common.Results;
 using AssestBundleTools.Application.Replacement.Dtos;
 using AssestBundleTools.Application.Replacement.Services;
@@ -42,6 +43,7 @@ public sealed class MatchSpineReplacementSourcesHandler :
         }
 
         var candidates = sourcePathsResult.Value
+            .Distinct(StringComparer.OrdinalIgnoreCase)
             .Select(static path => new SourceCandidate(
                 path,
                 EnumerateMatchKeys(Path.GetFileName(path)).ToHashSet(StringComparer.OrdinalIgnoreCase)))
@@ -50,6 +52,7 @@ public sealed class MatchSpineReplacementSourcesHandler :
         foreach (var part in EnumerateParts(query.Group))
         {
             var partKeys = EnumeratePartMatchKeys(part).ToArray();
+            var compatibleCandidates = new List<SourceCandidate>();
             foreach (var candidate in candidates)
             {
                 if (!IsRoleCompatible(part, candidate.FilePath) ||
@@ -79,8 +82,22 @@ public sealed class MatchSpineReplacementSourcesHandler :
                     }
                 }
 
-                matches.Add(new SpineReplacementSourceMatchDto(part.AssetId, candidate.FilePath));
-                break;
+                compatibleCandidates.Add(candidate);
+            }
+
+            if (compatibleCandidates.Count > 1)
+            {
+                return Result<IReadOnlyList<SpineReplacementSourceMatchDto>>.Failure(
+                    ApplicationErrors.SpineReplacementSourceConflict(
+                        part.Name,
+                        compatibleCandidates.Count));
+            }
+
+            if (compatibleCandidates.Count == 1)
+            {
+                matches.Add(new SpineReplacementSourceMatchDto(
+                    part.AssetId,
+                    compatibleCandidates[0].FilePath));
             }
         }
 

@@ -365,6 +365,8 @@ Sprite 编辑应用后仍不改写原始 AB、标准化 artifact 或预览缓存
 
 Spine 编辑第一阶段属于“组成文件替换草稿”，而不是新的 Unity 资产写入类型。用户在 Spine 组编辑态中选择 skeleton、atlas 或 texture page 文件后，先只写入当前资源文档的临时编辑草稿并刷新组级有效预览；在点击保存前，不追加 `operations[]`，也不改变真实组成资产的已应用替换状态。若组成资产已有已应用文件替换，编辑态替换页以该来源路径作为当前基线展示；用户选择新来源后才形成未保存草稿。保存 Spine 编辑时，应把草稿拆分成多条目标为真实组成资产的 `ReplaceFromFile` 操作记录：texture page 对应 `Texture2D`，atlas 对应承载 atlas 文本的 `TextAsset`，skeleton 对应承载 `.skel / .json / .bytes` 的 `TextAsset` 或当前识别出的 skeleton 组成资产。每条记录仍必须拥有自己的 `target`、`source`、`previousState`、`result` 和撤销 / 重做语义；这些记录共享同一个 `batchId / relationId`，并在 `relations[]` 中把 Spine 组文档作为 owner 投影、真实组成资产作为 subject 记录。Spine 组的 `变更` 分段可以把同批次记录聚合显示为一组 Spine 修改卡片，但该聚合必须来自组成资产的真实变更读模型，不应追加目标为 Spine 组本身的虚假替换操作；组级卡片上的撤销、重做和删除也必须作用于真实组成资产记录；组成资产详情页仍展示各自真实记录并允许独立撤销、重做和删除。
 
+Spine 组通过目录、多个散文件或两者混合选择替换来源时，Application 应先按组成角色、名称键和 skeleton 真实内容格式筛出有效候选。若同一组成资产仍命中多个有效候选，当前阶段必须把整次匹配作为冲突失败，不按拖拽顺序或文件系统枚举顺序静默选择，也不生成部分替换草稿；Presentation 展示结构化冲突提示并要求用户移除同名候选后重新选择。后续若增加候选选择界面，应继续以该冲突结果为入口，而不是在匹配器中恢复隐式优先级。
+
 Spine 编辑草稿预览不得绕过有效读模型。编辑态预览输入为原始 Spine 组详情叠加当前未保存草稿文件；保存后的预览输入为工作区操作记录物化出的 skeleton、atlas 和 texture page 当前有效载荷。若组成文件不匹配、缺少 page、atlas 声明尺寸与图片尺寸不一致或 runtime adapter 无法解释，Application 应返回结构化诊断，Presentation 只展示诊断和稳定摘要回退，不把外部解析异常或原始 stdout/stderr 作为主提示。实际 AB 对象替换和写包仍只在后续保存 / 重建 / 统一导出阶段消费这些组成资产替换记录。
 
 当前文本草稿持久读模型规则：

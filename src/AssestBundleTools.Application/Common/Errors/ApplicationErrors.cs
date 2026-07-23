@@ -327,6 +327,17 @@ public static class ApplicationErrors
                 ("SourceFormat", sourceFormat)),
             isUserActionable: true);
 
+    public static AppError SpineReplacementSourceConflict(string targetName, int candidateCount) =>
+        new(
+            code: "Asset.Replace.SpineSourceConflict",
+            category: ErrorCategory.Conflict,
+            severity: ErrorSeverity.Warning,
+            messageToken: "Error.Asset.Replace.SpineSourceConflict",
+            parameters: CreateParameters(
+                ("TargetName", targetName),
+                ("CandidateCount", candidateCount)),
+            isUserActionable: true);
+
     public static AppError BundleExportManifestWriteFailed(string outputPath, string? detail = null) =>
         new(
             code: "Bundle.Save.ManifestWriteFailed",
