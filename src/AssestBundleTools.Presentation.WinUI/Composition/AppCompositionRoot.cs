@@ -136,7 +136,8 @@ internal static class AppCompositionRoot
         var removeWorkspaceBundleHandler = new RemoveWorkspaceBundleHandler(
             workspaceMetadataStoreFactory,
             workspaceDataStoreFactory,
-            bundleArtifactSessionInvalidator);
+            bundleArtifactSessionInvalidator,
+            workspaceImportExecutionGate);
         var loadBundleTreeHandler = new LoadBundleTreeHandler(workspaceSessionRegistry);
         var loadAssetListHandler = new LoadAssetListHandler(workspaceSessionRegistry);
         var loadSpineAssetGroupsHandler = new LoadSpineAssetGroupsHandler(

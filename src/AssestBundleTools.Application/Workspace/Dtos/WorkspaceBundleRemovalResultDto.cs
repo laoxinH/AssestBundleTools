@@ -11,4 +11,27 @@ public sealed record WorkspaceBundleRemovalResultDto(
     string BundleSourcePath,
     bool RemovedDirectImportSource,
     bool AddedExcludedBundleSourcePath,
-    int RemainingRegisteredSourceCount);
+    int RemainingRegisteredSourceCount,
+    long GateWaitDurationMs,
+    long ElapsedDurationMs,
+    IReadOnlyList<WorkspaceBundleRemovalCleanupIssueDto> CleanupIssues)
+{
+    public bool CacheCleanupCompleted => CleanupIssues.Count == 0;
+}
+
+public sealed record WorkspaceBundleRemovalCleanupIssueDto(
+    WorkspaceBundleRemovalCleanupStage Stage,
+    string? Target,
+    string ExceptionType,
+    string Message);
+
+public enum WorkspaceBundleRemovalCleanupStage
+{
+    SpineGroupCatalog,
+    LoadedSession,
+    BundleArtifact,
+    BundleIndex,
+    RecognitionCache,
+    PreviewCatalog,
+    PreviewEntry
+}

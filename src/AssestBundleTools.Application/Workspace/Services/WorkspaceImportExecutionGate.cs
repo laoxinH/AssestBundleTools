@@ -3,7 +3,7 @@ using System.Collections.Concurrent;
 namespace AssestBundleTools.Application.Workspace.Services;
 
 /// <summary>
-/// 基于 <see cref="SemaphoreSlim"/> 对同一工作区的导入作业做串行化保护。
+/// 基于 <see cref="SemaphoreSlim"/> 对同一工作区的导入处理和来源变更做串行化保护。
 /// </summary>
 public sealed class WorkspaceImportExecutionGate : IWorkspaceImportExecutionGate
 {

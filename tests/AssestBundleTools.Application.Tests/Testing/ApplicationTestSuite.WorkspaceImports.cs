@@ -17,6 +17,14 @@ internal static partial class ApplicationTestSuite
             RemoveWorkspaceBundleHandlerTests.HandleAsync_ShouldReturnFailure_WhenWorkspaceMetadataDoesNotExist);
         await RunTestAsync(
             failures,
+            nameof(RemoveWorkspaceBundleHandlerTests.HandleAsync_ShouldKeepLogicalRemovalSuccessful_WhenArtifactCleanupIsLocked),
+            RemoveWorkspaceBundleHandlerTests.HandleAsync_ShouldKeepLogicalRemovalSuccessful_WhenArtifactCleanupIsLocked);
+        await RunTestAsync(
+            failures,
+            nameof(RemoveWorkspaceBundleHandlerTests.HandleAsync_ShouldWaitForSharedWorkspaceGate_BeforeMutatingMetadata),
+            RemoveWorkspaceBundleHandlerTests.HandleAsync_ShouldWaitForSharedWorkspaceGate_BeforeMutatingMetadata);
+        await RunTestAsync(
+            failures,
             nameof(BundleArtifactCacheMaintenanceHandlerTests.GetUsage_ShouldReadUsage_FromRequestedWorkspaceDataRootAndWorkspace),
             BundleArtifactCacheMaintenanceHandlerTests.GetUsage_ShouldReadUsage_FromRequestedWorkspaceDataRootAndWorkspace);
         await RunTestAsync(

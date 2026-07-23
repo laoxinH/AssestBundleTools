@@ -1,4 +1,5 @@
 using AssestBundleTools.Application.Workspace.Commands;
+using AssestBundleTools.Application.Workspace.Dtos;
 using AssestBundleTools.Application.Workspace.Services;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
@@ -80,23 +81,74 @@ internal sealed class BundleExplorerBundleActionHandler
         }
 
         _setBusyState(true);
+        _appLogService.AppendInfo(_localizationService.GetFormattedString(
+            ResourceKeys.BundleExplorerLogBundleRemovalRequestedFormat,
+            workspaceEntry.WorkspaceKey,
+            bundleNode.BundleId.Value,
+            bundleNode.SourcePath));
+
+        WorkspaceBundleRemovalResultDto? removalResult = null;
         try
         {
-            var result = await _workspaceExplorerGateway.RemoveWorkspaceBundleAsync(
-                new RemoveWorkspaceBundleCommand(
-                    WorkspaceKey: workspaceEntry.WorkspaceKey,
-                    WorkspaceDataRootPath: workspaceEntry.WorkspaceDataRootPath,
-                    BundleId: bundleNode.BundleId,
-                    BundleSourcePath: bundleNode.SourcePath));
-
-            if (!_operationFeedbackBridge.TryGetValue(result, out _))
+            try
             {
+                var result = await _workspaceExplorerGateway.RemoveWorkspaceBundleAsync(
+                    new RemoveWorkspaceBundleCommand(
+                        WorkspaceKey: workspaceEntry.WorkspaceKey,
+                        WorkspaceDataRootPath: workspaceEntry.WorkspaceDataRootPath,
+                        BundleId: bundleNode.BundleId,
+                        BundleSourcePath: bundleNode.SourcePath));
+
+                if (!_operationFeedbackBridge.TryGetValue(result, out removalResult) || removalResult is null)
+                {
+                    return;
+                }
+            }
+            catch (Exception exception)
+            {
+                AppendUnexpectedRemovalFailure(bundleNode, "Remove", exception);
+                _operationFeedbackBridge.ShowOperationNotification(
+                    GetString(ResourceKeys.AppNotificationErrorTitle),
+                    GetString(ResourceKeys.BundleExplorerNotificationBundleRemovalFailed),
+                    AppNotificationSeverity.Error);
                 return;
             }
 
             _appLogService.AppendInfo(_localizationService.GetFormattedString(
                 ResourceKeys.BundleExplorerLogBundleRemoved,
                 bundleNode.DisplayName));
+            _appLogService.AppendInfo(_localizationService.GetFormattedString(
+                ResourceKeys.BundleExplorerLogBundleRemovalCompletedFormat,
+                removalResult.WorkspaceKey,
+                removalResult.BundleId.Value,
+                removalResult.BundleSourcePath,
+                removalResult.GateWaitDurationMs,
+                removalResult.ElapsedDurationMs,
+                removalResult.CleanupIssues.Count));
+
+            foreach (var cleanupIssue in removalResult.CleanupIssues)
+            {
+                _appLogService.AppendWarning(_localizationService.GetFormattedString(
+                    ResourceKeys.BundleExplorerLogBundleRemovalCleanupIssueFormat,
+                    cleanupIssue.Stage,
+                    cleanupIssue.Target ?? string.Empty,
+                    cleanupIssue.ExceptionType,
+                    cleanupIssue.Message));
+            }
+
+            try
+            {
+                await _reloadCurrentWorkspaceAsync();
+            }
+            catch (Exception exception)
+            {
+                AppendUnexpectedRemovalFailure(bundleNode, "Reload", exception);
+                _operationFeedbackBridge.ShowOperationNotification(
+                    GetString(ResourceKeys.AppNotificationWarningTitle),
+                    GetString(ResourceKeys.BundleExplorerNotificationBundleRemovalRefreshFailed),
+                    AppNotificationSeverity.Warning);
+                return;
+            }
 
             _operationFeedbackBridge.ShowOperationNotification(
                 GetString(ResourceKeys.AppNotificationSuccessTitle),
@@ -104,13 +156,24 @@ internal sealed class BundleExplorerBundleActionHandler
                     ResourceKeys.BundleExplorerNotificationBundleRemoved,
                     bundleNode.DisplayName),
                 AppNotificationSeverity.Success);
-
-            await _reloadCurrentWorkspaceAsync();
         }
         finally
         {
             _setBusyState(false);
         }
+    }
+
+    private void AppendUnexpectedRemovalFailure(
+        BundleNodeViewModel bundleNode,
+        string stage,
+        Exception exception)
+    {
+        _appLogService.AppendError(_localizationService.GetFormattedString(
+            ResourceKeys.BundleExplorerLogBundleRemovalUnexpectedFailureFormat,
+            bundleNode.BundleId.Value,
+            stage,
+            exception.GetType().FullName ?? exception.GetType().Name,
+            exception.Message));
     }
 
     private string GetString(string resourceKey) => _localizationService.GetRequiredString(resourceKey);

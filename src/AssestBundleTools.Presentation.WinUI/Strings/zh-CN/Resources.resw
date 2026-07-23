@@ -3963,6 +3963,18 @@
   <data name="BundleExplorer.Log.BundleRemoved" xml:space="preserve">
     <value>已将资源包“{0}”从当前工作区移除。</value>
   </data>
+  <data name="BundleExplorer.Log.BundleRemovalRequested.Format" xml:space="preserve">
+    <value>开始移除工作区资源包。Workspace={0}; BundleId={1}; Path={2}。</value>
+  </data>
+  <data name="BundleExplorer.Log.BundleRemovalCompleted.Format" xml:space="preserve">
+    <value>工作区资源包逻辑移除完成。Workspace={0}; BundleId={1}; Path={2}; GateWaitMs={3}; ElapsedMs={4}; CleanupIssues={5}。</value>
+  </data>
+  <data name="BundleExplorer.Log.BundleRemovalCleanupIssue.Format" xml:space="preserve">
+    <value>资源包移除缓存清理未完成。Stage={0}; Target={1}; Exception={2}; Message={3}。</value>
+  </data>
+  <data name="BundleExplorer.Log.BundleRemovalUnexpectedFailure.Format" xml:space="preserve">
+    <value>资源包移除发生意外错误。BundleId={0}; Stage={1}; Exception={2}; Message={3}。</value>
+  </data>
   <data name="BundleExplorer.Log.AssetFocused" xml:space="preserve">
     <value>{0} 已聚焦资源：{1}</value>
   </data>
@@ -4073,6 +4085,12 @@
   </data>
   <data name="BundleExplorer.Notification.BundleRemoved" xml:space="preserve">
     <value>已从工作区移除资源包：{0}</value>
+  </data>
+  <data name="BundleExplorer.Notification.BundleRemovalFailed" xml:space="preserve">
+    <value>资源包移除失败，请在诊断中心查看详细信息。</value>
+  </data>
+  <data name="BundleExplorer.Notification.BundleRemovalRefreshFailed" xml:space="preserve">
+    <value>资源包已移除，但界面刷新失败。请手动刷新工作区，并在诊断中心查看详细信息。</value>
   </data>
   <data name="BundleExplorer.Notification.BundleOpenLocationFailed" xml:space="preserve">
     <value>无法打开资源包“{0}”的所在位置。</value>

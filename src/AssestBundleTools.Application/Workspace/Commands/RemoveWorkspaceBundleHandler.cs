@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using AssestBundleTools.Application.Common.Abstractions;
 using AssestBundleTools.Application.Common.Errors;
 using AssestBundleTools.Application.Common.Results;
@@ -16,51 +17,82 @@ public sealed class RemoveWorkspaceBundleHandler
     private readonly IWorkspaceMetadataStoreFactory _workspaceMetadataStoreFactory;
     private readonly IWorkspaceDataStoreFactory _workspaceDataStoreFactory;
     private readonly IBundleArtifactSessionInvalidator _bundleArtifactSessionInvalidator;
+    private readonly IWorkspaceImportExecutionGate _workspaceImportExecutionGate;
 
     public RemoveWorkspaceBundleHandler(
         IWorkspaceMetadataStoreFactory workspaceMetadataStoreFactory,
         IWorkspaceDataStoreFactory workspaceDataStoreFactory,
-        IBundleArtifactSessionInvalidator? bundleArtifactSessionInvalidator = null)
+        IBundleArtifactSessionInvalidator? bundleArtifactSessionInvalidator = null,
+        IWorkspaceImportExecutionGate? workspaceImportExecutionGate = null)
     {
         _workspaceMetadataStoreFactory = workspaceMetadataStoreFactory ?? throw new ArgumentNullException(nameof(workspaceMetadataStoreFactory));
         _workspaceDataStoreFactory = workspaceDataStoreFactory ?? throw new ArgumentNullException(nameof(workspaceDataStoreFactory));
         _bundleArtifactSessionInvalidator = bundleArtifactSessionInvalidator ?? NoOpBundleArtifactSessionInvalidator.Instance;
+        _workspaceImportExecutionGate = workspaceImportExecutionGate ?? new WorkspaceImportExecutionGate();
     }
 
-    public Task<Result<WorkspaceBundleRemovalResultDto>> HandleAsync(
+    public async Task<Result<WorkspaceBundleRemovalResultDto>> HandleAsync(
         RemoveWorkspaceBundleCommand command,
         CancellationToken cancellationToken = default)
     {
         if (cancellationToken.IsCancellationRequested)
         {
-            return Task.FromResult(Result<WorkspaceBundleRemovalResultDto>.Cancelled());
+            return Result<WorkspaceBundleRemovalResultDto>.Cancelled();
         }
 
         if (string.IsNullOrWhiteSpace(command.WorkspaceKey))
         {
-            return Task.FromResult(Result<WorkspaceBundleRemovalResultDto>.Failure(
-                ApplicationErrors.WorkspaceImportWorkspaceKeyRequired()));
+            return Result<WorkspaceBundleRemovalResultDto>.Failure(
+                ApplicationErrors.WorkspaceImportWorkspaceKeyRequired());
         }
 
         if (string.IsNullOrWhiteSpace(command.WorkspaceDataRootPath))
         {
-            return Task.FromResult(Result<WorkspaceBundleRemovalResultDto>.Failure(
-                ApplicationErrors.WorkspaceImportDataRootPathRequired()));
+            return Result<WorkspaceBundleRemovalResultDto>.Failure(
+                ApplicationErrors.WorkspaceImportDataRootPathRequired());
         }
 
         var normalizedBundleSourcePath = WorkspaceImportPathUtility.NormalizePath(command.BundleSourcePath);
         if (string.IsNullOrWhiteSpace(normalizedBundleSourcePath))
         {
-            return Task.FromResult(Result<WorkspaceBundleRemovalResultDto>.Failure(
-                ApplicationErrors.WorkspaceImportBundleSourcePathRequired()));
+            return Result<WorkspaceBundleRemovalResultDto>.Failure(
+                ApplicationErrors.WorkspaceImportBundleSourcePathRequired());
         }
+
+        var operationStopwatch = Stopwatch.StartNew();
+        try
+        {
+            return await _workspaceImportExecutionGate.ExecuteExclusiveAsync(
+                command.WorkspaceKey,
+                gateCancellationToken => Task.FromResult(RemoveCore(
+                    command,
+                    normalizedBundleSourcePath,
+                    operationStopwatch.ElapsedMilliseconds,
+                    operationStopwatch,
+                    gateCancellationToken)),
+                cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            return Result<WorkspaceBundleRemovalResultDto>.Cancelled();
+        }
+    }
+
+    private Result<WorkspaceBundleRemovalResultDto> RemoveCore(
+        RemoveWorkspaceBundleCommand command,
+        string normalizedBundleSourcePath,
+        long gateWaitDurationMs,
+        Stopwatch operationStopwatch,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
 
         var metadataStore = _workspaceMetadataStoreFactory.Create(command.WorkspaceDataRootPath);
         var existingMetadata = metadataStore.Load(command.WorkspaceKey);
         if (existingMetadata is null)
         {
-            return Task.FromResult(Result<WorkspaceBundleRemovalResultDto>.Failure(
-                ApplicationErrors.WorkspaceImportMetadataNotFound(command.WorkspaceKey)));
+            return Result<WorkspaceBundleRemovalResultDto>.Failure(
+                ApplicationErrors.WorkspaceImportMetadataNotFound(command.WorkspaceKey));
         }
 
         var importedSources = existingMetadata.ImportedSources ?? Array.Empty<WorkspaceImportedSourceDto>();
@@ -127,9 +159,45 @@ public sealed class RemoveWorkspaceBundleHandler
             OpenAssetEditorWindows: remainingOpenAssetEditorWindows);
         metadataStore.Save(updatedMetadata);
 
+        var cleanupIssues = new List<WorkspaceBundleRemovalCleanupIssueDto>();
+        void RecordCleanupIssue(
+            WorkspaceBundleRemovalCleanupStage stage,
+            string? target,
+            Exception exception)
+        {
+            cleanupIssues.Add(new WorkspaceBundleRemovalCleanupIssueDto(
+                Stage: stage,
+                Target: target,
+                ExceptionType: exception.GetType().FullName ?? exception.GetType().Name,
+                Message: exception.Message));
+        }
+
+        void RecordBundleCleanupIssue(
+            WorkspaceBundleArtifactCleanupStage stage,
+            string? target,
+            Exception exception)
+        {
+            RecordCleanupIssue(
+                stage switch
+                {
+                    WorkspaceBundleArtifactCleanupStage.LoadedSession => WorkspaceBundleRemovalCleanupStage.LoadedSession,
+                    WorkspaceBundleArtifactCleanupStage.BundleArtifact => WorkspaceBundleRemovalCleanupStage.BundleArtifact,
+                    WorkspaceBundleArtifactCleanupStage.BundleIndex => WorkspaceBundleRemovalCleanupStage.BundleIndex,
+                    WorkspaceBundleArtifactCleanupStage.PreviewCatalog => WorkspaceBundleRemovalCleanupStage.PreviewCatalog,
+                    WorkspaceBundleArtifactCleanupStage.PreviewEntry => WorkspaceBundleRemovalCleanupStage.PreviewEntry,
+                    _ => throw new ArgumentOutOfRangeException(nameof(stage), stage, null)
+                },
+                target,
+                exception);
+        }
+
         var bundleCacheKey = WorkspaceImportPathUtility.CreateBundleCacheKey(normalizedBundleSourcePath);
         var spineGroupCatalogCacheStore = _workspaceDataStoreFactory.CreateSpineGroupCatalogCacheStore(command.WorkspaceDataRootPath);
-        spineGroupCatalogCacheStore.DeleteWorkspace(command.WorkspaceKey);
+        TryCleanup(
+            WorkspaceBundleRemovalCleanupStage.SpineGroupCatalog,
+            command.WorkspaceKey,
+            () => spineGroupCatalogCacheStore.DeleteWorkspace(command.WorkspaceKey),
+            RecordCleanupIssue);
         if (!string.IsNullOrWhiteSpace(bundleCacheKey))
         {
             var bundleArtifactStore = _workspaceDataStoreFactory.CreateBundleArtifactStore(command.WorkspaceDataRootPath);
@@ -142,19 +210,47 @@ public sealed class RemoveWorkspaceBundleHandler
                 bundleArtifactStore,
                 bundleIndexCacheStore,
                 previewCacheStore,
-                bundleArtifactSessionInvalidator: _bundleArtifactSessionInvalidator);
-            recognitionCacheStore.Delete(command.WorkspaceKey, bundleCacheKey);
+                bundleArtifactSessionInvalidator: _bundleArtifactSessionInvalidator,
+                cleanupFailureObserver: RecordBundleCleanupIssue);
+            TryCleanup(
+                WorkspaceBundleRemovalCleanupStage.RecognitionCache,
+                bundleCacheKey,
+                () => recognitionCacheStore.Delete(command.WorkspaceKey, bundleCacheKey),
+                RecordCleanupIssue);
         }
 
-        return Task.FromResult(Result<WorkspaceBundleRemovalResultDto>.Success(
+        operationStopwatch.Stop();
+        return Result<WorkspaceBundleRemovalResultDto>.Success(
             new WorkspaceBundleRemovalResultDto(
                 WorkspaceKey: updatedMetadata.WorkspaceKey,
                 BundleId: command.BundleId,
                 BundleSourcePath: normalizedBundleSourcePath,
                 RemovedDirectImportSource: removedDirectImportSource,
                 AddedExcludedBundleSourcePath: addedExcludedBundleSourcePath,
-                RemainingRegisteredSourceCount: remainingImportedSources.Length)));
+                RemainingRegisteredSourceCount: remainingImportedSources.Length,
+                GateWaitDurationMs: gateWaitDurationMs,
+                ElapsedDurationMs: operationStopwatch.ElapsedMilliseconds,
+                CleanupIssues: cleanupIssues));
     }
+
+    private static void TryCleanup(
+        WorkspaceBundleRemovalCleanupStage stage,
+        string? target,
+        Action cleanup,
+        Action<WorkspaceBundleRemovalCleanupStage, string?, Exception> failureObserver)
+    {
+        try
+        {
+            cleanup();
+        }
+        catch (Exception exception) when (IsNonFatalCleanupException(exception))
+        {
+            failureObserver(stage, target, exception);
+        }
+    }
+
+    private static bool IsNonFatalCleanupException(Exception exception) =>
+        exception is not OutOfMemoryException and not AccessViolationException;
 
     private static IReadOnlyList<WorkspaceAssetEditorWindowStateDto>? RemoveBundleAssetTabsFromEditorWindows(
         IReadOnlyList<WorkspaceAssetEditorWindowStateDto>? openAssetEditorWindows,

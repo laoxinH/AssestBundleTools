@@ -3963,6 +3963,18 @@
   <data name="BundleExplorer.Log.BundleRemoved" xml:space="preserve">
     <value>Removed bundle "{0}" from the current workspace.</value>
   </data>
+  <data name="BundleExplorer.Log.BundleRemovalRequested.Format" xml:space="preserve">
+    <value>Workspace bundle removal started. Workspace={0}; BundleId={1}; Path={2}.</value>
+  </data>
+  <data name="BundleExplorer.Log.BundleRemovalCompleted.Format" xml:space="preserve">
+    <value>Workspace bundle removal completed logically. Workspace={0}; BundleId={1}; Path={2}; GateWaitMs={3}; ElapsedMs={4}; CleanupIssues={5}.</value>
+  </data>
+  <data name="BundleExplorer.Log.BundleRemovalCleanupIssue.Format" xml:space="preserve">
+    <value>Bundle removal cache cleanup was incomplete. Stage={0}; Target={1}; Exception={2}; Message={3}.</value>
+  </data>
+  <data name="BundleExplorer.Log.BundleRemovalUnexpectedFailure.Format" xml:space="preserve">
+    <value>Unexpected bundle removal failure. BundleId={0}; Stage={1}; Exception={2}; Message={3}.</value>
+  </data>
   <data name="BundleExplorer.Log.AssetFocused" xml:space="preserve">
     <value>{0} focused asset: {1}</value>
   </data>
@@ -4073,6 +4085,12 @@
   </data>
   <data name="BundleExplorer.Notification.BundleRemoved" xml:space="preserve">
     <value>Removed bundle from workspace: {0}</value>
+  </data>
+  <data name="BundleExplorer.Notification.BundleRemovalFailed" xml:space="preserve">
+    <value>Could not remove the bundle. See Diagnostics for details.</value>
+  </data>
+  <data name="BundleExplorer.Notification.BundleRemovalRefreshFailed" xml:space="preserve">
+    <value>The bundle was removed, but the workspace view could not refresh. Refresh it manually and see Diagnostics for details.</value>
   </data>
   <data name="BundleExplorer.Notification.BundleOpenLocationFailed" xml:space="preserve">
     <value>Unable to open the containing folder for bundle "{0}".</value>

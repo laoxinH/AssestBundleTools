@@ -615,6 +615,10 @@ public static class ResourceKeys
     public const string BundleExplorerLogBundleDirectoryImportRequested = "BundleExplorer.Log.BundleDirectoryImportRequested";
     public const string BundleExplorerLogBundleLoaded = "BundleExplorer.Log.BundleLoaded";
     public const string BundleExplorerLogBundleRemoved = "BundleExplorer.Log.BundleRemoved";
+    public const string BundleExplorerLogBundleRemovalRequestedFormat = "BundleExplorer.Log.BundleRemovalRequested.Format";
+    public const string BundleExplorerLogBundleRemovalCompletedFormat = "BundleExplorer.Log.BundleRemovalCompleted.Format";
+    public const string BundleExplorerLogBundleRemovalCleanupIssueFormat = "BundleExplorer.Log.BundleRemovalCleanupIssue.Format";
+    public const string BundleExplorerLogBundleRemovalUnexpectedFailureFormat = "BundleExplorer.Log.BundleRemovalUnexpectedFailure.Format";
     public const string BundleExplorerLogAssetFocused = "BundleExplorer.Log.AssetFocused";
     public const string BundleExplorerLogAssetPreviewFailedFormat = "BundleExplorer.Log.AssetPreviewFailed.Format";
     public const string BundleExplorerLogFilterApplied = "BundleExplorer.Log.FilterApplied";
@@ -647,6 +651,8 @@ public static class ResourceKeys
     public const string BundleExplorerNotificationBundleFileImportRequested = "BundleExplorer.Notification.BundleFileImportRequested";
     public const string BundleExplorerNotificationBundleDirectoryImportRequested = "BundleExplorer.Notification.BundleDirectoryImportRequested";
     public const string BundleExplorerNotificationBundleRemoved = "BundleExplorer.Notification.BundleRemoved";
+    public const string BundleExplorerNotificationBundleRemovalFailed = "BundleExplorer.Notification.BundleRemovalFailed";
+    public const string BundleExplorerNotificationBundleRemovalRefreshFailed = "BundleExplorer.Notification.BundleRemovalRefreshFailed";
     public const string BundleExplorerNotificationBundleOpenLocationFailed = "BundleExplorer.Notification.BundleOpenLocationFailed";
     public const string BundleExplorerNotificationPreviewOpenLocationFailed = "BundleExplorer.Notification.PreviewOpenLocationFailed";
     public const string BundleExplorerNotificationResolvedAssetNavigationBusy = "BundleExplorer.Notification.ResolvedAssetNavigationBusy";

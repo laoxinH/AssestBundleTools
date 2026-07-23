@@ -8,7 +8,7 @@ using AssestBundleTools.Application.Tests.Testing;
 
 namespace AssestBundleTools.Application.Tests.Workspace.Commands;
 
-internal static class RemoveWorkspaceBundleHandlerTests
+internal static partial class RemoveWorkspaceBundleHandlerTests
 {
     public static async Task HandleAsync_ShouldRemoveBundleArtifacts_AndPersistExcludedPath_WhenBundleRemainsCoveredByDirectoryImport()
     {
@@ -286,6 +286,17 @@ internal static class RemoveWorkspaceBundleHandlerTests
 
     private sealed class TestBundleArtifactStore : IBundleArtifactStore
     {
+        private readonly Exception? _deleteException;
+        private readonly List<string>? _operationTrace;
+
+        public TestBundleArtifactStore(
+            Exception? deleteException = null,
+            List<string>? operationTrace = null)
+        {
+            _deleteException = deleteException;
+            _operationTrace = operationTrace;
+        }
+
         public List<(string WorkspaceKey, string BundleCacheKey)> DeleteOperations { get; } = [];
 
         public BundleArtifactManifestDto? Load(string workspaceKey, string bundleCacheKey) => null;
@@ -310,7 +321,12 @@ internal static class RemoveWorkspaceBundleHandlerTests
 
         public void Delete(string workspaceKey, string bundleCacheKey)
         {
+            _operationTrace?.Add("artifact-delete");
             DeleteOperations.Add((workspaceKey, bundleCacheKey));
+            if (_deleteException is not null)
+            {
+                throw _deleteException;
+            }
         }
 
         public void DeleteWorkspace(string workspaceKey)
@@ -394,10 +410,18 @@ internal static class RemoveWorkspaceBundleHandlerTests
 
     private sealed class TestBundleArtifactSessionInvalidator : IBundleArtifactSessionInvalidator
     {
+        private readonly List<string>? _operationTrace;
+
+        public TestBundleArtifactSessionInvalidator(List<string>? operationTrace = null)
+        {
+            _operationTrace = operationTrace;
+        }
+
         public List<(string WorkspaceKey, string BundleCacheKey)> InvalidatedBundleArtifacts { get; } = [];
 
         public void InvalidateBundleArtifact(string workspaceKey, string bundleCacheKey)
         {
+            _operationTrace?.Add("session-invalidate");
             InvalidatedBundleArtifacts.Add((workspaceKey, bundleCacheKey));
         }
 

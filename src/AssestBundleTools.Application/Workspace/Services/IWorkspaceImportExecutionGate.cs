@@ -1,7 +1,7 @@
 namespace AssestBundleTools.Application.Workspace.Services;
 
 /// <summary>
-/// 负责在 Application 导入链路内部对同一工作区导入作业做互斥保护。
+/// 负责对同一工作区的导入处理、打开扫描和来源移除等互斥操作做串行化保护。
 /// </summary>
 public interface IWorkspaceImportExecutionGate
 {
