@@ -81,7 +81,7 @@ internal static partial class FileSystemWorkspaceBundleExporterTests
 
         var payloadPath = Path.Combine(scope.DirectoryPath, "payload.txt");
         var replacementText = $"abt-object-writer-smoke-{Guid.NewGuid():N}";
-        await File.WriteAllTextAsync(payloadPath, replacementText, Encoding.UTF8);
+        await File.WriteAllBytesAsync(payloadPath, Encoding.UTF8.GetBytes(replacementText));
 
         var exporter = new FileSystemWorkspaceBundleExporter();
         var result = await exporter.ExportAsync(new WorkspaceBundleExportRequestDto(
@@ -148,7 +148,7 @@ internal static partial class FileSystemWorkspaceBundleExporterTests
 
         var payloadPath = Path.Combine(scope.DirectoryPath, "payload.txt");
         var replacementText = $"abt-overwrite-smoke-{Guid.NewGuid():N}";
-        await File.WriteAllTextAsync(payloadPath, replacementText, Encoding.UTF8);
+        await File.WriteAllBytesAsync(payloadPath, Encoding.UTF8.GetBytes(replacementText));
 
         var exporter = new FileSystemWorkspaceBundleExporter();
         var result = await exporter.ExportAsync(new WorkspaceBundleExportRequestDto(
@@ -217,7 +217,7 @@ internal static partial class FileSystemWorkspaceBundleExporterTests
         }
 
         var payloadPath = Path.Combine(scope.DirectoryPath, "payload.txt");
-        await File.WriteAllTextAsync(payloadPath, "blocked-overwrite", Encoding.UTF8);
+        await File.WriteAllBytesAsync(payloadPath, Encoding.UTF8.GetBytes("blocked-overwrite"));
 
         var exporter = new FileSystemWorkspaceBundleExporter();
         var result = await exporter.ExportAsync(new WorkspaceBundleExportRequestDto(
@@ -431,7 +431,7 @@ internal static partial class FileSystemWorkspaceBundleExporterTests
 
         var payloadPath = Path.Combine(scope.DirectoryPath, "payload.txt");
         var replacementText = $"abt-compression-smoke-{Guid.NewGuid():N}";
-        await File.WriteAllTextAsync(payloadPath, replacementText, Encoding.UTF8);
+        await File.WriteAllBytesAsync(payloadPath, Encoding.UTF8.GetBytes(replacementText));
 
         var exporter = new FileSystemWorkspaceBundleExporter();
         var result = await exporter.ExportAsync(new WorkspaceBundleExportRequestDto(
@@ -500,7 +500,7 @@ internal static partial class FileSystemWorkspaceBundleExporterTests
 
         var payloadPath = Path.Combine(scope.DirectoryPath, "payload.txt");
         var replacementText = $"abt-lz4-smoke-{Guid.NewGuid():N}";
-        await File.WriteAllTextAsync(payloadPath, replacementText, Encoding.UTF8);
+        await File.WriteAllBytesAsync(payloadPath, Encoding.UTF8.GetBytes(replacementText));
 
         var exporter = new FileSystemWorkspaceBundleExporter();
         var result = await exporter.ExportAsync(new WorkspaceBundleExportRequestDto(

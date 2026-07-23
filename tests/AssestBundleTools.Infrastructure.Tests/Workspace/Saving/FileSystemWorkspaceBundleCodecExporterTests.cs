@@ -34,7 +34,7 @@ internal static partial class FileSystemWorkspaceBundleExporterTests
 
         var payloadPath = Path.Combine(scope.DirectoryPath, "payload.txt");
         var replacementText = $"abt-codec-stage-{Guid.NewGuid():N}";
-        await File.WriteAllTextAsync(payloadPath, replacementText, Encoding.UTF8);
+        await File.WriteAllBytesAsync(payloadPath, Encoding.UTF8.GetBytes(replacementText));
         var codec = new RecordingAssetBundleCodec(
             probe.SerializedFileName,
             probe.PathId);

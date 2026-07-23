@@ -290,6 +290,11 @@ internal static class InfrastructureTestSuite
             failures,
             nameof(FileSystemWorkspaceBundleExporterTests.ExportAsync_ShouldRewriteTextAssetObject_WhenRealSampleBundleIsAvailable),
             FileSystemWorkspaceBundleExporterTests.ExportAsync_ShouldRewriteTextAssetObject_WhenRealSampleBundleIsAvailable);
+
+        await RunTestAsync(
+            failures,
+            nameof(FileSystemWorkspaceBundleExporterTests.ExportAsync_ShouldPreserveBinaryTextAssetPayloadBytes_WhenRealSampleBundleIsAvailable),
+            FileSystemWorkspaceBundleExporterTests.ExportAsync_ShouldPreserveBinaryTextAssetPayloadBytes_WhenRealSampleBundleIsAvailable);
         await RunTestAsync(
             failures,
             nameof(FileSystemWorkspaceBundleExporterTests.ExportAsync_ShouldApplySourceCodec_AfterStandardObjectWrite),

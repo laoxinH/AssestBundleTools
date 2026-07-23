@@ -33,7 +33,7 @@
 尚未实现：
 
 - 资源处理器输入目前只覆盖文件替换载荷；工作区内替换、编辑草稿和后续有效载荷端口仍需接入同一资源处理计划。
-- 对象级 writer 当前覆盖 `TextAsset` 文本载荷、`Texture2D` 图片载荷、同 bundle 工作区内对象复制、Sprite `m_Rect / m_Pivot` 几何写入和 `AudioClip` 按原容器匹配的外部流写回；`Texture2D` 写入优先保持目标对象原 `m_TextureFormat`，当 AssetsTools 编码器不支持原格式（例如 ASTC）时回退为 Unity 通用的 `RGBA32` 再写入，因此可导出但输出体积可能增大；跨 bundle 工作区内替换、Mesh / Material / MonoBehaviour 等更多对象类型和更完整的格式转换仍需后续扩展。
+- 对象级 writer 当前覆盖 `TextAsset` 载荷、`Texture2D` 图片载荷、同 bundle 工作区内对象复制、Sprite `m_Rect / m_Pivot` 几何写入和 `AudioClip` 按原容器匹配的外部流写回。外部文件替换 `TextAsset` 时必须逐字节写入 `m_Script`，不得先按 UTF-8 解码；这是二进制 Spine `.skel / .bytes` 保真的必要条件。只有应用内文本编辑草稿按 UTF-8 编码后写入。`Texture2D` 写入优先保持目标对象原 `m_TextureFormat`，当 AssetsTools 编码器不支持原格式（例如 ASTC）时回退为 Unity 通用的 `RGBA32` 再写入，因此可导出但输出体积可能增大；跨 bundle 工作区内替换、Mesh / Material / MonoBehaviour 等更多对象类型和更完整的格式转换仍需后续扩展。
 - 保存检查点、部分成功和取消 / 回滚语义。
 
 ## 3. 设计结论

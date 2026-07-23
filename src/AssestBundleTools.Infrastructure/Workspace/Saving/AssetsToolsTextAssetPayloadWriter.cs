@@ -19,7 +19,7 @@ internal static class AssetsToolsTextAssetPayloadWriter
         WorkspaceBundleAssetWriteItemDto writeItem,
         string payloadPath)
     {
-        return ApplyTextAssetPayload(baseField, writeItem.AssetName, File.ReadAllText(payloadPath, Encoding.UTF8));
+        return ApplyTextAssetPayload(baseField, writeItem.AssetName, File.ReadAllBytes(payloadPath));
     }
 
     public static Result<object> ApplyDraft(
@@ -43,13 +43,13 @@ internal static class AssetsToolsTextAssetPayloadWriter
                     "Save.BundleWrite.TextDraftMissing"));
         }
 
-        return ApplyTextAssetPayload(baseField, writeItem.AssetName, text);
+        return ApplyTextAssetPayload(baseField, writeItem.AssetName, Encoding.UTF8.GetBytes(text));
     }
 
     private static Result<object> ApplyTextAssetPayload(
         AssetTypeValueField baseField,
         string assetName,
-        string text)
+        byte[] payload)
     {
         var scriptField = AssetsToolsFieldReader.TryGetField(baseField, "m_Script");
         if (scriptField is null)
@@ -60,7 +60,7 @@ internal static class AssetsToolsTextAssetPayloadWriter
                     "Save.BundleWrite.TextAssetScriptUnavailable"));
         }
 
-        scriptField.AsString = text;
+        scriptField.AsByteArray = payload;
         return Result<object>.Success(new object());
     }
 
