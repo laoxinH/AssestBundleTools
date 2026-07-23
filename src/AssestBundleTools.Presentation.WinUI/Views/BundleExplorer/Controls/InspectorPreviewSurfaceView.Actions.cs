@@ -61,11 +61,6 @@ public sealed partial class InspectorPreviewSurfaceView
         ViewModel?.Preview.Image.UseFullImageForSpriteEditGeometry();
     }
 
-    private void OnSpriteEditReplaceTextureButtonClick(object sender, RoutedEventArgs e)
-    {
-        SpriteTextureReplacementRequested?.Invoke(this, EventArgs.Empty);
-    }
-
     private void OnMeshZoomOutButtonClick(object sender, RoutedEventArgs e)
     {
         ViewModel?.Preview.Mesh.ZoomBy(0.84d);

@@ -117,8 +117,6 @@ public sealed partial class InspectorPanelView : UserControl
 
     public event EventHandler? OpenPreviewLocationRequested;
 
-    public event EventHandler? SpriteTextureReplacementRequested;
-
     public event EventHandler? LoadMoreTextRequested;
 
     public event EventHandler<ResolvedAssetOpenRequestedEventArgs>? ResolvedAssetOpenRequested;
@@ -184,11 +182,6 @@ public sealed partial class InspectorPanelView : UserControl
     private void OnPreviewSurfaceOpenPreviewLocationRequested(object? sender, EventArgs e)
     {
         OpenPreviewLocationRequested?.Invoke(this, EventArgs.Empty);
-    }
-
-    private void OnPreviewSurfaceSpriteTextureReplacementRequested(object? sender, EventArgs e)
-    {
-        SpriteTextureReplacementRequested?.Invoke(this, EventArgs.Empty);
     }
 
     private void OnPreviewSurfaceLoadMoreTextRequested(object? sender, EventArgs e)

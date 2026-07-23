@@ -2766,6 +2766,9 @@
   <data name="InspectorPanelView.ApplyReplacementButton.Content" xml:space="preserve">
     <value>Apply Replacement</value>
   </data>
+  <data name="InspectorPanelView.ReplaceSpriteTextureButton.Content" xml:space="preserve">
+    <value>Replace Texture</value>
+  </data>
   <data name="InspectorPanelView.ApplySpriteEditButton.Content" xml:space="preserve">
     <value>Save Sprite Edit</value>
   </data>

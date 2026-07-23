@@ -44,8 +44,6 @@ public sealed partial class InspectorPreviewSurfaceView : UserControl
 
     public event EventHandler? OpenPreviewLocationRequested;
 
-    public event EventHandler? SpriteTextureReplacementRequested;
-
     public event EventHandler? LoadMoreTextRequested;
 
     public event EventHandler<ResolvedAssetOpenRequestedEventArgs>? ResolvedAssetOpenRequested;
@@ -73,7 +71,6 @@ public sealed partial class InspectorPreviewSurfaceView : UserControl
         ToolTipService.SetToolTip(ImageResetButton, UiText.Get(ResourceKeys.InspectorPreviewImageResetToolTip));
         ApplyButtonAssistiveText(SpriteEditResetOriginalButton, UiText.Get(ResourceKeys.InspectorSpriteEditResetOriginalToolTip));
         ApplyButtonAssistiveText(SpriteEditFullSizeButton, UiText.Get(ResourceKeys.InspectorSpriteEditFullSizeToolTip));
-        ApplyButtonAssistiveText(SpriteEditReplaceTextureButton, UiText.Get(ResourceKeys.InspectorSpriteEditReplaceTextureToolTip));
         ToolTipService.SetToolTip(MeshZoomInButton, UiText.Get(ResourceKeys.InspectorMeshPreviewZoomInToolTip));
         ToolTipService.SetToolTip(MeshZoomOutButton, UiText.Get(ResourceKeys.InspectorMeshPreviewZoomOutToolTip));
         ToolTipService.SetToolTip(MeshResetButton, UiText.Get(ResourceKeys.InspectorMeshPreviewResetToolTip));

@@ -1616,6 +1616,7 @@ public static class ResourceKeys
     public const string InspectorSelectFileReplacementButton = "InspectorPanelView.SelectFileReplacementButton.Content";
     public const string InspectorSelectReplacementButton = "InspectorPanelView.SelectReplacementButton.Content";
     public const string InspectorApplyReplacementButton = "InspectorPanelView.ApplyReplacementButton.Content";
+    public const string InspectorReplaceSpriteTextureButton = "InspectorPanelView.ReplaceSpriteTextureButton.Content";
     public const string InspectorApplySpriteEditButton = "InspectorPanelView.ApplySpriteEditButton.Content";
     public const string InspectorApplySpineEditButton = "InspectorPanelView.ApplySpineEditButton.Content";
     public const string InspectorExitSpriteEditButton = "InspectorPanelView.ExitSpriteEditButton.Content";

@@ -174,7 +174,6 @@
                     ViewModel="{x:Bind ViewModel.Inspector, Mode=OneWay}"
                     LoadMoreTextRequested="OnPreviewSurfaceLoadMoreTextRequested"
                     OpenPreviewLocationRequested="OnPreviewSurfaceOpenPreviewLocationRequested"
-                    SpriteTextureReplacementRequested="OnPreviewSurfaceSpriteTextureReplacementRequested"
                     ResolvedAssetOpenRequested="OnResolvedAssetOpenRequested" />
 
                 <controls:TextAssetEditDraftView
@@ -277,6 +276,26 @@
                                 Orientation="Horizontal"
                                 Spacing="0"
                                 Visibility="{x:Bind ViewModel.SpriteEditActionBarVisibility, Mode=OneWay}">
+                                <Button
+                                    x:Name="ReplaceSpriteTextureButton"
+                                    Click="OnReplaceSpriteTextureButtonClick"
+                                    Style="{StaticResource WorkspaceOperationButtonStyle}">
+                                    <StackPanel Orientation="Horizontal" Spacing="5">
+                                        <FontIcon
+                                            FontFamily="{StaticResource AppIconFontFamily}"
+                                            FontSize="12"
+                                            Glyph="&#xEA6A;" />
+                                        <TextBlock x:Name="ReplaceSpriteTextureButtonText" />
+                                    </StackPanel>
+                                </Button>
+
+                                <Border
+                                    Width="1"
+                                    Height="16"
+                                    Margin="2,0"
+                                    VerticalAlignment="Center"
+                                    Background="{ThemeResource ControlStrokeColorDefaultBrush}" />
+
                                 <Button
                                     x:Name="SaveSpriteEditButton"
                                     Click="OnSaveSpriteEditButtonClick"
@@ -506,7 +525,6 @@
                     SelectFileReplacementSourceRequested="OnInspectorSelectFileReplacementSourceRequested"
                     SpineEditBatchMatchRequested="OnSpineEditBatchMatchRequested"
                     SpineEditPartFileSelectionRequested="OnSpineEditPartFileSelectionRequested"
-                    SpriteTextureReplacementRequested="OnInspectorSpriteTextureReplacementRequested"
                     UndoReplacementRequested="OnInspectorUndoReplacementRequested"
                     SpineAtlasPageSelectionRequested="OnInspectorSpineAtlasPageSelectionRequested" />
             </Border>

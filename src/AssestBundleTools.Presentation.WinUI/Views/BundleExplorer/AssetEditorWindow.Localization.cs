@@ -12,6 +12,13 @@ public sealed partial class AssetEditorWindow
             AssetEditorGroupDragHandle,
             UiText.Get(ResourceKeys.AssetEditorWindowDragGroupHandleToolTip));
         ApplyActionButtonText(ExtractButton, ExtractButtonText, ResourceKeys.InspectorExtractButton);
+        ApplyActionButtonText(
+            ReplaceSpriteTextureButton,
+            ReplaceSpriteTextureButtonText,
+            ResourceKeys.InspectorReplaceSpriteTextureButton);
+        ToolTipService.SetToolTip(
+            ReplaceSpriteTextureButton,
+            UiText.Get(ResourceKeys.InspectorSpriteEditReplaceTextureToolTip));
         ApplyActionButtonText(SaveSpriteEditButton, SaveSpriteEditButtonText, ResourceKeys.InspectorApplySpriteEditButton);
         ApplyActionButtonText(ExitSpriteEditButton, ExitSpriteEditButtonText, ResourceKeys.InspectorExitSpriteEditButton);
         ApplyActionButtonText(UndoSpriteEditButton, UndoSpriteEditButtonText, ResourceKeys.InspectorUndoReplacementButton);

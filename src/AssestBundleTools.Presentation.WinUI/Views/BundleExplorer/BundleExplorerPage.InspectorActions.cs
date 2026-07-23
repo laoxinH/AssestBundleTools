@@ -70,11 +70,6 @@ public sealed partial class BundleExplorerPage
         await ViewModel.SelectFileReplacementSourceAsync();
     }
 
-    private async void OnInspectorSpriteTextureReplacementRequested(object sender, EventArgs e)
-    {
-        await ViewModel.SelectSpriteTextureReplacementSourceAsync();
-    }
-
     private async void OnInspectorApplyReplacementRequested(object sender, EventArgs e)
     {
         await ViewModel.ApplyPendingReplacementAsync();

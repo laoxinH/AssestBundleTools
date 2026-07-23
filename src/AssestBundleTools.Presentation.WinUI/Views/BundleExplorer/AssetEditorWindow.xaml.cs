@@ -176,6 +176,11 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
         await ViewModel.ModifyFromFileReplacementSourceAsync();
     }
 
+    private async void OnReplaceSpriteTextureButtonClick(object sender, RoutedEventArgs e)
+    {
+        await ViewModel.SelectSpriteTextureReplacementSourceAsync();
+    }
+
     private async void OnSaveSpriteEditButtonClick(object sender, RoutedEventArgs e)
     {
         await ViewModel.ApplySpriteEditAsync();
@@ -248,11 +253,6 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
         await ViewModel.SelectFileReplacementSourceAsync();
     }
 
-    private async void OnInspectorSpriteTextureReplacementRequested(object sender, EventArgs e)
-    {
-        await ViewModel.SelectSpriteTextureReplacementSourceAsync();
-    }
-
     private async void OnInspectorModifyFromFileReplacementSourceRequested(object sender, EventArgs e)
     {
         await ViewModel.ModifyFromFileReplacementSourceAsync();
@@ -299,11 +299,6 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
     private async void OnPreviewSurfaceLoadMoreTextRequested(object sender, EventArgs e)
     {
         await ViewModel.LoadMorePreviewTextLinesAsync();
-    }
-
-    private async void OnPreviewSurfaceSpriteTextureReplacementRequested(object sender, EventArgs e)
-    {
-        await ViewModel.SelectSpriteTextureReplacementSourceAsync();
     }
 
     private async void OnResolvedAssetOpenRequested(

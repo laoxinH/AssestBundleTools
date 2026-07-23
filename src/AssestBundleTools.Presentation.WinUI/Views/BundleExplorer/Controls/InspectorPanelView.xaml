@@ -180,7 +180,6 @@
                                 ViewModel="{x:Bind ViewModel, Mode=OneWay}"
                                 LoadMoreTextRequested="OnPreviewSurfaceLoadMoreTextRequested"
                                 OpenPreviewLocationRequested="OnPreviewSurfaceOpenPreviewLocationRequested"
-                                SpriteTextureReplacementRequested="OnPreviewSurfaceSpriteTextureReplacementRequested"
                                 ResolvedAssetOpenRequested="OnPreviewSurfaceResolvedAssetOpenRequested"
                                 Visibility="{x:Bind DetailsPreviewVisibility, Mode=OneWay}" />
 
