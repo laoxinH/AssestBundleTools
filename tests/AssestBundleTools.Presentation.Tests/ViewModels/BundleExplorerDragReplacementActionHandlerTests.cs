@@ -27,6 +27,7 @@ public sealed partial class BundleExplorerAssetExtractionActionHandlerTests
 
         var plan = await handler.PrepareAssetsAsync(
             CreateWorkspaceSummary(),
+            hero,
             [hero, portrait],
             [],
             sourcePaths,
@@ -39,7 +40,9 @@ public sealed partial class BundleExplorerAssetExtractionActionHandlerTests
             _ => throw new Xunit.Sdk.XunitException("Matched replacements should succeed."));
 
         Assert.True(applied);
-        Assert.Equal(sourcePaths, Assert.Single(gateway.AssetReplacementSourceMatchQueries).SourcePaths);
+        var matchQuery = Assert.Single(gateway.AssetReplacementSourceMatchQueries);
+        Assert.Equal(sourcePaths, matchQuery.SourcePaths);
+        Assert.Equal(hero.Item.AssetId, matchQuery.DirectDropTarget?.AssetId);
         Assert.Equal(2, gateway.ReplaceAssetFromFileCommands.Count);
         Assert.Equal(
             [hero.Item.AssetId, portrait.Item.AssetId],

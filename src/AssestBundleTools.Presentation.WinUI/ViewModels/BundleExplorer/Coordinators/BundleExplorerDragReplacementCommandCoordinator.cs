@@ -33,6 +33,7 @@ internal sealed class BundleExplorerDragReplacementCommandCoordinator
     }
 
     public async Task<AssetDragReplacementPreparationResult> PrepareAssetsAsync(
+        AssetListEntryViewModel directDropTarget,
         IReadOnlyList<AssetListEntryViewModel> targets,
         IReadOnlyList<SpineAssetGroupEntryViewModel> spineGroups,
         IReadOnlyList<string> sourcePaths)
@@ -45,6 +46,7 @@ internal sealed class BundleExplorerDragReplacementCommandCoordinator
         var failureWasReported = false;
         var plan = await _actionHandler.PrepareAssetsAsync(
             workspaceSummary,
+            directDropTarget,
             targets,
             spineGroups,
             sourcePaths,

@@ -455,6 +455,26 @@ internal static partial class ApplicationTestSuite
             AssetReplacementSourceMatchingTests.MatchAssetReplacementSourcesHandler_ShouldFailWhenSpineCatalogCannotLoad);
         await RunTestAsync(
             failures,
+            nameof(AssetDirectDropReplacementSourceMatchingTests.DirectDrop_ShouldIgnoreFileNameAndTargetOnlyExactAsset),
+            AssetDirectDropReplacementSourceMatchingTests.DirectDrop_ShouldIgnoreFileNameAndTargetOnlyExactAsset);
+        await RunTestAsync(
+            failures,
+            nameof(AssetDirectDropReplacementSourceMatchingTests.DirectDrop_ShouldRejectIncompatibleExtension),
+            AssetDirectDropReplacementSourceMatchingTests.DirectDrop_ShouldRejectIncompatibleExtension);
+        await RunTestAsync(
+            failures,
+            nameof(AssetDirectDropReplacementSourceMatchingTests.DirectDrop_ShouldAcceptAtlasTextSource),
+            AssetDirectDropReplacementSourceMatchingTests.DirectDrop_ShouldAcceptAtlasTextSource);
+        await RunTestAsync(
+            failures,
+            nameof(AssetDirectDropReplacementSourceMatchingTests.DirectDrop_ShouldValidateSkeletonTextSourceByPayload),
+            AssetDirectDropReplacementSourceMatchingTests.DirectDrop_ShouldValidateSkeletonTextSourceByPayload);
+        await RunTestAsync(
+            failures,
+            nameof(AssetDirectDropReplacementSourceMatchingTests.SingleDirectoryResult_ShouldKeepBatchNameMatching),
+            AssetDirectDropReplacementSourceMatchingTests.SingleDirectoryResult_ShouldKeepBatchNameMatching);
+        await RunTestAsync(
+            failures,
             nameof(ReplacementWorkflowHandlerTests.GetWorkspaceReplacementCandidatesHandler_ShouldReturnFailure_WhenRegistryProvidesNoCandidates),
             ReplacementWorkflowHandlerTests.GetWorkspaceReplacementCandidatesHandler_ShouldReturnFailure_WhenRegistryProvidesNoCandidates);
         await RunTestAsync(

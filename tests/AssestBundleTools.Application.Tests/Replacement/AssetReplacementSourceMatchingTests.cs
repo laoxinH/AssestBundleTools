@@ -282,9 +282,9 @@ internal static class AssetReplacementSourceMatchingTests
         TestAssert.Equal("Asset.Replace.BatchSourceFileReadFailed", TestAssert.Single(result.Errors).Code, "The catalog failure should be preserved.");
     }
 
-    private static WorkspaceId CreateWorkspaceId() => new("workspace-session-1");
+    internal static WorkspaceId CreateWorkspaceId() => new("workspace-session-1");
 
-    private static MatchAssetReplacementSourcesHandler CreateHandler(IWorkspaceSessionRegistry registry) =>
+    internal static MatchAssetReplacementSourcesHandler CreateHandler(IWorkspaceSessionRegistry registry) =>
         new(
             new PassthroughReplacementSourcePathExpander(),
             new SpineSkeletonReplacementCompatibilityService(
@@ -293,7 +293,7 @@ internal static class AssetReplacementSourceMatchingTests
                 new StaticReplacementPreviewSourceProvider(
                     new Dictionary<string, AssetPreviewContentDto>(StringComparer.OrdinalIgnoreCase))));
 
-    private static AssetListItemDto CreateAssetListItem(
+    internal static AssetListItemDto CreateAssetListItem(
         BundleId bundleId,
         AssetId assetId,
         string name,
@@ -314,7 +314,7 @@ internal static class AssetReplacementSourceMatchingTests
             ExportFileName: exportFileName ?? name,
             CanExtract: true);
 
-    private static AssetDetailsDto CreateAssetDetails(
+    internal static AssetDetailsDto CreateAssetDetails(
         WorkspaceId workspaceId,
         BundleId bundleId,
         AssetId assetId) =>
@@ -342,7 +342,7 @@ internal static class AssetReplacementSourceMatchingTests
             null,
             []);
 
-    private static AssetPreviewDto CreateSkeletonPreview(
+    internal static AssetPreviewDto CreateSkeletonPreview(
         WorkspaceId workspaceId,
         BundleId bundleId,
         AssetId assetId) =>
@@ -364,7 +364,7 @@ internal static class AssetReplacementSourceMatchingTests
                 AssetPreviewCacheStatusKind.Missing,
                 AssetPreviewFallbackReasonKind.None));
 
-    private sealed class StaticAssetPreviewHandler(AssetPreviewDto preview) :
+    internal sealed class StaticAssetPreviewHandler(AssetPreviewDto preview) :
         IQueryHandler<GetAssetPreviewQuery, Result<AssetPreviewDto>>
     {
         public Task<Result<AssetPreviewDto>> HandleAsync(
@@ -373,7 +373,7 @@ internal static class AssetReplacementSourceMatchingTests
             Task.FromResult(Result<AssetPreviewDto>.Success(preview));
     }
 
-    private sealed class PassthroughReplacementSourcePathExpander : IReplacementSourcePathExpander
+    internal sealed class PassthroughReplacementSourcePathExpander : IReplacementSourcePathExpander
     {
         public Task<Result<IReadOnlyList<string>>> ExpandAsync(
             IReadOnlyList<string> sourcePaths,
@@ -381,7 +381,7 @@ internal static class AssetReplacementSourceMatchingTests
             Task.FromResult(Result<IReadOnlyList<string>>.Success(sourcePaths));
     }
 
-    private sealed class StaticReplacementPreviewSourceProvider(
+    internal sealed class StaticReplacementPreviewSourceProvider(
         IReadOnlyDictionary<string, AssetPreviewContentDto> previews) : IReplacementPreviewSourceProvider
     {
         public Task<Result<AssetPreviewContentDto>> LoadFilePreviewAsync(
@@ -443,7 +443,7 @@ internal static class AssetReplacementSourceMatchingTests
                 ApplicationErrors.BatchReplacementSourceFileReadFailed("spine-catalog")));
     }
 
-    private sealed class AssetDetailsRegistry(AssetDetailsDto? details = null) : IWorkspaceSessionRegistry
+    internal sealed class AssetDetailsRegistry(AssetDetailsDto? details = null) : IWorkspaceSessionRegistry
     {
         public bool TryGetAssetDetails(
             WorkspaceId workspaceId,

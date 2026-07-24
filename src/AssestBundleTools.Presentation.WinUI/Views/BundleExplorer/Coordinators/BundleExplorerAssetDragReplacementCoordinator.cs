@@ -80,6 +80,7 @@ internal sealed class BundleExplorerAssetDragReplacementCoordinator
         AppendReceivedLog(target.DisplayName, string.Join("; ", sourcePaths));
         var pane = _owner.ViewModel.AssetWorkflow.PrimaryPane;
         var preparation = await _owner.ViewModel.DragReplacementCommands.PrepareAssetsAsync(
+            target,
             pane.Items,
             pane.SpineGroupItems,
             sourcePaths);

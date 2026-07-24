@@ -26,6 +26,7 @@ public sealed class AssetPaneDragReplacementContractTests
         Assert.Contains("TransformToVisual(listView)", targetCoordinator);
         Assert.Contains("bounds.Contains(position)", targetCoordinator);
         Assert.DoesNotContain("FindElementsInHostCoordinates(position, listView)", targetCoordinator);
+        Assert.Contains("_requestReplacementAsync(item, paths)", targetCoordinator);
         var dragOver = targetCoordinator[
             targetCoordinator.IndexOf("private void OnDragOver", StringComparison.Ordinal)..
             targetCoordinator.IndexOf("private async void OnDrop", StringComparison.Ordinal)];

@@ -10,7 +10,7 @@ using AssestBundleTools.Domain.Assets;
 namespace AssestBundleTools.Application.Replacement.Queries;
 
 /// <summary>
-/// 展开普通资产拖入来源，并按名称、类型和 skeleton 真实格式生成确定性匹配计划。
+/// 展开普通资产拖入来源，并按精确落点或批量名称、类型及 skeleton 真实格式生成确定性匹配计划。
 /// </summary>
 public sealed class MatchAssetReplacementSourcesHandler :
     IQueryHandler<MatchAssetReplacementSourcesQuery, Result<AssetReplacementSourceMatchPlanDto>>
@@ -62,10 +62,28 @@ public sealed class MatchAssetReplacementSourcesHandler :
             return Result<AssetReplacementSourceMatchPlanDto>.Failure(spineGroupsResult.Errors);
         }
 
-        var skeletonTargetIds = (spineGroupsResult.Value ?? Array.Empty<SpineAssetGroupDto>())
+        var spineGroups = spineGroupsResult.Value ?? Array.Empty<SpineAssetGroupDto>();
+        var skeletonTargetIds = spineGroups
             .SelectMany(static group => group.SkeletonAssets)
             .Select(static part => CreateAssetKey(part.BundleId.Value, part.AssetId.Value))
             .ToHashSet(StringComparer.Ordinal);
+        var atlasTargetIds = spineGroups
+            .SelectMany(static group => group.AtlasAssets)
+            .Select(static part => CreateAssetKey(part.BundleId.Value, part.AssetId.Value))
+            .ToHashSet(StringComparer.Ordinal);
+
+        var directTarget = ResolveDirectTarget(query, candidates);
+        if (directTarget is not null)
+        {
+            return await MatchDirectTargetAsync(
+                query,
+                directTarget,
+                candidates[0].FilePath,
+                skeletonTargetIds,
+                atlasTargetIds,
+                cancellationToken);
+        }
+
         var matches = new List<AssetReplacementSourceMatchDto>();
         var conflicts = new List<AssetReplacementSourceConflictDto>();
 
@@ -131,6 +149,82 @@ public sealed class MatchAssetReplacementSourcesHandler :
         return Result<AssetReplacementSourceMatchPlanDto>.Success(
             new AssetReplacementSourceMatchPlanDto(matches, conflicts));
     }
+
+    private async Task<Result<AssetReplacementSourceMatchPlanDto>> MatchDirectTargetAsync(
+        MatchAssetReplacementSourcesQuery query,
+        AssetListItemDto target,
+        string sourceFilePath,
+        IReadOnlySet<string> skeletonTargetIds,
+        IReadOnlySet<string> atlasTargetIds,
+        CancellationToken cancellationToken)
+    {
+        var targetKey = CreateAssetKey(target.BundleId.Value, target.AssetId.Value);
+        var isSkeleton = skeletonTargetIds.Contains(targetKey);
+        var isAtlas = atlasTargetIds.Contains(targetKey);
+        if (!IsDirectTypeCompatible(target.AssetType, sourceFilePath, isSkeleton, isAtlas))
+        {
+            return CreateEmptyPlan();
+        }
+
+        if (isSkeleton)
+        {
+            var compatibility = await _skeletonCompatibilityService.CheckAsync(
+                query.WorkspaceId,
+                query.WorkspaceKey,
+                query.WorkspaceDataRootPath,
+                target.BundleId,
+                target.AssetId,
+                sourceFilePath,
+                cancellationToken);
+            if (compatibility.IsCancelled)
+            {
+                return Result<AssetReplacementSourceMatchPlanDto>.Cancelled();
+            }
+
+            if (!compatibility.IsSuccess || compatibility.Value?.IsCompatible != true)
+            {
+                return CreateEmptyPlan();
+            }
+        }
+
+        return Result<AssetReplacementSourceMatchPlanDto>.Success(
+            new AssetReplacementSourceMatchPlanDto(
+                [new AssetReplacementSourceMatchDto(
+                    target,
+                    sourceFilePath,
+                    Path.GetFileName(sourceFilePath),
+                    isSkeleton)],
+                []));
+    }
+
+    private static AssetListItemDto? ResolveDirectTarget(
+        MatchAssetReplacementSourcesQuery query,
+        IReadOnlyList<SourceCandidate> candidates)
+    {
+        if (query.DirectDropTarget is null ||
+            query.SourcePaths.Count != 1 ||
+            candidates.Count != 1 ||
+            !string.Equals(
+                query.SourcePaths[0].Trim(),
+                candidates[0].FilePath,
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        var directTargetKey = CreateAssetKey(
+            query.DirectDropTarget.BundleId.Value,
+            query.DirectDropTarget.AssetId.Value);
+        return query.Targets.FirstOrDefault(target =>
+            string.Equals(
+                CreateAssetKey(target.BundleId.Value, target.AssetId.Value),
+                directTargetKey,
+                StringComparison.Ordinal));
+    }
+
+    private static Result<AssetReplacementSourceMatchPlanDto> CreateEmptyPlan() =>
+        Result<AssetReplacementSourceMatchPlanDto>.Success(
+            new AssetReplacementSourceMatchPlanDto([], []));
 
     private static void MoveSharedSourceMatchesToConflicts(
         List<AssetReplacementSourceMatchDto> matches,
@@ -228,6 +322,26 @@ public sealed class MatchAssetReplacementSourcesHandler :
             ? targetType == AssetType.TextAsset && IsSkeletonSource(sourceFilePath)
             : ReplacementFileTypeCatalog.IsFilePathCompatible(targetType, sourceFilePath);
 
+    private static bool IsDirectTypeCompatible(
+        AssetType targetType,
+        string sourceFilePath,
+        bool isSkeleton,
+        bool isAtlas)
+    {
+        if (isSkeleton)
+        {
+            return targetType == AssetType.TextAsset && IsSkeletonSource(sourceFilePath);
+        }
+
+        if (isAtlas)
+        {
+            return targetType == AssetType.TextAsset &&
+                   (HasExtension(sourceFilePath, ".atlas") || HasExtension(sourceFilePath, ".txt"));
+        }
+
+        return ReplacementFileTypeCatalog.IsFilePathCompatible(targetType, sourceFilePath);
+    }
+
     private static bool HasCompatibleSemanticExtension(
         AssetListItemDto target,
         string sourceFilePath,
@@ -246,7 +360,8 @@ public sealed class MatchAssetReplacementSourcesHandler :
     private static bool IsSkeletonSource(string sourceFilePath) =>
         HasExtension(sourceFilePath, ".skel") ||
         HasExtension(sourceFilePath, ".json") ||
-        HasExtension(sourceFilePath, ".bytes");
+        HasExtension(sourceFilePath, ".bytes") ||
+        HasExtension(sourceFilePath, ".txt");
 
     private static bool HasExtension(string sourceFilePath, string extension) =>
         string.Equals(Path.GetExtension(sourceFilePath), extension, StringComparison.OrdinalIgnoreCase);

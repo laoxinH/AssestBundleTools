@@ -46,6 +46,7 @@ internal sealed class BundleExplorerDragReplacementActionHandler
 
     public async Task<AssetReplacementSourceMatchPlanDto?> PrepareAssetsAsync(
         WorkspaceSummaryDto workspaceSummary,
+        AssetListEntryViewModel directDropTarget,
         IReadOnlyList<AssetListEntryViewModel> targets,
         IReadOnlyList<SpineAssetGroupEntryViewModel> spineGroups,
         IReadOnlyList<string> sourcePaths,
@@ -53,6 +54,7 @@ internal sealed class BundleExplorerDragReplacementActionHandler
         Action<IReadOnlyList<AppError>> appendResultFailure)
     {
         ArgumentNullException.ThrowIfNull(workspaceSummary);
+        ArgumentNullException.ThrowIfNull(directDropTarget);
         ArgumentNullException.ThrowIfNull(targets);
         ArgumentNullException.ThrowIfNull(spineGroups);
         ArgumentNullException.ThrowIfNull(sourcePaths);
@@ -69,7 +71,8 @@ internal sealed class BundleExplorerDragReplacementActionHandler
                     workspaceSummary.WorkspaceDataRootPath ?? string.Empty,
                     targets.Select(static target => target.Item).ToArray(),
                     spineGroups.Select(static group => group.Item).ToArray(),
-                    sourcePaths));
+                    sourcePaths,
+                    directDropTarget.Item));
             if (result.IsSuccess && result.Value is not null)
             {
                 return result.Value;
