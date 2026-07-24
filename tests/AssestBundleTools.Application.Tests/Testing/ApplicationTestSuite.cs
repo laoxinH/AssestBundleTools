@@ -431,6 +431,14 @@ internal static partial class ApplicationTestSuite
             AssetReplacementSourceMatchingTests.MatchAssetReplacementSourcesHandler_ShouldMatchMixedSourcesAcrossCurrentList);
         await RunTestAsync(
             failures,
+            nameof(AssetReplacementSourceMatchingTests.MatchAssetReplacementSourcesHandler_ShouldMatchAllTypesAndOrdinalDisplayNames),
+            AssetReplacementSourceMatchingTests.MatchAssetReplacementSourcesHandler_ShouldMatchAllTypesAndOrdinalDisplayNames);
+        await RunTestAsync(
+            failures,
+            nameof(AssetReplacementSourceMatchingTests.MatchAssetReplacementSourcesHandler_ShouldConflictForSharedImageTypesWithoutOrdinalName),
+            AssetReplacementSourceMatchingTests.MatchAssetReplacementSourcesHandler_ShouldConflictForSharedImageTypesWithoutOrdinalName);
+        await RunTestAsync(
+            failures,
             nameof(AssetReplacementSourceMatchingTests.MatchAssetReplacementSourcesHandler_ShouldReportEveryConflictingSource),
             AssetReplacementSourceMatchingTests.MatchAssetReplacementSourcesHandler_ShouldReportEveryConflictingSource);
         await RunTestAsync(

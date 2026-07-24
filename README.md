@@ -83,6 +83,10 @@ AudioClip 会识别 FSB5、WAV 等容器；缺少预览或编码组件时，应�
 
 ![AudioClip 文件替换](docs/assets/user-guide-v1/06-audio-replace.gif)
 
+资产列表也支持把多个文件、文件夹或两者混合后一次拖入，按当前列表文件名批量匹配。重名资产沿用 `[1]`、`[2]` 导出编号，冲突时会先列出来源而不会执行替换。
+
+![批量拖拽替换 AudioClip](docs/assets/user-guide-v1/09-audio-batch-drag-replace.gif)
+
 ### Spine 动画预览与组替换
 
 Spine 视图会聚合 skeleton、atlas 与关联贴图，并提供 animation、skin、播放速度、逐帧控制和时间轴。独立窗口模式可以为动画提供更大的固定预览区域。

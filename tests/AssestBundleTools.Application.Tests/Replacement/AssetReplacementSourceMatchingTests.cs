@@ -48,6 +48,93 @@ internal static class AssetReplacementSourceMatchingTests
             "The audio source should map to the audio target.");
     }
 
+    public static async Task MatchAssetReplacementSourcesHandler_ShouldMatchAllTypesAndOrdinalDisplayNames()
+    {
+        var workspaceId = CreateWorkspaceId();
+        var bundleId = new BundleId("bundle.mixed");
+        var firstAudio = CreateAssetListItem(
+            bundleId,
+            new AssetId("asset.audio.1"),
+            "shared_voice",
+            AssetType.AudioClip,
+            "shared_voice [1]",
+            "shared_voice [1].wav");
+        var secondAudio = CreateAssetListItem(
+            bundleId,
+            new AssetId("asset.audio.2"),
+            "shared_voice",
+            AssetType.AudioClip,
+            "shared_voice [2]",
+            "shared_voice [2].wav");
+        var texture = CreateAssetListItem(bundleId, new AssetId("asset.texture"), "shared", AssetType.Texture2D, exportFileName: "shared.png");
+        var audio = CreateAssetListItem(bundleId, new AssetId("asset.audio"), "shared", AssetType.AudioClip, exportFileName: "shared.wav");
+        var text = CreateAssetListItem(bundleId, new AssetId("asset.text"), "config.atlas", AssetType.TextAsset, exportFileName: "config.atlas");
+        var mesh = CreateAssetListItem(bundleId, new AssetId("asset.mesh"), "body", AssetType.Mesh, exportFileName: "body.obj");
+        var handler = CreateHandler(new AssetDetailsRegistry());
+
+        var result = await handler.HandleAsync(new MatchAssetReplacementSourcesQuery(
+            workspaceId,
+            "workspace-key",
+            @"D:\WorkspaceData",
+            [firstAudio, secondAudio, texture, audio, text, mesh],
+            [],
+            [
+                @"D:\Replacement\shared_voice [1].wav",
+                @"D:\Replacement\shared_voice [2].ogg",
+                @"D:\Replacement\shared.png",
+                @"D:\Replacement\shared.wav",
+                @"D:\Replacement\config.atlas",
+                @"D:\Replacement\body.obj"
+            ]));
+
+        TestAssert.True(result.IsSuccess, "The all-types list should produce a match plan.");
+        var plan = result.Value ?? throw new InvalidOperationException("Expected all-types source match plan.");
+        TestAssert.Equal(6, plan.Matches.Count, "Every supported type and ordinal source should match exactly once.");
+        TestAssert.Equal(0, plan.Conflicts.Count, "Type extensions and ordinal names should remove ambiguity.");
+        TestAssert.Equal(
+            firstAudio.AssetId,
+            TestAssert.Single(plan.Matches.Where(static match => match.SourceFileName == "shared_voice [1].wav").ToArray()).Target.AssetId,
+            "The [1] source should map to the first projected duplicate.");
+        TestAssert.Equal(
+            secondAudio.AssetId,
+            TestAssert.Single(plan.Matches.Where(static match => match.SourceFileName == "shared_voice [2].ogg").ToArray()).Target.AssetId,
+            "The [2] source should map to the second projected duplicate even when the compatible audio extension changes.");
+        TestAssert.Equal(
+            texture.AssetId,
+            TestAssert.Single(plan.Matches.Where(static match => match.SourceFileName == "shared.png").ToArray()).Target.AssetId,
+            "The PNG source should map only to the texture target.");
+        TestAssert.Equal(
+            audio.AssetId,
+            TestAssert.Single(plan.Matches.Where(static match => match.SourceFileName == "shared.wav").ToArray()).Target.AssetId,
+            "The WAV source should map only to the audio target with the same base name.");
+    }
+
+    public static async Task MatchAssetReplacementSourcesHandler_ShouldConflictForSharedImageTypesWithoutOrdinalName()
+    {
+        var workspaceId = CreateWorkspaceId();
+        var bundleId = new BundleId("bundle.shared-image");
+        var texture = CreateAssetListItem(bundleId, new AssetId("asset.texture"), "shared", AssetType.Texture2D, exportFileName: "shared.png");
+        var sprite = CreateAssetListItem(bundleId, new AssetId("asset.sprite"), "shared", AssetType.Sprite, exportFileName: "shared.png");
+        var source = @"D:\Replacement\shared.png";
+        var handler = CreateHandler(new AssetDetailsRegistry());
+
+        var result = await handler.HandleAsync(new MatchAssetReplacementSourcesQuery(
+            workspaceId,
+            "workspace-key",
+            @"D:\WorkspaceData",
+            [texture, sprite],
+            [],
+            [source]));
+
+        TestAssert.True(result.IsSuccess, "Shared image extensions should produce a structured plan.");
+        var plan = result.Value ?? throw new InvalidOperationException("Expected shared-image source match plan.");
+        TestAssert.Equal(0, plan.Matches.Count, "One PNG must not be applied to both Texture2D and Sprite silently.");
+        TestAssert.Equal(2, plan.Conflicts.Count, "Both ambiguous image targets should be listed in the conflict details.");
+        TestAssert.True(
+            plan.Conflicts.All(conflict => conflict.SourceFilePaths.SequenceEqual([source])),
+            "Each shared-image conflict should identify the ambiguous PNG source.");
+    }
+
     public static async Task MatchAssetReplacementSourcesHandler_ShouldReportEveryConflictingSource()
     {
         var workspaceId = CreateWorkspaceId();
@@ -78,8 +165,20 @@ internal static class AssetReplacementSourceMatchingTests
     {
         var workspaceId = CreateWorkspaceId();
         var bundleId = new BundleId("bundle.assets");
-        var first = CreateAssetListItem(bundleId, new AssetId("asset.first"), "hero", AssetType.Texture2D);
-        var second = CreateAssetListItem(bundleId, new AssetId("asset.second"), "hero", AssetType.Texture2D);
+        var first = CreateAssetListItem(
+            bundleId,
+            new AssetId("asset.first"),
+            "hero",
+            AssetType.Texture2D,
+            "hero [1]",
+            "hero [1].png");
+        var second = CreateAssetListItem(
+            bundleId,
+            new AssetId("asset.second"),
+            "hero",
+            AssetType.Texture2D,
+            "hero [2]",
+            "hero [2].png");
         var source = @"D:\Replacement\hero.png";
         var handler = CreateHandler(new AssetDetailsRegistry());
 
@@ -91,7 +190,7 @@ internal static class AssetReplacementSourceMatchingTests
             [],
             [source]));
 
-        TestAssert.True(result.IsSuccess, "Duplicate target names should produce a structured conflict plan.");
+        TestAssert.True(result.IsSuccess, "An unnumbered source should conflict with ordinal duplicate targets.");
         var plan = result.Value ?? throw new InvalidOperationException("Expected ordinary replacement source match plan.");
         TestAssert.Equal(0, plan.Matches.Count, "One source must not be applied silently to multiple targets.");
         TestAssert.Equal(2, plan.Conflicts.Count, "Every ambiguous target should be included in conflict details.");
@@ -198,7 +297,9 @@ internal static class AssetReplacementSourceMatchingTests
         BundleId bundleId,
         AssetId assetId,
         string name,
-        AssetType assetType) =>
+        AssetType assetType,
+        string? displayName = null,
+        string? exportFileName = null) =>
         new(
             assetId,
             bundleId,
@@ -209,8 +310,8 @@ internal static class AssetReplacementSourceMatchingTests
             128,
             HasPreview: true,
             IsModified: false,
-            DisplayName: name,
-            ExportFileName: name,
+            DisplayName: displayName ?? name,
+            ExportFileName: exportFileName ?? name,
             CanExtract: true);
 
     private static AssetDetailsDto CreateAssetDetails(
