@@ -14,4 +14,5 @@ public sealed record GetAssetPreviewQuery(
     string WorkspaceDataRootPath,
     BundleId BundleId,
     AssetId AssetId,
-    AssetPreviewSourceOverrideDto? PreviewSourceOverride = null);
+    AssetPreviewSourceOverrideDto? PreviewSourceOverride = null,
+    AssetPreviewContentScope ContentScope = AssetPreviewContentScope.Effective);

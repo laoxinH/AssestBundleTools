@@ -47,6 +47,7 @@ Application 负责：
 
 - 定义预览预算策略、DTO 契约、诊断语义和本地化消息 token。
 - 统一解析“当前有效内容”：原始资源、工作区替换、文件替换、编辑草稿和 Spine 组组成文件草稿都应进入同一套 preview source resolution。
+- `GetAssetPreviewQuery` 默认继续返回当前有效内容；只有必须以不可变 AB 原始载荷为基线的校验用例，才允许显式请求 `Original` 内容范围。`Original` 范围必须绕过文件替换、工作区替换、文本编辑草稿、预览来源覆盖和有效内容投影，但仍复用同一套原始预览缓存与 generator 管线，调用方不得自行读取 AB 或缓存文件。
 - 对所有 preview generator 输出做展示裁剪、集合截断、摘要降级和诊断补充。
 - 提供 `LoadPreviewTextChunkQuery`、`LoadPreviewTextLinesQuery`、`SearchPreviewTextQuery`、后续 `FormatPreviewTextRangeQuery` 等按需读取契约。
 

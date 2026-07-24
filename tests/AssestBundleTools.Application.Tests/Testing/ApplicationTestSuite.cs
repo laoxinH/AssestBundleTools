@@ -245,6 +245,10 @@ internal static partial class ApplicationTestSuite
             GetAssetPreviewHandlerTests.HandleAsync_ShouldUseFileReplacementPreview_ForTextAsset);
         await RunTestAsync(
             failures,
+            nameof(GetAssetPreviewHandlerTests.HandleAsync_ShouldUseOriginalPreview_WhenEffectiveFileReplacementExists),
+            GetAssetPreviewHandlerTests.HandleAsync_ShouldUseOriginalPreview_WhenEffectiveFileReplacementExists);
+        await RunTestAsync(
+            failures,
             nameof(GetAssetPreviewHandlerTests.HandleAsync_ShouldUseAppliedTextEditDraftPreview_ForTextAsset),
             GetAssetPreviewHandlerTests.HandleAsync_ShouldUseAppliedTextEditDraftPreview_ForTextAsset);
         await RunTestAsync(
@@ -415,6 +419,10 @@ internal static partial class ApplicationTestSuite
             failures,
             nameof(ReplacementWorkflowHandlerTests.GetFileReplacementCandidateHandler_ShouldPreferTargetAssetType_WhenSharedExtensionMatches),
             ReplacementWorkflowHandlerTests.GetFileReplacementCandidateHandler_ShouldPreferTargetAssetType_WhenSharedExtensionMatches);
+        await RunTestAsync(
+            failures,
+            nameof(ReplacementWorkflowHandlerTests.GetFileReplacementCandidateHandler_ShouldNotLockImageExtensionAfterReplacement),
+            ReplacementWorkflowHandlerTests.GetFileReplacementCandidateHandler_ShouldNotLockImageExtensionAfterReplacement);
         await RunSpriteEditOperationTestsAsync(failures);
         await RunReplacementOperationRecorderTestsAsync(failures);
         await RunTestAsync(
@@ -469,6 +477,10 @@ internal static partial class ApplicationTestSuite
             failures,
             nameof(AssetDirectDropReplacementSourceMatchingTests.DirectDrop_ShouldValidateSkeletonTextSourceByPayload),
             AssetDirectDropReplacementSourceMatchingTests.DirectDrop_ShouldValidateSkeletonTextSourceByPayload);
+        await RunTestAsync(
+            failures,
+            nameof(AssetDirectDropReplacementSourceMatchingTests.SkeletonCompatibility_ShouldKeepOriginalFormatAfterEffectiveReplacement),
+            AssetDirectDropReplacementSourceMatchingTests.SkeletonCompatibility_ShouldKeepOriginalFormatAfterEffectiveReplacement);
         await RunTestAsync(
             failures,
             nameof(AssetDirectDropReplacementSourceMatchingTests.SingleDirectoryResult_ShouldKeepBatchNameMatching),

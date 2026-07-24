@@ -542,7 +542,7 @@ BackgroundWorkRequest<Result<WorkspaceBatchReplacementResultDto>>
 - 普通资产精确目标替换的基础格式规则沿用单资产文件替换能力：Texture2D / Sprite 接受受支持的图片格式，AudioClip 接受受支持的音频格式，Mesh、Material 等按既有类型目录校验；Spine skeleton 组成资产允许 `.skel / .bytes / .json / .txt` 进入真实 payload 格式校验，atlas 组成资产只接受 `.atlas / .txt` 文本来源，其他 TextAsset 只接受既有文本类来源。精确目标模式不得仅因文件名不同而拒绝，也不得因扩展名可接受而绕过 skeleton JSON / binary 一致性检查。
 - “全部类型”列表中的普通资产必须同时使用原始名称、列表显示名和导出文件名进行匹配，并继续服从资源类型兼容表。同类型重名资产沿用列表和批量提取生成的稳定 `[1]`、`[2]` 后缀，带编号来源只能命中相同编号目标；未带编号的同名来源若可命中多个目标，应进入结构化冲突。不同类型同名且扩展名不同时（例如 PNG / WAV）可分别确定匹配；Texture2D / Sprite 等共享同一来源扩展名时，不得仅凭类型猜测目标。
 - 普通资产多来源匹配中，同一目标资产命中多个兼容来源，或同一来源文件命中多个重名目标时，整次匹配必须返回包含目标名称和冲突来源路径的结构化冲突计划；Presentation 应展示哪些文件发生冲突并立即结束本次操作，不显示替换确认，也不得按拖放顺序、目录顺序或扩展名优先级静默选取来源。
-- Spine skeleton 的兼容性以真实 payload 为准：目标和来源分别通过既有预览管线识别为 JSON 或 binary，只有格式一致时才能形成候选并最终写入；`.skel / .json / .bytes / .txt` 只参与文件选择和名称匹配，不能作为格式判据。当前官方 runtime 适配器只承担读取与播放，不提供可证明无损的跨版本 serializer，因此不得隐式执行 JSON 与 binary 互转。
+- Spine skeleton 的兼容性以真实 payload 为准：目标必须通过既有预览管线的 `Original` 内容范围读取原始 AB 载荷，来源则通过外部文件预览端口识别为 JSON 或 binary；只有来源格式与原始目标格式一致时才能形成候选并最终写入。已应用文件替换、工作区替换或文本编辑不得改变后续替换的目标格式基线；`.skel / .json / .bytes / .txt` 只参与文件选择和名称匹配，不能作为格式判据。当前官方 runtime 适配器只承担读取与播放，不提供可证明无损的跨版本 serializer，因此不得隐式执行 JSON 与 binary 互转。
 - 普通资产列表中已被 Spine 组识别为 skeleton 组成资产的 `TextAsset` 同样必须复用上述真实 payload 格式兼容规则；匹配查询应按目标 Bundle 主动取得 Spine 组目录，不能依赖用户是否已切换过 Spine 组视图。来源后缀不能绕过 binary / JSON 一致性检查。
 - 对名称本身带语义后缀的普通 `TextAsset`，名称匹配必须保留该后缀边界，例如 `foo.atlas` 不得因去后缀后与 `foo.skel` 同名而形成候选；只有已经确认是 skeleton 组成资产时，才允许 `.skel / .json / .bytes / .txt` 之间跨后缀进入真实 payload 格式校验。
 - 路径形态不符合目标要求、普通资产没有名称与类型均兼容的来源、skeleton 内容格式不一致，或 Spine 来源没有名称与内容格式均兼容的组成资源时，不显示替换确认，也不写操作记录。

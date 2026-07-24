@@ -135,15 +135,18 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
             return Result<AssetPreviewDto>.Failure(ApplicationErrors.AssetNotFound(query.AssetId));
         }
 
-        var effectiveReplacementPreview = await _replacementEffectivePreviewResolver.TryLoadAsync(
-            query,
-            assetCacheEntry,
-            replacementPreviewStack,
-            HandlePreviewAsync,
-            cancellationToken);
-        if (effectiveReplacementPreview is not null)
+        if (query.ContentScope != AssetPreviewContentScope.Original)
         {
-            return effectiveReplacementPreview;
+            var effectiveReplacementPreview = await _replacementEffectivePreviewResolver.TryLoadAsync(
+                query,
+                assetCacheEntry,
+                replacementPreviewStack,
+                HandlePreviewAsync,
+                cancellationToken);
+            if (effectiveReplacementPreview is not null)
+            {
+                return effectiveReplacementPreview;
+            }
         }
 
         var previewCacheKey = CreatePreviewCacheKey(bundleCacheEntry.BundleCacheKey, assetCacheEntry.AssetId);
@@ -167,7 +170,7 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
                 diagnostic: new AssetPreviewDiagnosticDto(
                     CacheStatus: AssetPreviewCacheStatusKind.Hit,
                     FallbackReason: AssetPreviewFallbackReasonKind.None));
-            return Result<AssetPreviewDto>.Success(await ApplyEffectivePreviewProjectorsAsync(
+            return Result<AssetPreviewDto>.Success(await ApplyEffectivePreviewProjectorsIfRequestedAsync(
                 _workspaceSessionRegistry,
                 query,
                 assetCacheEntry,
@@ -303,7 +306,7 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
                 CacheStatus: cacheEvaluation.CacheStatus,
                 FallbackReason: AssetPreviewFallbackReasonKind.None,
                 DetailMessage: cacheEvaluation.DetailMessage));
-        return Result<AssetPreviewDto>.Success(await ApplyEffectivePreviewProjectorsAsync(
+        return Result<AssetPreviewDto>.Success(await ApplyEffectivePreviewProjectorsIfRequestedAsync(
             _workspaceSessionRegistry,
             query,
             assetCacheEntry,
@@ -311,6 +314,23 @@ public sealed class GetAssetPreviewHandler : IQueryHandler<GetAssetPreviewQuery,
             replacementPreviewStack,
             cancellationToken));
     }
+
+    private Task<AssetPreviewDto> ApplyEffectivePreviewProjectorsIfRequestedAsync(
+        IWorkspaceSessionRegistry workspaceSessionRegistry,
+        GetAssetPreviewQuery query,
+        BundleIndexAssetCacheEntryDto assetCacheEntry,
+        AssetPreviewDto preview,
+        HashSet<string> replacementPreviewStack,
+        CancellationToken cancellationToken) =>
+        query.ContentScope == AssetPreviewContentScope.Original
+            ? Task.FromResult(preview)
+            : ApplyEffectivePreviewProjectorsAsync(
+                workspaceSessionRegistry,
+                query,
+                assetCacheEntry,
+                preview,
+                replacementPreviewStack,
+                cancellationToken);
 
     private async Task<AssetPreviewDto> ApplyEffectivePreviewProjectorsAsync(
         IWorkspaceSessionRegistry workspaceSessionRegistry,

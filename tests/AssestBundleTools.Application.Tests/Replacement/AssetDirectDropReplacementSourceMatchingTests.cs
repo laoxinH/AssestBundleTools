@@ -1,4 +1,6 @@
 using AssestBundleTools.Application.Assets.Dtos;
+using AssestBundleTools.Application.Assets.Queries;
+using AssestBundleTools.Application.Common.Abstractions;
 using AssestBundleTools.Application.Common.Results;
 using AssestBundleTools.Application.Replacement.Queries;
 using AssestBundleTools.Application.Replacement.Services;
@@ -147,6 +149,43 @@ internal static class AssetDirectDropReplacementSourceMatchingTests
             "A .txt extension must not bypass binary-versus-JSON skeleton compatibility.");
     }
 
+    public static async Task SkeletonCompatibility_ShouldKeepOriginalFormatAfterEffectiveReplacement()
+    {
+        var workspaceId = AssetReplacementSourceMatchingTests.CreateWorkspaceId();
+        var bundleId = new BundleId("bundle.spine");
+        var target = CreateItem(bundleId, "asset.skeleton", "hero.skel", AssetType.TextAsset);
+        var source = @"D:\Replacement\second-replacement.txt";
+        var previewHandler = new ScopeAwareAssetPreviewHandler(
+            AssetReplacementSourceMatchingTests.CreateSkeletonPreview(
+                workspaceId,
+                bundleId,
+                target.AssetId));
+        var service = new SpineSkeletonReplacementCompatibilityService(
+            new AssetReplacementSourceMatchingTests.AssetDetailsRegistry(
+                AssetReplacementSourceMatchingTests.CreateAssetDetails(
+                    workspaceId,
+                    bundleId,
+                    target.AssetId)),
+            previewHandler,
+            new AssetReplacementSourceMatchingTests.StaticReplacementPreviewSourceProvider(
+                new Dictionary<string, AssetPreviewContentDto>(StringComparer.OrdinalIgnoreCase)
+                {
+                    [source] = new(AssetPreviewKind.Binary, "application/octet-stream", [0x1c, 0x00])
+                }));
+
+        var result = await service.CheckAsync(
+            workspaceId,
+            "workspace-key",
+            @"D:\WorkspaceData",
+            bundleId,
+            target.AssetId,
+            source);
+
+        TestAssert.True(result.IsSuccess, "A second skeleton compatibility check should succeed.");
+        TestAssert.True(result.Value?.IsCompatible == true, "The second binary source should still match the original binary target.");
+        TestAssert.Equal(AssetPreviewContentScope.Original, previewHandler.LastContentScope, "Compatibility checks must bypass the effective replacement preview.");
+    }
+
     public static async Task SingleDirectoryResult_ShouldKeepBatchNameMatching()
     {
         var workspaceId = AssetReplacementSourceMatchingTests.CreateWorkspaceId();
@@ -208,5 +247,29 @@ internal static class AssetDirectDropReplacementSourceMatchingTests
             IReadOnlyList<string> sourcePaths,
             CancellationToken cancellationToken = default) =>
             Task.FromResult(Result<IReadOnlyList<string>>.Success([expandedFile]));
+    }
+
+    private sealed class ScopeAwareAssetPreviewHandler(AssetPreviewDto originalPreview) :
+        IQueryHandler<GetAssetPreviewQuery, Result<AssetPreviewDto>>
+    {
+        public AssetPreviewContentScope LastContentScope { get; private set; }
+
+        public Task<Result<AssetPreviewDto>> HandleAsync(
+            GetAssetPreviewQuery query,
+            CancellationToken cancellationToken = default)
+        {
+            LastContentScope = query.ContentScope;
+            var preview = query.ContentScope == AssetPreviewContentScope.Original
+                ? originalPreview
+                : originalPreview with
+                {
+                    Kind = AssetPreviewKind.Text,
+                    ContentType = "application/json",
+                    BinaryContent = null,
+                    TextContent = "{\"bones\":[]}",
+                    FullTextContent = "{\"bones\":[]}"
+                };
+            return Task.FromResult(Result<AssetPreviewDto>.Success(preview));
+        }
     }
 }

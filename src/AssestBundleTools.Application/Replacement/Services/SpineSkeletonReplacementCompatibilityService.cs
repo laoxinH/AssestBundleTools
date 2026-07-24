@@ -56,7 +56,8 @@ public sealed class SpineSkeletonReplacementCompatibilityService
                 workspaceKey,
                 workspaceDataRootPath,
                 targetBundleId,
-                targetAssetId),
+                targetAssetId,
+                ContentScope: AssetPreviewContentScope.Original),
             cancellationToken);
         if (targetResult.IsCancelled)
         {

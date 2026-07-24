@@ -178,6 +178,39 @@ internal static class ReplacementWorkflowHandlerTests
         TestAssert.Equal(AssetType.Sprite, candidate.SourceAssetType, "Shared image extensions should prefer the target asset type.");
     }
 
+    public static async Task GetFileReplacementCandidateHandler_ShouldNotLockImageExtensionAfterReplacement()
+    {
+        var workspaceId = CreateWorkspaceId();
+        var targetBundleId = new BundleId("bundle.target");
+        var targetAssetId = new AssetId("asset.texture");
+        var registry = new TestWorkspaceSessionRegistry();
+        registry.RegisterAssetDetails(CreateAssetDetails(
+            workspaceId,
+            targetBundleId,
+            targetAssetId,
+            AssetType.Texture2D,
+            "HeroTexture") with
+        {
+            IsModified = true,
+            FileReplacementSourceFileName = "first-replacement.png",
+            FileReplacementSourcePath = @"C:\Imports\first-replacement.png",
+            FileReplacementSourceAssetType = AssetType.Texture2D
+        });
+        var handler = new GetFileReplacementCandidateHandler(registry);
+
+        var result = await handler.HandleAsync(new GetFileReplacementCandidateQuery(
+            workspaceId,
+            targetBundleId,
+            targetAssetId,
+            @"C:\Imports\second-replacement.jpg"));
+
+        TestAssert.True(result.IsSuccess, "A previous PNG replacement must not lock a Texture2D target to PNG.");
+        TestAssert.Equal(
+            AssetType.Texture2D,
+            result.Value?.SourceAssetType ?? AssetType.Unknown,
+            "A later compatible JPG should still resolve from the original stable asset type.");
+    }
+
     public static async Task GetFileReplacementCandidateHandler_ShouldReturnFailure_WhenTargetAssetDoesNotExist()
     {
         var workspaceId = CreateWorkspaceId();
