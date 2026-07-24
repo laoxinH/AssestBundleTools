@@ -129,6 +129,7 @@
 - 识别缓存只保存轻量结论和诊断证据，不保存解密输出、Reader 对象或资产索引；其目录固定为 `cache/import-recognition/<workspace-key>/`
 - 导入处理结果必须区分“当前刷新中包含缓存结论的筛除 / 读取跳过总量”和“本次重新识别新增的筛除 / 读取跳过量”：`ScreenedOutFileCount / SkippedFileCount` 供完整诊断与工作区状态使用，`NewlyScreenedOutFileCount / NewlySkippedFileCount` 供本次操作反馈使用。Toast 只以本次新增筛除、本次新增读取跳过和失败决定是否显示警告，不得因历史识别缓存中的筛除或 Reader 拒绝结论在每次刷新时重复发出黄色警告。
 - 新增导入和工作区重开都必须先做完整来源路径对账，但只对新增或指纹 / 版本变化的文件重新 Probe；目录枚举仍用于发现新增与删除，不能把“增量识别”误写成永不检查目录变化
+- 来源目录覆盖当前工作区 `workspaceDataRootPath` 的父目录时，来源发现必须整棵排除该工作区数据根目录；`cache / staging / logs / workspaces` 等应用生成内容不得成为导入候选，避免工作区重开时扫描自身缓存并形成递归识别缓存膨胀。该排除使用完整目录边界判断，不能误排除仅共享名称前缀的兄弟目录
 - 明确筛除或 Reader 明确拒绝的直接文件导入不得永久留在 `importedSources[]`；目录导入仍保留目录根，目录内无关文件由识别缓存承载，避免改变用户选择的目录语义
 - 预览如何展示属于后续预览策略，不属于当前自动识别主轴
 - 每个 AB 的实际 `decryptorId / decryptorVersion` 属于 bundle artifact / index 身份，不属于工作区级选择状态

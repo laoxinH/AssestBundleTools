@@ -10,6 +10,7 @@ using AssestBundleTools.Infrastructure.Tests.Workspace.Persistence;
 using AssestBundleTools.Infrastructure.Tests.Workspace.Replacement;
 using AssestBundleTools.Infrastructure.Tests.Workspace.Diagnostics;
 using AssestBundleTools.Infrastructure.Tests.Workspace.Extraction;
+using AssestBundleTools.Infrastructure.Tests.Workspace.Importing;
 using AssestBundleTools.Infrastructure.Tests.Workspace.Runtime;
 using AssestBundleTools.Infrastructure.Tests.Workspace.Saving;
 using AssestBundleTools.Infrastructure.Tests.Updates;
@@ -26,6 +27,10 @@ internal static class InfrastructureTestSuite
             failures,
             nameof(FileSystemReplacementSourcePathExpanderTests.ExpandAsync_ShouldCombineLooseFilesAndDirectoryFilesWithoutDuplicates),
             FileSystemReplacementSourcePathExpanderTests.ExpandAsync_ShouldCombineLooseFilesAndDirectoryFilesWithoutDuplicates);
+        await RunTestAsync(
+            failures,
+            nameof(FileSystemWorkspaceImportSourceDiscoveryServiceTests.Discover_ShouldExcludeWorkspaceDataRootWithoutExcludingPathPrefixSiblings),
+            FileSystemWorkspaceImportSourceDiscoveryServiceTests.Discover_ShouldExcludeWorkspaceDataRootWithoutExcludingPathPrefixSiblings);
 
         await RunTestAsync(
             failures,

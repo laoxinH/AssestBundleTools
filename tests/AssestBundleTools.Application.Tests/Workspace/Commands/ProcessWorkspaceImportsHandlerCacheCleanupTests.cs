@@ -137,5 +137,7 @@ internal static partial class ProcessWorkspaceImportsHandlerTests
         TestAssert.Equal(0, decryptor.ProbeCallCount, "Stale-cache cleanup should not invoke decryptor probing.");
         TestAssert.Equal(0, reader.CanReadCallCount, "Stale-cache cleanup should not invoke reader probing.");
         TestAssert.Equal(0, reader.ReadCallCount, "Stale-cache cleanup should not invoke reader parsing.");
+        TestAssert.Equal(1, sourceDiscoveryService.IgnoredDirectoryPaths.Count, "Workspace discovery should receive one reserved data root.");
+        TestAssert.Equal(workspaceDataRootPath, sourceDiscoveryService.IgnoredDirectoryPaths[0], "Workspace data root should be excluded from import discovery.");
     }
 }

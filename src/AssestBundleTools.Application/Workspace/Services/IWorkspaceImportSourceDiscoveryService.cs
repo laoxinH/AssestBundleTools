@@ -9,5 +9,6 @@ public interface IWorkspaceImportSourceDiscoveryService
 {
     IReadOnlyList<DiscoveredWorkspaceImportFileDto> Discover(
         IReadOnlyList<WorkspaceImportedSourceDto> importedSources,
-        IReadOnlyList<string>? excludedSourcePaths = null);
+        IReadOnlyList<string>? excludedSourcePaths = null,
+        IReadOnlyList<string>? ignoredDirectoryPaths = null);
 }

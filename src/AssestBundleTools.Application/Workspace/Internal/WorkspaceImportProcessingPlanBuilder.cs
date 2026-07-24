@@ -69,7 +69,8 @@ internal sealed class WorkspaceImportProcessingPlanBuilder
         var importedSources = metadata.ImportedSources ?? Array.Empty<WorkspaceImportedSourceDto>();
         var discoveredFiles = _workspaceImportSourceDiscoveryService.Discover(
             importedSources,
-            metadata.ExcludedBundleSourcePaths);
+            metadata.ExcludedBundleSourcePaths,
+            [command.WorkspaceDataRootPath]);
         var currentToolVersion = ResolveVersion(ToolSchemaVersion);
         var recognitionVersion = ResolveVersion(RecognitionSchemaVersion);
         var existingIndexEntries = bundleIndexCacheStore.LoadAll(command.WorkspaceKey)

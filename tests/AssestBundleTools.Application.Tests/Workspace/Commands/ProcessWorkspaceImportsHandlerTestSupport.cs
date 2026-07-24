@@ -222,7 +222,14 @@ internal static partial class ProcessWorkspaceImportsHandlerTests
 
         public IReadOnlyList<DiscoveredWorkspaceImportFileDto> Discover(
             IReadOnlyList<WorkspaceImportedSourceDto> importedSources,
-            IReadOnlyList<string>? excludedSourcePaths = null) => _discoveredFiles;
+            IReadOnlyList<string>? excludedSourcePaths = null,
+            IReadOnlyList<string>? ignoredDirectoryPaths = null)
+        {
+            IgnoredDirectoryPaths = ignoredDirectoryPaths ?? [];
+            return _discoveredFiles;
+        }
+
+        public IReadOnlyList<string> IgnoredDirectoryPaths { get; private set; } = [];
     }
 
     private sealed class TestWorkspaceImportFileSystemService : IWorkspaceImportFileSystemService
