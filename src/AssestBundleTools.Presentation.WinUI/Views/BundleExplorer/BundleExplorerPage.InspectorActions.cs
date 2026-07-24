@@ -93,6 +93,6 @@ public sealed partial class BundleExplorerPage
         object sender,
         InspectorChangeRecordActionRequestedEventArgs e)
     {
-        await ViewModel.DeleteChangeRecordAsync(e.OperationId);
+        await ViewModel.AssetWorkflow.DeleteChangeRecordsAsync(e.OperationIds, e.IsRestoreOriginal);
     }
 }

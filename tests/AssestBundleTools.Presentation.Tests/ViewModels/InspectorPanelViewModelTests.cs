@@ -9,6 +9,7 @@ using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Formatting;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Presenters;
+using AssestBundleTools.Presentation.WinUI.Views.BundleExplorer.Controls;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media.Imaging;
 
@@ -16,6 +17,18 @@ namespace AssestBundleTools.Presentation.Tests.ViewModels;
 
 public sealed class InspectorPanelViewModelTests
 {
+    [Fact]
+    public void RestoreActionEvent_ShouldPreserveDistinctOperationIdsAndIntent()
+    {
+        var eventArgs = new InspectorChangeRecordActionRequestedEventArgs(
+            ["op-1", " op-2 ", "op-1"],
+            isRestoreOriginal: true);
+
+        Assert.Equal(["op-1", "op-2"], eventArgs.OperationIds);
+        Assert.Equal("op-1", eventArgs.OperationId);
+        Assert.True(eventArgs.IsRestoreOriginal);
+    }
+
     [Fact]
     public void CanModify_ShouldBeIndependentFromReplacementSourceButtons()
     {
@@ -121,6 +134,38 @@ public sealed class InspectorPanelViewModelTests
         Assert.Equal(changeRecord, viewModel.ChangeRecords[0]);
         Assert.Equal(Visibility.Visible, viewModel.ChangeRecordsListVisibility);
         Assert.Equal(Visibility.Collapsed, viewModel.ChangeRecordsEmptyStateVisibility);
+        Assert.Equal(Visibility.Visible, viewModel.RestoreOriginalVisibility);
+        Assert.Equal(["op-1"], viewModel.RestorableOperationIds);
+    }
+
+    [Fact]
+    public void RestoreOriginal_ShouldStayHidden_WhenOnlyProtectedHistoryExists()
+    {
+        var viewModel = CreateViewModel();
+        var extractionRecord = new InspectorChangeRecordViewModel(
+            OperationId: "extract-1",
+            TargetBundleId: "bundle",
+            TargetAssetId: "asset-1",
+            TargetAssetName: "Sprite",
+            TitleText: "Extracted",
+            BadgeText: string.Empty,
+            SourceText: string.Empty,
+            TimeText: "Time: now",
+            SecondaryText: @"C:\Exports\hero.png",
+            ShowsUndoReplacement: false,
+            ShowsRedoReplacement: false,
+            ShowsDeleteRecord: false,
+            CanExecuteAction: false,
+            IsPending: false,
+            UndoButtonText: "Undo",
+            RedoButtonText: "Redo",
+            DeleteButtonText: "Delete",
+            Glyph: "\uE8B7");
+
+        ApplyBasicDetails(viewModel, string.Empty, "CAB-test", [extractionRecord]);
+
+        Assert.Equal(Visibility.Collapsed, viewModel.RestoreOriginalVisibility);
+        Assert.Empty(viewModel.RestorableOperationIds);
     }
 
     [Fact]

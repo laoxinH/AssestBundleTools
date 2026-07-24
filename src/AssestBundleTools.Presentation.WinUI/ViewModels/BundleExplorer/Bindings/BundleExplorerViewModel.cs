@@ -551,9 +551,6 @@ public sealed partial class BundleExplorerViewModel : ObservableObject, IDisposa
     public Task RedoAppliedReplacementAsync(string? replacementOperationId = null) =>
         _assetWorkflow.RedoAppliedReplacementAsync(replacementOperationId);
 
-    public Task DeleteChangeRecordAsync(string? operationId) =>
-        _assetWorkflow.DeleteChangeRecordAsync(operationId);
-
     /// <summary>
     /// 页面级交互仍有多处历史入口会请求浏览状态持久化。
     /// 这里保留一层薄封装，把触发统一转交给专用协调对象。

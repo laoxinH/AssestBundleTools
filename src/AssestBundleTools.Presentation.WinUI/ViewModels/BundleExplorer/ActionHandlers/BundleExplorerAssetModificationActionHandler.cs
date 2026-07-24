@@ -384,33 +384,22 @@ internal sealed class BundleExplorerAssetModificationActionHandler
             setBusyState,
             appendResultFailure);
 
-    public Task DeleteChangeRecordAsync(
+    public Task DeleteChangeRecordsAsync(
         WorkspaceSummaryDto workspaceSummary,
-        AssetDocumentTabViewModel assetTab,
-        AssetDetailsDto details,
-        string operationId,
+        IReadOnlyList<string> operationIds,
+        string targetAssetName,
         Action<bool> setBusyState,
-        Action<IReadOnlyList<AppError>> appendResultFailure) =>
-        _changeRecordActionHandler.DeleteChangeRecordAsync(
+        Action<IReadOnlyList<AppError>> appendResultFailure,
+        Action? clearPendingReplacementCandidates = null,
+        bool isRestoreOriginal = false) =>
+        _changeRecordActionHandler.DeleteChangeRecordsAsync(
             workspaceSummary,
-            assetTab,
-            details,
-            operationId,
+            operationIds,
+            targetAssetName,
             setBusyState,
-            appendResultFailure);
-
-    public Task DeleteProjectedChangeRecordAsync(
-        WorkspaceSummaryDto workspaceSummary,
-        ProjectedChangeRecordTarget target,
-        string operationId,
-        Action<bool> setBusyState,
-        Action<IReadOnlyList<AppError>> appendResultFailure) =>
-        _changeRecordActionHandler.DeleteProjectedChangeRecordAsync(
-            workspaceSummary,
-            target,
-            operationId,
-            setBusyState,
-            appendResultFailure);
+            appendResultFailure,
+            clearPendingReplacementCandidates,
+            isRestoreOriginal);
 
     public Task<bool> SelectSpineEditPartFileAsync(
         WorkspaceSummaryDto workspaceSummary,

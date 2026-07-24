@@ -370,43 +370,38 @@ internal sealed class BundleExplorerAssetCommandCoordinator
             _operationFeedbackBridge.AppendResultFailure);
     }
 
-    public async Task DeleteChangeRecordAsync(string? operationId)
+    public Task DeleteChangeRecordsAsync(IReadOnlyList<string>? operationIds, bool isRestoreOriginal = false)
     {
-        if (string.IsNullOrWhiteSpace(operationId))
+        var inspector = _getInspector();
+        var requestedOperationIds = InspectorChangeRecordSelectionResolver.ResolveDeletableOperationIds(
+            inspector,
+            operationIds);
+        var workspaceSummary = _workspaceShell.WorkspaceSummary;
+        if (_isBusyProvider() ||
+            workspaceSummary is null ||
+            requestedOperationIds.Count == 0)
         {
-            return;
+            return Task.CompletedTask;
         }
 
-        if (TryGetActiveAssetCommandContext(
-                static (_, _) => true,
-                out var workspaceSummary,
-                out var assetTab,
-                out var details))
+        var activeAssetTab = _getActiveAssetDocumentTab();
+        if (activeAssetTab is { CanEdit: false } ||
+            (activeAssetTab is null && !TryGetActiveSpineGroupDocumentState(out _)))
         {
-            await _modificationActionHandler.DeleteChangeRecordAsync(
-                workspaceSummary,
-                assetTab,
-                details,
-                operationId,
-                _setBusyState,
-                _operationFeedbackBridge.AppendResultFailure);
-            return;
+            return Task.CompletedTask;
         }
 
-        if (!TryGetProjectedSpineChangeRecordContext(
-                operationId,
-                out workspaceSummary,
-                out var target))
-        {
-            return;
-        }
-
-        await _modificationActionHandler.DeleteProjectedChangeRecordAsync(
+        Action? clearPendingReplacementCandidates = activeAssetTab is null
+            ? null
+            : activeAssetTab.ClearPendingReplacementCandidates;
+        return _modificationActionHandler.DeleteChangeRecordsAsync(
             workspaceSummary,
-            target,
-            operationId!,
+            requestedOperationIds,
+            inspector.AssetName,
             _setBusyState,
-            _operationFeedbackBridge.AppendResultFailure);
+            _operationFeedbackBridge.AppendResultFailure,
+            clearPendingReplacementCandidates,
+            isRestoreOriginal);
     }
 
     private bool CanExecuteActiveAssetCommand(Func<AssetDocumentTabViewModel, AssetDetailsDto, bool> canExecute)

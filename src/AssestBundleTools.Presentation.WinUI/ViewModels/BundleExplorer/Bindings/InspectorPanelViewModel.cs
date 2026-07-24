@@ -281,6 +281,15 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
     public Visibility ChangeRecordsEmptyStateVisibility =>
         ChangeRecords.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
 
+    public IReadOnlyList<string> RestorableOperationIds => ChangeRecords
+        .Where(static record => record.ShowsDeleteRecord && record.HasOperationId)
+        .Select(static record => record.OperationId)
+        .Distinct(StringComparer.Ordinal)
+        .ToArray();
+
+    public Visibility RestoreOriginalVisibility =>
+        RestorableOperationIds.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+
     public void Clear(string emptyStateText)
     {
         EmptyStateText = emptyStateText;
@@ -440,6 +449,8 @@ public sealed partial class InspectorPanelViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(ChangeRecordsListVisibility));
         OnPropertyChanged(nameof(ChangeRecordsEmptyStateVisibility));
+        OnPropertyChanged(nameof(RestorableOperationIds));
+        OnPropertyChanged(nameof(RestoreOriginalVisibility));
     }
 
     private static string NormalizePathValue(string path)

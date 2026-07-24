@@ -5612,4 +5612,11 @@
   <data name="Error.Update.Apply.OtherInstancesRunning" xml:space="preserve"><value>仍有其他应用实例正在运行。</value></data>
   <data name="Error.Update.Apply.DirectoryNotWritable" xml:space="preserve"><value>当前应用目录不可写，无法应用更新。</value></data>
   <data name="Error.Update.Apply.UpdaterLaunchFailed" xml:space="preserve"><value>无法启动更新程序。</value></data>
+  <data name="InspectorPanelView.RestoreOriginalButton.Content" xml:space="preserve"><value>复原原始资产</value></data>
+  <data name="InspectorPanelView.RestoreOriginalButton.ToolTip" xml:space="preserve"><value>清除当前资产的全部内容修改记录并恢复原始状态</value></data>
+  <data name="InspectorPanelView.RestoreOriginalConfirm.Title" xml:space="preserve"><value>复原原始资产？</value></data>
+  <data name="InspectorPanelView.RestoreOriginalConfirm.Content.Format" xml:space="preserve"><value>将清除“{0}”的 {1} 条内容修改记录，并同时复原其中涉及的关联资源。此操作无法撤销。提取历史和外部文件不会被删除。</value></data>
+  <data name="InspectorPanelView.RestoreOriginalConfirm.PrimaryButton" xml:space="preserve"><value>复原</value></data>
+  <data name="BundleExplorer.Log.OriginalAssetRestored" xml:space="preserve"><value>已将“{0}”复原为原始资产，并清除 {1} 条内容修改记录。</value></data>
+  <data name="BundleExplorer.Notification.OriginalAssetRestored" xml:space="preserve"><value>“{0}”已恢复为原始状态。</value></data>
 </root>

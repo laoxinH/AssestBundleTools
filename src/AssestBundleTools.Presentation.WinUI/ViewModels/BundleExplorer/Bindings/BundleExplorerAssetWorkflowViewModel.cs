@@ -18,11 +18,7 @@ namespace AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Binding
 /// <summary>
 /// 承载资源列表、资产详情标签、检查器内容与预览/替换动作的编排状态。
 /// </summary>
-/// <remarks>
-/// 这一层聚焦“当前活动资源包下的资产工作流”：
-/// 资源筛选、详情标签激活、检查器同步、预览加载以及资产级操作都在这里闭环，
-/// 主页面 ViewModel 只保留工作区与资源包级别的导航编排职责。
-/// </remarks>
+/// 资源筛选、详情标签、检查器、预览与资产级操作均在此闭环，主页面只负责编排工作区和资源包导航。
 public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBundleExplorerAssetWorkflowBindingHost, IDisposable
 {
     private readonly ILocalizationService _localizationService;
@@ -506,8 +502,8 @@ public sealed class BundleExplorerAssetWorkflowViewModel : ObservableObject, IBu
     public Task RedoAppliedReplacementAsync(string? replacementOperationId = null) =>
         _assetCommandCoordinator.RedoAppliedReplacementAsync(replacementOperationId);
 
-    public Task DeleteChangeRecordAsync(string? operationId) =>
-        _assetCommandCoordinator.DeleteChangeRecordAsync(operationId);
+    public Task DeleteChangeRecordsAsync(IReadOnlyList<string>? operationIds, bool isRestoreOriginal = false) =>
+        _assetCommandCoordinator.DeleteChangeRecordsAsync(operationIds, isRestoreOriginal);
 
     private void ReapplyActiveAssetDocumentTab(AssetDocumentTabViewModel assetTab, AssetDetailsDto details) =>
         _assetDocumentTabCoordinator.ReapplyAssetDocumentTab(assetTab, details);

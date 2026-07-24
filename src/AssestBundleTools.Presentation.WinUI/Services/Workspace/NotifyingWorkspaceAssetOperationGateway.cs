@@ -259,7 +259,9 @@ internal sealed class NotifyingWorkspaceAssetOperationGateway : IWorkspaceAssetO
                 command.WorkspaceId,
                 CreateAffectedAssets(result.Value)),
             WorkspaceOperationChangeReason.RecordDeleted,
-            CreateOperationIds(result.Value?.OperationId ?? command.OperationId));
+              result.Value?.DeletedOperationIds is { Count: > 0 } deletedOperationIds
+                  ? deletedOperationIds
+                  : CreateOperationIds(result.Value?.OperationId ?? command.OperationId));
         return result;
     }
 

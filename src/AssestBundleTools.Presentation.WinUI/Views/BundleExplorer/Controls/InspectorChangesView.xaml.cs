@@ -18,6 +18,10 @@ public sealed partial class InspectorChangesView : UserControl
     {
         InitializeComponent();
         ChangesEmptyStateTitleText.Text = UiText.Get(ResourceKeys.InspectorChangesEmptyStateTitle);
+        RestoreOriginalButtonText.Text = UiText.Get(ResourceKeys.InspectorRestoreOriginalButton);
+        ToolTipService.SetToolTip(
+            RestoreOriginalButton,
+            UiText.Get(ResourceKeys.InspectorRestoreOriginalToolTip));
     }
 
     public event EventHandler<InspectorChangeRecordActionRequestedEventArgs>? UndoReplacementRequested;
@@ -44,6 +48,34 @@ public sealed partial class InspectorChangesView : UserControl
 
     private void OnDeleteRecordButtonClick(object sender, RoutedEventArgs e) =>
         DeleteRecordRequested?.Invoke(this, CreateActionEventArgs(sender));
+
+    private async void OnRestoreOriginalButtonClick(object sender, RoutedEventArgs e)
+    {
+        var operationIds = ViewModel?.RestorableOperationIds ?? [];
+        if (operationIds.Count == 0 || XamlRoot is null)
+        {
+            return;
+        }
+
+        var dialog = new ContentDialog
+        {
+            XamlRoot = XamlRoot,
+            Title = UiText.Get(ResourceKeys.InspectorRestoreOriginalConfirmTitle),
+            Content = UiText.GetFormatted(
+                ResourceKeys.InspectorRestoreOriginalConfirmContent,
+                ViewModel?.AssetName ?? string.Empty,
+                operationIds.Count),
+            PrimaryButtonText = UiText.Get(ResourceKeys.InspectorRestoreOriginalConfirmButton),
+            CloseButtonText = UiText.Get(ResourceKeys.CommonCancelButton),
+            DefaultButton = ContentDialogButton.Close
+        };
+        if (await dialog.ShowAsync() == ContentDialogResult.Primary)
+        {
+            DeleteRecordRequested?.Invoke(
+                this,
+                new InspectorChangeRecordActionRequestedEventArgs(operationIds, isRestoreOriginal: true));
+        }
+    }
 
     private void OnChangesSectionScrollViewerViewChanged(
         object sender,

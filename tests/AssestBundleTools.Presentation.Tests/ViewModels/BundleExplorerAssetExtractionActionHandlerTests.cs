@@ -467,7 +467,7 @@ public sealed partial class BundleExplorerAssetExtractionActionHandlerTests
         var gateway = new RecordingWorkspaceAssetOperationGateway();
         var coordinator = CreateSpineGroupCommandCoordinator(gateway);
 
-        await coordinator.DeleteChangeRecordAsync("replace-texture");
+        await coordinator.DeleteChangeRecordsAsync(["replace-texture"]);
 
         var command = Assert.Single(gateway.DeleteWorkspaceOperationRecordCommands);
         Assert.Equal("replace-texture", command.OperationId);
@@ -480,7 +480,7 @@ public sealed partial class BundleExplorerAssetExtractionActionHandlerTests
         var gateway = new RecordingWorkspaceAssetOperationGateway();
         var coordinator = CreateSpineGroupEditorActionCoordinator(gateway);
 
-        await coordinator.DeleteChangeRecordAsync("replace-texture");
+        await coordinator.DeleteChangeRecordsAsync(["replace-texture"]);
 
         var command = Assert.Single(gateway.DeleteWorkspaceOperationRecordCommands);
         Assert.Equal("replace-texture", command.OperationId);

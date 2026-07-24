@@ -5612,4 +5612,11 @@
   <data name="Error.Update.Apply.OtherInstancesRunning" xml:space="preserve"><value>Other app instances are still running.</value></data>
   <data name="Error.Update.Apply.DirectoryNotWritable" xml:space="preserve"><value>The current app directory is not writable.</value></data>
   <data name="Error.Update.Apply.UpdaterLaunchFailed" xml:space="preserve"><value>The updater could not be started.</value></data>
+  <data name="InspectorPanelView.RestoreOriginalButton.Content" xml:space="preserve"><value>Restore original asset</value></data>
+  <data name="InspectorPanelView.RestoreOriginalButton.ToolTip" xml:space="preserve"><value>Clear all content changes for this asset and restore its original state</value></data>
+  <data name="InspectorPanelView.RestoreOriginalConfirm.Title" xml:space="preserve"><value>Restore the original asset?</value></data>
+  <data name="InspectorPanelView.RestoreOriginalConfirm.Content.Format" xml:space="preserve"><value>This will clear {1} content change records for “{0}” and restore any associated resources involved. This action cannot be undone. Extraction history and external files will not be deleted.</value></data>
+  <data name="InspectorPanelView.RestoreOriginalConfirm.PrimaryButton" xml:space="preserve"><value>Restore</value></data>
+  <data name="BundleExplorer.Log.OriginalAssetRestored" xml:space="preserve"><value>Restored “{0}” to its original state and cleared {1} content change records.</value></data>
+  <data name="BundleExplorer.Notification.OriginalAssetRestored" xml:space="preserve"><value>“{0}” was restored to its original state.</value></data>
 </root>

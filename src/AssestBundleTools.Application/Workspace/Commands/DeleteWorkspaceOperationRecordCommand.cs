@@ -9,4 +9,5 @@ public sealed record DeleteWorkspaceOperationRecordCommand(
     WorkspaceId WorkspaceId,
     string OperationId,
     string? WorkspaceKey = null,
-    string? WorkspaceDataRootPath = null);
+    string? WorkspaceDataRootPath = null,
+    IReadOnlyList<string>? AdditionalOperationIds = null);

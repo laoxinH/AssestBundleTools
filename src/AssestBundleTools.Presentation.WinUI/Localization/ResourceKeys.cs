@@ -655,6 +655,7 @@ public static class ResourceKeys
     public const string BundleExplorerLogReplacementRedone = "BundleExplorer.Log.ReplacementRedone";
     public const string BundleExplorerLogSpriteEditApplied = "BundleExplorer.Log.SpriteEditApplied";
     public const string BundleExplorerLogOperationRecordDeleted = "BundleExplorer.Log.OperationRecordDeleted";
+    public const string BundleExplorerLogOriginalAssetRestored = "BundleExplorer.Log.OriginalAssetRestored";
     public const string BundleExplorerNotificationWorkspaceLoaded = "BundleExplorer.Notification.WorkspaceLoaded";
     public const string BundleExplorerNotificationBundleFileImportRequested = "BundleExplorer.Notification.BundleFileImportRequested";
     public const string BundleExplorerNotificationBundleDirectoryImportRequested = "BundleExplorer.Notification.BundleDirectoryImportRequested";
@@ -685,6 +686,7 @@ public static class ResourceKeys
     public const string BundleExplorerNotificationReplacementRedone = "BundleExplorer.Notification.ReplacementRedone";
     public const string BundleExplorerNotificationSpriteEditApplied = "BundleExplorer.Notification.SpriteEditApplied";
     public const string BundleExplorerNotificationOperationRecordDeleted = "BundleExplorer.Notification.OperationRecordDeleted";
+    public const string BundleExplorerNotificationOriginalAssetRestored = "BundleExplorer.Notification.OriginalAssetRestored";
     public const string FilePickerExtractionTypeImage = "FilePicker.Extraction.Type.Image";
     public const string FilePickerExtractionTypeText = "FilePicker.Extraction.Type.Text";
     public const string FilePickerExtractionTypeAudio = "FilePicker.Extraction.Type.Audio";
@@ -1630,6 +1632,11 @@ public static class ResourceKeys
     public const string InspectorFileReplacementCapabilityLabel = "InspectorPanelView.FileReplacementCapabilityLabelText.Text";
     public const string InspectorWorkspaceReplacementCapabilityLabel = "InspectorPanelView.WorkspaceReplacementCapabilityLabelText.Text";
     public const string InspectorChangesEmptyStateTitle = "InspectorPanelView.ChangesEmptyStateTitleText.Text";
+    public const string InspectorRestoreOriginalButton = "InspectorPanelView.RestoreOriginalButton.Content";
+    public const string InspectorRestoreOriginalToolTip = "InspectorPanelView.RestoreOriginalButton.ToolTip";
+    public const string InspectorRestoreOriginalConfirmTitle = "InspectorPanelView.RestoreOriginalConfirm.Title";
+    public const string InspectorRestoreOriginalConfirmContent = "InspectorPanelView.RestoreOriginalConfirm.Content.Format";
+    public const string InspectorRestoreOriginalConfirmButton = "InspectorPanelView.RestoreOriginalConfirm.PrimaryButton";
     public const string InspectorExtractButton = "InspectorPanelView.ExtractButton.Content";
     public const string InspectorModifyButton = "InspectorPanelView.ModifyButton.Content";
     public const string InspectorReplaceFileButton = "InspectorPanelView.ReplaceFileButton.Content";

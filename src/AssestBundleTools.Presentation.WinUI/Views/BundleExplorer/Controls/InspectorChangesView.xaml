@@ -33,10 +33,30 @@
             Tag="3"
             ViewChanged="OnChangesSectionScrollViewerViewChanged"
             Visibility="{Binding ChangesSectionVisibility}">
-            <ItemsControl
-                Padding="8"
-                ItemsSource="{Binding ChangeRecords}"
-                Visibility="{Binding ChangeRecordsListVisibility}">
+            <StackPanel>
+                <Grid
+                    Margin="8,8,8,10"
+                    Visibility="{Binding RestoreOriginalVisibility}">
+                    <Button
+                        x:Name="RestoreOriginalButton"
+                        HorizontalAlignment="Right"
+                        Click="OnRestoreOriginalButtonClick"
+                        Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                        Style="{StaticResource ChangeRecordActionButtonStyle}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <FontIcon
+                                FontFamily="{StaticResource AppIconFontFamily}"
+                                FontSize="13"
+                                Glyph="&#xE72C;" />
+                            <TextBlock x:Name="RestoreOriginalButtonText" />
+                        </StackPanel>
+                    </Button>
+                </Grid>
+
+                <ItemsControl
+                    Padding="8,0,8,8"
+                    ItemsSource="{Binding ChangeRecords}"
+                    Visibility="{Binding ChangeRecordsListVisibility}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="viewModels:InspectorChangeRecordViewModel">
                         <Border
@@ -161,7 +181,8 @@
                         </Border>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
-            </ItemsControl>
+                </ItemsControl>
+            </StackPanel>
         </ScrollViewer>
 
         <Grid

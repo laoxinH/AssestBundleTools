@@ -90,6 +90,30 @@ public sealed class WorkspaceOperationChangeNotificationTests
     }
 
     [Fact]
+    public async Task DeleteWorkspaceOperationRecordAsync_ShouldNotifyEveryDeletedOperationId()
+    {
+        var workspaceId = new WorkspaceId("workspace-operation-batch-delete-notify");
+        var notifier = new WorkspaceOperationChangeNotifier();
+        var receivedEvents = new List<WorkspaceOperationChangedEventArgs>();
+        notifier.WorkspaceOperationsChanged += (_, e) => receivedEvents.Add(e);
+        var gateway = new NotifyingWorkspaceAssetOperationGateway(
+            new SuccessfulWorkspaceAssetOperationGateway(),
+            notifier);
+
+        var result = await gateway.DeleteWorkspaceOperationRecordAsync(
+            new DeleteWorkspaceOperationRecordCommand(
+                workspaceId,
+                "operation-1",
+                "workspace-a",
+                @"D:\WorkspaceData\A",
+                ["operation-2"]));
+
+        Assert.True(result.IsSuccess);
+        var notification = Assert.Single(receivedEvents);
+        Assert.Equal(["operation-1", "operation-2"], notification.OperationIds);
+    }
+
+    [Fact]
     public async Task ApplySpriteEditAsync_ShouldNotifyTargetAssetEditRefresh()
     {
         var workspaceId = new WorkspaceId("workspace-sprite-edit-notify");
@@ -969,7 +993,10 @@ public sealed class WorkspaceOperationChangeNotificationTests
                     command.OperationId,
                     new BundleId("bundle-textures"),
                     new AssetId("asset-texture"),
-                    DateTimeOffset.UtcNow)));
+                    DateTimeOffset.UtcNow,
+                    DeletedOperationIds: new[] { command.OperationId }
+                        .Concat(command.AdditionalOperationIds ?? [])
+                        .ToArray())));
     }
 
     private sealed class TestAssociatedAssetImpactRegistry : IWorkspaceAssociatedAssetImpactRegistry

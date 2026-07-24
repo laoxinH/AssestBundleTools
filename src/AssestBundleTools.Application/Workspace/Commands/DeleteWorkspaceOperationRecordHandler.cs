@@ -68,28 +68,51 @@ public sealed class DeleteWorkspaceOperationRecordHandler : ICommandHandler<Dele
         var workspaceKey = command.WorkspaceKey.Trim();
         var store = _workspaceDataStoreFactory.CreateWorkspaceChangeStore(command.WorkspaceDataRootPath.Trim());
         var changeSet = store.Load(workspaceKey) ?? WorkspaceChangeSetDto.Empty(workspaceKey);
-        var deletedOperation = (changeSet.Operations ?? Array.Empty<WorkspaceOperationRecordDto>())
-            .FirstOrDefault(operation => string.Equals(
+        var originalOperations = changeSet.Operations ?? Array.Empty<WorkspaceOperationRecordDto>();
+        var requestedOperationIds = CreateRequestedOperationIds(command);
+        var requestedOperations = requestedOperationIds
+            .Select(operationId => originalOperations.FirstOrDefault(operation => string.Equals(
                 operation.OperationId,
-                command.OperationId.Trim(),
-                StringComparison.Ordinal));
-        if (deletedOperation is null)
+                operationId,
+                StringComparison.Ordinal)))
+            .ToArray();
+        var missingOperationIndex = Array.FindIndex(requestedOperations, static operation => operation is null);
+        if (missingOperationIndex >= 0)
         {
             return Task.FromResult(Result<WorkspaceOperationRecordDeletedResultDto>.Failure(
-                ApplicationErrors.WorkspaceOperationRecordNotFound(command.OperationId)));
+                ApplicationErrors.WorkspaceOperationRecordNotFound(requestedOperationIds[missingOperationIndex])));
         }
 
-        if (IsProtectedOperationRecord(deletedOperation))
+        var protectedOperation = requestedOperations.FirstOrDefault(operation =>
+            operation is not null && IsProtectedOperationRecord(operation));
+        if (protectedOperation is not null)
         {
             return Task.FromResult(Result<WorkspaceOperationRecordDeletedResultDto>.Failure(
-                ApplicationErrors.WorkspaceOperationRecordDeleteNotAllowed(deletedOperation.OperationId)));
+                ApplicationErrors.WorkspaceOperationRecordDeleteNotAllowed(protectedOperation.OperationId)));
         }
 
         var deletedAtUtc = DateTimeOffset.UtcNow;
-        var updatedChangeSet = _operationLogService.DeleteOperationRecord(
-            changeSet,
-            deletedOperation.OperationId,
-            deletedAtUtc);
+        var updatedChangeSet = changeSet;
+        foreach (var operationId in requestedOperationIds)
+        {
+            if (!(updatedChangeSet.Operations ?? Array.Empty<WorkspaceOperationRecordDto>())
+                .Any(operation => string.Equals(operation.OperationId, operationId, StringComparison.Ordinal)))
+            {
+                continue;
+            }
+
+            updatedChangeSet = _operationLogService.DeleteOperationRecord(
+                updatedChangeSet,
+                operationId,
+                deletedAtUtc);
+        }
+
+        var remainingOperationIds = (updatedChangeSet.Operations ?? Array.Empty<WorkspaceOperationRecordDto>())
+            .Select(static operation => operation.OperationId)
+            .ToHashSet(StringComparer.Ordinal);
+        var actuallyDeletedOperations = originalOperations
+            .Where(operation => !remainingOperationIds.Contains(operation.OperationId))
+            .ToArray();
         store.Save(updatedChangeSet);
 
         if (_workspaceSessionRegistry is IWorkspaceOperationReplaySessionRegistry replaySessionRegistry)
@@ -97,34 +120,47 @@ public sealed class DeleteWorkspaceOperationRecordHandler : ICommandHandler<Dele
             replaySessionRegistry.TryReplayWorkspaceOperations(command.WorkspaceId, updatedChangeSet);
         }
 
+        var deletedOperation = requestedOperations[0]!;
         var result = new WorkspaceOperationRecordDeletedResultDto(
             command.WorkspaceId,
             deletedOperation.OperationId,
             TryParseBundleId(deletedOperation.Target?.BundleId),
             TryParseAssetId(deletedOperation.Target?.AssetId),
             deletedAtUtc,
-            CreateAffectedTargets(deletedOperation));
+            CreateAffectedTargets(actuallyDeletedOperations),
+            actuallyDeletedOperations.Select(static operation => operation.OperationId).ToArray());
         return Task.FromResult(Result<WorkspaceOperationRecordDeletedResultDto>.Success(result));
     }
+
+    private static IReadOnlyList<string> CreateRequestedOperationIds(DeleteWorkspaceOperationRecordCommand command) =>
+        new[] { command.OperationId }
+            .Concat(command.AdditionalOperationIds ?? Array.Empty<string>())
+            .Where(static operationId => !string.IsNullOrWhiteSpace(operationId))
+            .Select(static operationId => operationId.Trim())
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
 
     private static bool IsProtectedOperationRecord(WorkspaceOperationRecordDto operation) =>
         operation.OperationKind is WorkspaceOperationKind.ExtractAsset or
             WorkspaceOperationKind.ExtractBatch;
 
     private static IReadOnlyList<WorkspaceOperationTargetDto> CreateAffectedTargets(
-        WorkspaceOperationRecordDto operation)
+        IEnumerable<WorkspaceOperationRecordDto> operations)
     {
         var targets = new List<WorkspaceOperationTargetDto>();
-        if (operation.Target is not null)
+        foreach (var operation in operations)
         {
-            targets.Add(operation.Target);
-        }
-
-        foreach (var relation in operation.Relations ?? Array.Empty<WorkspaceOperationRelationDto>())
-        {
-            if (relation.RelatedTarget is not null)
+            if (operation.Target is not null)
             {
-                targets.Add(relation.RelatedTarget);
+                targets.Add(operation.Target);
+            }
+
+            foreach (var relation in operation.Relations ?? Array.Empty<WorkspaceOperationRelationDto>())
+            {
+                if (relation.RelatedTarget is not null)
+                {
+                    targets.Add(relation.RelatedTarget);
+                }
             }
         }
 

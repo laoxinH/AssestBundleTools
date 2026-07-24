@@ -275,8 +275,8 @@ public sealed partial class AssetEditorWindowViewModel
     public Task RedoAppliedReplacementAsync(string? replacementOperationId = null) =>
         _assetActionCoordinator.RedoAppliedReplacementAsync(replacementOperationId);
 
-    public Task DeleteChangeRecordAsync(string? operationId) =>
-        _assetActionCoordinator.DeleteChangeRecordAsync(operationId);
+    public Task DeleteChangeRecordsAsync(IReadOnlyList<string>? operationIds, bool isRestoreOriginal = false) =>
+        _assetActionCoordinator.DeleteChangeRecordsAsync(operationIds, isRestoreOriginal);
 
     public bool RequestSpriteEditModeForActiveAsset()
     {

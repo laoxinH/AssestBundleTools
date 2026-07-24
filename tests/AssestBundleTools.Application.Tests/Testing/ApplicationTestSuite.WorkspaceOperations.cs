@@ -37,6 +37,14 @@ internal static partial class ApplicationTestSuite
             WorkspaceOperationRelationMatcherTests.OperationConcernsTarget_ShouldMatchRelatedSourceFingerprint);
         await RunTestAsync(
             failures,
+            nameof(DeleteWorkspaceOperationRecordHandlerTests.HandleAsync_ShouldDeleteMultipleRecordsAtomically_AndMergeAffectedTargets),
+            DeleteWorkspaceOperationRecordHandlerTests.HandleAsync_ShouldDeleteMultipleRecordsAtomically_AndMergeAffectedTargets);
+        await RunTestAsync(
+            failures,
+            nameof(DeleteWorkspaceOperationRecordHandlerTests.HandleAsync_ShouldRejectEntireBatch_WhenAnyRecordIsProtected),
+            DeleteWorkspaceOperationRecordHandlerTests.HandleAsync_ShouldRejectEntireBatch_WhenAnyRecordIsProtected);
+        await RunTestAsync(
+            failures,
             nameof(DeleteWorkspaceOperationRecordHandlerTests.HandleAsync_ShouldRejectExtractionOperationDeletion),
             DeleteWorkspaceOperationRecordHandlerTests.HandleAsync_ShouldRejectExtractionOperationDeletion);
         await RunTestAsync(

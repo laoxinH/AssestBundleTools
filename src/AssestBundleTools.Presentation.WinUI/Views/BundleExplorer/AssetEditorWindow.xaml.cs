@@ -281,7 +281,7 @@ public sealed partial class AssetEditorWindow : Microsoft.UI.Xaml.Window, IAsset
         object sender,
         InspectorChangeRecordActionRequestedEventArgs e)
     {
-        await ViewModel.DeleteChangeRecordAsync(e.OperationId);
+        await ViewModel.DeleteChangeRecordsAsync(e.OperationIds, e.IsRestoreOriginal);
     }
 
     private async void OnInspectorSpineAtlasPageSelectionRequested(
