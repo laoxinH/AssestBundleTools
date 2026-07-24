@@ -538,13 +538,16 @@ BackgroundWorkRequest<Result<WorkspaceBatchReplacementResultDto>>
 - 只有指针实际落在已实现的资产行或 Spine 组行内才进入替换；列表空白、表头和其他窗格继续沿用原有行为。
 - 普通模式使用 WinUI `StorageItems`，管理员兼容模式使用统一 `WM_DROPFILES` 精确目标路由；两种入口必须生成相同的“目标行 + 来源路径”请求。
 - 管理员模式下，资产行目标使用 `Item` 优先级，高于资源包窗格的工作区导入 `Surface` 目标，避免替换来源被误导入为新 AB。
-- 普通资产只接受一个文件。Spine 组接受一个目录或一次拖入的多个文件；两种来源形态都交给 Application 层同一匹配查询，按组成角色和名称键生成替换映射，不在 Presentation ViewModel 中枚举目录或复制匹配规则。
+- 普通资产行接受一次拖入的多个文件、目录或两者混合；拖放命中的行只作为该入口的精确落点，Application 层应展开来源，并按文件名把来源匹配到当前资产列表中每一个可见普通资产。目录枚举、名称键、资源类型兼容性和冲突判断不得复制到 Presentation。Spine 组继续使用现有目录 / 多文件混合匹配查询和组内组成角色规则，不因普通资产入口扩展而改变。
+- 普通资产多来源匹配中，同一目标资产命中多个兼容来源，或同一来源文件命中多个重名目标时，整次匹配必须返回包含目标名称和冲突来源路径的结构化冲突计划；Presentation 应展示哪些文件发生冲突并立即结束本次操作，不显示替换确认，也不得按拖放顺序、目录顺序或扩展名优先级静默选取来源。
 - Spine skeleton 的兼容性以真实 payload 为准：目标和来源分别通过既有预览管线识别为 JSON 或 binary，只有格式一致时才能形成候选并最终写入；`.skel / .json / .bytes` 只参与文件选择和名称匹配，不能作为格式判据。当前官方 runtime 适配器只承担读取与播放，不提供可证明无损的跨版本 serializer，因此不得隐式执行 JSON 与 binary 互转。
-- 路径形态不符合目标要求、普通资产类型校验失败、Spine 来源没有名称与内容格式均兼容的组成资源时，不显示替换确认，也不写操作记录。
+- 普通资产列表中已被 Spine 组识别为 skeleton 组成资产的 `TextAsset` 同样必须复用上述真实 payload 格式兼容规则；匹配查询应按目标 Bundle 主动取得 Spine 组目录，不能依赖用户是否已切换过 Spine 组视图。来源后缀不能绕过 binary / JSON 一致性检查。
+- 对名称本身带语义后缀的普通 `TextAsset`，名称匹配必须保留该后缀边界，例如 `foo.atlas` 不得因去后缀后与 `foo.skel` 同名而形成候选；只有已经确认是 skeleton 组成资产时，才允许 `.skel / .json / .bytes` 之间跨后缀进入真实 payload 格式校验。
+- 路径形态不符合目标要求、普通资产没有名称与类型均兼容的来源、skeleton 内容格式不一致，或 Spine 来源没有名称与内容格式均兼容的组成资源时，不显示替换确认，也不写操作记录。
 
 确认与执行约束：
 
-- 候选校验或 Spine 目录匹配完成后，必须显示本地化确认对话框；普通资产显示目标名和来源文件名，Spine 组同时显示命中的组成资源数量。
+- 无冲突候选校验或 Spine 目录匹配完成后，必须显示本地化确认对话框；普通资产单项显示目标名和来源文件名，多项显示命中资产数量，Spine 组同时显示命中的组成资源数量。
 - 用户取消时不得应用替换、不得追加 `ReplaceFromFile`，也不得遗留 Spine 编辑草稿。
 - 用户确认后，普通资产逐项复用 `GetFileReplacementCandidate / ReplaceAssetFromFile`；Spine 组逐组成资源复用相同链路并共享现有 `batchId / relationId`。
 - 成功后的列表状态、详情、关联资源和 Spine 预览只通过现有 workspace operation notification 与读模型重读刷新，拖放处理器不得手动读写 `staging/changes`。
@@ -579,7 +582,7 @@ BackgroundWorkRequest<Result<WorkspaceBatchReplacementResultDto>>
 - 已逐项复用单资源文件替换能力，并通过现有记录器写入 `ReplaceFromFile` 操作记录。
 - 已按“普通候选先执行、Spine 组候选后执行”的顺序处理；Spine 组候选拆成组成资产替换，并共享批次关系和 Spine 组关联关系。
 - 已让批量替换候选区将 manifest / 启发式计划中的 Spine 组成文件按组展示，类型筛选显示独立 `Spine` 选项，提交时再展开为真实组成资产执行。
-- 已让主工作台资产列表支持行级拖入替换：普通资产通过 WinUI `StorageItems` 或管理员 `WM_DROPFILES` 精确行路由进入单文件候选校验，Spine 组通过同一路由复用目录角色匹配；两者都在用户确认后才调用现有 `ReplaceFromFile` 链路。
+- 已让主工作台资产列表支持行级拖入替换：普通资产通过 WinUI `StorageItems` 或管理员 `WM_DROPFILES` 精确行路由接收文件、目录及两者混合来源，由 Application 展开后按当前资产列表逐项匹配、检测双向重名冲突并校验 skeleton 真实载荷格式；Spine 组通过同一路由继续复用现有目录 / 多文件角色匹配。两者都在用户确认后才调用现有 `ReplaceFromFile` 链路。
 - 已接入 `BatchReplacement` 可见后台任务、进度、完成摘要和操作通知聚合。
 - 当前仍未开放低置信/多候选的目标手动确认执行页；这些候选若被用户勾选，会按支持范围执行或进入跳过结果。
 - 批处理任务页中的旧批量替换卡片、旧 source kind 和旧摘要 ViewModel 已移除；工作台级批量替换窗口是唯一入口。

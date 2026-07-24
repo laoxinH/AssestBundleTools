@@ -1371,11 +1371,29 @@
   <data name="AssetPaneView.DragReplacement.AssetConfirm.Format" xml:space="preserve">
     <value>将使用“{1}”替换资产“{0}”。确认后会立即追加一条可撤销的替换记录。</value>
   </data>
+  <data name="AssetPaneView.DragReplacement.AssetsConfirm.Format" xml:space="preserve">
+    <value>已按文件名匹配到 {0} 个资产。确认后会立即逐项追加可撤销的替换记录。</value>
+  </data>
   <data name="AssetPaneView.DragReplacement.SpineConfirm.Format" xml:space="preserve">
     <value>目录“{2}”已匹配 Spine 组“{0}”中的 {1} 个组成资源。确认后会立即逐项应用替换。</value>
   </data>
   <data name="AssetPaneView.DragReplacement.InvalidSource" xml:space="preserve">
-    <value>普通资产只接受一个文件，Spine 组只接受一个包含组成文件的目录。</value>
+    <value>拖入内容中没有可读取的文件或目录。</value>
+  </data>
+  <data name="AssetPaneView.DragReplacement.NoAssetMatches" xml:space="preserve">
+    <value>拖入内容中没有按文件名和资源类型匹配到当前资产列表的文件。</value>
+  </data>
+  <data name="AssetPaneView.DragReplacement.Conflict.Title" xml:space="preserve">
+    <value>存在替换来源冲突</value>
+  </data>
+  <data name="AssetPaneView.DragReplacement.Conflict.CloseButton" xml:space="preserve">
+    <value>关闭</value>
+  </data>
+  <data name="AssetPaneView.DragReplacement.Conflict.Intro" xml:space="preserve">
+    <value>以下文件匹配关系存在冲突。请处理同名来源或目标后重新拖入，本次不会执行替换：</value>
+  </data>
+  <data name="AssetPaneView.DragReplacement.Conflict.Target.Format" xml:space="preserve">
+    <value>资产“{0}”：</value>
   </data>
   <data name="AssetPaneView.DragReplacement.NoSpineMatches.Format" xml:space="preserve">
     <value>所选目录中没有可匹配到 Spine 组“{0}”的组成文件。</value>

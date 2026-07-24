@@ -1371,11 +1371,29 @@
   <data name="AssetPaneView.DragReplacement.AssetConfirm.Format" xml:space="preserve">
     <value>Replace asset “{0}” with “{1}”? Confirming immediately adds an undoable replacement record.</value>
   </data>
+  <data name="AssetPaneView.DragReplacement.AssetsConfirm.Format" xml:space="preserve">
+    <value>{0} assets were matched by file name. Confirming immediately adds undoable replacement records for them.</value>
+  </data>
   <data name="AssetPaneView.DragReplacement.SpineConfirm.Format" xml:space="preserve">
     <value>Folder “{2}” matched {1} parts in Spine group “{0}”. Confirming applies each replacement immediately.</value>
   </data>
   <data name="AssetPaneView.DragReplacement.InvalidSource" xml:space="preserve">
-    <value>Drop one file onto an asset, or one folder containing component files onto a Spine group.</value>
+    <value>The dropped content did not contain any readable files or directories.</value>
+  </data>
+  <data name="AssetPaneView.DragReplacement.NoAssetMatches" xml:space="preserve">
+    <value>No dropped file matched the current asset list by file name and asset type.</value>
+  </data>
+  <data name="AssetPaneView.DragReplacement.Conflict.Title" xml:space="preserve">
+    <value>Replacement source conflicts</value>
+  </data>
+  <data name="AssetPaneView.DragReplacement.Conflict.CloseButton" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="AssetPaneView.DragReplacement.Conflict.Intro" xml:space="preserve">
+    <value>The following file matches are ambiguous. Resolve duplicate sources or targets and drop again. No replacements will be applied:</value>
+  </data>
+  <data name="AssetPaneView.DragReplacement.Conflict.Target.Format" xml:space="preserve">
+    <value>Asset “{0}”:</value>
   </data>
   <data name="AssetPaneView.DragReplacement.NoSpineMatches.Format" xml:space="preserve">
     <value>No files in the selected folder match Spine group “{0}”.</value>

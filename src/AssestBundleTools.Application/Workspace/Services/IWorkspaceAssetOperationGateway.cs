@@ -28,6 +28,10 @@ public interface IWorkspaceAssetOperationGateway
         GetFileReplacementCandidateQuery query,
         CancellationToken cancellationToken = default);
 
+    Task<Result<AssetReplacementSourceMatchPlanDto>> MatchAssetReplacementSourcesAsync(
+        MatchAssetReplacementSourcesQuery query,
+        CancellationToken cancellationToken = default);
+
     Task<Result<IReadOnlyList<WorkspaceReplacementCandidateDto>>> GetWorkspaceReplacementCandidatesAsync(
         GetWorkspaceReplacementCandidatesQuery query,
         CancellationToken cancellationToken = default);

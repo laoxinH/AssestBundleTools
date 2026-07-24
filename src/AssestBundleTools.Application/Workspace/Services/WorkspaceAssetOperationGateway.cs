@@ -19,6 +19,7 @@ public sealed class WorkspaceAssetOperationGateway : IWorkspaceAssetOperationGat
     private readonly ExtractAssetHandler _extractAssetHandler;
     private readonly ExtractSpineAssetGroupHandler _extractSpineAssetGroupHandler;
     private readonly GetFileReplacementCandidateHandler _getFileReplacementCandidateHandler;
+    private readonly MatchAssetReplacementSourcesHandler _matchAssetReplacementSourcesHandler;
     private readonly MatchSpineReplacementSourcesHandler _matchSpineReplacementSourcesHandler;
     private readonly CheckSpineSkeletonReplacementCompatibilityHandler _checkSpineSkeletonReplacementCompatibilityHandler;
     private readonly GetWorkspaceReplacementCandidatesHandler _getWorkspaceReplacementCandidatesHandler;
@@ -38,6 +39,7 @@ public sealed class WorkspaceAssetOperationGateway : IWorkspaceAssetOperationGat
         ExtractAssetHandler extractAssetHandler,
         ExtractSpineAssetGroupHandler extractSpineAssetGroupHandler,
         GetFileReplacementCandidateHandler getFileReplacementCandidateHandler,
+        MatchAssetReplacementSourcesHandler matchAssetReplacementSourcesHandler,
         MatchSpineReplacementSourcesHandler matchSpineReplacementSourcesHandler,
         CheckSpineSkeletonReplacementCompatibilityHandler checkSpineSkeletonReplacementCompatibilityHandler,
         GetWorkspaceReplacementCandidatesHandler getWorkspaceReplacementCandidatesHandler,
@@ -56,6 +58,7 @@ public sealed class WorkspaceAssetOperationGateway : IWorkspaceAssetOperationGat
         _extractAssetHandler = extractAssetHandler ?? throw new ArgumentNullException(nameof(extractAssetHandler));
         _extractSpineAssetGroupHandler = extractSpineAssetGroupHandler ?? throw new ArgumentNullException(nameof(extractSpineAssetGroupHandler));
         _getFileReplacementCandidateHandler = getFileReplacementCandidateHandler ?? throw new ArgumentNullException(nameof(getFileReplacementCandidateHandler));
+        _matchAssetReplacementSourcesHandler = matchAssetReplacementSourcesHandler ?? throw new ArgumentNullException(nameof(matchAssetReplacementSourcesHandler));
         _matchSpineReplacementSourcesHandler = matchSpineReplacementSourcesHandler ?? throw new ArgumentNullException(nameof(matchSpineReplacementSourcesHandler));
         _checkSpineSkeletonReplacementCompatibilityHandler = checkSpineSkeletonReplacementCompatibilityHandler ?? throw new ArgumentNullException(nameof(checkSpineSkeletonReplacementCompatibilityHandler));
         _getWorkspaceReplacementCandidatesHandler = getWorkspaceReplacementCandidatesHandler ?? throw new ArgumentNullException(nameof(getWorkspaceReplacementCandidatesHandler));
@@ -86,6 +89,11 @@ public sealed class WorkspaceAssetOperationGateway : IWorkspaceAssetOperationGat
         GetFileReplacementCandidateQuery query,
         CancellationToken cancellationToken = default) =>
         _getFileReplacementCandidateHandler.HandleAsync(query, cancellationToken);
+
+    public Task<Result<AssetReplacementSourceMatchPlanDto>> MatchAssetReplacementSourcesAsync(
+        MatchAssetReplacementSourcesQuery query,
+        CancellationToken cancellationToken = default) =>
+        _matchAssetReplacementSourcesHandler.HandleAsync(query, cancellationToken);
 
     public Task<Result<IReadOnlyList<SpineReplacementSourceMatchDto>>> MatchSpineReplacementSourcesAsync(
         MatchSpineReplacementSourcesQuery query,

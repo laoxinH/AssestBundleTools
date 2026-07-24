@@ -794,6 +794,8 @@ public sealed partial class BundleExplorerAssetExtractionActionHandlerTests
 
         public List<GetFileReplacementCandidateQuery> FileReplacementCandidateQueries { get; } = [];
 
+        public List<MatchAssetReplacementSourcesQuery> AssetReplacementSourceMatchQueries { get; } = [];
+
         public List<ReplaceAssetFromFileCommand> ReplaceAssetFromFileCommands { get; } = [];
 
         public List<MatchSpineReplacementSourcesQuery> SpineReplacementSourceMatchQueries { get; } = [];
@@ -916,6 +918,30 @@ public sealed partial class BundleExplorerAssetExtractionActionHandlerTests
                     command.AssetId,
                     "hero.png",
                     DateTimeOffset.UtcNow)));
+        }
+
+        public Task<Result<AssetReplacementSourceMatchPlanDto>> MatchAssetReplacementSourcesAsync(
+            MatchAssetReplacementSourcesQuery query,
+            CancellationToken cancellationToken = default)
+        {
+            AssetReplacementSourceMatchQueries.Add(query);
+            var matches = query.Targets
+                .Select(target => query.SourcePaths.FirstOrDefault(path =>
+                    string.Equals(
+                        Path.GetFileNameWithoutExtension(path),
+                        Path.GetFileNameWithoutExtension(target.Name),
+                        StringComparison.OrdinalIgnoreCase)) is { } sourcePath
+                    ? new AssetReplacementSourceMatchDto(
+                        target,
+                        sourcePath,
+                        Path.GetFileName(sourcePath),
+                        RequireSpineSkeletonFormatMatch: false)
+                    : null)
+                .Where(static match => match is not null)
+                .Select(static match => match!)
+                .ToArray();
+            return Task.FromResult(Result<AssetReplacementSourceMatchPlanDto>.Success(
+                new AssetReplacementSourceMatchPlanDto(matches, [])));
         }
 
         public Task<Result<IReadOnlyList<SpineReplacementSourceMatchDto>>> MatchSpineReplacementSourcesAsync(

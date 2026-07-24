@@ -54,7 +54,7 @@ public sealed class AssetPaneDragReplacementContractTests
             "ViewModels", "BundleExplorer", "ActionHandlers", "BundleExplorerSpineEditActionHandler.cs");
 
         var assetConfirm = coordinator.IndexOf("ConfirmAsync(", StringComparison.Ordinal);
-        var assetApply = coordinator.IndexOf("DragReplacementCommands.ApplyAssetAsync", StringComparison.Ordinal);
+        var assetApply = coordinator.IndexOf("DragReplacementCommands.ApplyAssetsAsync", StringComparison.Ordinal);
         var spinePrepare = coordinator.IndexOf("DragReplacementCommands.PrepareSpineGroupAsync", StringComparison.Ordinal);
         var spineConfirm = coordinator.IndexOf("ResourceKeys.AssetPaneDragReplacementSpineConfirmFormat", StringComparison.Ordinal);
         var spineApply = coordinator.IndexOf("DragReplacementCommands.ApplySpineGroupAsync", StringComparison.Ordinal);
@@ -70,6 +70,30 @@ public sealed class AssetPaneDragReplacementContractTests
         Assert.Contains("requireSpineSkeletonFormatMatch", spineHandler);
         Assert.Contains("BeginNotificationBatch", spineHandler);
         Assert.Contains("CreateSpineReplacementOperationContext(group, draft)", spineHandler);
+    }
+
+    [Fact]
+    public void AssetPaneDragReplacement_ShouldMatchMixedOrdinarySourcesAndStopBeforeConfirmationOnConflict()
+    {
+        var projectRoot = GetPresentationProjectRoot();
+        var coordinator = Read(projectRoot,
+            "Views", "BundleExplorer", "Coordinators", "BundleExplorerAssetDragReplacementCoordinator.cs");
+        var actionHandler = Read(projectRoot,
+            "ViewModels", "BundleExplorer", "ActionHandlers", "BundleExplorerDragReplacementActionHandler.cs");
+
+        var prepare = coordinator.IndexOf("DragReplacementCommands.PrepareAssetsAsync", StringComparison.Ordinal);
+        var conflict = coordinator.IndexOf("if (plan.HasConflicts)", StringComparison.Ordinal);
+        var confirm = coordinator.IndexOf("if (!await ConfirmAsync(confirmation))", StringComparison.Ordinal);
+        var apply = coordinator.IndexOf("DragReplacementCommands.ApplyAssetsAsync", StringComparison.Ordinal);
+
+        Assert.True(prepare >= 0 && prepare < conflict && conflict < confirm && confirm < apply);
+        Assert.Contains("pane.Items", coordinator);
+        Assert.Contains("pane.SpineGroupItems", coordinator);
+        Assert.Contains("ShowConflictsAsync(plan.Conflicts)", coordinator);
+        Assert.DoesNotContain("sourcePaths.Count != 1", coordinator);
+        Assert.Contains("MatchAssetReplacementSourcesAsync", actionHandler);
+        Assert.Contains("BeginNotificationBatch", actionHandler);
+        Assert.Contains("RequireSpineSkeletonFormatMatch", actionHandler);
     }
 
     [Fact]
@@ -98,6 +122,10 @@ public sealed class AssetPaneDragReplacementContractTests
             Assert.Contains("AssetPaneView.DragReplacement.AssetConfirm.Format", resources);
             Assert.Contains("AssetPaneView.DragReplacement.SpineConfirm.Format", resources);
             Assert.Contains("AssetPaneView.DragReplacement.InvalidSource", resources);
+            Assert.Contains("AssetPaneView.DragReplacement.AssetsConfirm.Format", resources);
+            Assert.Contains("AssetPaneView.DragReplacement.NoAssetMatches", resources);
+            Assert.Contains("AssetPaneView.DragReplacement.Conflict.Title", resources);
+            Assert.Contains("AssetPaneView.DragReplacement.Conflict.Target.Format", resources);
             Assert.Contains("AssetPaneView.DragReplacement.NoSpineMatches.Format", resources);
         }
     }

@@ -450,6 +450,11 @@ public sealed class AssetEditorWindowTextEditActionCoordinatorTests
             CancellationToken cancellationToken = default) =>
             throw new NotSupportedException();
 
+        public Task<Result<AssetReplacementSourceMatchPlanDto>> MatchAssetReplacementSourcesAsync(
+            MatchAssetReplacementSourcesQuery query,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
         public Task<Result<IReadOnlyList<WorkspaceReplacementCandidateDto>>> GetWorkspaceReplacementCandidatesAsync(
             GetWorkspaceReplacementCandidatesQuery query,
             CancellationToken cancellationToken = default) =>

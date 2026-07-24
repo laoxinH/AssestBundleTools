@@ -1,4 +1,7 @@
 using System.IO;
+using System.Text;
+using AssestBundleTools.Application.Assets.Dtos;
+using AssestBundleTools.Application.Replacement.Dtos;
 using AssestBundleTools.Presentation.WinUI.Localization;
 using AssestBundleTools.Presentation.WinUI.Services;
 using AssestBundleTools.Presentation.WinUI.ViewModels.BundleExplorer.Bindings;
@@ -68,27 +71,55 @@ internal sealed class BundleExplorerAssetDragReplacementCoordinator
         AssetListEntryViewModel target,
         IReadOnlyList<string> sourcePaths)
     {
-        if (sourcePaths.Count != 1)
+        if (sourcePaths.Count == 0)
         {
             ShowInvalidSourceWarning();
             return;
         }
 
-        var sourceFilePath = sourcePaths[0];
-        AppendReceivedLog(target.DisplayName, sourceFilePath);
-        var candidate = await _owner.ViewModel.DragReplacementCommands.PrepareAssetAsync(
-            target,
-            sourceFilePath);
-        if (candidate is null || !await ConfirmAsync(
-                _localizationService.GetFormattedString(
-                    ResourceKeys.AssetPaneDragReplacementAssetConfirmFormat,
-                    target.DisplayName,
-                    candidate.SourceFileName)))
+        AppendReceivedLog(target.DisplayName, string.Join("; ", sourcePaths));
+        var pane = _owner.ViewModel.AssetWorkflow.PrimaryPane;
+        var preparation = await _owner.ViewModel.DragReplacementCommands.PrepareAssetsAsync(
+            pane.Items,
+            pane.SpineGroupItems,
+            sourcePaths);
+        var plan = preparation.Plan;
+        if (plan is null)
+        {
+            if (!preparation.FailureWasReported)
+            {
+                ShowInvalidSourceWarning();
+            }
+
+            return;
+        }
+
+        if (plan.HasConflicts)
+        {
+            await ShowConflictsAsync(plan.Conflicts);
+            return;
+        }
+
+        if (plan.Matches.Count == 0)
+        {
+            ShowWarning(GetString(ResourceKeys.AssetPaneDragReplacementNoAssetMatches));
+            return;
+        }
+
+        var confirmation = plan.Matches.Count == 1
+            ? _localizationService.GetFormattedString(
+                ResourceKeys.AssetPaneDragReplacementAssetConfirmFormat,
+                ResolveTargetName(plan.Matches[0].Target),
+                plan.Matches[0].SourceFileName)
+            : _localizationService.GetFormattedString(
+                ResourceKeys.AssetPaneDragReplacementAssetsConfirmFormat,
+                plan.Matches.Count);
+        if (!await ConfirmAsync(confirmation))
         {
             return;
         }
 
-        await _owner.ViewModel.DragReplacementCommands.ApplyAssetAsync(target, candidate);
+        await _owner.ViewModel.DragReplacementCommands.ApplyAssetsAsync(plan.Matches);
     }
 
     private async Task HandleSpineGroupAsync(
@@ -154,6 +185,63 @@ internal sealed class BundleExplorerAssetDragReplacementCoordinator
         };
         return await dialog.ShowAsync() == ContentDialogResult.Primary;
     }
+
+    private async Task ShowConflictsAsync(IReadOnlyList<AssetReplacementSourceConflictDto> conflicts)
+    {
+        var details = BuildConflictDetails(conflicts);
+        _appLogService.AppendWarning(details);
+        if (_owner.XamlRoot is null)
+        {
+            _appNotificationService.Show(
+                GetString(ResourceKeys.AppNotificationWarningTitle),
+                details,
+                AppNotificationSeverity.Warning);
+            return;
+        }
+
+        var dialog = new ContentDialog
+        {
+            XamlRoot = _owner.XamlRoot,
+            Title = GetString(ResourceKeys.AssetPaneDragReplacementConflictTitle),
+            Content = new ScrollViewer
+            {
+                MaxHeight = 420,
+                Content = new TextBlock
+                {
+                    Text = details,
+                    TextWrapping = Microsoft.UI.Xaml.TextWrapping.Wrap,
+                    IsTextSelectionEnabled = true
+                }
+            },
+            CloseButtonText = GetString(ResourceKeys.AssetPaneDragReplacementConflictCloseButton),
+            DefaultButton = ContentDialogButton.Close
+        };
+        await dialog.ShowAsync();
+    }
+
+    private string BuildConflictDetails(IReadOnlyList<AssetReplacementSourceConflictDto> conflicts)
+    {
+        var builder = new StringBuilder(GetString(ResourceKeys.AssetPaneDragReplacementConflictIntro));
+        foreach (var conflict in conflicts)
+        {
+            builder.AppendLine();
+            builder.AppendLine();
+            builder.Append(_localizationService.GetFormattedString(
+                ResourceKeys.AssetPaneDragReplacementConflictTargetFormat,
+                ResolveTargetName(conflict.Target)));
+            foreach (var path in conflict.SourceFilePaths)
+            {
+                builder.AppendLine();
+                builder.Append("  - ");
+                builder.Append(path);
+            }
+        }
+
+        return builder.ToString();
+    }
+
+    private static string ResolveTargetName(AssetListItemDto target) =>
+        string.IsNullOrWhiteSpace(target.DisplayName) ? target.Name : target.DisplayName;
 
     private void ShowInvalidSourceWarning() =>
         ShowWarning(GetString(ResourceKeys.AssetPaneDragReplacementInvalidSource));

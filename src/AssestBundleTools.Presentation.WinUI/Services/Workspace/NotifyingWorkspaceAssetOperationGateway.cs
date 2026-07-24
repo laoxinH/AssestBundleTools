@@ -67,6 +67,11 @@ internal sealed class NotifyingWorkspaceAssetOperationGateway : IWorkspaceAssetO
         CancellationToken cancellationToken = default) =>
         _inner.GetFileReplacementCandidateAsync(query, cancellationToken);
 
+    public Task<Result<AssetReplacementSourceMatchPlanDto>> MatchAssetReplacementSourcesAsync(
+        MatchAssetReplacementSourcesQuery query,
+        CancellationToken cancellationToken = default) =>
+        _inner.MatchAssetReplacementSourcesAsync(query, cancellationToken);
+
     public Task<Result<IReadOnlyList<SpineReplacementSourceMatchDto>>> MatchSpineReplacementSourcesAsync(
         MatchSpineReplacementSourcesQuery query,
         CancellationToken cancellationToken = default) =>

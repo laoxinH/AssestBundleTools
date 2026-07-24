@@ -225,6 +225,10 @@ internal static class AppCompositionRoot
             workspaceSessionRegistry,
             getAssetPreviewHandler,
             replacementPreviewSourceProvider);
+        var matchAssetReplacementSourcesHandler = new MatchAssetReplacementSourcesHandler(
+            replacementSourcePathExpander,
+            spineSkeletonReplacementCompatibilityService,
+            loadSpineAssetGroupsHandler);
         var matchSpineReplacementSourcesHandler = new MatchSpineReplacementSourcesHandler(
             replacementSourcePathExpander,
             spineSkeletonReplacementCompatibilityService);
@@ -341,6 +345,7 @@ internal static class AppCompositionRoot
             extractAssetHandler: extractAssetHandler,
             extractSpineAssetGroupHandler: extractSpineAssetGroupHandler,
             getFileReplacementCandidateHandler: getFileReplacementCandidateHandler,
+            matchAssetReplacementSourcesHandler: matchAssetReplacementSourcesHandler,
             matchSpineReplacementSourcesHandler: matchSpineReplacementSourcesHandler,
             checkSpineSkeletonReplacementCompatibilityHandler: checkSpineSkeletonReplacementCompatibilityHandler,
             getWorkspaceReplacementCandidatesHandler: getWorkspaceReplacementCandidatesHandler,

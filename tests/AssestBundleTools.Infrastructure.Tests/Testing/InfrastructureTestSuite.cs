@@ -7,6 +7,7 @@ using AssestBundleTools.Infrastructure.Tests.Bundles.Previewing;
 using AssestBundleTools.Infrastructure.Tests.Extensions.Installation;
 using AssestBundleTools.Infrastructure.Tests.Settings.Persistence;
 using AssestBundleTools.Infrastructure.Tests.Workspace.Persistence;
+using AssestBundleTools.Infrastructure.Tests.Workspace.Replacement;
 using AssestBundleTools.Infrastructure.Tests.Workspace.Diagnostics;
 using AssestBundleTools.Infrastructure.Tests.Workspace.Extraction;
 using AssestBundleTools.Infrastructure.Tests.Workspace.Runtime;
@@ -20,6 +21,11 @@ internal static class InfrastructureTestSuite
     public static async Task<int> RunAsync()
     {
         var failures = new List<string>();
+
+        await RunTestAsync(
+            failures,
+            nameof(FileSystemReplacementSourcePathExpanderTests.ExpandAsync_ShouldCombineLooseFilesAndDirectoryFilesWithoutDuplicates),
+            FileSystemReplacementSourcePathExpanderTests.ExpandAsync_ShouldCombineLooseFilesAndDirectoryFilesWithoutDuplicates);
 
         await RunTestAsync(
             failures,

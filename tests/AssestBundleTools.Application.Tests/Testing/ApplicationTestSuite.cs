@@ -427,6 +427,26 @@ internal static partial class ApplicationTestSuite
             ReplacementWorkflowHandlerTests.GetFileReplacementCandidateHandler_ShouldReturnFailure_WhenSourceExtensionIsIncompatible);
         await RunTestAsync(
             failures,
+            nameof(AssetReplacementSourceMatchingTests.MatchAssetReplacementSourcesHandler_ShouldMatchMixedSourcesAcrossCurrentList),
+            AssetReplacementSourceMatchingTests.MatchAssetReplacementSourcesHandler_ShouldMatchMixedSourcesAcrossCurrentList);
+        await RunTestAsync(
+            failures,
+            nameof(AssetReplacementSourceMatchingTests.MatchAssetReplacementSourcesHandler_ShouldReportEveryConflictingSource),
+            AssetReplacementSourceMatchingTests.MatchAssetReplacementSourcesHandler_ShouldReportEveryConflictingSource);
+        await RunTestAsync(
+            failures,
+            nameof(AssetReplacementSourceMatchingTests.MatchAssetReplacementSourcesHandler_ShouldReportOneSourceMatchingDuplicateTargets),
+            AssetReplacementSourceMatchingTests.MatchAssetReplacementSourcesHandler_ShouldReportOneSourceMatchingDuplicateTargets);
+        await RunTestAsync(
+            failures,
+            nameof(AssetReplacementSourceMatchingTests.MatchAssetReplacementSourcesHandler_ShouldUsePayloadFormatForSkeletonTargets),
+            AssetReplacementSourceMatchingTests.MatchAssetReplacementSourcesHandler_ShouldUsePayloadFormatForSkeletonTargets);
+        await RunTestAsync(
+            failures,
+            nameof(AssetReplacementSourceMatchingTests.MatchAssetReplacementSourcesHandler_ShouldFailWhenSpineCatalogCannotLoad),
+            AssetReplacementSourceMatchingTests.MatchAssetReplacementSourcesHandler_ShouldFailWhenSpineCatalogCannotLoad);
+        await RunTestAsync(
+            failures,
             nameof(ReplacementWorkflowHandlerTests.GetWorkspaceReplacementCandidatesHandler_ShouldReturnFailure_WhenRegistryProvidesNoCandidates),
             ReplacementWorkflowHandlerTests.GetWorkspaceReplacementCandidatesHandler_ShouldReturnFailure_WhenRegistryProvidesNoCandidates);
         await RunTestAsync(

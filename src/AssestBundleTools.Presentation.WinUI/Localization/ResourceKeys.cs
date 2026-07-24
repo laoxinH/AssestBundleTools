@@ -1034,8 +1034,14 @@ public static class ResourceKeys
     public const string AssetPaneDragReplacementConfirmTitle = "AssetPaneView.DragReplacement.Confirm.Title";
     public const string AssetPaneDragReplacementConfirmButton = "AssetPaneView.DragReplacement.Confirm.Button";
     public const string AssetPaneDragReplacementAssetConfirmFormat = "AssetPaneView.DragReplacement.AssetConfirm.Format";
+    public const string AssetPaneDragReplacementAssetsConfirmFormat = "AssetPaneView.DragReplacement.AssetsConfirm.Format";
     public const string AssetPaneDragReplacementSpineConfirmFormat = "AssetPaneView.DragReplacement.SpineConfirm.Format";
     public const string AssetPaneDragReplacementInvalidSource = "AssetPaneView.DragReplacement.InvalidSource";
+    public const string AssetPaneDragReplacementNoAssetMatches = "AssetPaneView.DragReplacement.NoAssetMatches";
+    public const string AssetPaneDragReplacementConflictTitle = "AssetPaneView.DragReplacement.Conflict.Title";
+    public const string AssetPaneDragReplacementConflictCloseButton = "AssetPaneView.DragReplacement.Conflict.CloseButton";
+    public const string AssetPaneDragReplacementConflictIntro = "AssetPaneView.DragReplacement.Conflict.Intro";
+    public const string AssetPaneDragReplacementConflictTargetFormat = "AssetPaneView.DragReplacement.Conflict.Target.Format";
     public const string AssetPaneDragReplacementNoSpineMatchesFormat = "AssetPaneView.DragReplacement.NoSpineMatches.Format";
     public const string AssetPaneDragReplacementBusy = "AssetPaneView.DragReplacement.Busy";
     public const string AssetPaneDragReplacementReceivedLogFormat = "AssetPaneView.DragReplacement.Log.Received.Format";

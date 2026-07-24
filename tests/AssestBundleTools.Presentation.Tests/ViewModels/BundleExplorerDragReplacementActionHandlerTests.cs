@@ -13,31 +13,37 @@ namespace AssestBundleTools.Presentation.Tests.ViewModels;
 public sealed partial class BundleExplorerAssetExtractionActionHandlerTests
 {
     [Fact]
-    public async Task DragReplacement_ShouldPrepareAndApplyOrdinaryAssetThroughExistingFileChain()
+    public async Task DragReplacement_ShouldPrepareAndApplyEveryMatchedOrdinaryAsset()
     {
         var gateway = new RecordingWorkspaceAssetOperationGateway();
         var handler = CreateDragReplacementHandler(gateway);
-        var target = CreateAssetEntry("asset-drop", "hero");
-        var sourcePath = @"D:\Exports\hero.png";
+        var hero = CreateAssetEntry("asset-hero", "hero");
+        var portrait = CreateAssetEntry("asset-portrait", "portrait");
+        var sourcePaths = new[]
+        {
+            @"D:\Exports\hero.png",
+            @"D:\Exports\portrait.png"
+        };
 
-        var candidate = await handler.PrepareAssetAsync(
+        var plan = await handler.PrepareAssetsAsync(
             CreateWorkspaceSummary(),
-            target,
-            sourcePath,
+            [hero, portrait],
+            [],
+            sourcePaths,
             busy => gateway.BusyTransitions.Add($"busy:{busy.ToString().ToLowerInvariant()}"),
-            _ => throw new Xunit.Sdk.XunitException("Candidate preparation should succeed."));
-        var applied = await handler.ApplyAssetAsync(
+            _ => throw new Xunit.Sdk.XunitException("Source matching should succeed."));
+        var applied = await handler.ApplyAssetsAsync(
             CreateWorkspaceSummary(),
-            target,
-            Assert.IsType<FileReplacementCandidateDto>(candidate),
+            Assert.IsType<AssetReplacementSourceMatchPlanDto>(plan).Matches,
             busy => gateway.BusyTransitions.Add($"busy:{busy.ToString().ToLowerInvariant()}"),
-            _ => throw new Xunit.Sdk.XunitException("Replacement should succeed."));
+            _ => throw new Xunit.Sdk.XunitException("Matched replacements should succeed."));
 
         Assert.True(applied);
-        Assert.Equal(sourcePath, Assert.Single(gateway.FileReplacementCandidateQueries).SourceFilePath);
-        var command = Assert.Single(gateway.ReplaceAssetFromFileCommands);
-        Assert.Equal(target.Item.AssetId, command.TargetAssetId);
-        Assert.Equal(sourcePath, command.SourceFilePath);
+        Assert.Equal(sourcePaths, Assert.Single(gateway.AssetReplacementSourceMatchQueries).SourcePaths);
+        Assert.Equal(2, gateway.ReplaceAssetFromFileCommands.Count);
+        Assert.Equal(
+            [hero.Item.AssetId, portrait.Item.AssetId],
+            gateway.ReplaceAssetFromFileCommands.Select(static command => command.TargetAssetId));
         Assert.Equal(["busy:true", "busy:false", "busy:true", "busy:false"], gateway.BusyTransitions);
     }
 

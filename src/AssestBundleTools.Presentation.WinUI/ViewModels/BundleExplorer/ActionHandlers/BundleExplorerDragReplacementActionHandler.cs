@@ -15,6 +15,8 @@ internal sealed class BundleExplorerDragReplacementActionHandler
 {
     private readonly BundleExplorerFileReplacementActionExecutor _fileReplacementActionExecutor;
     private readonly BundleExplorerSpineEditActionHandler _spineEditActionHandler;
+    private readonly IWorkspaceAssetOperationGateway _workspaceAssetOperationGateway;
+    private readonly IWorkspaceOperationChangeNotifier _operationChangeNotifier;
 
     public BundleExplorerDragReplacementActionHandler(
         IWorkspaceAssetOperationGateway workspaceAssetOperationGateway,
@@ -24,6 +26,8 @@ internal sealed class BundleExplorerDragReplacementActionHandler
         IFilePickerService filePickerService,
         IWorkspaceOperationChangeNotifier operationChangeNotifier)
     {
+        _workspaceAssetOperationGateway = workspaceAssetOperationGateway ?? throw new ArgumentNullException(nameof(workspaceAssetOperationGateway));
+        _operationChangeNotifier = operationChangeNotifier ?? throw new ArgumentNullException(nameof(operationChangeNotifier));
         _fileReplacementActionExecutor = new BundleExplorerFileReplacementActionExecutor(
             workspaceAssetOperationGateway,
             appLogService,
@@ -40,27 +44,43 @@ internal sealed class BundleExplorerDragReplacementActionHandler
             operationChangeNotifier);
     }
 
-    public async Task<FileReplacementCandidateDto?> PrepareAssetAsync(
+    public async Task<AssetReplacementSourceMatchPlanDto?> PrepareAssetsAsync(
         WorkspaceSummaryDto workspaceSummary,
-        AssetListEntryViewModel target,
-        string sourceFilePath,
+        IReadOnlyList<AssetListEntryViewModel> targets,
+        IReadOnlyList<SpineAssetGroupEntryViewModel> spineGroups,
+        IReadOnlyList<string> sourcePaths,
         Action<bool> setBusyState,
         Action<IReadOnlyList<AppError>> appendResultFailure)
     {
         ArgumentNullException.ThrowIfNull(workspaceSummary);
-        ArgumentNullException.ThrowIfNull(target);
+        ArgumentNullException.ThrowIfNull(targets);
+        ArgumentNullException.ThrowIfNull(spineGroups);
+        ArgumentNullException.ThrowIfNull(sourcePaths);
         ArgumentNullException.ThrowIfNull(setBusyState);
         ArgumentNullException.ThrowIfNull(appendResultFailure);
 
         setBusyState(true);
         try
         {
-            return await _fileReplacementActionExecutor.GetFileReplacementCandidateAsync(
-                workspaceSummary,
-                target.Item.BundleId,
-                target.Item.AssetId,
-                sourceFilePath,
-                appendResultFailure);
+            var result = await _workspaceAssetOperationGateway.MatchAssetReplacementSourcesAsync(
+                new(
+                    workspaceSummary.WorkspaceId,
+                    workspaceSummary.WorkspaceKey ?? string.Empty,
+                    workspaceSummary.WorkspaceDataRootPath ?? string.Empty,
+                    targets.Select(static target => target.Item).ToArray(),
+                    spineGroups.Select(static group => group.Item).ToArray(),
+                    sourcePaths));
+            if (result.IsSuccess && result.Value is not null)
+            {
+                return result.Value;
+            }
+
+            if (!result.IsCancelled)
+            {
+                appendResultFailure(result.Errors);
+            }
+
+            return null;
         }
         finally
         {
@@ -68,29 +88,45 @@ internal sealed class BundleExplorerDragReplacementActionHandler
         }
     }
 
-    public async Task<bool> ApplyAssetAsync(
+    public async Task<bool> ApplyAssetsAsync(
         WorkspaceSummaryDto workspaceSummary,
-        AssetListEntryViewModel target,
-        FileReplacementCandidateDto candidate,
+        IReadOnlyList<AssetReplacementSourceMatchDto> matches,
         Action<bool> setBusyState,
         Action<IReadOnlyList<AppError>> appendResultFailure)
     {
         ArgumentNullException.ThrowIfNull(workspaceSummary);
-        ArgumentNullException.ThrowIfNull(target);
-        ArgumentNullException.ThrowIfNull(candidate);
+        ArgumentNullException.ThrowIfNull(matches);
         ArgumentNullException.ThrowIfNull(setBusyState);
         ArgumentNullException.ThrowIfNull(appendResultFailure);
 
         setBusyState(true);
+        using var notificationBatch = _operationChangeNotifier.BeginNotificationBatch();
         try
         {
-            return await _fileReplacementActionExecutor.ApplyFileReplacementAsync(
-                workspaceSummary,
-                target.Item.BundleId,
-                target.Item.AssetId,
-                target.DisplayName,
-                candidate,
-                appendResultFailure);
+            foreach (var match in matches)
+            {
+                var candidate = await _fileReplacementActionExecutor.GetFileReplacementCandidateAsync(
+                    workspaceSummary,
+                    match.Target.BundleId,
+                    match.Target.AssetId,
+                    match.SourceFilePath,
+                    appendResultFailure);
+                if (candidate is null || !await _fileReplacementActionExecutor.ApplyFileReplacementAsync(
+                        workspaceSummary,
+                        match.Target.BundleId,
+                        match.Target.AssetId,
+                        string.IsNullOrWhiteSpace(match.Target.DisplayName)
+                            ? match.Target.Name
+                            : match.Target.DisplayName,
+                        candidate,
+                        appendResultFailure,
+                        requireSpineSkeletonFormatMatch: match.RequireSpineSkeletonFormatMatch))
+                {
+                    return false;
+                }
+            }
+
+            return matches.Count > 0;
         }
         finally
         {

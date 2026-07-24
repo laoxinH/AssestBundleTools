@@ -32,33 +32,39 @@ internal sealed class BundleExplorerDragReplacementCommandCoordinator
         _setBusyState = setBusyState ?? throw new ArgumentNullException(nameof(setBusyState));
     }
 
-    public Task<FileReplacementCandidateDto?> PrepareAssetAsync(
-        AssetListEntryViewModel target,
-        string sourceFilePath)
+    public async Task<AssetDragReplacementPreparationResult> PrepareAssetsAsync(
+        IReadOnlyList<AssetListEntryViewModel> targets,
+        IReadOnlyList<SpineAssetGroupEntryViewModel> spineGroups,
+        IReadOnlyList<string> sourcePaths)
     {
-        ArgumentNullException.ThrowIfNull(target);
-        return !TryGetWorkspace(out var workspaceSummary)
-            ? Task.FromResult<FileReplacementCandidateDto?>(null)
-            : _actionHandler.PrepareAssetAsync(
-                workspaceSummary,
-                target,
-                sourceFilePath,
-                _setBusyState,
-                _operationFeedbackBridge.AppendResultFailure);
+        if (!TryGetWorkspace(out var workspaceSummary))
+        {
+            return new AssetDragReplacementPreparationResult(null, FailureWasReported: true);
+        }
+
+        var failureWasReported = false;
+        var plan = await _actionHandler.PrepareAssetsAsync(
+            workspaceSummary,
+            targets,
+            spineGroups,
+            sourcePaths,
+            _setBusyState,
+            errors =>
+            {
+                failureWasReported = errors.Count > 0;
+                _operationFeedbackBridge.AppendResultFailure(errors);
+            });
+        return new AssetDragReplacementPreparationResult(plan, failureWasReported);
     }
 
-    public Task<bool> ApplyAssetAsync(
-        AssetListEntryViewModel target,
-        FileReplacementCandidateDto candidate)
+    public Task<bool> ApplyAssetsAsync(IReadOnlyList<AssetReplacementSourceMatchDto> matches)
     {
-        ArgumentNullException.ThrowIfNull(target);
-        ArgumentNullException.ThrowIfNull(candidate);
+        ArgumentNullException.ThrowIfNull(matches);
         return !TryGetWorkspace(out var workspaceSummary)
             ? Task.FromResult(false)
-            : _actionHandler.ApplyAssetAsync(
+            : _actionHandler.ApplyAssetsAsync(
                 workspaceSummary,
-                target,
-                candidate,
+                matches,
                 _setBusyState,
                 _operationFeedbackBridge.AppendResultFailure);
     }
@@ -108,4 +114,8 @@ internal sealed class BundleExplorerDragReplacementCommandCoordinator
 
 internal sealed record SpineDragReplacementPreparationResult(
     SpineAssetGroupEditDraftViewModel? Draft,
+    bool FailureWasReported);
+
+internal sealed record AssetDragReplacementPreparationResult(
+    AssetReplacementSourceMatchPlanDto? Plan,
     bool FailureWasReported);
