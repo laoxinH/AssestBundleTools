@@ -64,7 +64,8 @@ internal sealed class BundleExplorerBatchExtractionBackgroundExecutor
                     BuildBatchExtractionSuggestedPath(
                         selectedOutputDirectory,
                         entry,
-                        defaultBundleDisplayName))))
+                        defaultBundleDisplayName),
+                    SpineSkeletonExtensionMode: ResolveAutomaticSpineSkeletonExtensionMode())))
             .ToArray();
 
         using var notificationBatch = _operationChangeNotifier?.BeginNotificationBatch();
@@ -244,7 +245,7 @@ internal sealed class BundleExplorerBatchExtractionBackgroundExecutor
                     {
                         context.Progress.ReportProgress(0, 1, displayName);
                         var result = await _workspaceAssetOperationGateway.ExtractAssetAsync(
-                            command,
+                            ApplySpineSkeletonExtensionPreference(command),
                             context.CancellationToken);
                         context.Progress.ReportProgress(1, 1, displayName);
                         return result;
@@ -456,6 +457,16 @@ internal sealed class BundleExplorerBatchExtractionBackgroundExecutor
                 command.UseContentAwareSpineSkeletonFileExtension ||
                 _useContentAwareSpineSkeletonFileExtensionProvider()
         };
+
+    private ExtractAssetCommand ApplySpineSkeletonExtensionPreference(ExtractAssetCommand command) =>
+        command.SpineSkeletonExtensionMode == SpineSkeletonExportExtensionMode.None
+            ? command with { SpineSkeletonExtensionMode = ResolveAutomaticSpineSkeletonExtensionMode() }
+            : command;
+
+    private SpineSkeletonExportExtensionMode ResolveAutomaticSpineSkeletonExtensionMode() =>
+        _useContentAwareSpineSkeletonFileExtensionProvider()
+            ? SpineSkeletonExportExtensionMode.AutoDetectContentAware
+            : SpineSkeletonExportExtensionMode.AutoDetectUniformSkel;
 
     private sealed record AssetBatchExtractionItem(
         string DisplayName,

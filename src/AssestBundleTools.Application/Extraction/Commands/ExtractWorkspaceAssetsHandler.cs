@@ -431,7 +431,10 @@ public sealed class ExtractWorkspaceAssetsHandler : ICommandHandler<ExtractWorks
                     asset.AssetId,
                     command.WorkspaceKey,
                     command.WorkspaceDataRootPath,
-                    asset.SuggestedOutputPath),
+                    asset.SuggestedOutputPath,
+                    SpineSkeletonExtensionMode: command.UseContentAwareSpineSkeletonFileExtension
+                        ? SpineSkeletonExportExtensionMode.AutoDetectContentAware
+                        : SpineSkeletonExportExtensionMode.AutoDetectUniformSkel),
                 cancellationToken);
             return ConvertAssetResult(handlerResult);
         }

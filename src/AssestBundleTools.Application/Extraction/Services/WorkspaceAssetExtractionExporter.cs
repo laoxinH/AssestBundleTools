@@ -191,7 +191,8 @@ public sealed class WorkspaceAssetExtractionExporter
         bool preserveSuggestedFileName,
         SpineSkeletonExportExtensionMode spineSkeletonExtensionMode)
     {
-        if (preserveSuggestedFileName)
+        if (preserveSuggestedFileName &&
+            spineSkeletonExtensionMode == SpineSkeletonExportExtensionMode.None)
         {
             return suggestedOutputPath.Trim();
         }
@@ -243,7 +244,10 @@ public sealed class WorkspaceAssetExtractionExporter
         }
 
         var stem = Path.GetFileName(fileName.Trim());
-        foreach (var extension in new[] { ".skel.bytes", ".skel", ".json", ".bytes" })
+        foreach (var extension in new[]
+                 {
+                     ".skel.bytes", ".json.txt", ".skel", ".json", ".bytes", ".txt", ".bin"
+                 })
         {
             if (stem.EndsWith(extension, StringComparison.OrdinalIgnoreCase))
             {

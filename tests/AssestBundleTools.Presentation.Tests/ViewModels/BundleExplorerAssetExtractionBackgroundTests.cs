@@ -39,6 +39,7 @@ public sealed partial class BundleExplorerAssetExtractionActionHandlerTests
         var command = Assert.Single(gateway.ExtractAssetCommands);
         Assert.Equal(filePicker.AssetExtractionOutputFilePath, command.SuggestedOutputPath);
         Assert.True(command.PreserveSuggestedFileName);
+        Assert.Equal(SpineSkeletonExportExtensionMode.AutoDetectUniformSkel, command.SpineSkeletonExtensionMode);
         Assert.Equal([true, false], busyStates);
         Assert.Equal(1, backgroundTaskRunner.RunCallCount);
         Assert.Equal(typeof(Result<AssetExtractionResultDto>), backgroundTaskRunner.LastResultType);
@@ -91,5 +92,61 @@ public sealed partial class BundleExplorerAssetExtractionActionHandlerTests
         Assert.True(task.IsDisposed);
         Assert.Contains(task.ProgressReports, report => report.CompletedCount == 1 && report.TotalCount == 1);
         Assert.Null(groupTab.Item.SkeletonAssets[0].LastExtractedAtUtc);
+    }
+
+    [Fact]
+    public async Task ExtractSelectedAssetAsync_ShouldProjectContentAwareSkeletonNamingPreference()
+    {
+        var gateway = new RecordingWorkspaceAssetOperationGateway();
+        var filePicker = new RecordingFilePickerService
+        {
+            AssetExtractionOutputFilePath = @"D:\Exports\skeleton.txt"
+        };
+        var handler = new BundleExplorerAssetExtractionActionHandler(
+            gateway,
+            new TestAppLogService(),
+            new TestAppNotificationService(),
+            new TestLocalizationService(),
+            filePicker,
+            useContentAwareSpineSkeletonFileExtensionProvider: static () => true);
+
+        await handler.ExtractSelectedAssetAsync(
+            CreateWorkspaceSummary(),
+            CreateAssetDetails(),
+            _ => { },
+            _ => throw new InvalidOperationException("Single asset extraction should not fail in this test."));
+
+        var command = Assert.Single(gateway.ExtractAssetCommands);
+        Assert.Equal(SpineSkeletonExportExtensionMode.AutoDetectContentAware, command.SpineSkeletonExtensionMode);
+    }
+
+    [Fact]
+    public async Task ExtractSelectedAssetsAsync_ShouldProjectSkeletonNamingPreferenceToFallbackBatch()
+    {
+        var gateway = new RecordingWorkspaceAssetOperationGateway();
+        var filePicker = new RecordingFilePickerService
+        {
+            BatchExtractionOutputDirectory = @"D:\Exports\Selected"
+        };
+        var handler = new BundleExplorerAssetExtractionActionHandler(
+            gateway,
+            new TestAppLogService(),
+            new TestAppNotificationService(),
+            new TestLocalizationService(),
+            filePicker,
+            useContentAwareSpineSkeletonFileExtensionProvider: static () => true);
+
+        await handler.ExtractSelectedAssetsAsync(
+            CreateWorkspaceSummary(),
+            [CreateAssetEntry("asset-1", "skeleton"), CreateAssetEntry("asset-2", "atlas")],
+            "spine.ab",
+            _ => { },
+            _ => throw new InvalidOperationException("Fallback batch extraction should not fail in this test."));
+
+        Assert.All(
+            gateway.ExtractAssetCommands,
+            static command => Assert.Equal(
+                SpineSkeletonExportExtensionMode.AutoDetectContentAware,
+                command.SpineSkeletonExtensionMode));
     }
 }

@@ -1,10 +1,12 @@
 using AssestBundleTools.Application.Assets.Dtos;
+using AssestBundleTools.Application.Assets.Queries;
 using AssestBundleTools.Application.Common.Abstractions;
 using AssestBundleTools.Application.Common.Errors;
 using AssestBundleTools.Application.Common.Results;
 using AssestBundleTools.Application.Extraction.Dtos;
 using AssestBundleTools.Application.Extraction.Services;
 using AssestBundleTools.Application.Workspace.Services;
+using AssestBundleTools.Domain.Assets;
 
 namespace AssestBundleTools.Application.Extraction.Commands;
 
@@ -16,15 +18,18 @@ public sealed class ExtractAssetHandler : ICommandHandler<ExtractAssetCommand, R
     private readonly IWorkspaceSessionRegistry _workspaceSessionRegistry;
     private readonly WorkspaceAssetExtractionExporter? _extractionExporter;
     private readonly WorkspaceExtractionOperationRecorder? _operationRecorder;
+    private readonly IQueryHandler<LoadSpineAssetGroupsQuery, Result<SpineAssetGroupListResultDto>>? _loadSpineAssetGroupsHandler;
 
     public ExtractAssetHandler(
         IWorkspaceSessionRegistry workspaceSessionRegistry,
         WorkspaceAssetExtractionExporter? extractionExporter = null,
-        WorkspaceExtractionOperationRecorder? operationRecorder = null)
+        WorkspaceExtractionOperationRecorder? operationRecorder = null,
+        IQueryHandler<LoadSpineAssetGroupsQuery, Result<SpineAssetGroupListResultDto>>? loadSpineAssetGroupsHandler = null)
     {
         _workspaceSessionRegistry = workspaceSessionRegistry ?? throw new ArgumentNullException(nameof(workspaceSessionRegistry));
         _extractionExporter = extractionExporter;
         _operationRecorder = operationRecorder;
+        _loadSpineAssetGroupsHandler = loadSpineAssetGroupsHandler;
     }
 
     public async Task<Result<AssetExtractionResultDto>> HandleAsync(
@@ -81,7 +86,20 @@ public sealed class ExtractAssetHandler : ICommandHandler<ExtractAssetCommand, R
             return Result<AssetExtractionResultDto>.Failure(ApplicationErrors.AssetExtractionNotSupported(command.AssetId));
         }
 
-        var suggestedOutputPath = ResolveSuggestedOutputPath(command, targetDetails);
+        var extensionMode = await ResolveSpineSkeletonExtensionModeAsync(
+            command,
+            targetDetails,
+            cancellationToken);
+        if (extensionMode is null)
+        {
+            return Result<AssetExtractionResultDto>.Cancelled();
+        }
+
+        var effectiveCommand = command with
+        {
+            SpineSkeletonExtensionMode = extensionMode.Value
+        };
+        var suggestedOutputPath = ResolveSuggestedOutputPath(effectiveCommand, targetDetails);
         var extractionResult = new AssetExtractionResultDto(
             WorkspaceId: command.WorkspaceId,
             BundleId: command.BundleId,
@@ -89,7 +107,7 @@ public sealed class ExtractAssetHandler : ICommandHandler<ExtractAssetCommand, R
             AssetName: targetDetails.Name,
             SuggestedOutputPath: suggestedOutputPath,
             ExtractedAtUtc: DateTimeOffset.UtcNow);
-        var effectiveCommand = command with { SuggestedOutputPath = suggestedOutputPath };
+        effectiveCommand = effectiveCommand with { SuggestedOutputPath = suggestedOutputPath };
 
         if (_extractionExporter is not null)
         {
@@ -132,6 +150,50 @@ public sealed class ExtractAssetHandler : ICommandHandler<ExtractAssetCommand, R
             extractionResult);
 
         return Result<AssetExtractionResultDto>.Success(extractionResult);
+    }
+
+    private async Task<SpineSkeletonExportExtensionMode?> ResolveSpineSkeletonExtensionModeAsync(
+        ExtractAssetCommand command,
+        AssetDetailsDto targetDetails,
+        CancellationToken cancellationToken)
+    {
+        if (command.SpineSkeletonExtensionMode is not
+            (SpineSkeletonExportExtensionMode.AutoDetectUniformSkel or
+             SpineSkeletonExportExtensionMode.AutoDetectContentAware))
+        {
+            return command.SpineSkeletonExtensionMode;
+        }
+
+        if (targetDetails.AssetType != AssetType.TextAsset ||
+            _loadSpineAssetGroupsHandler is null)
+        {
+            return SpineSkeletonExportExtensionMode.None;
+        }
+
+        var groupsResult = await _loadSpineAssetGroupsHandler.HandleAsync(
+            new LoadSpineAssetGroupsQuery(
+                command.WorkspaceId,
+                command.BundleId,
+                WorkspaceDataRootPath: command.WorkspaceDataRootPath),
+            cancellationToken);
+        if (groupsResult.IsCancelled)
+        {
+            return null;
+        }
+
+        var isSpineSkeleton = groupsResult.IsSuccess &&
+                              groupsResult.Value?.Items.Any(group =>
+                                  group.SkeletonAssets.Any(part =>
+                                      part.BundleId.Equals(command.BundleId) &&
+                                      part.AssetId.Equals(command.AssetId))) == true;
+        if (!isSpineSkeleton)
+        {
+            return SpineSkeletonExportExtensionMode.None;
+        }
+
+        return command.SpineSkeletonExtensionMode == SpineSkeletonExportExtensionMode.AutoDetectContentAware
+            ? SpineSkeletonExportExtensionMode.ContentAware
+            : SpineSkeletonExportExtensionMode.UniformSkel;
     }
 
     private string ResolveSuggestedOutputPath(ExtractAssetCommand command, AssetDetailsDto targetDetails)

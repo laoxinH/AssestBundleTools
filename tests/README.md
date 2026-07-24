@@ -109,7 +109,7 @@
 后续仍待补齐：
 
 - 工作区可恢复操作记录接入保存链路后，补来源缺失 / 指纹不匹配恢复计划、按目标资源撤销栈的当前会话精确回退、Sprite 编辑真实写包消费和保存检查点回归
-- 提取主线已补单资源文本 / 图片真实写出、Mesh OBJ / 静态 FBX 导出、结构化 JSON 摘要导出、MonoBehaviour TypeTree JSON 字段树 / 摘要 JSON / YAML / 原始字段文本导出、单资源保存文件名保留、批量提取操作记录、Spine 资源组 skeleton / atlas / 主贴图 / alpha 贴图整组提取、文件写出端口和提取记录重启恢复回归；后续补命名冲突、取消、失败分类、输出文件缺失恢复诊断和批处理结果明细回归
+- 提取主线已补单资源文本 / 图片真实写出、Mesh OBJ / 静态 FBX 导出、结构化 JSON 摘要导出、MonoBehaviour TypeTree JSON 字段树 / 摘要 JSON / YAML / 原始字段文本导出、单资源保存文件名保留、批量提取操作记录、Spine 资源组 skeleton / atlas / 主贴图 / alpha 贴图整组提取、普通资产入口对已识别 skeleton 的默认 `.skel` / 内容感知 `.json` 命名以及普通 TextAsset 不误改名、文件写出端口和提取记录重启恢复回归；后续补命名冲突、取消、失败分类、输出文件缺失恢复诊断和批处理结果明细回归
 - 替换主线已落地 Texture2D 的记录、有效预览、右键 / 检查器 `替换文件` 快捷入口一致性、独立变更记录、局部预览刷新、资产列表已修改状态即时刷新和目标资源级撤销 / 重做回归；后续继续补文件来源兼容性诊断、来源缺失 / 指纹不匹配恢复计划、批量替换结果明细、更多资源类型有效预览和真实写包消费回归
 - 保存 / 重建已进入第一阶段真实导出：工作区导出窗口可选择导出到工作区输出目录或自选目录，`SaveRebuild` 后台任务会按选中资源包并发写出修改后的 AB 并生成 `_abt-bundle-export-manifest.json`；CLI 资源处理器端口、真实外部进程执行、result JSON 解析、非法输出路径拒绝、处理器结果摘要、失败回填、内置 FMOD 音频处理器协议、对象级 AssetsTools 写包、TextAsset / Texture2D / Sprite / AudioClip 写后读回、ASTC 等 Texture2D 原格式不可编码时的 RGBA32 回退，以及 AudioClip 按原容器匹配 / 容器不匹配拒绝 / 强制写入 `.resS / .resource` 回归已落地；后续按 `docs/design/workspace-export-save-pipeline.md` 继续补 workspace replacement 跨 bundle 真实样本回归、更多资源类型、最终冲突确认、缺失 artifact materialization、取消 / 回滚和保存检查点回归
 - 更完整的工作区激活，以及替换/保存链路在真实写包与最终持久化语义落地后的深层回归

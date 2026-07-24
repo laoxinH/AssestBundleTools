@@ -7,5 +7,7 @@ public enum SpineSkeletonExportExtensionMode
 {
     None = 0,
     UniformSkel = 1,
-    ContentAware = 2
+    ContentAware = 2,
+    AutoDetectUniformSkel = 3,
+    AutoDetectContentAware = 4
 }

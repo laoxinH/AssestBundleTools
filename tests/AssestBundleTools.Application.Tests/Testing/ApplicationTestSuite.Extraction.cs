@@ -16,6 +16,18 @@ internal static partial class ApplicationTestSuite
             ExtractionWorkflowHandlerTests.ExtractAssetHandler_ShouldPreserveReadableSkelTextPayload);
         await RunTestAsync(
             failures,
+            nameof(ExtractionWorkflowHandlerTests.ExtractAssetHandler_ShouldUseSkelExtension_ForDetectedSkeletonByDefault),
+            ExtractionWorkflowHandlerTests.ExtractAssetHandler_ShouldUseSkelExtension_ForDetectedSkeletonByDefault);
+        await RunTestAsync(
+            failures,
+            nameof(ExtractionWorkflowHandlerTests.ExtractAssetHandler_ShouldUseJsonExtension_ForDetectedJsonSkeletonWhenEnabled),
+            ExtractionWorkflowHandlerTests.ExtractAssetHandler_ShouldUseJsonExtension_ForDetectedJsonSkeletonWhenEnabled);
+        await RunTestAsync(
+            failures,
+            nameof(ExtractionWorkflowHandlerTests.ExtractAssetHandler_ShouldKeepTxtExtension_ForOrdinaryTextAssetDuringSkeletonDetection),
+            ExtractionWorkflowHandlerTests.ExtractAssetHandler_ShouldKeepTxtExtension_ForOrdinaryTextAssetDuringSkeletonDetection);
+        await RunTestAsync(
+            failures,
             nameof(ExtractionWorkflowHandlerTests.ExtractAssetHandler_ShouldWriteImagePayload_WithPngOutput),
             ExtractionWorkflowHandlerTests.ExtractAssetHandler_ShouldWriteImagePayload_WithPngOutput);
         await RunTestAsync(

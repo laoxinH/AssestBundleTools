@@ -198,7 +198,8 @@ internal static class AppCompositionRoot
         var extractAssetHandler = new ExtractAssetHandler(
             workspaceSessionRegistry,
             workspaceAssetExtractionExporter,
-            workspaceExtractionOperationRecorder);
+            workspaceExtractionOperationRecorder,
+            loadSpineAssetGroupsHandler);
         var getWorkspaceBatchExtractionPreviewHandler = new GetWorkspaceBatchExtractionPreviewHandler(
             workspaceSessionRegistry,
             loadSpineAssetGroupsHandler);
