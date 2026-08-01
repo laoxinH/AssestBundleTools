@@ -105,7 +105,12 @@ public sealed class FileSystemWorkspacePostExportPluginLauncher : IWorkspacePost
         var manifestDirectory = string.IsNullOrWhiteSpace(manifestFilePath)
             ? Environment.CurrentDirectory
             : Path.GetDirectoryName(Path.GetFullPath(manifestFilePath)) ?? Environment.CurrentDirectory;
-        return Path.GetFullPath(Path.Combine(manifestDirectory, trimmedPath));
+        var localCandidate = Path.GetFullPath(Path.Combine(manifestDirectory, trimmedPath));
+        return trimmedPath.Contains(Path.DirectorySeparatorChar) ||
+               trimmedPath.Contains(Path.AltDirectorySeparatorChar) ||
+               File.Exists(localCandidate)
+            ? localCandidate
+            : trimmedPath;
     }
 
     private static string ResolveWorkingDirectory(

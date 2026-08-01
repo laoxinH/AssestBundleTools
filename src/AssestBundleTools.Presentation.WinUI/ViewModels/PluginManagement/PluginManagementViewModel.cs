@@ -21,6 +21,8 @@ public sealed partial class PluginManagementViewModel : ObservableObject
     private readonly IAssetBundleDecryptorCatalogService _assetBundleDecryptorCatalogService;
     private readonly IResourceProcessorCatalogService _resourceProcessorCatalogService;
     private readonly IPostExportPluginCatalogService _postExportPluginCatalogService;
+    private readonly IPluginPackageImportService _pluginPackageImportService;
+    private readonly Action _reloadAssetBundleDecryptorRegistry;
     private readonly IAppNotificationService _appNotificationService;
     private readonly IAppLogService _appLogService;
     private readonly ILocalizationService _localizationService;
@@ -40,7 +42,9 @@ public sealed partial class PluginManagementViewModel : ObservableObject
         IAssetBundleDecryptorCatalogService assetBundleDecryptorCatalogService,
         IResourceProcessorCatalogService resourceProcessorCatalogService,
         IPostExportPluginCatalogService postExportPluginCatalogService,
+        IPluginPackageImportService pluginPackageImportService,
         IAssetBundleDecryptorRegistry assetBundleDecryptorRegistry,
+        Action reloadAssetBundleDecryptorRegistry,
         IAppNotificationService appNotificationService,
         IAppLogService appLogService,
         ILocalizationService localizationService,
@@ -49,6 +53,8 @@ public sealed partial class PluginManagementViewModel : ObservableObject
         _assetBundleDecryptorCatalogService = assetBundleDecryptorCatalogService ?? throw new ArgumentNullException(nameof(assetBundleDecryptorCatalogService));
         _resourceProcessorCatalogService = resourceProcessorCatalogService ?? throw new ArgumentNullException(nameof(resourceProcessorCatalogService));
         _postExportPluginCatalogService = postExportPluginCatalogService ?? throw new ArgumentNullException(nameof(postExportPluginCatalogService));
+        _pluginPackageImportService = pluginPackageImportService ?? throw new ArgumentNullException(nameof(pluginPackageImportService));
+        _reloadAssetBundleDecryptorRegistry = reloadAssetBundleDecryptorRegistry ?? throw new ArgumentNullException(nameof(reloadAssetBundleDecryptorRegistry));
         _appNotificationService = appNotificationService ?? throw new ArgumentNullException(nameof(appNotificationService));
         _appLogService = appLogService ?? throw new ArgumentNullException(nameof(appLogService));
         _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));

@@ -1,6 +1,7 @@
 using System.Text.Json;
 using AssestBundleTools.Application.Bundles.Dtos;
 using AssestBundleTools.Application.Bundles.Services;
+using AssestBundleTools.Infrastructure.Bundles.Plugins;
 using AssestBundleTools.Infrastructure.Bundles.Processing;
 using AssestBundleTools.Infrastructure.Workspace.Persistence;
 
@@ -32,7 +33,7 @@ public sealed class FileSystemPostExportPluginCatalogStore : IPostExportPluginCa
                 continue;
             }
 
-            foreach (var filePath in Directory.EnumerateFiles(directoryPath, "*.json", SearchOption.TopDirectoryOnly))
+            foreach (var filePath in Directory.EnumerateFiles(directoryPath, "*.json", SearchOption.AllDirectories))
             {
                 var manifest = ReadManifest(filePath);
                 if (manifest is null || !IsValid(manifest))
@@ -75,6 +76,7 @@ public sealed class FileSystemPostExportPluginCatalogStore : IPostExportPluginCa
 
         var manifest = new PostExportPluginManifest
         {
+            SchemaVersion = 1,
             Id = definition.Id.Trim(),
             DisplayName = definition.DisplayName.Trim(),
             Version = string.IsNullOrWhiteSpace(definition.Version) ? "1.0.0" : definition.Version.Trim(),
@@ -103,7 +105,10 @@ public sealed class FileSystemPostExportPluginCatalogStore : IPostExportPluginCa
             string.Equals(candidate.Id, pluginId.Trim(), StringComparison.OrdinalIgnoreCase));
         if (entry?.ManifestFilePath is not null && IsUserManagedManifestPath(entry.ManifestFilePath))
         {
-            JsonWorkspaceFileStorageHelper.DeleteFileIfExists(entry.ManifestFilePath);
+            PluginPackageInstallationUnit.DeleteManifestOrPackage(
+                entry.ManifestFilePath,
+                _userManagedManifestDirectoryPath,
+                entry.Id);
         }
     }
 
@@ -111,7 +116,7 @@ public sealed class FileSystemPostExportPluginCatalogStore : IPostExportPluginCa
     {
         var executablePath = manifest.ExecutablePath.Trim();
         var status = string.Equals(manifest.Kind, "postExport", StringComparison.OrdinalIgnoreCase) &&
-                     File.Exists(ResolvePath(executablePath, manifestPath))
+                     IsExecutableAvailable(executablePath, manifestPath)
             ? ResourceProcessorStatus.Available
             : ResourceProcessorStatus.Unavailable;
         return new PostExportPluginCatalogEntryDto(
@@ -145,8 +150,11 @@ public sealed class FileSystemPostExportPluginCatalogStore : IPostExportPluginCa
     }
 
     private static bool IsValid(PostExportPluginManifest manifest) =>
+        manifest.SchemaVersion == 1 &&
+        string.Equals(manifest.Kind, "postExport", StringComparison.OrdinalIgnoreCase) &&
         !string.IsNullOrWhiteSpace(manifest.Id) &&
         !string.IsNullOrWhiteSpace(manifest.DisplayName) &&
+        !string.IsNullOrWhiteSpace(manifest.Version) &&
         !string.IsNullOrWhiteSpace(manifest.ExecutablePath) &&
         manifest.ProcessArguments.Any(static argument =>
             argument.Contains("{manifestPath}", StringComparison.Ordinal));
@@ -157,10 +165,50 @@ public sealed class FileSystemPostExportPluginCatalogStore : IPostExportPluginCa
             .Select(static argument => argument.Trim())
             .ToArray();
 
-    private static string ResolvePath(string path, string manifestPath) =>
-        Path.GetFullPath(Path.IsPathRooted(path)
-            ? path
-            : Path.Combine(Path.GetDirectoryName(manifestPath) ?? Environment.CurrentDirectory, path));
+    private static bool IsExecutableAvailable(string path, string manifestPath)
+    {
+        if (Path.IsPathRooted(path))
+        {
+            return File.Exists(Path.GetFullPath(path));
+        }
+
+        var manifestDirectory = Path.GetDirectoryName(manifestPath) ?? Environment.CurrentDirectory;
+        var localCandidate = Path.GetFullPath(Path.Combine(manifestDirectory, path));
+        if (File.Exists(localCandidate))
+        {
+            return true;
+        }
+
+        return !path.Contains(Path.DirectorySeparatorChar) &&
+               !path.Contains(Path.AltDirectorySeparatorChar) &&
+               ResolveFromPath(path) is not null;
+    }
+
+    private static string? ResolveFromPath(string fileName)
+    {
+        var path = Environment.GetEnvironmentVariable("PATH");
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return null;
+        }
+
+        var extensions = string.IsNullOrWhiteSpace(Path.GetExtension(fileName))
+            ? (Environment.GetEnvironmentVariable("PATHEXT") ?? ".EXE;.CMD;.BAT").Split(';')
+            : [string.Empty];
+        foreach (var directory in path.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries))
+        {
+            foreach (var extension in extensions)
+            {
+                var candidate = Path.Combine(directory.Trim(), fileName + extension.Trim());
+                if (File.Exists(candidate))
+                {
+                    return candidate;
+                }
+            }
+        }
+
+        return null;
+    }
 
     private bool IsUserManagedManifestPath(string filePath)
     {

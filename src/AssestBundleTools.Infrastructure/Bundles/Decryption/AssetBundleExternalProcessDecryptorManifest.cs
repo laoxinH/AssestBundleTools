@@ -5,7 +5,9 @@ namespace AssestBundleTools.Infrastructure.Bundles.Decryption;
 /// </summary>
 internal sealed class AssetBundleExternalProcessDecryptorManifest
 {
-    public int SchemaVersion { get; init; } = 1;
+    public int SchemaVersion { get; init; }
+
+    public string Kind { get; init; } = string.Empty;
 
     public string Id { get; init; } = string.Empty;
 

@@ -5619,4 +5619,40 @@
   <data name="InspectorPanelView.RestoreOriginalConfirm.PrimaryButton" xml:space="preserve"><value>Restore</value></data>
   <data name="BundleExplorer.Log.OriginalAssetRestored" xml:space="preserve"><value>Restored “{0}” to its original state and cleared {1} content change records.</value></data>
   <data name="BundleExplorer.Notification.OriginalAssetRestored" xml:space="preserve"><value>“{0}” was restored to its original state.</value></data>
+  <data name="PluginManagementPage.ImportFolderButton.Content" xml:space="preserve">
+    <value>Import plugin package from folder</value>
+  </data>
+  <data name="PluginManagementPage.ImportArchiveButton.Content" xml:space="preserve">
+    <value>Import plugin package from ZIP</value>
+  </data>
+  <data name="PluginManagementPage.PackageImportSucceededMessage.Format" xml:space="preserve">
+    <value>Installed plugin "{0}" v{1}.</value>
+  </data>
+  <data name="PluginManagementPage.PackageImportFailedMessage" xml:space="preserve">
+    <value>Failed to import the plugin package.</value>
+  </data>
+  <data name="PluginManagementPage.PackageOverwrite.Title" xml:space="preserve">
+    <value>Replace installed plugin</value>
+  </data>
+  <data name="PluginManagementPage.PackageOverwrite.Description.Format" xml:space="preserve">
+    <value>Plugin "{0}" ({1}) is already installed. Replace it with v{2} from this package? The previous version will be restored if replacement fails.</value>
+  </data>
+  <data name="PluginManagementPage.PackageOverwrite.PrimaryButton" xml:space="preserve">
+    <value>Replace</value>
+  </data>
+  <data name="PluginManagementPage.PackageOverwrite.CloseButton" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="Error.Plugin.Package.SourceInvalid" xml:space="preserve">
+    <value>The selected plugin package is invalid or cannot be read. Detail: {0}</value>
+  </data>
+  <data name="Error.Plugin.Package.ManifestInvalid" xml:space="preserve">
+    <value>The plugin manifest does not meet the current specification. Detail: {0}</value>
+  </data>
+  <data name="Error.Plugin.Package.ReadOnlyConflict" xml:space="preserve">
+    <value>Plugin ID "{0}" conflicts with a built-in or read-only plugin and cannot be replaced.</value>
+  </data>
+  <data name="Error.Plugin.Package.InstallFailed" xml:space="preserve">
+    <value>Plugin package installation failed. The previous plugin was not changed. Detail: {0}</value>
+  </data>
 </root>

@@ -162,6 +162,29 @@ public sealed class WinUIFilePickerService : IFilePickerService
         return Task.FromResult(PickExportDirectory(cancellationToken));
     }
 
+    public async Task<string?> PickPluginPackageDirectoryAsync(CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var picker = CreateFolderPicker();
+        var selectedFolder = await picker.PickSingleFolderAsync();
+        cancellationToken.ThrowIfCancellationRequested();
+        return selectedFolder?.Path;
+    }
+
+    public async Task<string?> PickPluginPackageArchiveAsync(CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var picker = new FileOpenPicker
+        {
+            SuggestedStartLocation = PickerLocationId.Downloads
+        };
+        picker.FileTypeFilter.Add(".zip");
+        InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(RequireOwnerWindow()));
+        var selectedFile = await picker.PickSingleFileAsync();
+        cancellationToken.ThrowIfCancellationRequested();
+        return selectedFile?.Path;
+    }
+
     private FolderPicker CreateFolderPicker()
     {
         var ownerWindow = RequireOwnerWindow();

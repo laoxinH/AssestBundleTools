@@ -12,6 +12,7 @@
     <ProjectReference Include="..\..\src\AssestBundleTools.BundleCodec.Arknights\AssestBundleTools.BundleCodec.Arknights.csproj" />
     <ProjectReference Include="..\..\src\AssestBundleTools.BundleCodec.CrossCore\AssestBundleTools.BundleCodec.CrossCore.csproj" />
     <ProjectReference Include="..\..\src\AssestBundleTools.Infrastructure\AssestBundleTools.Infrastructure.csproj" />
+    <ProjectReference Include="..\AssestBundleTools.TestPlugin\AssestBundleTools.TestPlugin.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
 </Project>

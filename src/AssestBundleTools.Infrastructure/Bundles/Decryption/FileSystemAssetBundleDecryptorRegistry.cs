@@ -27,7 +27,7 @@ public sealed class FileSystemAssetBundleDecryptorRegistry : IAssetBundleDecrypt
                 continue;
             }
 
-            foreach (var manifestFilePath in Directory.EnumerateFiles(manifestDirectoryPath, "*.json", SearchOption.TopDirectoryOnly))
+            foreach (var manifestFilePath in Directory.EnumerateFiles(manifestDirectoryPath, "*.json", SearchOption.AllDirectories))
             {
                 var manifest = ReadManifest(manifestFilePath);
                 if (manifest is null || !IsValid(manifest))
@@ -91,7 +91,9 @@ public sealed class FileSystemAssetBundleDecryptorRegistry : IAssetBundleDecrypt
 
     private static bool IsValid(AssetBundleExternalProcessDecryptorManifest manifest)
     {
-        return !string.IsNullOrWhiteSpace(manifest.Id) &&
+        return manifest.SchemaVersion == 1 &&
+               string.Equals(manifest.Kind, "assetBundleCodec", StringComparison.OrdinalIgnoreCase) &&
+               !string.IsNullOrWhiteSpace(manifest.Id) &&
                !string.IsNullOrWhiteSpace(manifest.DisplayName) &&
                !string.IsNullOrWhiteSpace(manifest.Version) &&
                !string.IsNullOrWhiteSpace(manifest.ExecutablePath) &&

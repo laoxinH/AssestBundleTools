@@ -1,6 +1,7 @@
 using System.Text.Json;
 using AssestBundleTools.Application.Bundles.Dtos;
 using AssestBundleTools.Application.Bundles.Services;
+using AssestBundleTools.Infrastructure.Bundles.Plugins;
 using AssestBundleTools.Infrastructure.Workspace.Persistence;
 
 namespace AssestBundleTools.Infrastructure.Bundles.Processing;
@@ -53,7 +54,7 @@ public sealed class FileSystemResourceProcessorCatalogStore : IResourceProcessor
                 continue;
             }
 
-            foreach (var manifestFilePath in Directory.EnumerateFiles(manifestDirectoryPath, "*.json", SearchOption.TopDirectoryOnly))
+            foreach (var manifestFilePath in Directory.EnumerateFiles(manifestDirectoryPath, "*.json", SearchOption.AllDirectories))
             {
                 var manifest = ReadManifest(manifestFilePath);
                 if (manifest is null || !IsValid(manifest))
@@ -109,6 +110,7 @@ public sealed class FileSystemResourceProcessorCatalogStore : IResourceProcessor
 
         var manifest = new ResourceProcessorManifest
         {
+            SchemaVersion = 1,
             Id = definition.Id.Trim(),
             DisplayName = definition.DisplayName.Trim(),
             Version = string.IsNullOrWhiteSpace(definition.Version) ? "1.0.0" : definition.Version.Trim(),
@@ -145,7 +147,10 @@ public sealed class FileSystemResourceProcessorCatalogStore : IResourceProcessor
             return;
         }
 
-        JsonWorkspaceFileStorageHelper.DeleteFileIfExists(existingEntry.ManifestFilePath);
+        PluginPackageInstallationUnit.DeleteManifestOrPackage(
+            existingEntry.ManifestFilePath,
+            _userManagedManifestDirectoryPath,
+            existingEntry.Id);
     }
 
     private static IReadOnlyList<string> ResolveManifestDirectories(IEnumerable<string>? manifestDirectories)
@@ -310,14 +315,17 @@ public sealed class FileSystemResourceProcessorCatalogStore : IResourceProcessor
 
     private static ResourceProcessorStatus ResolveStatus(ResourceProcessorManifest manifest)
     {
-        return string.Equals(manifest.Kind, "resourceProcessor", StringComparison.OrdinalIgnoreCase)
+        return manifest.SchemaVersion == 1 &&
+               string.Equals(manifest.Kind, "resourceProcessor", StringComparison.OrdinalIgnoreCase)
             ? ResourceProcessorStatus.Available
             : ResourceProcessorStatus.Warning;
     }
 
     private static bool IsValid(ResourceProcessorManifest manifest)
     {
-        return !string.IsNullOrWhiteSpace(manifest.Id) &&
+        return manifest.SchemaVersion == 1 &&
+               string.Equals(manifest.Kind, "resourceProcessor", StringComparison.OrdinalIgnoreCase) &&
+               !string.IsNullOrWhiteSpace(manifest.Id) &&
                !string.IsNullOrWhiteSpace(manifest.DisplayName) &&
                !string.IsNullOrWhiteSpace(manifest.Version) &&
                manifest.ResourceKinds.Count > 0 &&

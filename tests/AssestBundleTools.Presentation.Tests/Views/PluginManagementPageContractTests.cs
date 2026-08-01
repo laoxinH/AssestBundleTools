@@ -52,6 +52,13 @@ public sealed class PluginManagementPageContractTests
             "Views",
             "PluginManagement",
             "PluginManagementPage.xaml.cs"));
+        var pluginPackageImportCode = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "src",
+            "AssestBundleTools.Presentation.WinUI",
+            "Views",
+            "PluginManagement",
+            "PluginManagementPage.PackageImport.cs"));
         var settingsPage = File.ReadAllText(Path.Combine(
             repositoryRoot,
             "src",
@@ -81,6 +88,8 @@ public sealed class PluginManagementPageContractTests
         Assert.Contains("x:Name=\"AddDecryptorMenuFlyoutItem\"", pluginPage);
         Assert.Contains("x:Name=\"AddResourceProcessorMenuFlyoutItem\"", pluginPage);
         Assert.Contains("x:Name=\"AddPostExportPluginMenuFlyoutItem\"", pluginPage);
+        Assert.Contains("x:Name=\"ImportPluginFolderMenuFlyoutItem\"", pluginPage);
+        Assert.Contains("x:Name=\"ImportPluginArchiveMenuFlyoutItem\"", pluginPage);
         Assert.Contains("x:Name=\"PluginDirectoryHelpHost\"", pluginPage);
         Assert.Contains("PointerEntered=\"OnPluginDirectoryHelpPointerEntered\"", pluginPage);
         Assert.Contains("Text=\"{x:Bind ViewModel.VisiblePluginCountText, Mode=OneWay}\"", pluginPage);
@@ -95,6 +104,10 @@ public sealed class PluginManagementPageContractTests
         Assert.Contains("OnAddDecryptorMenuFlyoutItemClick", pluginPageCode);
         Assert.Contains("OnAddResourceProcessorMenuFlyoutItemClick", pluginPageCode);
         Assert.Contains("OnAddPostExportPluginMenuFlyoutItemClick", pluginPageCode);
+        Assert.Contains("PickPluginPackageDirectoryAsync", pluginPackageImportCode);
+        Assert.Contains("PickPluginPackageArchiveAsync", pluginPackageImportCode);
+        Assert.Contains("OverwriteConfirmationRequired", pluginPackageImportCode);
+        Assert.Contains("replaceExisting: true", pluginPackageImportCode);
         Assert.Contains("AssetBundleDecryptorEditorDialogContent", pluginPageCode);
         Assert.Contains("ResourceProcessorEditorDialogContent", pluginPageCode);
         Assert.Contains("PostExportPluginEditorDialogContent", pluginPageCode);
@@ -168,7 +181,6 @@ public sealed class PluginManagementPageContractTests
             "Views",
             "PluginManagement",
             "PluginManagementPage.xaml.cs"));
-
         Assert.Contains("x:Name=\"BasicStepIndicatorBorder\"", editorXaml);
         Assert.Contains("x:Name=\"ExecutionStepIndicatorBorder\"", editorXaml);
         Assert.Contains("x:Name=\"ArgumentsStepIndicatorBorder\"", editorXaml);

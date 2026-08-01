@@ -48,6 +48,7 @@ internal static class BuiltInCrossCoreDecryptorFactory
         new()
         {
             SchemaVersion = 1,
+            Kind = "assetBundleCodec",
             Id = AssetBundleDecryptorIds.BuiltInCrossCoreDuplicatedHeader,
             DisplayName = AssetBundleDecryptorIds.BuiltInCrossCoreDuplicatedHeader,
             Version = Version,

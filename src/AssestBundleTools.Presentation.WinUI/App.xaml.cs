@@ -63,6 +63,7 @@ public partial class App : Microsoft.UI.Xaml.Application
             AssetBundleDecryptorCatalogService = services.AssetBundleDecryptorCatalogService;
             ResourceProcessorCatalogService = services.ResourceProcessorCatalogService;
             PostExportPluginCatalogService = services.PostExportPluginCatalogService;
+            PluginPackageImportService = services.PluginPackageImportService;
             WorkspaceDialogService = services.WorkspaceDialogService;
             AppInteractionFeedbackService = services.AppInteractionFeedbackService;
             WorkspaceWindowService = services.WorkspaceWindowService;
@@ -139,6 +140,8 @@ public partial class App : Microsoft.UI.Xaml.Application
     public IResourceProcessorCatalogService ResourceProcessorCatalogService { get; }
 
     public IPostExportPluginCatalogService PostExportPluginCatalogService { get; }
+
+    public IPluginPackageImportService PluginPackageImportService { get; }
 
     public IWorkspaceDialogService WorkspaceDialogService { get; }
 

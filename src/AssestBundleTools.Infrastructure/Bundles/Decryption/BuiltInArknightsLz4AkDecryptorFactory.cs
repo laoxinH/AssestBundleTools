@@ -48,6 +48,7 @@ internal static class BuiltInArknightsLz4AkDecryptorFactory
         new()
         {
             SchemaVersion = 1,
+            Kind = "assetBundleCodec",
             Id = AssetBundleDecryptorIds.BuiltInArknightsLz4Ak,
             DisplayName = AssetBundleDecryptorIds.BuiltInArknightsLz4Ak,
             Version = Version,

@@ -259,6 +259,14 @@ public static class ResourceKeys
     public const string PluginManagementAddDecryptorButton = "PluginManagementPage.AddDecryptorButton.Content";
     public const string PluginManagementAddResourceProcessorButton = "PluginManagementPage.AddResourceProcessorButton.Content";
     public const string PluginManagementAddPostExportPluginButton = "PluginManagementPage.AddPostExportPluginButton.Content";
+    public const string PluginManagementImportFolderButton = "PluginManagementPage.ImportFolderButton.Content";
+    public const string PluginManagementImportArchiveButton = "PluginManagementPage.ImportArchiveButton.Content";
+    public const string PluginManagementPackageImportSucceededMessageFormat = "PluginManagementPage.PackageImportSucceededMessage.Format";
+    public const string PluginManagementPackageImportFailedMessage = "PluginManagementPage.PackageImportFailedMessage";
+    public const string PluginManagementPackageOverwriteTitle = "PluginManagementPage.PackageOverwrite.Title";
+    public const string PluginManagementPackageOverwriteDescriptionFormat = "PluginManagementPage.PackageOverwrite.Description.Format";
+    public const string PluginManagementPackageOverwritePrimaryButton = "PluginManagementPage.PackageOverwrite.PrimaryButton";
+    public const string PluginManagementPackageOverwriteCloseButton = "PluginManagementPage.PackageOverwrite.CloseButton";
     public const string PluginManagementDirectoryEmptyTitle = "PluginManagementPage.Directory.EmptyTitle";
     public const string PluginManagementDirectoryEmptyText = "PluginManagementPage.Directory.EmptyText";
     public const string PluginManagementDetailsEmptyTitle = "PluginManagementPage.Details.EmptyTitle";
@@ -1060,6 +1068,10 @@ public static class ResourceKeys
     public const string ErrorBundleDecryptorCatalogSaveVerificationFailed = "Error.Bundle.Decryptor.Catalog.SaveVerificationFailed";
     public const string ErrorBundleDecryptorCatalogSaveFailed = "Error.Bundle.Decryptor.Catalog.SaveFailed";
     public const string ErrorBundleDecryptorCatalogDeleteFailed = "Error.Bundle.Decryptor.Catalog.DeleteFailed";
+    public const string ErrorPluginPackageSourceInvalid = "Error.Plugin.Package.SourceInvalid";
+    public const string ErrorPluginPackageManifestInvalid = "Error.Plugin.Package.ManifestInvalid";
+    public const string ErrorPluginPackageReadOnlyConflict = "Error.Plugin.Package.ReadOnlyConflict";
+    public const string ErrorPluginPackageInstallFailed = "Error.Plugin.Package.InstallFailed";
     public const string ErrorWorkspaceImportMetadataNotFound = "Error.Workspace.Import.MetadataNotFound";
     public const string ErrorWorkspaceOpenDataRootPathRequired = "Error.Workspace.Open.DataRootPathRequired";
     public const string ErrorBundleDecryptorFallbackNotFound = "Error.Bundle.Decryptor.FallbackNotFound";

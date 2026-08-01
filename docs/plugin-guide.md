@@ -13,7 +13,7 @@ AssestBundleTools 当前支持三类外部插件。它们都是独立进程，�
 
 | 类型 | manifest `kind` | 执行时机 | 执行粒度 | 主程序是否等待 | 结果契约 |
 | --- | --- | --- | --- | --- | --- |
-| AssetBundle codec | 无 `kind` 字段 | AB 导入前；可选在 AB 导出后回写游戏格式 | 每个 AB 单独 Probe / Decrypt / Encrypt | 是 | result JSON + 输出文件 + 退出码 0 |
+| AssetBundle codec | `assetBundleCodec` | AB 导入前；可选在 AB 导出后回写游戏格式 | 每个 AB 单独 Probe / Decrypt / Encrypt | 是 | result JSON + 输出文件 + 退出码 0 |
 | 导出资源处理器 | `resourceProcessor` | 修改内容写回 AB 前 | 每个符合条件的资产单独执行 | 是 | result JSON + 可选输出文件 + 退出码 0 |
 | 导出后插件 | `postExport` | AB 与 `_abt-bundle-export-manifest.json` 写出后 | 每次导出最多执行一次 | 否 | 仅要求进程成功启动 |
 
@@ -47,7 +47,32 @@ AssestBundleTools 当前支持三类外部插件。它们都是独立进程，�
 
 ### 2.2 安装插件包
 
-当前版本没有 ZIP 插件包的一键安装器。插件作者应提供一个压缩包，用户把压缩包内容直接解压到对应发现目录，然后在“插件管理”页面点击刷新。
+推荐使用“插件管理 -> 新增插件 -> 从文件夹导入 / 从 ZIP 导入”。应用会读取包内 manifest，自动识别三类插件、校验入口与协议字段，并把完整运行目录安装到对应用户插件目录。重复 id 会显示覆盖确认；取消或校验失败不会修改当前已安装插件。
+
+推荐分发结构：
+
+```text
+game.example.plugin.zip
+  game.example.plugin.json
+  tool.exe
+  runtime.dll
+  scripts/
+    helper.py
+```
+
+压缩包可以额外包含一层同名目录，但一个包只能包含一个插件 manifest。不要把多个插件或示例 manifest 放进同一个包；说明文档中的普通 JSON 不会被当作 manifest，但任何带受支持 `kind` 的第二份 JSON 都会导致“多个清单”校验失败。
+
+新插件包的 manifest 必须声明以下 `kind` 之一：
+
+- `assetBundleCodec`
+- `resourceProcessor`
+- `postExport`
+
+三类清单都必须显式声明 `schemaVersion: 1` 与 `kind`。应用不会根据其他字段猜测插件类型；缺少、写错或使用不支持的版本会直接拒绝导入。通过插件管理页手动新增时，应用会按所选类别自动写入正确值。
+
+应用会拒绝路径穿越、包外入口、缺失运行文件、未知类型、无效占位符和体积异常的压缩包。当前没有插件签名与沙箱，导入只代表结构检查通过，不代表插件来源可信。
+
+仍可手工复制到下述发现目录，或在页面中使用表单创建清单。手工方式不会复制运行依赖，开发者需要自行保证相对路径成立。
 
 推荐的分发结构如下：
 
@@ -67,7 +92,7 @@ game.example.codec\
 %LocalAppData%\AssestBundleTools\decryptors\game.example.codec\game-example-codec.exe
 ```
 
-注意：应用只扫描发现目录第一层的 `*.json`。manifest 可以引用子目录中的程序，但不能把 manifest 本身再套一层目录，否则插件不会出现。
+包导入项安装在以插件 id 命名的子目录中，应用会递归发现其 manifest。直接复制到发现目录的插件也必须使用当前清单规范并显式声明 `schemaVersion: 1` 与 `kind`。
 
 ### 2.3 通过界面注册
 
@@ -92,11 +117,11 @@ game.example.codec\
 
 ### 2.5 移除与排错
 
-用户管理项可以在插件管理页删除；应用目录中的只读项只能由发行包维护者移除。手工安装的插件也可以删除对应 manifest 和工具目录，然后点击刷新。
+用户管理项可以在插件管理页删除；包导入项会删除以插件 id 命名的完整安装目录，手动表单生成在根目录的清单只删除自身。应用目录中的只读项只能由发行包维护者移除。手工复制的插件也可以删除完整插件目录，然后点击刷新。
 
 插件没有出现时依次检查：
 
-1. manifest 是否直接位于正确发现目录的第一层。
+1. manifest 是否位于正确的插件发现目录内，并显式声明了 `schemaVersion: 1` 与受支持的 `kind`。
 2. JSON 是否有效，必填字段是否为空。
 3. `id` 是否与其他插件重复。用户目录中的同 ID 外部项会优先于应用目录项，但不能覆盖内置只读项。
 4. 可执行路径是否存在，当前 Windows 架构是否能够运行该程序。
@@ -172,6 +197,7 @@ Probe 必须依据文件内容和结构特征，不能仅凭扩展名或文件�
 ```json
 {
   "schemaVersion": 1,
+  "kind": "assetBundleCodec",
   "id": "game.example.codec",
   "displayName": "Example Game Codec",
   "version": "1.0.0",
@@ -294,6 +320,7 @@ Encrypt 还支持 `{parameter:key}`。它会展开为 Decrypt 时返回并由工
 
 ```json
 {
+  "schemaVersion": 1,
   "id": "game.example.texture-processor",
   "displayName": "Example Texture Processor",
   "version": "1.0.0",
@@ -319,7 +346,7 @@ Encrypt 还支持 `{parameter:key}`。它会展开为 Decrypt 时返回并由工
 - `resourceKinds` 至少包含一个支持的槽位。
 - `timeoutMs` 必须大于 `0`。
 - `processArguments` 至少包含实际执行需要的参数，推荐始终传递 `{inputPath}`、`{outputPath}` 和 `{resultPath}`。
-- 资源处理器的相对 `executablePath` 相对 manifest 目录解析；当前不把纯文件名当作 PATH 命令。推荐分发真实 `.exe`，或填写可移植运行时的明确路径。
+- 资源处理器的相对 `executablePath` 相对 manifest 目录解析；纯文件名也可以解析 PATH 上的命令。推荐分发真实 `.exe`，脚本插件可以使用包内脚本与 `python` 等明确的 PATH 宿主。
 
 支持的占位符：
 
@@ -386,6 +413,7 @@ Encrypt 还支持 `{parameter:key}`。它会展开为 Decrypt 时返回并由工
 
 ```json
 {
+  "schemaVersion": 1,
   "id": "game.example.post-export",
   "displayName": "Example Mod Packager",
   "version": "1.0.0",

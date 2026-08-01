@@ -5619,4 +5619,40 @@
   <data name="InspectorPanelView.RestoreOriginalConfirm.PrimaryButton" xml:space="preserve"><value>复原</value></data>
   <data name="BundleExplorer.Log.OriginalAssetRestored" xml:space="preserve"><value>已将“{0}”复原为原始资产，并清除 {1} 条内容修改记录。</value></data>
   <data name="BundleExplorer.Notification.OriginalAssetRestored" xml:space="preserve"><value>“{0}”已恢复为原始状态。</value></data>
+  <data name="PluginManagementPage.ImportFolderButton.Content" xml:space="preserve">
+    <value>从文件夹导入插件包</value>
+  </data>
+  <data name="PluginManagementPage.ImportArchiveButton.Content" xml:space="preserve">
+    <value>从 ZIP 导入插件包</value>
+  </data>
+  <data name="PluginManagementPage.PackageImportSucceededMessage.Format" xml:space="preserve">
+    <value>已安装插件“{0}” v{1}。</value>
+  </data>
+  <data name="PluginManagementPage.PackageImportFailedMessage" xml:space="preserve">
+    <value>插件包导入失败。</value>
+  </data>
+  <data name="PluginManagementPage.PackageOverwrite.Title" xml:space="preserve">
+    <value>替换已安装插件</value>
+  </data>
+  <data name="PluginManagementPage.PackageOverwrite.Description.Format" xml:space="preserve">
+    <value>已存在插件“{0}”（{1}）。是否使用导入包中的 v{2} 覆盖当前版本？覆盖失败时会自动恢复原版本。</value>
+  </data>
+  <data name="PluginManagementPage.PackageOverwrite.PrimaryButton" xml:space="preserve">
+    <value>替换</value>
+  </data>
+  <data name="PluginManagementPage.PackageOverwrite.CloseButton" xml:space="preserve">
+    <value>取消</value>
+  </data>
+  <data name="Error.Plugin.Package.SourceInvalid" xml:space="preserve">
+    <value>所选插件包无效或无法读取。详细信息：{0}</value>
+  </data>
+  <data name="Error.Plugin.Package.ManifestInvalid" xml:space="preserve">
+    <value>插件清单不符合当前规范。详细信息：{0}</value>
+  </data>
+  <data name="Error.Plugin.Package.ReadOnlyConflict" xml:space="preserve">
+    <value>插件 ID“{0}”与内置或只读插件冲突，无法覆盖。</value>
+  </data>
+  <data name="Error.Plugin.Package.InstallFailed" xml:space="preserve">
+    <value>安装插件包失败，原有插件未被修改。详细信息：{0}</value>
+  </data>
 </root>

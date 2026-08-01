@@ -19,6 +19,7 @@ using AssestBundleTools.Application.Workspace.Services;
 using AssestBundleTools.Infrastructure.Bundles.Decryption;
 using AssestBundleTools.Infrastructure.Bundles.Processing;
 using AssestBundleTools.Infrastructure.Bundles.PostExport;
+using AssestBundleTools.Infrastructure.Bundles.Plugins;
 using AssestBundleTools.Infrastructure.Bundles.Previewing;
 using AssestBundleTools.Infrastructure.Bundles.Previewing.Audio;
 using AssestBundleTools.Infrastructure.Bundles.Previewing.Spine;
@@ -81,6 +82,10 @@ internal static class AppCompositionRoot
         var assetBundleDecryptorCatalogStore = new FileSystemAssetBundleDecryptorCatalogStore();
         var resourceProcessorCatalogStore = new FileSystemResourceProcessorCatalogStore();
         var postExportPluginCatalogStore = new FileSystemPostExportPluginCatalogStore();
+        var pluginPackageInstallationService = new FileSystemPluginPackageInstallationService(
+            assetBundleDecryptorCatalogStore,
+            resourceProcessorCatalogStore,
+            postExportPluginCatalogStore);
 
         var workspaceImportSourceDiscoveryService = new FileSystemWorkspaceImportSourceDiscoveryService();
         var workspaceImportFileSystemService = new FileSystemWorkspaceImportFileSystemService();
@@ -319,6 +324,7 @@ internal static class AppCompositionRoot
         var getPostExportPluginCatalogEntriesHandler = new GetPostExportPluginCatalogEntriesHandler(postExportPluginCatalogStore);
         var upsertPostExportPluginHandler = new UpsertPostExportPluginHandler(postExportPluginCatalogStore);
         var deletePostExportPluginHandler = new DeletePostExportPluginHandler(postExportPluginCatalogStore);
+        var importPluginPackageHandler = new ImportPluginPackageHandler(pluginPackageInstallationService);
         var assetEditDraftStore = new WorkspaceChangeSetAssetEditDraftStore(
             workspaceCatalogStore,
             workspaceDataStoreFactory);
@@ -408,6 +414,7 @@ internal static class AppCompositionRoot
             getPostExportPluginCatalogEntriesHandler,
             upsertPostExportPluginHandler,
             deletePostExportPluginHandler);
+        var pluginPackageImportService = new PluginPackageImportService(importPluginPackageHandler);
         var appInteractionFeedbackService = new AppInteractionFeedbackService();
         var workspaceDialogService = new WorkspaceDialogService(
             localizationService,
@@ -497,6 +504,7 @@ internal static class AppCompositionRoot
             AssetBundleDecryptorCatalogService: assetBundleDecryptorCatalogService,
             ResourceProcessorCatalogService: resourceProcessorCatalogService,
             PostExportPluginCatalogService: postExportPluginCatalogService,
+            PluginPackageImportService: pluginPackageImportService,
             WorkspaceDialogService: workspaceDialogService,
             AppInteractionFeedbackService: appInteractionFeedbackService,
             WorkspaceWindowService: workspaceWindowService,

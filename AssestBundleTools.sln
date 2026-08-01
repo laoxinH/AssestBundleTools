@@ -31,6 +31,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AssestBundleTools.BundleCod
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AssestBundleTools.BundleCodec.CrossCore", "src\AssestBundleTools.BundleCodec.CrossCore\AssestBundleTools.BundleCodec.CrossCore.csproj", "{4775913D-8AB9-47D3-8ECE-F8EE1B82CE14}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AssestBundleTools.TestPlugin", "tests\AssestBundleTools.TestPlugin\AssestBundleTools.TestPlugin.csproj", "{2E33E9C3-5E3C-4042-A6EC-72FCDF0A747F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -183,6 +185,18 @@ Global
 		{4775913D-8AB9-47D3-8ECE-F8EE1B82CE14}.Release|x64.Build.0 = Release|Any CPU
 		{4775913D-8AB9-47D3-8ECE-F8EE1B82CE14}.Release|x86.ActiveCfg = Release|Any CPU
 		{4775913D-8AB9-47D3-8ECE-F8EE1B82CE14}.Release|x86.Build.0 = Release|Any CPU
+		{2E33E9C3-5E3C-4042-A6EC-72FCDF0A747F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2E33E9C3-5E3C-4042-A6EC-72FCDF0A747F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2E33E9C3-5E3C-4042-A6EC-72FCDF0A747F}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{2E33E9C3-5E3C-4042-A6EC-72FCDF0A747F}.Debug|x64.Build.0 = Debug|Any CPU
+		{2E33E9C3-5E3C-4042-A6EC-72FCDF0A747F}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{2E33E9C3-5E3C-4042-A6EC-72FCDF0A747F}.Debug|x86.Build.0 = Debug|Any CPU
+		{2E33E9C3-5E3C-4042-A6EC-72FCDF0A747F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2E33E9C3-5E3C-4042-A6EC-72FCDF0A747F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2E33E9C3-5E3C-4042-A6EC-72FCDF0A747F}.Release|x64.ActiveCfg = Release|Any CPU
+		{2E33E9C3-5E3C-4042-A6EC-72FCDF0A747F}.Release|x64.Build.0 = Release|Any CPU
+		{2E33E9C3-5E3C-4042-A6EC-72FCDF0A747F}.Release|x86.ActiveCfg = Release|Any CPU
+		{2E33E9C3-5E3C-4042-A6EC-72FCDF0A747F}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -196,5 +210,6 @@ Global
 		{AC9F859D-C218-4E20-89D6-55FC1026A788} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{13B01485-8DCD-4E44-B477-ED6D105A5F77} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{4775913D-8AB9-47D3-8ECE-F8EE1B82CE14} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{2E33E9C3-5E3C-4042-A6EC-72FCDF0A747F} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 	EndGlobalSection
 EndGlobal

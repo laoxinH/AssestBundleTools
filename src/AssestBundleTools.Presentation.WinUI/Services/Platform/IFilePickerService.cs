@@ -80,4 +80,16 @@ public interface IFilePickerService
     /// 返回 <see langword="null"/> 表示用户主动取消，不应视为错误。
     /// </summary>
     Task<string?> PickSpineReplacementSourceDirectoryAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// 选择包含单个插件清单及其运行文件的目录。
+    /// </summary>
+    Task<string?> PickPluginPackageDirectoryAsync(CancellationToken cancellationToken = default) =>
+        Task.FromResult<string?>(null);
+
+    /// <summary>
+    /// 选择包含单个插件的 ZIP 分发包。
+    /// </summary>
+    Task<string?> PickPluginPackageArchiveAsync(CancellationToken cancellationToken = default) =>
+        Task.FromResult<string?>(null);
 }

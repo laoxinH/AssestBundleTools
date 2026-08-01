@@ -5,6 +5,8 @@ namespace AssestBundleTools.Infrastructure.Bundles.Processing;
 /// </summary>
 internal sealed class ResourceProcessorManifest
 {
+    public int SchemaVersion { get; init; }
+
     public string Id { get; init; } = string.Empty;
 
     public string DisplayName { get; init; } = string.Empty;
@@ -13,7 +15,7 @@ internal sealed class ResourceProcessorManifest
 
     public string? Description { get; init; }
 
-    public string Kind { get; init; } = "resourceProcessor";
+    public string Kind { get; init; } = string.Empty;
 
     public IReadOnlyList<string> ResourceKinds { get; init; } = Array.Empty<string>();
 

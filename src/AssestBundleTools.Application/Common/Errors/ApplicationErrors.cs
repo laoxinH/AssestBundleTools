@@ -409,6 +409,42 @@ public static class ApplicationErrors
             parameters: CreateParameters(("PluginId", pluginId), ("Detail", detail)),
             isUserActionable: true);
 
+    public static AppError PluginPackageSourceInvalid(string? detail = null) =>
+        new(
+            code: "Plugin.Package.SourceInvalid",
+            category: ErrorCategory.Validation,
+            severity: ErrorSeverity.Warning,
+            messageToken: "Error.Plugin.Package.SourceInvalid",
+            parameters: CreateParameters(("Detail", detail)),
+            isUserActionable: true);
+
+    public static AppError PluginPackageManifestInvalid(string? detail = null) =>
+        new(
+            code: "Plugin.Package.ManifestInvalid",
+            category: ErrorCategory.Configuration,
+            severity: ErrorSeverity.Warning,
+            messageToken: "Error.Plugin.Package.ManifestInvalid",
+            parameters: CreateParameters(("Detail", detail)),
+            isUserActionable: true);
+
+    public static AppError PluginPackageReadOnlyConflict(string pluginId) =>
+        new(
+            code: "Plugin.Package.ReadOnlyConflict",
+            category: ErrorCategory.Conflict,
+            severity: ErrorSeverity.Warning,
+            messageToken: "Error.Plugin.Package.ReadOnlyConflict",
+            parameters: CreateParameters(("PluginId", pluginId)),
+            isUserActionable: true);
+
+    public static AppError PluginPackageInstallFailed(string? detail = null) =>
+        new(
+            code: "Plugin.Package.InstallFailed",
+            category: ErrorCategory.IoFailure,
+            severity: ErrorSeverity.Error,
+            messageToken: "Error.Plugin.Package.InstallFailed",
+            parameters: CreateParameters(("Detail", detail)),
+            isUserActionable: true);
+
     public static AppError ResourceProcessorNotFound(string processorId) =>
         new(
             code: "Bundle.Save.ResourceProcessor.NotFound",

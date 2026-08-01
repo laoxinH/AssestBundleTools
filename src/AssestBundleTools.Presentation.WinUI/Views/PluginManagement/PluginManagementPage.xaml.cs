@@ -25,7 +25,9 @@ public sealed partial class PluginManagementPage : Page
             App.CurrentApp.AssetBundleDecryptorCatalogService,
             App.CurrentApp.ResourceProcessorCatalogService,
             App.CurrentApp.PostExportPluginCatalogService,
+            App.CurrentApp.PluginPackageImportService,
             App.CurrentApp.AssetBundleDecryptorRegistry,
+            App.CurrentApp.ReloadAssetBundleDecryptorRegistry,
             App.CurrentApp.AppNotificationService,
             App.CurrentApp.AppLogService,
             App.CurrentApp.LocalizationService,
@@ -61,6 +63,8 @@ public sealed partial class PluginManagementPage : Page
         AddDecryptorMenuFlyoutItem.Text = UiText.Get(ResourceKeys.PluginManagementAddDecryptorButton);
         AddResourceProcessorMenuFlyoutItem.Text = UiText.Get(ResourceKeys.PluginManagementAddResourceProcessorButton);
         AddPostExportPluginMenuFlyoutItem.Text = UiText.Get(ResourceKeys.PluginManagementAddPostExportPluginButton);
+        ImportPluginFolderMenuFlyoutItem.Text = UiText.Get(ResourceKeys.PluginManagementImportFolderButton);
+        ImportPluginArchiveMenuFlyoutItem.Text = UiText.Get(ResourceKeys.PluginManagementImportArchiveButton);
         DecryptorGroupTitleText.Text = UiText.Get(ResourceKeys.PluginManagementTypeImportDecryptor);
         ResourceProcessorGroupTitleText.Text = UiText.Get(ResourceKeys.PluginManagementTypeExportProcessor);
         PostExportGroupTitleText.Text = UiText.Get(ResourceKeys.PluginManagementTypePostExport);

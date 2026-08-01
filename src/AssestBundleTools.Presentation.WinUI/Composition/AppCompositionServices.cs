@@ -34,6 +34,7 @@ internal sealed record AppCompositionServices(
     IAssetBundleDecryptorCatalogService AssetBundleDecryptorCatalogService,
     IResourceProcessorCatalogService ResourceProcessorCatalogService,
     IPostExportPluginCatalogService PostExportPluginCatalogService,
+    IPluginPackageImportService PluginPackageImportService,
     IWorkspaceDialogService WorkspaceDialogService,
     IAppInteractionFeedbackService AppInteractionFeedbackService,
     IWorkspaceWindowService WorkspaceWindowService,

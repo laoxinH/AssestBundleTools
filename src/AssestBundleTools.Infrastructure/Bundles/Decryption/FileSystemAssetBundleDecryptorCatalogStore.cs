@@ -1,6 +1,7 @@
 using System.Text.Json;
 using AssestBundleTools.Application.Bundles.Dtos;
 using AssestBundleTools.Application.Bundles.Services;
+using AssestBundleTools.Infrastructure.Bundles.Plugins;
 using AssestBundleTools.Infrastructure.Workspace.Persistence;
 
 namespace AssestBundleTools.Infrastructure.Bundles.Decryption;
@@ -40,7 +41,7 @@ public sealed class FileSystemAssetBundleDecryptorCatalogStore : IAssetBundleDec
                 continue;
             }
 
-            foreach (var manifestFilePath in Directory.EnumerateFiles(manifestDirectoryPath, "*.json", SearchOption.TopDirectoryOnly))
+            foreach (var manifestFilePath in Directory.EnumerateFiles(manifestDirectoryPath, "*.json", SearchOption.AllDirectories))
             {
                 var manifest = ReadManifest(manifestFilePath);
                 if (manifest is null || !IsValid(manifest))
@@ -98,6 +99,8 @@ public sealed class FileSystemAssetBundleDecryptorCatalogStore : IAssetBundleDec
 
         var manifest = new AssetBundleExternalProcessDecryptorManifest
         {
+            SchemaVersion = 1,
+            Kind = "assetBundleCodec",
             Id = definition.Id.Trim(),
             DisplayName = definition.DisplayName.Trim(),
             Version = string.IsNullOrWhiteSpace(definition.Version) ? "1.0.0" : definition.Version.Trim(),
@@ -136,7 +139,10 @@ public sealed class FileSystemAssetBundleDecryptorCatalogStore : IAssetBundleDec
             return;
         }
 
-        JsonWorkspaceFileStorageHelper.DeleteFileIfExists(existingEntry.ManifestFilePath);
+        PluginPackageInstallationUnit.DeleteManifestOrPackage(
+            existingEntry.ManifestFilePath,
+            _userManagedManifestDirectoryPath,
+            existingEntry.Definition.Id);
     }
 
     private static IReadOnlyList<string> ResolveManifestDirectories(IEnumerable<string>? manifestDirectories)
@@ -230,7 +236,9 @@ public sealed class FileSystemAssetBundleDecryptorCatalogStore : IAssetBundleDec
 
     private static bool IsValid(AssetBundleExternalProcessDecryptorManifest manifest)
     {
-        return !string.IsNullOrWhiteSpace(manifest.Id) &&
+        return manifest.SchemaVersion == 1 &&
+               string.Equals(manifest.Kind, "assetBundleCodec", StringComparison.OrdinalIgnoreCase) &&
+               !string.IsNullOrWhiteSpace(manifest.Id) &&
                !string.IsNullOrWhiteSpace(manifest.DisplayName) &&
                !string.IsNullOrWhiteSpace(manifest.Version) &&
                !string.IsNullOrWhiteSpace(manifest.ExecutablePath) &&

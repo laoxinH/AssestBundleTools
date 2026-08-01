@@ -2,6 +2,7 @@ using AssestBundleTools.Infrastructure.Tests.Bundles.Decryption;
 using AssestBundleTools.Infrastructure.Tests.Bundles.Internal;
 using AssestBundleTools.Infrastructure.Tests.Bundles.Processing;
 using AssestBundleTools.Infrastructure.Tests.Bundles.PostExport;
+using AssestBundleTools.Infrastructure.Tests.Bundles.Plugins;
 using AssestBundleTools.Infrastructure.Tests.Bundles.Reading;
 using AssestBundleTools.Infrastructure.Tests.Bundles.Previewing;
 using AssestBundleTools.Infrastructure.Tests.Extensions.Installation;
@@ -742,6 +743,38 @@ internal static class InfrastructureTestSuite
             failures,
             nameof(FileSystemResourceProcessorCatalogStoreTests.Load_ShouldIncludeBuiltInSlots_AndUserManagedProcessors),
             FileSystemResourceProcessorCatalogStoreTests.Load_ShouldIncludeBuiltInSlots_AndUserManagedProcessors);
+        await RunTestAsync(
+            failures,
+            nameof(FileSystemPluginPackageInstallationServiceTests.ImportFolder_ShouldInstallAndInvokeAssetBundleCodecPythonPlugin),
+            FileSystemPluginPackageInstallationServiceTests.ImportFolder_ShouldInstallAndInvokeAssetBundleCodecPythonPlugin);
+        await RunTestAsync(
+            failures,
+            nameof(FileSystemPluginPackageInstallationServiceTests.ManualCatalogSaves_ShouldWriteExplicitKindsForAllPluginTypes),
+            () =>
+            {
+                FileSystemPluginPackageInstallationServiceTests.ManualCatalogSaves_ShouldWriteExplicitKindsForAllPluginTypes();
+                return Task.CompletedTask;
+            });
+        await RunTestAsync(
+            failures,
+            nameof(FileSystemPluginPackageInstallationServiceTests.Catalogs_ShouldRejectManifestsWithoutExplicitKind),
+            FileSystemPluginPackageInstallationServiceTests.Catalogs_ShouldRejectManifestsWithoutExplicitKind);
+        await RunTestAsync(
+            failures,
+            nameof(FileSystemPluginPackageInstallationServiceTests.ImportZip_ShouldInstallAndInvokeResourceProcessorPythonPlugin),
+            FileSystemPluginPackageInstallationServiceTests.ImportZip_ShouldInstallAndInvokeResourceProcessorPythonPlugin);
+        await RunTestAsync(
+            failures,
+            nameof(FileSystemPluginPackageInstallationServiceTests.ImportZip_ShouldInstallAndLaunchPostExportExePlugin),
+            FileSystemPluginPackageInstallationServiceTests.ImportZip_ShouldInstallAndLaunchPostExportExePlugin);
+        await RunTestAsync(
+            failures,
+            nameof(FileSystemPluginPackageInstallationServiceTests.Import_ShouldRequireConfirmationBeforeReplacingUserPlugin),
+            FileSystemPluginPackageInstallationServiceTests.Import_ShouldRequireConfirmationBeforeReplacingUserPlugin);
+        await RunTestAsync(
+            failures,
+            nameof(FileSystemPluginPackageInstallationServiceTests.Import_ShouldRejectMissingKindAndZipPathTraversal),
+            FileSystemPluginPackageInstallationServiceTests.Import_ShouldRejectMissingKindAndZipPathTraversal);
         await RunTestAsync(
             failures,
             nameof(FileSystemResourceProcessorCatalogStoreTests.DeleteUserManagedProcessor_ShouldRemoveManifest),

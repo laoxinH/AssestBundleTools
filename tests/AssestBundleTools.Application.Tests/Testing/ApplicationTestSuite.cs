@@ -24,6 +24,15 @@ internal static partial class ApplicationTestSuite
     {
         var failures = new List<string>();
 
+        await RunTestAsync(
+            failures,
+            nameof(PluginPackageImportHandlerTests.Import_ShouldRejectBlankSourceWithoutCallingInstallationService),
+            PluginPackageImportHandlerTests.Import_ShouldRejectBlankSourceWithoutCallingInstallationService);
+        await RunTestAsync(
+            failures,
+            nameof(PluginPackageImportHandlerTests.Import_ShouldForwardReplacementChoiceAndReturnInstallationResult),
+            PluginPackageImportHandlerTests.Import_ShouldForwardReplacementChoiceAndReturnInstallationResult);
+
         await RunTestAsync(failures, nameof(Failure_ShouldExposeSingleError), Failure_ShouldExposeSingleError);
         await RunTestAsync(failures, nameof(Failure_ShouldThrow_WhenErrorCollectionIsEmpty), Failure_ShouldThrow_WhenErrorCollectionIsEmpty);
         await RunTestAsync(failures, nameof(GenericSuccess_ShouldExposeValue), GenericSuccess_ShouldExposeValue);

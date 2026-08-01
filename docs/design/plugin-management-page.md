@@ -136,6 +136,7 @@ executable ...
 - 状态筛选：全部、可用、警告、不可用、只读、用户管理。
 - 刷新：重新读取 catalog 并触发对应 registry reload。
 - 新增插件：选择插件类型后打开对应编辑器。
+- 导入插件包：选择包含插件清单与运行文件的文件夹，或选择 `.zip` 压缩包；应用从清单自动识别插件类型并安装到对应用户目录。
 - 打开插件目录：打开用户插件根目录，便于复制 manifest 和工具文件。
 
 目录项状态规则：
@@ -146,6 +147,30 @@ executable ...
 - `可用`：manifest 解析通过，必填字段完整，路径可解析。
 - `警告`：manifest 可读但存在非阻断问题，例如可执行文件尚未验证、probe 参数缺失但声明支持自动识别。
 - `不可用`：manifest 缺失必填字段、命令路径无法解析或类型声明无法识别。
+
+### 5.1.1 文件夹与 ZIP 插件包导入
+
+文件夹和 ZIP 使用同一份包契约。开发者分发包应把一个插件的 manifest 与其运行文件放在同一包根目录；允许外层只有一个包装目录。扫描整个包后必须且只能发现一个有效 manifest，避免把依赖携带的 JSON 误判为第二个插件。
+
+插件类型仅由 manifest 的 `kind` 决定：
+
+- `assetBundleCodec`：AssetBundle 导入解密 / 可选导出回写插件。
+- `resourceProcessor`：按资产执行的导出资源处理器。
+- `postExport`：消费最终导出 manifest 的整批后处理插件。
+
+三类 manifest 都必须显式声明 `schemaVersion: 1` 与 `kind`，不通过其他字段猜测类型，也不接受缺失版本的旧清单。插件管理页的三个手动新增表单按用户选择的插件类别自动写入固定值，不提供可自由填写的类型文本框；内置插件也遵循相同定义。
+
+安装前由 Application 用例请求 Infrastructure 完成以下检查：
+
+- JSON 可解析，`schemaVersion` 为 `1`，`id / displayName / version / executablePath` 及对应类型的参数字段完整。
+- `kind` 可识别，资源处理器 `resourceKinds` 仅包含稳定槽位，参数占位符属于对应协议允许集合。
+- manifest 声明的相对入口和工作目录必须位于包内且实际存在；纯命令名允许由 PATH 解析，用于 `python` 等脚本宿主。
+- ZIP 拒绝绝对路径、`..` 路径穿越、符号链接式越界、重复目标路径、超出数量或解压大小限制的条目。
+- 插件 id 不得覆盖内置 / 只读项；用户目录已有同 id 时必须先向用户显示名称、类型与版本并确认覆盖。
+
+校验通过后先复制或解压到用户插件根目录下的临时目录，再以 `<kind-root>/<sanitized-id>/` 为安装单元原子提升。覆盖安装先保留旧目录，只有新目录提升成功才删除备份；失败时恢复旧目录；删除包导入项时清理完整安装单元。catalog 递归发现包内 manifest；直接复制到发现目录的插件和手动表单生成的清单同样必须符合当前版本与 `kind` 规范，不保留旧清单推断逻辑。
+
+导入成功后统一刷新三类 catalog；AssetBundle codec 还必须 reload `IAssetBundleDecryptorRegistry`，确保新插件不重启应用即可参与工作区自动识别和指定 codec 导入。
 
 ### 5.2 导入解密插件详情
 
@@ -180,6 +205,7 @@ executable ...
 
 ```json
 {
+  "schemaVersion": 1,
   "id": "export.texture.png-processor",
   "displayName": "Texture PNG Processor",
   "version": "1.0.0",
@@ -239,6 +265,7 @@ executable ...
 
 ```json
 {
+  "schemaVersion": 1,
   "id": "post-export.zip",
   "displayName": "ZIP 打包",
   "version": "1.0.0",

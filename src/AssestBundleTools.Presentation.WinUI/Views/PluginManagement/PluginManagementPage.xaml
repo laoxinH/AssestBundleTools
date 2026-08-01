@@ -540,6 +540,25 @@
                                                     Glyph="&#xE00D;" />
                                             </MenuFlyoutItem.Icon>
                                         </MenuFlyoutItem>
+                                        <MenuFlyoutSeparator />
+                                        <MenuFlyoutItem
+                                            x:Name="ImportPluginFolderMenuFlyoutItem"
+                                            Click="OnImportPluginFolderMenuFlyoutItemClick">
+                                            <MenuFlyoutItem.Icon>
+                                                <FontIcon
+                                                    FontFamily="{StaticResource AppIconFontFamily}"
+                                                    Glyph="&#xE8B7;" />
+                                            </MenuFlyoutItem.Icon>
+                                        </MenuFlyoutItem>
+                                        <MenuFlyoutItem
+                                            x:Name="ImportPluginArchiveMenuFlyoutItem"
+                                            Click="OnImportPluginArchiveMenuFlyoutItemClick">
+                                            <MenuFlyoutItem.Icon>
+                                                <FontIcon
+                                                    FontFamily="{StaticResource AppIconFontFamily}"
+                                                    Glyph="&#xE896;" />
+                                            </MenuFlyoutItem.Icon>
+                                        </MenuFlyoutItem>
                                     </MenuFlyout>
                                 </Button.Flyout>
                                 <FontIcon
