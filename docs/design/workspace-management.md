@@ -12,9 +12,9 @@
 
 当前文档与以下规范配套使用：
 
-- [code-architecture-guidelines.md](C:/Users/thixi/source/repos/AssestBundleTools/AssestBundleTools/docs/design/code-architecture-guidelines.md)
-- [ui-final-spec.md](C:/Users/thixi/source/repos/AssestBundleTools/AssestBundleTools/docs/design/ui-final-spec.md)
-- [project-build-roadmap.md](C:/Users/thixi/source/repos/AssestBundleTools/AssestBundleTools/docs/design/project-build-roadmap.md)
+- [code-architecture-guidelines.md](code-architecture-guidelines.md)
+- [ui-final-spec.md](ui-final-spec.md)
+- [project-build-roadmap.md](project-build-roadmap.md)
 - [workspace-recoverable-operation-records.md](workspace-recoverable-operation-records.md)
 - [asset-editor-window-mode.md](asset-editor-window-mode.md)
 
@@ -805,9 +805,9 @@ cache/
 4. 最近工作区列表按 `Pinned > LastActivatedAtUtc` 排序。
 5. 同一工作区内同一资源包默认只恢复一个标签页实例。
 
-## 8. 当前阶段落地范围
+## 8. 已实现能力基线
 
-当前实现已经收敛并完成以下稳定子集：
+以下内容描述工作区链路当前必须保持的能力基线，不承担版本进度记录职责：
 
 - `WorkspaceContextService` 从“仅当前工作区”演进为“活动工作区 + 已登记工作区列表”
 - 最近工作区目录恢复、可用性语义、“上次活动工作区”恢复请求推导与浏览状态/激活元数据编排
@@ -914,7 +914,7 @@ cache/
 - 顶部全局工作区切换器
 - 资源编辑窗口的显示器位置 / 最大化状态完整恢复、跨窗口编辑冲突解决和真实写包回滚语义；这些能力等待独立窗口、编辑草稿和保存链路契约稳定后再落地
 
-## 9. 后续实施建议
+## 9. 演进约束
 
 当前工作区主链路已经完成阶段性收口。后续工作区相关开发默认服务于提取、替换和保存输出主线，不再优先扩展顶层工作区切换器或新的大布局。
 
@@ -982,7 +982,7 @@ cache/
 3. 当前已覆盖 Reader / Preview / Extraction、并基于标准化 artifact identity 复用的 AssetsTools loaded-session 缓存已补齐默认容量上限和内存压力退避；SaveRebuild 保存计划已通过 Application artifact resolver 建立只读输入图，并已把输出路径 preflight 纳入计划，后续真实导出 / 写包不允许绕开标准化 artifact 或跳过最终冲突确认。
 4. `OutOfMemoryException` 已有专用诊断分类和短期退避：Infrastructure 保留异常 detail，Application 暴露 `Bundle.Preview.OutOfMemory / AssetPreviewFallbackReasonKind.OutOfMemory`，Presentation 暂停同 bundle 后台预热并在 DEBUG 输出退避诊断，避免连续失败。
 
-## 10. 执行结论
+## 10. 稳定结论
 
 后续所有“多工作区”能力默认按以下原则实现：
 

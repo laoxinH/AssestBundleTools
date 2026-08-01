@@ -488,9 +488,9 @@ Export / SaveRebuild 共享 artifact resolver 已从保存计划骨架推进到�
 
 应用重启后不恢复“正在跑的线程”。如果重启前任务已经写入 `Pending / Planned` 操作记录，则由操作记录恢复计划判断为 `Interrupted` 或其他可恢复状态；如果只是后台预热或状态条任务，则直接丢弃。
 
-## 16. 当前落地状态
+## 16. 已实现能力基线
 
-截至 2026-05-17，统一后台任务流程已完成第一阶段最小落地，并开始进入可观察任务模型：
+以下内容描述统一后台任务流程当前必须保持的能力基线，不承担版本进度记录职责：
 
 - `Presentation.WinUI/Services/Background` 已新增 `BackgroundWorkRequest<T>`、`BackgroundWorkExecutionContext`、`IBackgroundWorkProgress`、`IBackgroundWorkScheduler`、任务 profile、语义分类和优先级枚举。
 - `BackgroundWorkScheduler` 当前复用既有 `IBackgroundTaskRunner` 作为执行原语，并把可见任务生命周期投影到 `IAppBackgroundTaskStatusService`；`WorkspaceOpen / WorkspaceImport / PreviewForeground / PreviewPrewarm / SpineRuntimeFrame / BatchExtraction / BatchReplacement / SaveRebuild` 已有第一版 profile 闸门。
@@ -509,7 +509,7 @@ Export / SaveRebuild 共享 artifact resolver 已从保存计划骨架推进到�
 - 导入进度现在通过 `WorkspaceImportBackgroundProgressBridge` 同时投影给左侧导入遮罩和 Shell 状态条；操作记录与变更页刷新仍走既有 `IWorkspaceOperationChangeNotifier`，没有恢复手动刷新资产列表。
 - 当前实现还没有完整任务详情弹层、全局 CPU/IO/memory 闸门或完成结果中心；loaded-session 容量上限和内存压力退避已先在 Infrastructure cache 内落地；SaveRebuild 已能读取现有 artifact identity、预检目标输出路径 blockers、执行 CLI 资源处理器、用对象级 AssetsTools writer 生成 AB 并写出导出 manifest，但仍未自动 materialize 缺失 artifact。
 
-当前设计判断：后台调度、标准化物理缓存、loaded-session、预览缓存和保存输出 preflight 的职责边界已经清晰，足以继续承载提取 / 预览 / Spine 详情复用；容量治理已经补上显式清理、偏好驱动自动清理、artifact 删除后的 loaded-session 主动驱逐、loaded-session 容量上限和内存压力退避。缓存命中与清理细节本轮先通过 DEBUG 日志体现，其中 loaded-session 会直接记录 `Acquire miss / in-flight / hit` 和真实 `Load start / completed / failed`，不新增诊断面板；Export / SaveRebuild 已形成只读 artifact 输入图、输出路径 blocker 预检、CLI 资源处理器执行、对象级 AB 写包和 AB 输出 manifest，M10 后续按 [workspace-export-save-pipeline.md](workspace-export-save-pipeline.md) 继续补取消 / 部分成功、检查点、缺失 artifact materialization 和更广资源类型。
+后台调度、标准化物理缓存、loaded-session、预览缓存和保存输出 preflight 的职责边界已经明确。Export / SaveRebuild 的具体契约及待办统一以 [workspace-export-save-pipeline.md](workspace-export-save-pipeline.md) 和 [项目路线图](project-build-roadmap.md) 为准，本文件不再维护里程碑进度。
 
 对应回归：
 
@@ -522,7 +522,7 @@ Export / SaveRebuild 共享 artifact resolver 已从保存计划骨架推进到�
 - `BundleExplorerAssetPreviewSchedulingTests` 覆盖前台资产预览 / Spine 组详情会投影到 Shell 状态服务、后台预热不投影状态服务，以及后台预热按最近激活标签优先调度。
 - `SaveWorkspaceHandlersTests` 覆盖保存计划会暴露输出路径 preflight blockers 并把操作记录物化为对象级写包项，`FileSystemWorkspaceSaveOutputProbeTests` 覆盖不存在目标、已存在文件和目录链文件阻塞三类基础探测，`FileSystemWorkspaceBundleExporterTests` 覆盖缺少对象写入项诊断和真实样本 TextAsset 写回读验证。
 
-## 17. 建议迁移计划
+## 17. 演进约束
 
 ### 第一阶段：抽象统一调度契约
 

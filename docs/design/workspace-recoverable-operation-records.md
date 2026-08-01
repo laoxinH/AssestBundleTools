@@ -4,7 +4,7 @@
 
 本文档定义“可恢复操作记录”模型，用于把当前工作区中的提取、替换、编辑草稿应用、保存输出等用户操作记录为可持久化、可校验、可撤销和可恢复的事实流。
 
-它补齐现有 `staging/changes/<workspaceKey>.json` 的下一阶段设计。当前代码已经具备：
+它定义 `staging/changes/<workspaceKey>.json` 及关联载荷目录的稳定契约。当前能力基线包括：
 
 - `WorkspaceChangeSetDto`
   保存 `changes[]`、`editDrafts[]`、`operations[]`、`schemaVersion` 和 `operationSequence`。
@@ -43,9 +43,9 @@ staging/
       <operationId>/...       # 后续大载荷或长操作中间产物
 ```
 
-当前阶段已经扩展 `staging/changes/<workspaceKey>.json` 作为操作事实与草稿描述来源，并新增文本草稿 payload store 作为 `staging/drafts/` 的首个大载荷承载点。后续其它真实草稿内容或大操作载荷继续落到 `drafts/` 与 `operation-payloads/`，但生命周期和事实语义仍必须由描述与操作记录驱动。
+`staging/changes/<workspaceKey>.json` 是操作事实与草稿描述来源，文本草稿 payload store 是 `staging/drafts/` 的首个大载荷承载点。其它真实草稿内容或大操作载荷继续落到 `drafts/` 与 `operation-payloads/`，但生命周期和事实语义仍必须由描述与操作记录驱动。
 
-推荐演进后的 `WorkspaceChangeSetDto` 逻辑结构：
+`WorkspaceChangeSetDto` 的目标逻辑结构：
 
 ```text
 workspaceKey

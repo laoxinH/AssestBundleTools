@@ -390,18 +390,9 @@ Preview.FullContentUnavailable
 - Spine 组详情已改为 source-backed 结构化读取：atlas 页面 / region 解析可以从 `FullContentReference` 通过 chunk-backed `TextReader` 按行读取；JSON skeleton 摘要和官方 runtime preview / playback 会把 `SkeletonJsonSource / AtlasTextSources` 传给 runtime adapter，runtime adapter 在自身解析边界通过 `IAssetPreviewTextSourceReader` 打开完整 source。因此普通大文本预览仍保持首段展示和按需加载，Spine 需要完整 atlas / skel 时也不会要求 Application / Presentation 先拼接 `FullTextContent`。第三方 Spine runtime 自身可能在 JSON parser 内部物化 skeleton 数据，这是 runtime 解析边界，外层 DTO / ViewModel 不携带整块文本。
 - Spine runtime adapter 已在 V3.8 / V4.2 的预览和 playback session 前加入 atlas 输入 guard，并能在 runtime key 未预解析时尝试可处理 JSON / binary source 的官方 adapter。
 
-推荐下一步继续沿阶段 4 的 Monaco 文本编辑器工程化和大文本编辑能力推进，然后回到阶段 2/3 做更广的预览边界收口：
+后续演进必须继续遵守三项约束：大文本不得整段进入 ViewModel 或单次 WebView 消息；JSON 格式化、Shader 写回和索引辅助搜索必须复用 Application gateway；Spine、TypeTree、图片、音频、Mesh 与 CLI 结果都必须具有明确预算和可诊断的回退路径。具体实施优先级只在[项目路线图](project-build-roadmap.md)维护。
 
-1. 补 WebView2 + Monaco 工程化剩余项：主功能完成后统一记录真实 UI 压力样本，以及后续如有需要的更细 Runtime 安装入口。
-2. 在当前 Monaco 全缓冲编辑基础上接入 patch 草稿保存：分块缓冲 / range edit 命令、保存前差异摘要、未保存状态恢复，并保证超大文本不需要整段进入 ViewModel 字符串或单次 WebView 消息。
-3. 给 TextAsset 编辑器补保存前差异摘要、撤销 / 重做和多窗口同资产冲突策略；当前已能按正文脏状态提示保存 / 丢弃 / 取消，后续需要把该状态接入恢复队列和多窗口同步。
-4. 接入 JSON 美化 / 压缩 / 校验、行跳转和格式化错误定位；大型 JSON 先提供只读结构索引、范围格式化或预算外诊断，不做全量 pretty print。
-5. 为 Shader 增加真实写回适配器，再把 `CanApply=false` 的只读入口升级为可保存入口。
-6. 在当前 `*.lines.json` 行 / 字符稀疏索引基础上继续补可取消的后台索引重建和索引辅助搜索：现有全文搜索仍可能顺序扫描，后续应把高频搜索、搜索结果缓存和 JSON 范围格式化逐步切到索引辅助。
-7. 继续盘点其它 staging-backed 文本载荷、结构化大集合和诊断文本，优先关注 TypeTree 字段树、CLI result JSON、外部工具 stdout / stderr 和插件诊断，确保它们也有预算和 reference / sidecar 边界。
-8. 在文本链路边界稳定后，进入阶段 2：把 Spine atlas 现有 guard 迁入统一 policy，并扩展到 skel JSON、TypeTree、图片、音频、Mesh 和 CLI result JSON。
-
-当前阶段性建议：下一步进入 patch 草稿保存与 JSON 格式化 / 校验。主要功能完成后再统一做 Monaco 工程化手动测试：确认正常启动后 `%LocalAppData%\AssestBundleTools\WebView2\TextEditor` 会生成 WebView2 用户数据、切换应用浅色 / 深色主题后 Monaco 背景和语法色跟随变化、临时移除输出目录中的 `Assets\Monaco` 会显示本地化兼容模式提示且“复制诊断”包含 Runtime / 路径 / 文档状态、12 MB JSON / atlas / skel 样本打开和关闭仍不阻塞主窗口。
+Monaco 工程化回归应覆盖 WebView2 用户数据目录生成、浅色 / 深色主题同步、离线资源缺失时的本地化回退诊断，以及大型 JSON / atlas / skel 样本打开和关闭时的窗口响应性。
 
 ## 11. 待决问题
 
