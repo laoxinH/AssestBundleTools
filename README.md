@@ -144,7 +144,6 @@ Infrastructure     -> Application + Domain
 ## 项目信息
 
 - GitHub：[laoxinH/AssestBundleTools](https://github.com/laoxinH/AssestBundleTools)
-- 官网：[www.modwu.com](https://www.modwu.com)
 - 图标绘制：青雷
 - 许可协议：[MIT License](LICENSE.md)
 
